@@ -1,0 +1,78 @@
+name: Update NHL site
+
+on:
+  schedule:
+    # In UTC. GitHub starts scheduled runs late: 2.7 to 8.7 hours for this job over 15 runs measured
+    # in October 2026 (never early), while it ran in DEMON-X13/nfl-hub, before it moved here; so each
+    # slot is queued for the window it must land in, not the minute it names. Off the hour, since :00
+    # is the minute most often delayed.
+    # Puck drop is 7pm Eastern for most games (23:00 UTC until November, 00:00 after), 10pm for the
+    # West Coast, 12:30-3pm for weekend matinees; the last West Coast final is about 1:30am Eastern.
+    # The call on a game is the last run's before its puck drop, frozen then by the clock; the page
+    # itself never offers a game that has started, whatever the last run saw.
+    - cron: "17 6 * * *"    # lands about 09-15 UTC: the night's finals graded, the morning lines, before the weekend matinees
+    - cron: "17 12 * * *"   # lands about 15-21 UTC: the afternoon read, before every 7pm Eastern puck drop
+    - cron: "17 15 * * *"   # lands about 18-00 UTC: the last read before 7pm puck drops at the usual 6-7 hours late
+    - cron: "17 18 * * *"   # lands about 21-03 UTC: before the 10pm Eastern puck drops; the early games' scores
+    - cron: "17 22 * * *"   # lands about 01-07 UTC: the night's finals
+  workflow_dispatch:
+  push:
+    # a change to the job or the page runs it once, so the change is proved on the real feeds at once and the
+    # state the page reads is the new job's from the first minute, not the next scheduled slot hours later
+    branches: [main]
+    paths: ["tools/*.js", "tools/package*.json", "index.html", ".github/workflows/update.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  nhl:
+    runs-on: ubuntu-latest
+    steps:
+      # the branch as it stands when the run starts, not the commit it was queued on: runs of one job wait
+      # in line (concurrency), and one queued behind another would otherwise start from the state the other
+      # has since replaced, and lose the push to a conflict on its own file
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: tools
+      - name: Play the job offline first (today's data, a fabricated season, the playoffs, the rollover)
+        run: node tools/simulate.js
+      - name: Read the scores through today, so last night's finals are in the state before they are boxed
+        run: node tools/update.js --scores
+      - name: Pull the new box scores and the injury report
+        run: node tools/fetch_box.js
+      - name: The goalies DailyFaceoff announces, game by game
+        run: node tools/starters.js
+      - name: Replay the player and goalie model and line up every game to come
+        run: node tools/players.js
+      - name: Read the season, rate, call, grade and write state.json
+        run: node tools/update.js
+      - name: Smoke test the page and the state against its sources and the last published state
+        run: node tools/smoke.js
+      - name: Commit if anything changed
+        run: |
+          git config user.name "nhl-hub bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add state.json data/teams.json data/box_*.jsonl data/injuries.json data/starters.json data/players.json
+          for f in data/season_*.json; do [ -e "$f" ] && git add "$f"; done
+          if git diff --cached --quiet; then echo "nothing changed"; else
+            git commit -m "update $(date -u +'%Y-%m-%d %H:%M UTC')"
+            ok=0
+            for i in 1 2 3; do
+              if git pull --rebase && git push; then ok=1; break; fi
+              git rebase --abort 2>/dev/null || true   # a failed rebase left in place fails every retry
+              echo "push raced another job, retrying ($i)"; sleep 15
+            done
+            [ "$ok" = 1 ]
+          fi
+      - name: Fail the run if a source the published state stands on broke (after the commit, so the page still updates and says so)
+        run: node tools/sources.js

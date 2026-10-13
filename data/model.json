@@ -1,0 +1,51 @@
+{
+ "params": {
+  "K": 8,
+  "carry": 0.8,
+  "hfa": 30,
+  "b2b": 40,
+  "rest": 5,
+  "ot": 0.4,
+  "mov": true
+ },
+ "gpe": 134.0766004929746,
+ "b": 0.002961455634965804,
+ "sd": 2.435236996504586,
+ "leagueTotal": 5.886,
+ "otRate": 0.2269,
+ "pull": 0.22,
+ "fitted": {
+  "seasons": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "warmup": [
+   2012,
+   2013
+  ],
+  "holdout": 2026,
+  "on": "2026-09-26",
+  "logloss": 0.6685,
+  "accuracy": 0.586,
+  "games": 15753,
+  "holdoutLogloss": 0.6898,
+  "holdoutAccuracy": 0.5387,
+  "holdoutGames": 1394,
+  "marginMae": 2.036,
+  "holdoutMarginMae": 2.135,
+  "holdoutHomeBeatsMargin": 0.509,
+  "goalsLogloss": 0.6886,
+  "holdoutOtRate": 0.2496,
+  "goalsOtRate": 0.2306
+ }
+}

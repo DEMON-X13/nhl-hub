@@ -1,0 +1,12 @@
+{
+  "name": "nhl-hub-tools",
+  "private": true,
+  "description": "The NHL site's job and smoke test",
+  "scripts": {
+    "update": "node update.js",
+    "smoke": "node smoke.js"
+  },
+  "dependencies": {
+    "jsdom": "^30.0.1"
+  }
+}

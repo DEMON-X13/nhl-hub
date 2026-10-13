@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>X NHL Bets</title>
+<meta name="description" content="A rating model's call on every NHL game: win chances, puck lines and totals against DraftKings' numbers, the standings, the playoff picture and a parlay builder.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1720; --bg-2:#141E29; --panel:#1A2533; --panel-2:#202D3D; --panel-3:#28384B;
+  --ink:#F3F7FB; --ink-2:#C3CDD9; --muted:#8393A6; --line:#2C3B4D; --line-2:#3A4C62;
+  --ice:#5FD4FF; --ice-2:#8EE3FF; --ice-soft:rgba(95,212,255,.14);
+  --lime:#CDFF4F; --lime-soft:rgba(205,255,79,.14);
+  --rose:#FF4D6D; --rose-soft:rgba(255,77,109,.14);
+  --gold:#FFD166; --gold-soft:rgba(255,209,102,.14);
+  --display:"Unbounded",ui-sans-serif,system-ui,sans-serif;
+  --body:"Manrope",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:18px; --r-sm:11px; --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14.5px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(900px 520px at 10% -8%,rgba(95,212,255,.16),transparent 60%),radial-gradient(700px 420px at 92% 0%,rgba(205,255,79,.07),transparent 60%),linear-gradient(180deg,#17222E 0%,var(--bg) 40%);background-attachment:fixed;min-height:100vh}
+::selection{background:var(--ice);color:#000}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--ice)}
+[hidden]{display:none!important}
+/* rink lines */
+.rink{position:fixed;inset:0;pointer-events:none;opacity:.07;background-image:linear-gradient(rgba(255,255,255,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.35) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(800px 500px at 50% 0%,#000 20%,transparent 75%);-webkit-mask-image:radial-gradient(800px 500px at 50% 0%,#000 20%,transparent 75%)}
+header{padding:24px 20px 0;max-width:1240px;margin:0 auto;position:relative}
+.brand{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.wordmark{font-family:var(--display);font-weight:900;font-size:clamp(30px,5.5vw,48px);letter-spacing:-.02em;line-height:.95;margin:0;text-transform:uppercase}
+.wordmark em{font-style:normal;color:var(--ice)}
+.wordmark .puck{display:inline-block;width:.5em;height:.22em;border-radius:50%;background:#0B0F14;border:2px solid var(--ice);box-shadow:0 0 18px rgba(95,212,255,.5);margin-left:.14em;vertical-align:.12em}
+.tagline{color:var(--ink-2);font-size:13px;margin:8px 0 0;max-width:560px}
+.stamp{font-size:12px;color:var(--muted);text-align:right;line-height:1.5}
+.stamp b{color:var(--ink-2);font-weight:600;display:block}
+nav{display:flex;gap:6px;margin:20px 0 0;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;background:var(--panel);border:1px solid var(--line);color:var(--ink-2);padding:9px 15px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.02em;cursor:pointer;transition:all .18s var(--ease)}
+nav button:hover{color:var(--ink);border-color:var(--line-2)}
+nav button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+nav button .n{display:inline-block;margin-left:7px;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--ice);color:var(--bg);font-weight:800}
+main{max-width:1240px;margin:0 auto;padding:16px 20px 90px}
+section[hidden]{display:none}
+h2{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0 0 12px}
+h2 small{font-family:var(--body);font-weight:500;color:var(--muted);font-size:13px;margin-left:10px;letter-spacing:0}
+h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.muted{color:var(--muted)} .small{font-size:12px} .num{font-variant-numeric:tabular-nums}
+.ice{color:var(--ice)} .lime{color:var(--lime)}
+.card{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-2);border-radius:10px;padding:7px 10px;color:var(--ink)}
+.btn{background:var(--panel-3);border:1px solid var(--line-2);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12.5px;transition:all .15s var(--ease);white-space:nowrap}
+.btn:hover{border-color:var(--ink-2)}
+.btn.ice{background:var(--ice);border-color:var(--ice);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink-2)}
+.btn.tiny{padding:4px 8px;font-size:11.5px;border-radius:8px}
+.btn.on{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:7px 11px;font-weight:700;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg)}
+/* day strip */
+.days{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.day{flex:none;min-width:84px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px 12px;cursor:pointer;text-align:left;transition:all .18s var(--ease)}
+.day:hover{border-color:var(--line-2)}
+.day.on{border-color:var(--ice);background:var(--ice-soft)}
+.day .dw{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.day .dn{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.1;margin-top:2px}
+.day .dc{font-size:11px;color:var(--ink-2);margin-top:3px}
+.day.on .dc{color:var(--ice-2)}
+/* game cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}
+@media(max-width:420px){.grid{grid-template-columns:1fr}}
+.game{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 12px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.game::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--ice),transparent)}
+.game.final::before{background:linear-gradient(180deg,var(--muted),transparent)}
+.game .when{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.game .when .live{color:var(--rose);font-weight:700}
+.side{display:grid;grid-template-columns:30px 1fr auto auto;gap:8px;align-items:center}
+.side img{width:30px;height:30px;object-fit:contain}
+.side .nm{font-weight:700;font-family:var(--display);font-size:13px}
+.side .nm small{color:var(--muted);font-weight:500;margin-left:5px;font-family:var(--body);font-size:11.5px}
+.side .sc{font-family:var(--display);font-weight:700;font-size:20px;min-width:28px;text-align:right}
+.side .sc.lose{color:var(--muted)}
+.side .wp{font-variant-numeric:tabular-nums;font-weight:700;min-width:46px;text-align:right;color:var(--ink-2)}
+.side.picked .wp{color:var(--lime)}
+.side.won .nm{color:var(--lime)}
+.prob{height:8px;border-radius:999px;background:var(--panel-3);overflow:hidden;display:flex}
+.prob i{display:block;height:100%;background:var(--ac,#888)} .prob i.h{margin-left:auto;background:var(--hc,#888)}
+.lines{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:12.5px;border-top:1px solid var(--line);padding-top:8px}
+.lines .k{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.lines .v{font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font:700 10.5px var(--body);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
+.tag.pick{background:var(--lime-soft);color:var(--lime)} .tag.pass{color:var(--muted)}
+.tag.win{background:var(--lime-soft);color:var(--lime)} .tag.loss{background:var(--rose-soft);color:var(--rose)} .tag.push{background:var(--gold-soft);color:var(--gold)}
+.tag.replay{background:var(--ice-soft);color:var(--ice)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.legbtns{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.legbtns .k{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.tbl th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--panel-2);position:sticky;top:0}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:rgba(255,255,255,.025)}
+.tbl td.n,.tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr.in td{font-weight:600} .tbl tr.cut td{border-bottom:2px dashed var(--line-2)}
+.tbl .linesTable td{white-space:normal}
+.tw{display:inline-flex;align-items:center;gap:7px}
+.tw img{width:20px;height:20px;object-fit:contain}
+.scroll{overflow:auto;max-height:72vh;border-radius:14px}
+.bar{height:6px;background:var(--panel-3);border-radius:3px;overflow:hidden;min-width:60px;display:inline-block;vertical-align:middle}
+.bar i{display:block;height:100%;background:var(--ice)}
+.bracket{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bracket .conf{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.series{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.series:last-child{border-bottom:0}
+.series .seed{font:700 11px var(--display);color:var(--muted);min-width:34px}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat .k{color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.stat .v{font-family:var(--display);font-size:22px;font-weight:900;line-height:1.1;margin-top:4px}
+.stat .v.good{color:var(--lime)} .stat .v.bad{color:var(--rose)}
+.legs{display:flex;flex-direction:column;gap:6px}
+.leg{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:8px 10px;background:var(--panel-3);border:1px solid var(--line);border-radius:10px;font-size:13px}
+.leg .x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px}
+.saved{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;background:var(--panel)}
+.saved .top{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.empty{background:var(--panel);border:1px dashed var(--line-2);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--ink-2)}
+.empty b{display:block;font-family:var(--display);font-size:22px;color:var(--ink);margin-bottom:6px}
+.spark{display:inline-block;vertical-align:middle;height:22px;width:90px}
+.spark polyline{fill:none;stroke:var(--ice);stroke-width:1.5}
+.spark circle{fill:var(--lime)}
+.lineup{margin-top:2px;font-size:12px;color:var(--ink-2);display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;border-top:1px solid var(--line);padding-top:8px}
+.lineup .k{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.lineup .who{color:var(--rose);font-weight:700}
+.countdown{font-family:var(--display);font-size:clamp(36px,8vw,72px);font-weight:900;color:var(--ice);line-height:1;letter-spacing:-.03em;margin:6px 0 4px}
+.note{background:var(--gold-soft);border:1px solid rgba(255,209,102,.35);color:var(--ink-2);border-radius:12px;padding:9px 12px;font-size:12.5px;margin-bottom:12px}
+.note b{color:var(--gold)}
+.game .when .asof{color:var(--gold);font-weight:700}
+.series .score{font:700 12px var(--display);color:var(--ink-2);white-space:nowrap}
+.series.done .score{color:var(--lime)}
+.series .out{opacity:.45;text-decoration:line-through}
+.champ{font-family:var(--display);font-weight:900;font-size:20px;color:var(--gold);margin:4px 0 10px}
+@media (max-width:640px){.bracket{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="rink"></div>
+<header>
+  <div class="brand">
+    <div>
+      <h1 class="wordmark">X <em>NHL</em> Bets<span class="puck"></span></h1>
+      <p class="tagline">A rating model's call on every game: the moneyline, the puck line and the total against DraftKings' numbers, frozen before puck drop and graded after.</p>
+    </div>
+    <div class="stamp"><b id="stamp">Loading…</b><span id="buildTag"></span></div>
+  </div>
+  <nav id="tabs">
+    <button data-tab="games" class="on">Games</button>
+    <button data-tab="standings">Standings</button>
+    <button data-tab="ratings">Power Ratings</button>
+    <button data-tab="playoff">Playoff</button>
+    <button data-tab="players">Players</button>
+    <button data-tab="parlays">Parlays <span id="legCount" class="n" hidden>0</span></button>
+    <button data-tab="record">Record</button>
+  </nav>
+</header>
+<main>
+  <section id="tab-games">
+    <div class="days" id="days"></div>
+    <div id="sourceNote" class="note" hidden></div>
+    <div id="opening" hidden></div>
+    <div class="toolbar">
+      <button class="btn ghost" id="refreshScores" title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>
+      <span class="small muted" id="gamesNote"></span>
+    </div>
+    <div class="grid" id="games"></div>
+  </section>
+
+  <section id="tab-standings" hidden>
+    <p class="small muted">Two points a win, one for a loss past regulation. The top three of each division and two wild cards a conference are in; the dashed line is the cut. Playoff is the simulation's chance of a spot.</p>
+    <div id="standings"></div>
+  </section>
+
+  <section id="tab-ratings" hidden>
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0">Power ratings</h2>
+        <select id="ratConf"><option value="">Both conferences</option><option value="East">East</option><option value="West">West</option></select>
+        <span class="small muted">Elo: home ice <b id="hfaNote"></b>, <b id="gpeNote"></b> per goal of margin.</span>
+      </div>
+      <div class="scroll"><table class="tbl" id="ratTable"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-playoff" hidden>
+    <div class="card">
+      <h2 id="bracketHead">If the season ended today</h2>
+      <div id="champ" class="champ" hidden></div>
+      <p class="small muted" id="bracketNote"></p>
+      <div class="bracket" id="bracket"></div>
+    </div>
+    <div class="card">
+      <div class="toolbar"><h2 style="margin:0">Playoff odds</h2><select id="poConf"><option value="">Both conferences</option><option value="East">East</option><option value="West">West</option></select><span class="small muted" id="poNote"></span></div>
+      <div class="scroll"><table class="tbl" id="poTable"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-players" hidden>
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0">Player rankings</h2>
+        <div class="seg" id="plKind"><button data-kind="skaters" class="on">Skaters</button><button data-kind="goalies">Goalies</button></div>
+        <select id="plTeam"><option value="">Every club</option></select>
+        <input type="text" id="plSearch" placeholder="Search a name" style="background:var(--panel-3);border:1px solid var(--line-2);border-radius:10px;padding:7px 10px;color:var(--ink)">
+        <span class="small muted" id="plNoteP"></span>
+      </div>
+      <p class="small muted" id="plModelNote"></p>
+      <div class="scroll"><table class="tbl" id="plTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Club strength tonight <small>who dressed last, minus the injury report, and the goalie for the club's next game</small></h2>
+      <p class="small muted" id="plSources"></p>
+      <div class="scroll"><table class="tbl" id="plTeams"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-parlays" hidden>
+    <div class="card">
+      <h2>Parlay builder</h2>
+      <p class="small muted">Add moneylines, puck lines and totals with the + buttons below, or on any game card. Priced at DraftKings' numbers as ESPN showed them when the job last ran; the model's chance is its own view of the same legs, multiplied, one leg a game.</p>
+      <div class="legs" id="legs"></div>
+      <div class="strip" id="parlayTotals"></div>
+      <div class="toolbar">
+        <label>Stake $<input type="number" id="stake" value="10" min="1" step="1" style="width:80px"></label>
+        <button class="btn ice" id="saveParlay">Save parlay</button>
+        <button class="btn ghost" id="clearParlay">Clear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="toolbar"><h2 style="margin:0">The lines</h2><span class="small muted" id="plNote"></span></div>
+      <div class="scroll"><table class="tbl linesTable" id="plLines"></table></div>
+    </div>
+    <div class="card">
+      <h2>Saved parlays</h2>
+      <p class="small muted">Kept in this browser only. Graded from the scores the job publishes.</p>
+      <div id="savedList"></div>
+    </div>
+  </section>
+
+  <section id="tab-record" hidden>
+    <div class="card">
+      <h2>The model's record</h2>
+      <p class="small muted" id="recordNote"></p>
+      <div class="strip" id="recordTotals"></div>
+      <h3>By month</h3>
+      <table class="tbl" id="recMonth"></table>
+      <h3>By confidence</h3>
+      <table class="tbl" id="recBand"></table>
+      <h3>How it was fitted</h3>
+      <p class="small muted" id="fitNote"></p>
+    </div>
+  </section>
+</main>
+<script>
+'use strict';
+const APP_BUILD = 'nhl v6 · 2026-10-10';
+const STATE_URL = 'state.json';
+const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
+const KEY = 'nhl_v1';
+let S = null;                 // the published state
+let P = load();               // the visitor's: legs, saved parlays, ui
+let LIVE = {};                // scores read from ESPN in this browser, by game id
+let DAY = null;               // the day open on the Games tab
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pct = p => (p * 100).toFixed(0) + '%';
+const pct1 = p => (p * 100).toFixed(1) + '%';
+const signed = n => n > 0 ? '+' + n : String(n);
+const fmtLine = n => n === 0 ? 'PK' : (n > 0 ? '+' + n : String(n));
+const fmtOdds = n => n === null || n === undefined ? '—' : (n > 0 ? '+' + n : String(n));
+const dec = am => am > 0 ? 1 + am / 100 : 1 + 100 / -am;
+const toAm = d => d >= 2 ? '+' + Math.round((d - 1) * 100) : String(Math.round(-100 / (d - 1)));
+const implied = am => am > 0 ? 100 / (am + 100) : -am / (-am + 100);
+const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const etToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+/* the visitor's clock decides what has started: the job runs a few times a day and GitHub starts it
+   hours late, so a game the last state still has as to come may be under way, or over, by now */
+/* started: under way or over, its puck drop passed by the clock, or (a delay, the job's own rule) the puck drop its
+   frozen call was made before has passed and the start has moved less than half a day later */
+const hasStarted = g => g.state !== 'pre' || Date.parse(g.start) <= Date.now()
+  || !!(g.frozen && g.before && Date.parse(g.before) <= Date.now() && Date.parse(g.start) - Date.parse(g.before) < 12 * 3600000);
+const hhmm = iso => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+const ago = iso => (Date.parse(S.published) - Date.parse(iso)) / 3600000;      // hours the source is older than the publish
+const STALE_H = 12;                       // an injury report older than this at publish time is said to be stale (the job runs five times a day)
+
+function load() { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); return Object.assign({ legs: [], saved: [], ui: {} }, p); } catch (e) { return { legs: [], saved: [], ui: {} }; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} }
+
+const T = id => S.teams[id] || { abbr: id, name: id, short: id };
+const gameById = () => { const m = {}; for (const g of S.games) m[g.id] = g; return m; };
+const rec = t => `${t.w}-${t.l}-${t.otl}`;
+function when(g) { return new Date(g.start).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+function timeOf(g) { return new Date(g.start).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+function teamCell(id) { const t = T(id); return `<span class="tw">${t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : ''}<span>${esc(t.short)}</span></span>`; }
+const modelMargin = g => g.mu === 0 ? 'even' : (g.mu > 0 ? `${T(g.home).abbr} by ${Math.abs(g.mu).toFixed(1)}` : `${T(g.away).abbr} by ${Math.abs(g.mu).toFixed(1)}`);
+
+/* ---------- tabs ---------- */
+function showTab(name) {
+  for (const b of $('tabs').querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === name);
+  for (const s of document.querySelectorAll('main > section')) s.hidden = s.id !== 'tab-' + name;
+  if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  P.ui.tab = name; save();
+  ({ games: renderGames, standings: renderStandings, ratings: renderRatings, playoff: renderPlayoff, players: renderPlayers, parlays: renderParlays, record: renderRecord })[name]();
+}
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
+window.addEventListener('hashchange', () => { const n = location.hash.slice(1); if (n && $('tab-' + n)) showTab(n); });
+
+/* ---------- Games: a day strip from yesterday to ten days out, or the season's first days before it opens ---------- */
+function dayStrip() {
+  const today = etToday();                 // the visitor's day, not the job's: a state published last night is still read on today's strip
+  const counts = {}; for (const g of S.games) counts[g.date] = (counts[g.date] || 0) + 1;
+  let days = []; for (let d = addDays(today, -1); d <= addDays(today, 10); d = addDays(d, 1)) days.push(d);
+  const first = S.games.length ? S.games[0].date : null;
+  if (first && first > days[days.length - 1]) { days = []; for (let d = first; d <= addDays(first, 6); d = addDays(d, 1)) days.push(d); }   // the season has not opened: its first week
+  const last = S.games.length ? S.games[S.games.length - 1].date : null;
+  if (last && last < days[0]) { days = []; for (let d = addDays(last, -6); d <= last; d = addDays(d, 1)) days.push(d); }               // the season is over: its last week
+  if (!DAY || !days.includes(DAY)) DAY = days.includes(today) && (counts[today] || !counts[addDays(today, 1)]) ? today : (days.find(d => d >= today && counts[d]) || days.find(d => counts[d]) || days[0]);
+  $('days').innerHTML = days.map(d => { const dt = new Date(d + 'T12:00:00Z'); return `<button class="day ${d === DAY ? 'on' : ''}" data-day="${d}">
+    <div class="dw">${d === today ? 'Today' : dt.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' })}</div>
+    <div class="dn">${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
+    <div class="dc">${counts[d] ? counts[d] + ' games' : '—'}</div></button>`; }).join('');
+  const opening = first && first > today ? Math.round((Date.parse(first + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000) : 0;
+  $('opening').hidden = !opening && S.games.length > 0;
+  if (opening) $('opening').innerHTML = `<div class="empty" style="margin-bottom:14px"><div class="countdown">${opening}</div><b>days to opening night</b><span class="muted small">The ratings below are last season's, carried ${Math.round(S.model.params.carry * 100)}% of the way; the lines are DraftKings' as they stand.</span></div>`;
+  else if (!S.games.length) $('opening').innerHTML = `<div class="empty" style="margin-bottom:14px"><b>The ${S.season - 1}-${String(S.season).slice(2)} schedule is not out yet</b><span class="muted small">The ratings are last season's, carried ${Math.round(S.model.params.carry * 100)}% of the way. The games appear here the day ESPN posts them.</span></div>`;
+  sourceNote();
+}
+/* what the published calls stand on, said when it is not the latest: an injury report that could not
+   be read on the last runs, DailyFaceoff's goalies that could not be read */
+function sourceNote() {
+  const PL = S.players, msgs = [];
+  if (PL && PL.injuries && PL.injuries.pulled && ago(PL.injuries.pulled) > STALE_H) msgs.push(`<b>Injury report from ${esc(new Date(PL.injuries.pulled).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}.</b> ESPN's report could not be read since; the lineups below leave out who it had out then.`);
+  if (PL && PL.injuries === null && PL.teams) msgs.push('<b>No injury report.</b> The lineups are who dressed last, with nobody taken out.');
+  if (PL && PL.starters && PL.starters.ok === false && S.games.some(g => g.date === etToday() && !hasStarted(g))) msgs.push(`<b>No announced goalies this run</b> (${esc(PL.starters.why || 'DailyFaceoff could not be read')}): each goalie is the model's own choice, said on the card.`);
+  $('sourceNote').hidden = !msgs.length; $('sourceNote').innerHTML = msgs.join('<br>');
+}
+$('days').addEventListener('click', e => { const b = e.target.closest('button[data-day]'); if (!b) return; DAY = b.dataset.day; renderGames(); });
+
+function hasLeg(g, side, kind) { return P.legs.some(l => l.game === g.id && l.side === side && l.kind === kind); }
+
+function renderGames() {
+  dayStrip();
+  const gs = S.games.filter(g => g.date === DAY).sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
+  $('gamesNote').textContent = gs.length ? `${gs.length} games` : '';
+  if (!gs.length) { $('games').innerHTML = '<div class="empty">No games this day.</div>'; return; }
+  $('games').innerHTML = gs.map(gameCard).join('');
+}
+function gameCard(g) {
+  const live = LIVE[g.id]; const state = live ? live.state : g.state;
+  const hs = live ? live.hs : g.hs, as = live ? live.as : g.as;
+  const th = T(g.home), ta = T(g.away);
+  const final = state === 'final';
+  const homeWon = final && hs > as, awayWon = final && as > hs;
+  const line = g.line;
+  const side = (id, rc, p, sc, picked, won, lost) => `
+    <div class="side ${picked ? 'picked' : ''} ${won ? 'won' : ''}">
+      ${T(id).logo ? `<img src="${esc(T(id).logo)}" alt="" onerror="this.style.visibility='hidden'">` : '<span></span>'}
+      <span class="nm">${esc(T(id).short)}<small>${esc(rc || '')}</small></span>
+      <span class="wp" title="the model's chance to win, overtime included">${pct(p)}</span>
+      <span class="sc ${lost ? 'lose' : ''}">${sc === null || sc === undefined ? '' : sc}</span>
+    </div>`;
+  let mkt = '—', ml = '—', tot = '—';
+  if (line) {
+    ml = `${ta.abbr} ${fmtOdds(line.awayML)} · ${th.abbr} ${fmtOdds(line.homeML)}`;
+    if (line.homeLine !== null && line.homeLine !== undefined) mkt = `${ta.abbr} ${fmtLine(-line.homeLine)} ${fmtOdds(line.awaySpreadOdds)} · ${th.abbr} ${fmtLine(line.homeLine)} ${fmtOdds(line.homeSpreadOdds)}`;
+    if (line.total !== null && line.total !== undefined) tot = `${line.total} · o ${fmtOdds(line.overOdds)} · u ${fmtOdds(line.underOdds)}`;
+  }
+  /* the calls: a side on the moneyline, the puck line or the total wherever the model's chance beats the book's by the edge */
+  const chips = [];
+  if (g.mlPick) chips.push(`<span class="tag pick">ML ${esc(T(g[g.mlPick]).abbr)} · +${Math.round(g.mlEdge[g.mlPick] * 100)}</span>`);
+  if (g.plPick) chips.push(`<span class="tag pick">${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? line.homeLine : -line.homeLine)} · +${Math.round(g.plEdge[g.plPick] * 100)}</span>`);
+  if (g.ouPick) chips.push(`<span class="tag pick">${g.ouPick} ${line.total} · +${Math.round(g.ouEdge[g.ouPick] * 100)}</span>`);
+  let calls = chips.length ? chips.join(' ') : (line ? '<span class="tag pass">no edge</span>' : '<span class="muted">no line yet</span>');
+  let result = '';
+  if (g.result) {
+    result = `<span class="tag ${g.result.su ? 'win' : 'loss'}">${g.result.su ? 'call right' : 'call wrong'}</span>`;
+    if (g.result.ml) result += ` <span class="tag ${g.result.ml}">ML ${g.result.ml}</span>`;
+    if (g.result.pl) result += ` <span class="tag ${g.result.pl}">PL ${g.result.pl}</span>`;
+    if (g.result.ou) result += ` <span class="tag ${g.result.ou}">${g.ouPick} ${g.result.ou}</span>`;
+    if (!g.frozen) result += ` <span class="tag replay" title="this game was over before the job first ran; the call is the replay's">replayed</span>`;
+  }
+  const started = final || state === 'live' || hasStarted(g);
+  const legBtn = (sd, kind) => legButton(g, sd, kind, line, started);
+  /* a live score is the job's, as of its run, unless this browser read ESPN since; a game the state
+     has as to come whose puck drop has passed says so instead of a time */
+  let detail = '';
+  if (live) detail = `<span class="${state === 'live' ? 'live' : ''}">${esc(live.detail)}</span>`;
+  else if (g.state === 'live') detail = `<span class="live">${esc(g.detail)}</span> <span class="asof" title="the score when the job last read it; Refresh scores reads ESPN now">as of ${esc(hhmm(g.scoreAt || S.published))}</span>`;
+  else if (g.state === 'final') detail = esc(g.detail);
+  else if (g.state === 'pre' && Date.parse(g.start) > Date.now() && started) detail = '<span class="asof" title="the feed moved the start after the first puck drop; the call shown is the one made before it">start moved · call kept</span>';
+  else if (started) detail = '<span class="asof" title="Refresh scores reads ESPN now">under way · no score yet</span>';
+  return `<div class="game ${final ? 'final' : ''}" data-id="${g.id}">
+    <div class="when"><span>${when(g)}${g.neutral ? ' · neutral ice' : ''}${g.note ? ' · ' + esc(g.note) : ''}</span><span>${detail}</span></div>
+    ${side(g.away, g.arec, 1 - g.pHome, as, g.pick === 'away', awayWon, homeWon)}
+    ${side(g.home, g.hrec, g.pHome, hs, g.pick === 'home', homeWon, awayWon)}
+    <div class="prob" style="--ac:${esc(ta.color || '#888')};--hc:${esc(th.color || '#888')}"><i style="width:${Math.round((1 - g.pHome) * 100)}%"></i><i class="h" style="width:${Math.round(g.pHome * 100)}%"></i></div>
+    <div class="lines">
+      <div><div class="k">Model</div><div class="v">${modelMargin(g)} · total ${g.xt.toFixed(1)} · OT ${pct(g.tie)}</div></div>
+      <div><div class="k">Moneyline</div><div class="v">${ml}</div></div>
+      <div><div class="k">Puck line</div><div class="v">${mkt}</div></div>
+      <div><div class="k">Total</div><div class="v">${tot}</div></div>
+      <div style="grid-column:1/-1"><div class="k">${g.result ? 'Result' : 'The call'}</div><div class="v chips">${g.result ? result : calls}</div></div>
+    </div>
+    ${lineupBlock(g)}
+    ${g.result || started ? '' : `<div class="legbtns"><span class="k">Add to parlay</span>${legBtn('away', 'ml')}${legBtn('home', 'ml')}${legBtn('away', 'pl')}${legBtn('home', 'pl')}${legBtn('over', 'ou')}${legBtn('under', 'ou')}</div>`}
+  </div>`;
+}
+/* the player model's side of a card: each goalie and how he was chosen, who is out, and the two models' chances when the call is one of them */
+function lineupBlock(g) {
+  const pm = g.pm; if (!pm) return '';
+  const boxNote = t => t.lastBox && t.lastFinal && t.lastFinal > t.lastBox ? `<div class="muted small">lineup from ${esc(t.lastBox)}: the box score of ${esc(t.lastFinal)} not read yet</div>` : '';
+  const side = (code, t) => `<div><div class="k">${esc(T(code).abbr)}</div>${t.goalie ? `<div>${esc(t.goalie.name)} <span class="muted">in goal · ${esc(t.goalie.how)}${t.goalie.debut ? ' · first NHL start' : ''}</span></div>` : '<div class="muted">goalie unknown</div>'}${t.out && t.out.length ? `<div><span class="who">out</span> ${t.out.map(o => esc(o.name)).join(', ')}</div>` : ''}${t.dtd && t.dtd.length ? `<div><span class="muted">day to day</span> ${t.dtd.map(o => esc(o.name)).join(', ')}</div>` : ''}${boxNote(t)}</div>`;
+  const both = g.elo ? `<div style="grid-column:1/-1" class="muted">Players ${pct(pm.pHome)} · ${pm.xt.toFixed(1)} goals; team Elo ${pct(g.elo.pHome)} · ${g.elo.xt.toFixed(1)}. The call is the ${g.by === 'players' ? 'player model' : 'team Elo'}.</div>` : `<div style="grid-column:1/-1" class="muted">Player model ${pct(pm.pHome)} · ${pm.xt.toFixed(1)} goals, shown beside the call; the team Elo makes it.</div>`;
+  const inj = pm.inj ? `<div style="grid-column:1/-1" class="muted small">Injury report of ${esc(new Date(pm.inj).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}${hasStarted(g) ? ', as the call was made' : ''}.</div>` : '';
+  return `<div class="lineup">${side(g.away, pm.away)}${side(g.home, pm.home)}${both}${inj}</div>`;
+}
+/* the price, the number and the model's chance for one bet on one game: null when the book has no number for it */
+function betOf(g, side, kind) {
+  const line = g.line; if (!line) return null;
+  if (kind === 'ml') { const odds = side === 'home' ? line.homeML : line.awayML; if (odds === null || odds === undefined) return null; return { odds, line: null, p: side === 'home' ? g.pHome : 1 - g.pHome, label: `${T(g[side]).abbr} ML` }; }
+  if (kind === 'pl') { if (!g.cover || line.homeLine === null || line.homeLine === undefined) return null; const odds = side === 'home' ? line.homeSpreadOdds : line.awaySpreadOdds; if (odds === null || odds === undefined) return null; const ln = side === 'home' ? line.homeLine : -line.homeLine; return { odds, line: ln, p: g.cover[side], label: `${T(g[side]).abbr} ${fmtLine(ln)}` }; }
+  if (!g.ou || line.total === null || line.total === undefined) return null;
+  const odds = side === 'over' ? line.overOdds : line.underOdds; if (odds === null || odds === undefined) return null;
+  return { odds, line: line.total, p: g.ou[side], label: `${side} ${line.total}` };
+}
+function legButton(g, sd, kind, line, started) {
+  if (!line || started) return '';
+  const b = betOf(g, sd, kind); if (!b) return '';
+  const on = hasLeg(g, sd, kind);
+  return `<button class="btn tiny ${on ? 'on' : ''}" data-leg="${g.id}|${sd}|${kind}" title="${on ? 'in the parlay: click to take it out' : 'add to the parlay'}">${on ? '✓' : '+'} ${esc(b.label)} ${fmtOdds(b.odds)}</button>`;
+}
+/* a leg button anywhere on the page adds or removes that bet */
+document.addEventListener('click', e => {
+  const b = e.target.closest('button[data-leg]'); if (!b) return;
+  const [gid, side, kind] = b.dataset.leg.split('|'); const g = gameById()[gid];
+  const i = P.legs.findIndex(l => l.game === gid && l.side === side && l.kind === kind);
+  if (i >= 0) P.legs.splice(i, 1);
+  else {
+    if (!g || hasStarted(g)) { if (!$('tab-games').hidden) renderGames(); if (!$('tab-parlays').hidden) renderParlays(); return; }   // a page left open past puck drop: no bet on a started game
+    P.legs = P.legs.filter(l => l.game !== gid);         // one leg a game
+    const bet = betOf(g, side, kind); if (!bet) return;
+    P.legs.push({ game: gid, side, kind, odds: bet.odds, line: bet.line, p: bet.p, label: `${T(g.away).abbr} @ ${T(g.home).abbr}`, text: bet.label, date: g.date });
+  }
+  save(); updateLegCount();
+  if (!$('tab-games').hidden) renderGames();
+  if (!$('tab-parlays').hidden) renderParlays();
+});
+function updateLegCount() { const n = P.legs.length; $('legCount').hidden = !n; $('legCount').textContent = n; }
+
+/* live scores, read from ESPN in this browser: on the button, and once on opening when the open day
+   has a game under way that the job has no final for */
+async function readLive(day) {
+  const r = await fetch(`${ESPN_SB}?dates=${day.replace(/-/g, '')}&limit=100`, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json(); let n = 0;
+  for (const ev of j.events || []) {
+    const c = ev.competitions && ev.competitions[0]; if (!c) continue;
+    const h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
+    const st = c.status && c.status.type || {}; const state = st.state === 'post' ? 'final' : st.state === 'in' ? 'live' : 'pre';
+    if (state === 'pre') continue;
+    LIVE[ev.id] = { state, hs: +h.score, as: +a.score, detail: st.shortDetail || st.detail || '' }; n++;
+  }
+  return n;
+}
+$('refreshScores').addEventListener('click', async () => {
+  const btn = $('refreshScores'); btn.disabled = true; btn.textContent = 'Reading…';
+  try { btn.textContent = `Scores read (${await readLive(DAY)})`; } catch (e) { btn.textContent = 'ESPN did not answer'; }
+  setTimeout(() => { btn.textContent = 'Refresh scores'; btn.disabled = false; }, 2500);
+  renderGames();
+});
+async function autoLive() {
+  const day = DAY; if (!day || !S.games.some(g => g.date === day && g.state !== 'final' && hasStarted(g))) return;
+  try { if (await readLive(day) && !$('tab-games').hidden) renderGames(); } catch (e) {}
+}
+
+/* ---------- Standings ---------- */
+function renderStandings() {
+  const PO = S.playoff; const po = PO.odds || {};
+  const inField = new Set();
+  for (const conf of ['East', 'West']) { const f = PO.bracket[conf]; for (const t of [].concat(...Object.values(f.divs), f.wild)) inField.add(t); }
+  const row = (r, i, cut) => { const t = T(r.team); return `<tr class="${inField.has(r.team) ? 'in' : ''} ${cut ? 'cut' : ''}"><td class="n muted">${i + 1}</td><td>${teamCell(r.team)}</td><td class="n">${r.gp}</td><td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.otl}</td><td class="n"><b>${r.pts}</b></td><td class="n">${r.rw}</td><td class="n">${r.row}</td><td class="n">${r.gf}</td><td class="n">${r.ga}</td><td class="n">${signed(r.gf - r.ga)}</td><td class="n">${t.rating}</td><td class="n">${po[r.team] ? pct(po[r.team].playoff) : '—'}</td></tr>`; };
+  const head = '<thead><tr><th class="n">#</th><th>Team</th><th class="n">GP</th><th class="n">W</th><th class="n">L</th><th class="n">OTL</th><th class="n">PTS</th><th class="n">RW</th><th class="n">ROW</th><th class="n">GF</th><th class="n">GA</th><th class="n">Diff</th><th class="n">Rating</th><th class="n">Playoff</th></tr></thead>';
+  const divs = { East: ['Atlantic', 'Metropolitan'], West: ['Central', 'Pacific'] };
+  $('standings').innerHTML = ['East', 'West'].map(conf => {
+    const f = PO.bracket[conf];
+    const wild = f.wild.map(t => T(t).abbr).join(', ');
+    return `<div class="card"><h2>${conf}ern Conference <small>wild cards ${esc(wild)}</small></h2>` + divs[conf].map(d => `<h3>${d}</h3><div class="scroll"><table class="tbl">${head}<tbody>${PO.standings[d].map((r, i) => row(r, i, i === 2)).join('')}</tbody></table></div>`).join('') + '</div>';
+  }).join('');
+}
+
+/* ---------- Power ratings ---------- */
+$('ratConf').addEventListener('change', renderRatings);
+function renderRatings() {
+  $('hfaNote').textContent = S.model.params.hfa + ' Elo'; $('gpeNote').textContent = S.model.gpe.toFixed(0) + ' Elo';
+  const conf = $('ratConf').value; const po = S.playoff.odds || {};
+  let ids = Object.keys(S.teams); if (conf) ids = ids.filter(id => T(id).conf === conf);
+  ids.sort((a, b) => T(b).rating - T(a).rating);
+  $('ratTable').innerHTML = '<thead><tr><th class="n">#</th><th>Team</th><th>Div</th><th class="n">Rating</th><th class="n">Record</th><th class="n">PTS</th><th class="n">GF/g</th><th class="n">GA/g</th><th class="n">Playoff</th><th class="n">Cup</th></tr></thead><tbody>' +
+    ids.map(id => { const t = T(id); return `<tr><td class="n">${t.rank}</td><td>${teamCell(id)}</td><td class="muted">${esc(t.div)}</td><td class="n"><b>${t.rating}</b></td><td class="n">${rec(t)}</td><td class="n">${t.pts}</td><td class="n">${t.gfRate.toFixed(2)}</td><td class="n">${t.gaRate.toFixed(2)}</td><td class="n">${po[id] ? pct(po[id].playoff) : '—'}</td><td class="n">${po[id] ? pct1(po[id].cup) : '—'}</td></tr>`; }).join('') + '</tbody>';
+}
+
+/* ---------- Playoff ---------- */
+$('poConf').addEventListener('change', renderPlayoff);
+function renderPlayoff() {
+  const PO = S.playoff; if (!PO) return;
+  const phase = PO.phase || 'regular', real = phase === 'postseason' || phase === 'over';
+  const ser = PO.series || [];
+  const find = (a, b) => ser.find(s => (s.a === a && s.b === b) || (s.a === b && s.b === a));
+  const lost = new Set(ser.filter(s => s.winner).map(s => s.winner === s.a ? s.b : s.a));
+  $('bracketHead').textContent = real ? 'The playoffs' : 'If the season ended today';
+  $('champ').hidden = !PO.champion; if (PO.champion) $('champ').textContent = `${T(PO.champion).name} won the Stanley Cup`;
+  $('bracketNote').textContent = real
+    ? `The first round as it was drawn and every series ESPN has a game in, with its score; a club knocked out is struck through. Rounds two to four follow the league's bracket, home ice to the higher seed.`
+    : `The league's bracket: the top three of each division and two wild cards a conference, the stronger division winner against the second wild card, second against third within each division. Ties by points are broken by regulation wins, then wins past the shootout, then goal difference.`;
+  const score = (a, b) => { const s = find(a, b); if (!s) return null; const wa = s.wins[a], wb = s.wins[b]; return { s, text: s.winner ? `${T(s.winner).abbr} won ${Math.max(wa, wb)}-${Math.min(wa, wb)}` : wa === wb ? `tied ${wa}-${wb}` : `${T(wa > wb ? a : b).abbr} leads ${Math.max(wa, wb)}-${Math.min(wa, wb)}` }; };
+  const cell = t => `<span class="${lost.has(t) ? 'out' : ''}">${teamCell(t)}</span>`;
+  const serie = ([a, b], seedA, seedB) => { const sc = score(a, b); return `<div class="series ${sc && sc.s.winner ? 'done' : ''}"><span class="tw"><span class="seed">${seedA}</span>${cell(a)}<span class="muted small">${T(a).pts} pts</span></span>${sc ? `<span class="score">${esc(sc.text)}</span>` : '<span class="muted small">vs</span>'}<span class="tw"><span class="muted small">${T(b).pts} pts</span>${cell(b)}<span class="seed">${seedB}</span></span></div>`; };
+  const later = r => ser.filter(s => s.round === r).map(s => serie([s.a, s.b], 'R' + r, '')).join('');
+  $('bracket').innerHTML = ['East', 'West'].map(conf => {
+    const f = PO.bracket[conf]; const [d1, d2] = Object.keys(f.divs);
+    const rest = real ? [2, 3].map(r => { const h = ser.filter(s => s.round === r && s.conf === conf).map(s => serie([s.a, s.b], 'R' + r, '')).join(''); return h ? `<h3>${r === 2 ? 'Second round' : 'Conference final'}</h3>${h}` : ''; }).join('') : '';
+    return `<div class="conf"><h3 style="margin-top:0">${conf}</h3>${serie(f.series[0], d1.slice(0, 1) + '1', 'WC2')}${serie(f.series[1], d1.slice(0, 1) + '2', d1.slice(0, 1) + '3')}${serie(f.series[2], d2.slice(0, 1) + '1', 'WC1')}${serie(f.series[3], d2.slice(0, 1) + '2', d2.slice(0, 1) + '3')}${rest}</div>`;
+  }).join('') + (real && later(4) ? `<div class="conf" style="grid-column:1/-1"><h3 style="margin-top:0">Stanley Cup Final</h3>${later(4)}</div>` : '');
+  const conf = $('poConf').value;
+  let ids = Object.keys(PO.odds).filter(id => !conf || T(id).conf === conf);
+  ids.sort((a, b) => PO.odds[b].cup - PO.odds[a].cup || PO.odds[b].playoff - PO.odds[a].playoff);
+  if (!real) ids.sort((a, b) => PO.odds[b].playoff - PO.odds[a].playoff || PO.odds[b].cup - PO.odds[a].cup);
+  $('poNote').textContent = phase === 'over' ? 'The season is over.' : real ? `${PO.sims} simulations of every series still to finish, each from its real score, best of seven with home ice to the higher seed, at the current ratings. A club knocked out has none.` : `${PO.sims} simulations of the ${PO.remaining} games left and the four rounds, best of seven with home ice to the higher seed, at the current ratings.`;
+  const bar = p => `<span class="tw"><span class="bar"><i style="width:${Math.round(p * 100)}%"></i></span>${pct1(p)}</span>`;
+  $('poTable').innerHTML = '<thead><tr><th>Team</th><th>Div</th><th class="n">Record</th><th class="n">PTS</th><th class="n">Exp. pts</th><th>Playoff</th><th class="n">Division</th><th class="n">Conference</th><th class="n">Stanley Cup</th></tr></thead><tbody>' +
+    ids.map(id => { const t = T(id), o = PO.odds[id]; const gone = real && (lost.has(id) || !o.playoff); return `<tr><td>${teamCell(id)}${gone ? ' <span class="muted small">out</span>' : ''}</td><td class="muted">${esc(t.div)}</td><td class="n">${rec(t)}</td><td class="n">${t.pts}</td><td class="n">${o.expPts}</td><td>${bar(o.playoff)}</td><td class="n">${pct(o.div)}</td><td class="n">${pct(o.conf)}</td><td class="n">${gone ? '—' : pct1(o.cup)}</td></tr>`; }).join('') + '</tbody>';
+}
+
+/* ---------- Players ---------- */
+$('plKind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; P.ui.plKind = b.dataset.kind; save(); renderPlayers(); });
+$('plTeam').addEventListener('change', renderPlayers); $('plSearch').addEventListener('input', renderPlayers);
+function spark(seasons, now) {
+  const ks = Object.keys(seasons).sort(); const vs = ks.map(k => seasons[k]).concat([now]);
+  if (vs.length < 2) return '';
+  const lo = Math.min(...vs), hi = Math.max(...vs), span = hi - lo || 1;
+  const pts = vs.map((v, i) => `${(i / (vs.length - 1) * 86 + 2).toFixed(1)},${(20 - (v - lo) / span * 18).toFixed(1)}`);
+  const [lx, ly] = pts[pts.length - 1].split(',');
+  return `<svg class="spark" viewBox="0 0 90 22" title="${ks.map((k, i) => `${k - 1}-${String(k).slice(2)}: ${vs[i]}`).join(', ')}, now ${now}"><polyline points="${pts.join(' ')}"></polyline><circle cx="${lx}" cy="${ly}" r="2"></circle></svg>`;
+}
+function renderPlayers() {
+  const PL = S.players;
+  if (!PL) { $('plModelNote').textContent = 'No player model yet: the box scores have not been pulled.'; $('plTable').innerHTML = ''; $('plTeams').innerHTML = ''; return; }
+  const kind = P.ui.plKind || 'skaters';
+  for (const b of $('plKind').querySelectorAll('button')) b.classList.toggle('on', b.dataset.kind === kind);
+  if ($('plTeam').options.length === 1) $('plTeam').innerHTML += Object.keys(S.teams).sort().map(c => `<option value="${c}">${esc(T(c).short)}</option>`).join('');
+  const R = PL.report; const w = R.walk || {}; const ws = Object.keys(w).sort();
+  const I = PL.injuries, ST = PL.starters, when2 = iso => iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+  $('plSources').innerHTML = (I === undefined ? '' : I ? `ESPN's injury report of ${esc(when2(I.pulled))}: ${I.rows} players listed, ${I.out} rated players out (out, injured reserve or suspended; day to day stays in).` : 'No injury report has been read.') + ' ' +
+    (ST ? (ST.ok === false ? `DailyFaceoff's goalies could not be read (${esc(ST.why || '')}); the goalie is the model's choice: the most starts in the club's last ten games, the other one on the second night of a back to back.` : `DailyFaceoff, read ${esc(when2(ST.pulled))}: ${ST.games} games from today with goalies named, ${ST.used} taken; otherwise the most starts in the club's last ten games, the other one on the second night of a back to back.`) : '');
+  $('plModelNote').innerHTML = `Every skater carries an offence and a defence rating, every goalie a save rating, in goals a game for a player on the ice all game (shown ×100). A club is its lineup weighted by ice time plus its goalie. Fitted on ${R.fitSeasons}; held out ${R.holdout - 1}-${String(R.holdout).slice(2)}: player model ${pct1(R.holdoutKnown.acc)} of winners (log loss ${R.holdoutKnown.logloss}) against the team Elo's ${pct1(R.holdoutTeam.acc)} (${R.holdoutTeam.logloss}). Walk-forward, each season called cold: ${ws.map(s => `${s - 1}-${String(s).slice(2)} ${w[s].player.logloss} vs ${w[s].team.logloss}`).join('; ')}. <b>${PL.use ? 'The site\'s call is the player model\'s.' : 'The team Elo keeps the call until the player model beats it cold.'}</b> Ratings as of ${esc(PL.asOf)}.`;
+  const team = $('plTeam').value, q = $('plSearch').value.trim().toLowerCase();
+  let rows = Object.entries(PL.players).map(([id, p]) => Object.assign({ id }, p)).filter(p => kind === 'goalies' ? p.pos === 'G' : p.pos !== 'G');
+  if (team) rows = rows.filter(p => p.team === team); if (q) rows = rows.filter(p => p.name.toLowerCase().includes(q));
+  rows = rows.filter(p => team || q || p.gp >= (kind === 'goalies' ? 10 : 20)).sort((a, b) => b.v - a.v);
+  $('plNoteP').textContent = `${rows.length} ${kind}`;
+  const x100 = v => (v * 100).toFixed(1);
+  const head = kind === 'goalies' ? '<thead><tr><th class="n">#</th><th>Goalie</th><th>Club</th><th class="n">Rating</th><th class="n">Starts</th><th>Five seasons</th></tr></thead>' : '<thead><tr><th class="n">#</th><th>Player</th><th>Club</th><th>Pos</th><th class="n">Rating</th><th class="n">Offence</th><th class="n">Defence</th><th class="n">Games</th><th class="n">TOI</th><th>Five seasons</th></tr></thead>';
+  $('plTable').innerHTML = head + '<tbody>' + rows.slice(0, 400).map((p, i) => kind === 'goalies'
+    ? `<tr><td class="n">${i + 1}</td><td>${esc(p.name)}</td><td>${teamCell(p.team)}</td><td class="n"><b>${x100(p.v)}</b></td><td class="n">${p.gp}</td><td>${spark(p.seasons, p.v)}</td></tr>`
+    : `<tr><td class="n">${i + 1}</td><td>${esc(p.name)}</td><td>${teamCell(p.team)}</td><td class="muted">${esc(p.pos)}</td><td class="n"><b>${x100(p.v)}</b></td><td class="n">${x100(p.o)}</td><td class="n">${x100(p.d)}</td><td class="n">${p.gp}</td><td class="n">${Math.floor(p.toi / 60)}:${String(p.toi % 60).padStart(2, '0')}</td><td>${spark(p.seasons, p.v)}</td></tr>`).join('') + '</tbody>';
+  const ts = Object.entries(PL.teams).sort((a, b) => b[1].strength - a[1].strength);
+  $('plTeams').innerHTML = '<thead><tr><th class="n">#</th><th>Club</th><th class="n">Strength</th><th class="n">Attack</th><th class="n">Defence</th><th>Goalie</th><th>Out</th></tr></thead><tbody>' + ts.map(([c, t], i) => `<tr><td class="n">${i + 1}</td><td>${teamCell(c)}</td><td class="n"><b>${x100(t.strength)}</b></td><td class="n">${x100(t.offence)}</td><td class="n">${x100(t.defence)}</td><td>${t.goalie ? `${esc(t.goalie.name)} <span class="muted small">${x100(t.goalie.gk)} · ${esc(t.goalie.how)}</span>` : '—'}</td><td class="small">${(t.out || []).map(o => esc(o.name)).join(', ') || '<span class="muted">nobody</span>'}</td></tr>`).join('') + '</tbody>';
+}
+
+/* ---------- Parlays ---------- */
+function priceLegs(legs) {
+  if (!legs.length) return null;
+  const d = legs.reduce((a, l) => a * dec(l.odds), 1), p = legs.reduce((a, l) => a * l.p, 1), imp = legs.reduce((a, l) => a * implied(l.odds), 1);
+  return { dec: d, am: toAm(d), p, imp, ev: p * (d - 1) - (1 - p) };
+}
+function gradeLeg(l) {
+  const g = gameById()[l.game]; if (!g || g.state !== 'final' || g.hs === null) return 'pending';
+  if (l.kind === 'ou') { const tot = g.hs + g.as; return tot > l.line ? (l.side === 'over' ? 'win' : 'loss') : tot < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push'; }
+  const margin = l.side === 'home' ? g.hs - g.as : g.as - g.hs;
+  if (l.kind === 'ml') return margin > 0 ? 'win' : 'loss';
+  const c = margin + l.line; return c > 0 ? 'win' : c < 0 ? 'loss' : 'push';
+}
+/* every game still to come, today and tomorrow, that the book has a number on, each with its six buttons */
+function renderParlayLines() {
+  const today = etToday();
+  let gs = S.games.filter(g => !hasStarted(g) && g.line && g.date >= today && g.date <= addDays(today, 1));
+  if (!gs.length) gs = S.games.filter(g => !hasStarted(g) && g.line).slice(0, 20);      // nothing today: the next lined games
+  gs.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+  $('plNote').textContent = gs.length ? `${gs.length} games still to come with a DraftKings number, as of the job's last run. The green figure is the model's chance for the side listed first.` : '';
+  if (!gs.length) { $('plLines').innerHTML = '<tbody><tr><td class="empty">Nothing to bet yet: no game still to come has a line. The job posts the next slate\'s lines when DraftKings does.</td></tr></tbody>'; return; }
+  $('plLines').innerHTML = '<thead><tr><th>Game</th><th>Puck drop</th><th>Model</th><th>Moneyline</th><th>Puck line</th><th>Total</th></tr></thead><tbody>' + gs.map(g => `<tr>
+    <td>${teamCell(g.away)} <span class="muted">@</span> ${teamCell(g.home)}</td>
+    <td class="muted small">${when(g)}</td>
+    <td class="small"><span class="lime" style="font-weight:700">${T(g.away).abbr} ${pct(1 - g.pHome)}</span> · ${modelMargin(g)} · ${g.xt.toFixed(1)}</td>
+    <td>${legButton(g, 'away', 'ml', g.line, false)}${legButton(g, 'home', 'ml', g.line, false)}</td>
+    <td>${legButton(g, 'away', 'pl', g.line, false)}${legButton(g, 'home', 'pl', g.line, false)}</td>
+    <td>${legButton(g, 'over', 'ou', g.line, false)}${legButton(g, 'under', 'ou', g.line, false)}</td></tr>`).join('') + '</tbody>';
+}
+function renderParlays() {
+  /* a leg whose game has started leaves the builder: its price is gone */
+  const games = gameById(); const gone = P.legs.filter(l => !games[l.game] || hasStarted(games[l.game]));
+  if (gone.length) { P.legs = P.legs.filter(l => !gone.includes(l)); save(); }
+  updateLegCount(); renderParlayLines();
+  if (gone.length) $('plNote').textContent = `${gone.length} leg${gone.length > 1 ? 's' : ''} left the builder: the game started. ` + $('plNote').textContent;
+  $('legs').innerHTML = P.legs.length ? P.legs.map((l, i) => `<div class="leg"><span>${esc(l.label)} · ${esc(l.text)} <span class="muted">${fmtOdds(l.odds)}</span></span><span class="muted small">${esc(l.date)}</span><span class="num" title="the model's chance">${pct(l.p)}</span><button class="x" data-i="${i}" title="remove">×</button></div>`).join('') : '<div class="empty">No legs yet. Pick moneylines, puck lines and totals on the Games tab or below.</div>';
+  const pr = priceLegs(P.legs); const stake = +$('stake').value || 0;
+  $('parlayTotals').innerHTML = pr ? `
+    <div class="stat"><div class="k">Parlay odds</div><div class="v">${pr.am}</div></div>
+    <div class="stat"><div class="k">Book's implied</div><div class="v">${pct1(pr.imp)}</div></div>
+    <div class="stat"><div class="k">Model's chance</div><div class="v ${pr.p > pr.imp ? 'good' : 'bad'}">${pct1(pr.p)}</div></div>
+    <div class="stat"><div class="k">Pays</div><div class="v">$${(stake * pr.dec).toFixed(2)}</div></div>
+    <div class="stat"><div class="k">Model EV a $</div><div class="v ${pr.ev >= 0 ? 'good' : 'bad'}">${signed(pr.ev.toFixed(2))}</div></div>` : '';
+  $('savedList').innerHTML = P.saved.length ? P.saved.slice().reverse().map(sp => {
+    const grades = sp.legs.map(gradeLeg);
+    const status = grades.includes('loss') ? 'loss' : grades.includes('pending') ? 'pending' : grades.every(x => x === 'push') ? 'push' : 'win';
+    const live = sp.legs.filter((l, i) => grades[i] !== 'push'); const pr2 = priceLegs(live);
+    const pays = status === 'win' ? (sp.stake * (pr2 ? pr2.dec : 1)).toFixed(2) : status === 'push' ? sp.stake.toFixed(2) : null;
+    return `<div class="saved"><div class="top"><b>${sp.legs.length}-leg parlay · ${sp.am}</b><span><span class="tag ${status === 'pending' ? '' : status}">${status}${pays !== null ? ' · $' + pays : ''}</span> <button class="btn tiny ghost" data-del="${sp.id}">delete</button></span></div>
+      <div class="small muted">$${sp.stake} · saved ${sp.at.slice(0, 10)} · model ${pct1(sp.p)} vs implied ${pct1(sp.imp)}</div>
+      <div class="small chips" style="margin-top:6px">${sp.legs.map((l, i) => `<span class="tag ${grades[i] === 'pending' ? '' : grades[i]}">${esc(l.text)} ${fmtOdds(l.odds)}</span>`).join(' ')}</div></div>`;
+  }).join('') : '<div class="empty">Nothing saved.</div>';
+}
+$('legs').addEventListener('click', e => { const b = e.target.closest('button.x'); if (!b) return; P.legs.splice(+b.dataset.i, 1); save(); renderParlays(); });
+$('stake').addEventListener('input', renderParlays);
+$('saveParlay').addEventListener('click', () => {
+  const pr = priceLegs(P.legs); if (!pr) return;
+  P.saved.push({ id: Date.now().toString(36), at: new Date().toISOString(), stake: +$('stake').value || 0, legs: P.legs, am: pr.am, p: pr.p, imp: pr.imp });
+  P.legs = []; save(); renderParlays();
+});
+$('clearParlay').addEventListener('click', () => { P.legs = []; save(); renderParlays(); });
+$('savedList').addEventListener('click', e => { const b = e.target.closest('button[data-del]'); if (!b) return; P.saved = P.saved.filter(s => s.id !== b.dataset.del); save(); renderParlays(); });
+
+/* ---------- Record ---------- */
+function renderRecord() {
+  const R = S.record; const f = S.model.fitted;
+  const stat = (k, v, cls) => `<div class="stat"><div class="k">${k}</div><div class="v ${cls || ''}">${v}</div></div>`;
+  const rate = r => r.w + r.l ? pct1(r.w / (r.w + r.l)) : '—';
+  const wl = r => `${r.w}-${r.l}${r.p ? '-' + r.p : ''}`;
+  const cls = r => r.w > r.l ? 'good' : r.w < r.l ? 'bad' : '';
+  $('recordTotals').innerHTML = stat('Straight up', `${R.su.w}-${R.su.l}`) + stat('SU rate', rate(R.su)) + stat('Moneyline picks', wl(R.ml), cls(R.ml)) + stat('Puck line picks', wl(R.pl), cls(R.pl)) + stat('Totals picks', wl(R.ou), cls(R.ou));
+  const replayed = S.games.filter(g => g.result && !g.frozen).length;
+  /* calls made before the injury report was read right (ESPN's feed gives the id only in a link, and an
+     older job read none, so nobody was ever taken out): they stand as shown, and say so */
+  const blind = S.games.filter(g => g.result && g.frozen && g.pm && !g.pm.inj).length;
+  $('recordNote').textContent = `Every game the model called, straight up; and every side it took on the moneyline, the puck line or the total, where its chance beat DraftKings' implied by ${Math.round(S.edge * 100)} points or more, each graded on the call shown before puck drop. ${replayed ? replayed + ' games were over before the job first ran and are graded from the replay, without a line. ' : ''}${blind ? `${blind} calls were made before the injury report was applied (a reading error kept every injured player, goalies included, in the lineups); they are graded as they were shown.` : ''}`;
+  const months = Object.keys(R.byMonth).sort((a, b) => (a === 'playoffs') - (b === 'playoffs') || a.localeCompare(b));
+  const mName = m => m === 'playoffs' ? 'Playoffs' : new Date(m + '-15T12:00:00Z').toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const head = '<thead><tr><th>When</th><th class="n">SU</th><th class="n">Rate</th><th class="n">ML</th><th class="n">Puck line</th><th class="n">Totals</th></tr></thead>';
+  $('recMonth').innerHTML = head + '<tbody>' + months.map(m => `<tr><td>${mName(m)}</td><td class="n">${R.byMonth[m].su.w}-${R.byMonth[m].su.l}</td><td class="n">${rate(R.byMonth[m].su)}</td><td class="n">${wl(R.byMonth[m].ml)}</td><td class="n">${wl(R.byMonth[m].pl)}</td><td class="n">${wl(R.byMonth[m].ou)}</td></tr>`).join('') + '</tbody>';
+  $('recBand').innerHTML = head.replace('When', 'Model chance') + '<tbody>' + ['70+', '60-70', '50-60'].filter(b => R.bands[b]).map(b => `<tr><td>${b}%</td><td class="n">${R.bands[b].su.w}-${R.bands[b].su.l}</td><td class="n">${rate(R.bands[b].su)}</td><td class="n">${wl(R.bands[b].ml)}</td><td class="n">${wl(R.bands[b].pl)}</td><td class="n">${wl(R.bands[b].ou)}</td></tr>`).join('') + '</tbody>';
+  const p = S.model.params;
+  $('fitNote').textContent = `Elo with K ${p.K}, ${Math.round(p.carry * 100)}% of a rating carried between seasons, ${p.hfa} Elo of home ice, ${p.b2b} off a side that played yesterday, ${p.rest} on for three days' rest, a result past regulation worth ${Math.round(p.ot * 100)}% of a win and a goal-margin multiplier, chosen by log loss on ${f.seasons[0]}-${f.seasons[f.seasons.length - 1]} (${f.games} games, ${pct1(f.accuracy)} of winners called). Held out, ${f.holdout}: ${pct1(f.holdoutAccuracy)} of winners, margin off by ${f.holdoutMarginMae} goals on average. The puck line and the total come from a Poisson goals layer on the club's scoring rates, ${Math.round(S.model.pull * 100)}% of one-goal games pulled into overtime so it goes to overtime as often as the league does (${pct1(S.model.otRate)}).`;
+}
+
+/* ---------- boot ---------- */
+async function boot() {
+  $('buildTag').textContent = APP_BUILD;
+  try {
+    const r = await fetch(STATE_URL + '?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+    S = await r.json();
+  } catch (e) { $('stamp').textContent = 'Could not read state.json (' + e.message + ')'; return; }
+  const pub = new Date(S.published);
+  const phase = S.playoff && S.playoff.phase;
+  $('stamp').innerHTML = `${S.season - 1}-${String(S.season).slice(2)} season${phase === 'postseason' ? ' · the playoffs' : phase === 'over' && S.playoff.champion ? ' · ' + esc(T(S.playoff.champion).short) + ' won the Cup' : ''} · ${S.record.su.w}-${S.record.su.l} SU, ${S.record.pl.w}-${S.record.pl.l} puck line, ${S.record.ou.w}-${S.record.ou.l} totals`;
+  $('stamp').insertAdjacentHTML('afterend', `<span class="small muted">published ${pub.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} · </span>`);
+  updateLegCount();
+  const h = location.hash.slice(1);
+  showTab(h && $('tab-' + h) ? h : (P.ui.tab && $('tab-' + P.ui.tab) ? P.ui.tab : 'games'));
+  autoLive();
+}
+boot();
+</script>
+</body>
+</html>

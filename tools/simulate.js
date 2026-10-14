@@ -94,19 +94,41 @@ function dataDir(name, from = REAL_DATA) {
 /* ---------- the feeds' shapes ---------- */
 const team = code => ({ id: E.CLUBS[code].id, abbreviation: code, displayName: E.CLUBS[code].name, shortDisplayName: E.CLUBS[code].name.split(' ').pop(), name: E.CLUBS[code].name.split(' ').pop(), logo: `https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/${code.toLowerCase()}.png`, color: '888888' });
 const am = n => n === null || n === undefined ? undefined : (n > 0 ? '+' + n : String(n));
-/* a line this site keeps, back in ESPN's odds shape */
-const oddsOfLine = l => !l ? undefined : [{ provider: { name: l.book || 'DraftKings' }, overUnder: l.total,
-  homeTeamOdds: { favorite: l.homeLine !== null && l.homeLine < 0 }, awayTeamOdds: { favorite: l.homeLine !== null && l.homeLine > 0 },
-  moneyline: { home: { close: { odds: am(l.homeML) } }, away: { close: { odds: am(l.awayML) } } },
-  pointSpread: l.homeLine === null || l.homeLine === undefined ? undefined : { home: { close: { line: am(l.homeLine), odds: am(l.homeSpreadOdds) } }, away: { close: { line: am(-l.homeLine), odds: am(l.awaySpreadOdds) } } },
-  total: { over: { close: { line: 'o' + l.total, odds: am(l.overOdds) } }, under: { close: { line: 'u' + l.total, odds: am(l.underOdds) } } } }];
-/* an invented DraftKings line around the model's view, with noise */
+/* DraftKings' own ids for a line, invented the way DraftKings builds them: one market number a game, shared by
+   its three markets, each id naming its side and, for a puck line or a total, its number (N150 is -1.5) */
+function inventIds(g, l) {
+  const n = +String(g.id).slice(-6), m = String(86000000 + n), c = x => String(Math.round(Math.abs(x) * 100));
+  const o = { event: String(34000000 + n), homeML: `0ML${m}_1`, awayML: `0ML${m}_3` };
+  if (l.homeLine !== null && l.homeLine !== undefined) { o.homePL = `0HC${m}${l.homeLine < 0 ? 'N' : 'P'}${c(l.homeLine)}_1`; o.awayPL = `0HC${m}${l.homeLine < 0 ? 'P' : 'N'}${c(l.homeLine)}_3`; }
+  if (l.total !== null && l.total !== undefined) { o.over = `0OU${m}O${c(l.total)}_1`; o.under = `0OU${m}U${c(l.total)}_3`; }
+  return o;
+}
+/* ESPN's wrapping of a DraftKings link: its affiliate gateway, the betslip URL in preurl (copied from a real answer) */
+const GW = 'https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=';
+const gw = inner => ({ language: 'en-US', rel: ['desktop', 'bets', 'draftkings'], href: GW + encodeURIComponent(inner), isExternal: true });
+const idsOnly = dk => { const o = {}; for (const k of ['event', 'homeML', 'awayML', 'homePL', 'awayPL', 'over', 'under']) if (dk && typeof dk[k] === 'string') o[k] = dk[k]; return o; };
+/* a line this site keeps, back in ESPN's odds shape: with DraftKings' links on every outcome (its own ids, or ids
+   invented for the game), or with none ({ links: false }, the shape a "Draft Kings" answer may come in) */
+const oddsOfLine = (l, g, opts = {}) => {
+  if (!l) return undefined;
+  const dk = opts.links === false ? null : l.dk ? idsOnly(l.dk) : g ? inventIds(g, l) : null;
+  const close = (o, id) => Object.assign(o, dk && dk.event && id ? { link: gw(`https://sportsbook.draftkings.com/event/${dk.event}?outcomes=${id}`) } : {});
+  return [{ provider: { name: l.book || 'DraftKings' }, overUnder: l.total, link: dk && dk.event ? gw(`https://sportsbook.draftkings.com/event/${dk.event}`) : undefined,
+    homeTeamOdds: { favorite: l.homeLine !== null && l.homeLine < 0 }, awayTeamOdds: { favorite: l.homeLine !== null && l.homeLine > 0 },
+    moneyline: { home: { close: close({ odds: am(l.homeML) }, dk && dk.homeML) }, away: { close: close({ odds: am(l.awayML) }, dk && dk.awayML) } },
+    pointSpread: l.homeLine === null || l.homeLine === undefined ? undefined : { home: { close: close({ line: am(l.homeLine), odds: am(l.homeSpreadOdds) }, dk && dk.homePL) }, away: { close: close({ line: am(-l.homeLine), odds: am(l.awaySpreadOdds) }, dk && dk.awayPL) } },
+    total: { over: { close: close({ line: 'o' + l.total, odds: am(l.overOdds) }, dk && dk.over) }, under: { close: close({ line: 'u' + l.total, odds: am(l.underOdds) }, dk && dk.under) } } }];
+};
+/* an invented DraftKings line around the model's view, with noise, and DraftKings' ids for it; a moved line
+   (shift) moves its total a goal too, so the moved line's total ids differ from the morning's */
 function invented(g, shift = 0) {
   const p = Math.min(0.85, Math.max(0.15, 1 / (1 + Math.pow(10, -((g.diff || 0) + shift) / 400)) + (rnd() - 0.5) * 0.06));
   const ml = q => q >= 0.5 ? Math.round(-100 * q / (1 - q) / 5) * 5 : Math.round(100 * (1 - q) / q / 5) * 5;
   const fav = p >= 0.5;
-  const total = Math.round((g.xt || 6) * 2) / 2 + (rnd() < 0.3 ? 0.5 : 0);
-  return { book: 'DraftKings', total, homeML: ml(p), awayML: ml(1 - p), homeLine: fav ? -1.5 : 1.5, homeSpreadOdds: fav ? 190 : -230, awaySpreadOdds: fav ? -230 : 190, overOdds: -110, underOdds: -110 };
+  const total = Math.round((g.xt || 6) * 2) / 2 + (rnd() < 0.3 ? 0.5 : 0) + (shift ? 1 : 0);
+  const l = { book: 'DraftKings', total, homeML: ml(p), awayML: ml(1 - p), homeLine: fav ? -1.5 : 1.5, homeSpreadOdds: fav ? 190 : -230, awaySpreadOdds: fav ? -230 : 190, overOdds: -110, underOdds: -110 };
+  l.dk = inventIds(g, l);
+  return l;
 }
 /* one game as a scoreboard event: pre, in or post */
 function event(g, x = {}) {
@@ -145,7 +167,7 @@ const dfoPage = data => `<html><body><script id="__NEXT_DATA__" type="applicatio
 function feedOf(games, tweak) {
   const byDate = {};
   for (const g of games) {
-    let x = g.state === 'final' ? { state: 'post', hs: g.hs, as: g.as, periods: g.periods, detail: g.detail } : g.state === 'live' ? { state: 'in', hs: g.hs, as: g.as, periods: g.periods || 2, detail: g.detail } : { state: 'pre', odds: oddsOfLine(g.line), detail: g.detail };
+    let x = g.state === 'final' ? { state: 'post', hs: g.hs, as: g.as, periods: g.periods, detail: g.detail } : g.state === 'live' ? { state: 'in', hs: g.hs, as: g.as, periods: g.periods || 2, detail: g.detail } : { state: 'pre', odds: oddsOfLine(g.line, g), detail: g.detail };
     x = Object.assign(x, { type: g.type });
     const ev = event(g, x);
     if (!tweak || tweak(g, ev) !== false) (byDate[g.date] = byDate[g.date] || []).push(ev);
@@ -298,7 +320,12 @@ function partB() {
   const b2b = pre.filter(g => [g.pm.home, g.pm.away].some(t => t.goalie && /back to back/.test(t.goalie.how)));
   chk(SB.games.filter(g => g.state !== 'pre' && g.frozen).every(g => !(g.pm && g.pm.pHome === g.pHome && g.pm.xt === g.xt) || (g.mu === g.pm.mu && g.by === 'players')), "every started call that is the player model's carries its margin again");
   console.log(`  ${pre.length} games to come lined up, ${b2b.length} with a back to back; ${SB.players.injuries.matched} of ${SB.players.injuries.rows} report rows matched, ${SB.players.injuries.out} out`);
-  const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB }, 'smoke.js over B');
+  /* DraftKings' ids: every line read this run is the feed's, ids and all (the published ids, or ids invented for the game) */
+  const realById = new Map(real.games.map(g => [g.id, g]));
+  const readNow = SB.games.filter(g => g.state === 'pre' && g.line && g.line.at === NOW);
+  const idsBad = readNow.filter(g => { const r = realById.get(g.id), want = r && r.line && r.line.dk ? idsOnly(r.line.dk) : r && r.line ? inventIds(r, r.line) : null; return !want || JSON.stringify(g.line.dk) !== JSON.stringify(want); });
+  chk(!idsBad.length, `every line read in B carries the feed's DraftKings ids (${readNow.length - idsBad.length} of ${readNow.length}${idsBad[0] ? `, e.g. ${idsBad[0].id}: ${JSON.stringify(idsBad[0].line.dk)}` : ''})`);
+  const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB }, 'smoke.js over B');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the real data through the new job: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B }).status === 0, 'sources.js: every source read');
 
@@ -458,7 +485,7 @@ function partB4(b) {
     fs.writeFileSync(path.join(FX1, `summary_${g.id}.json`), JSON.stringify(summaryOf({ home: g.home, away: g.away, skaters: hb.skaters.filter(x => x.team === g.home).concat(ab.skaters.filter(x => x.team === g.away)), goalies: hb.goalies.filter(x => x.team === g.home).concat(ab.goalies.filter(x => x.team === g.away)) }))); }
   const feedAt = (now, moved) => feedOf(real.games, (g, ev) => {
     if (over.some(x => x.id === g.id)) Object.assign(ev, event(g, { state: 'post', hs: 3, as: 2, periods: 3, type: g.type }));
-    else if (moved && g.id === G.id) Object.assign(ev, event(Object.assign({}, g, { start: MOVED }), { state: 'pre', odds: oddsOfLine(g.line), type: g.type }));
+    else if (moved && g.id === G.id) Object.assign(ev, event(Object.assign({}, g, { start: MOVED }), { state: 'pre', odds: oddsOfLine(g.line, g), type: g.type }));
     else if (g.date === D && g.state !== 'final' && Date.parse(g.start) <= Date.parse(now)) Object.assign(ev, event(g, { state: 'in', hs: 0, as: 0, periods: 1, detail: '15:00 - 1st', type: g.type }));
   });
   /* run 1: the call before puck drop, on the report the last run pulled (the feed not answering: it stays), stamped
@@ -503,7 +530,7 @@ function partB5() {
   fs.copyFileSync(path.join(ROOT, 'state.json'), ST5);
   const byDate = feedOf(real.games, g => g.id !== lone.id);
   byDate[lone.date] = [];
-  (byDate[newDay] = byDate[newDay] || []).push(event(Object.assign({}, lone, { start: newStart, date: newDay }), { state: 'pre', odds: oddsOfLine(lone.line), type: lone.type }));
+  (byDate[newDay] = byDate[newDay] || []).push(event(Object.assign({}, lone, { start: newStart, date: newDay }), { state: 'pre', odds: oddsOfLine(lone.line, lone), type: lone.type }));
   writeDays(OUT5, byDate);
   const r = run('update.js', ['--offline'], { NHL_DATA: DB, NHL_STATE: ST5, NHL_TEAMS: path.join(DB, 'teams.json'), NHL_OUT: OUT5, NHL_NOW: NOW, NHL_TODAY: E.etDate(NOW), NHL_SEASON: String(SEASON) }, 'B5: update.js');
   const S5 = readJSON(ST5), g = S5.games.find(x => x.id === lone.id);
@@ -536,7 +563,7 @@ function partA(B) {
       let x;
       if (g.date <= through) { results[g.id] = results[g.id] || score(g); x = Object.assign({ state: 'post' }, results[g.id]); }
       else if (opts.live && opts.live(g)) { const r = results[g.id] = results[g.id] || score(g); x = { state: 'in', hs: Math.min(r.hs, 1), as: Math.min(r.as, 1), periods: 2, detail: '8:12 - 2nd' }; }
-      else { const on = (opts.lines || []).includes(g0.date); if (on && (!lines[g.id] || opts.move)) lines[g.id] = invented(g, opts.move ? 40 : 0); x = { state: 'pre', odds: on ? oddsOfLine(lines[g.id]) : undefined }; }
+      else { const on = (opts.lines || []).includes(g0.date); if (on && (!lines[g.id] || opts.move)) lines[g.id] = invented(g, opts.move ? 40 : 0); x = { state: 'pre', odds: on ? oddsOfLine(lines[g.id], g, { links: opts.links }) : undefined }; }
       (byDate[g.date] = byDate[g.date] || []).push(event(g, x));
     }
     writeDays(dir, byDate);
@@ -555,6 +582,27 @@ function partA(B) {
   if (dayA.some(g => PMA.upcoming && PMA.upcoming[g.id])) chk(dayA.some(g => g.by === 'players'), "the player model's call is made on the day");
   chk(A.games.filter(g => g.result).length === games.filter(g => g.date < T0).length, 'every earlier game is graded from the replay');
   chk(A.games.filter(g => g.result).every(g => !g.frozen && !g.line), 'a replayed game carries no line and no call made before it');
+  /* DraftKings' ids: every game lined this morning carries the feed's, read whole, with no carried date */
+  const linedA = A.games.filter(g => (g.date === T0 || g.date === T1) && g.line);
+  chk(linedA.length > 0 && linedA.every(g => g.line.dk && JSON.stringify(g.line.dk) === JSON.stringify(idsOnly(lines[g.id].dk)) && !('at' in g.line.dk)), `every line on ${T0} and ${T1} carries DraftKings' ids as the feed gave them (${linedA.filter(g => g.line.dk).length} of ${linedA.length})`);
+  /* the models are untouched: the same answers with no links at all give every field but the ids, and every call field but line.dk */
+  {
+    const NL = mkdir('A-sb-nolinks'), SNL = path.join(SCRATCH, 'A-nolinks.json');
+    let same = 0, diff = [];
+    for (const f of fs.readdirSync(OUT)) {
+      const j = readJSON(path.join(OUT, f)), k = JSON.parse(JSON.stringify(j));
+      for (const ev of k.events || []) { const o = ev.competitions && ev.competitions[0] && ev.competitions[0].odds && ev.competitions[0].odds[0]; if (!o) continue; delete o.link; for (const m of [o.moneyline, o.pointSpread, o.total]) for (const side of Object.values(m || {})) if (side && side.close) delete side.close.link; }
+      fs.writeFileSync(path.join(NL, f), JSON.stringify(k));
+      if (f === `sb_${T0}.json` || f === `sb_${T1}.json`) (j.events || []).forEach((ev, i) => { const a = E.gameRow(ev), b = E.gameRow(k.events[i]); if (!a || !a.odds) return; const x = Object.assign({}, a.odds); delete x.dk; if (JSON.stringify(x) === JSON.stringify(b.odds) && !('dk' in b.odds) && a.odds.dk) same++; else diff.push(ev.id); });
+    }
+    chk(same > 0 && !diff.length, `oddsOf on answers with links and without agrees on every field but the ids (${same} games${diff.length ? ', differ on ' + diff.slice(0, 3).join(', ') : ''})`);
+    const rn = run('update.js', ['--offline'], Object.assign(env(T0 + 'T12:00Z'), { NHL_OUT: NL, NHL_STATE: SNL }), 'run 1 again, the answers with no links');
+    const NLS = rn.status === 0 ? readJSON(SNL) : null, byNL = new Map((NLS ? NLS.games : []).map(g => [g.id, g]));
+    const CALLF = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick', 'result'];
+    const strip = g => { const c = {}; for (const k of CALLF) c[k] = g[k] === undefined ? null : g[k]; if (c.line) { c.line = Object.assign({}, c.line); delete c.line.dk; } return JSON.stringify(c); };
+    const moved = A.games.filter(g => !byNL.has(g.id) || strip(g) !== strip(byNL.get(g.id)));
+    chk(NLS && !moved.length && !NLS.games.some(g => g.line && g.line.dk), `every call field but line.dk is the same on answers with no links (${moved.length} differ${moved[0] ? ', e.g. ' + moved[0].id : ''})`);
+  }
   const byIdA = Object.fromEntries(dayA.map(g => [g.id, g]));
   const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
   const same = (a, b) => CALL.filter(k => JSON.stringify(a[k] ?? null) !== JSON.stringify(b[k] ?? null));
@@ -584,10 +632,27 @@ function partA(B) {
   chk(A2.pass === undefined, 'the second pass\'s state is not marked as the first\'s');
   chk(early.length < 2 || A2.games.some(g => g.id === delayed.id && g.state === 'pre'), 'a game past its puck drop that the feed still has as scheduled is in the test');
   chk(!moved || A2.games.some(g => g.id === moved.id && g.state === 'pre' && g.start === movedStart), 'a game whose puck drop the feed moved later after it passed is in the test');
-  const smE = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json') }, 'smoke.js over the evening, against the morning\'s state');
+  const smE = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json'), NHL_OUT: OUT }, 'smoke.js over the evening, against the morning\'s state');
   chk(smE.status === 0 && / 0 failures/.test(smE.out), 'smoke over the evening, the morning\'s calls the last published: ' + smE.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   chk(A2.games.some(g => g.state === 'live' && g.hs !== null), 'a game under way has a score');
   for (const g of late) { const n = A2.games.find(x => x.id === g.id); chk(n.line.at === evening && JSON.stringify(n.line) !== JSON.stringify(g.line), `a game still to come takes the moved line: ${g.id}`); }
+  /* DraftKings' ids: a game to come takes the moved line's ids; one whose favourite flipped swaps its puck lines' N and P; the
+     games under way, delayed or moved keep the morning's ids though the feed's are different now */
+  const moveIds = late.map(g => [g, A2.games.find(x => x.id === g.id)]);
+  chk(moveIds.every(([g, n]) => n.line.dk && JSON.stringify(n.line.dk) === JSON.stringify(idsOnly(lines[g.id].dk)) && !('at' in n.line.dk)), 'every game to come takes the moved line\'s DraftKings ids');
+  const flip = moveIds.find(([g, n]) => g.line.homeLine !== n.line.homeLine);
+  chk(!!flip && /N\d+_1$/.test(flip[0].line.dk.homePL) !== /N\d+_1$/.test(flip[1].line.dk.homePL) && /N\d+_3$/.test(flip[0].line.dk.awayPL) !== /N\d+_3$/.test(flip[1].line.dk.awayPL), `a favourite that flipped swaps its puck line ids' N and P (${flip ? flip[0].line.dk.homePL + ' -> ' + flip[1].line.dk.homePL : 'no favourite flipped'})`);
+  for (const g of early) { const n = A2.games.find(x => x.id === g.id); chk(n.line && n.line.dk && JSON.stringify(n.line.dk) === JSON.stringify(g.line.dk) && JSON.stringify(idsOnly(lines[g.id].dk)) !== JSON.stringify(g.line.dk), `${g.id}, started, delayed or moved, keeps the morning's DraftKings ids though the feed's moved (${n.line && n.line.dk && n.line.dk.over} vs the feed's ${lines[g.id].dk.over})`); }
+  /* a mutation the smoke must catch: one started game's over id changed after puck drop */
+  {
+    const mut = readJSON(path.join(SCRATCH, 'A-evening.json')), sg = mut.games.find(g => early.some(e => e.id === g.id) && g.line && g.line.dk && g.line.dk.over);
+    if (sg) {
+      sg.line.dk.over = sg.line.dk.over.replace(/^0OU(\d+)O/, (m, n) => `0OU${+n + 1}O`);
+      const MUT = path.join(SCRATCH, 'A-evening-mutated.json'); fs.writeFileSync(MUT, JSON.stringify(mut));
+      const sm = run('smoke.js', [], { NHL_STATE: MUT, NHL_DATA: B, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json') }, 'smoke.js over a started game\'s id changed');
+      chk(sm.status === 1 && /moved after puck drop: line/.test(sm.out), `a started game's DraftKings id changed after puck drop fails the smoke ("moved after puck drop: line"): exit ${sm.status}`);
+    } else chk(false, 'no started game with an over id to mutate');
+  }
   /* run 1c, on a copy: what the scoreboard answers never takes a game it merely leaves out */
   const later = minute(Date.parse(evening) + 10 * 60000), EVE = path.join(SCRATCH, 'A-evening.json');
   const copyOut = name => { const d = mkdir(name); for (const f of fs.readdirSync(OUT)) fs.copyFileSync(path.join(OUT, f), path.join(d, f)); return d; };
@@ -614,7 +679,8 @@ function partA(B) {
   sbT0.events = sbT0.events.filter(e => late.some(g => g.id === e.id)).map(e => e.id === off.id ? postponed(e) : e);
   fs.writeFileSync(path.join(P2, `sb_${T0}.json`), JSON.stringify(sbT0));
   const sbH = fs.existsSync(path.join(P2, `sb_${hopDay}.json`)) ? readJSON(path.join(P2, `sb_${hopDay}.json`)) : { events: [] };
-  sbH.events.push(event(Object.assign({}, hop, { start: hopStart, date: hopDay }), { state: 'pre', odds: oddsOfLine(invented(hop)) }));
+  const hopLine = invented(hop);
+  sbH.events.push(event(Object.assign({}, hop, { start: hopStart, date: hopDay }), { state: 'pre', odds: oddsOfLine(hopLine, hop) }));
   fs.writeFileSync(path.join(P2, `sb_${hopDay}.json`), JSON.stringify(sbH));
   fs.writeFileSync(path.join(P2, `sb_${far}.json`), JSON.stringify({ events: [] }));
   const rp = run('update.js', ['--offline'], envP(P2, SP2), 'run 1c, a partial answer');
@@ -627,8 +693,96 @@ function partA(B) {
   const hn = AP.games.find(g => g.id === hop.id);
   chk(hn && hn.date === E.etDate(hopStart) && hn.state === 'pre' && hn.frozen === later && hn.before === hopStart, `a game under way that the feed moved to another day is a game to come again, called afresh: ${hop.id} ${hn && hn.date} ${hn && hn.frozen}`);
   chk(farGames.length > 0 && farGames.every(g => AP.games.some(x => x.id === g.id && x.date === far)), `a day weeks ahead answered blank keeps its ${farGames.length} games`);
-  const smP = run('smoke.js', [], { NHL_STATE: SP2, NHL_DATA: B, NHL_PREV_STATE: EVE }, 'smoke.js over the partial answer');
+  chk(hn && hn.line && JSON.stringify(hn.line.dk) === JSON.stringify(idsOnly(hopLine.dk)), `the game moved to another day takes its new line's DraftKings ids (${hn && hn.line && JSON.stringify(hn.line.dk)})`);
+  const smP = run('smoke.js', [], { NHL_STATE: SP2, NHL_DATA: B, NHL_PREV_STATE: EVE, NHL_OUT: P2 }, 'smoke.js over the partial answer');
   chk(smP.status === 0 && / 0 failures/.test(smP.out), 'smoke over a partial answer: ' + smP.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  /* run 1d, on a copy of the evening: ESPN's prices come through as "Draft Kings" with no link at all, the same numbers but one
+     total a goal higher; two games keep their links, one with an over on another number, one with an id in a shape the job does
+     not read; one game's links are not URLs at all; one game's links name its DraftKings event and no outcome. The ids of the
+     last state stay for the same numbers, dated by their read (beside the event, for the game whose links name only that) */
+  {
+    const later3 = minute(Date.parse(evening) + 20 * 60000), P3 = copyOut('A-sb-nolink'), SP3 = path.join(SCRATCH, 'A-nolink.json'); fs.copyFileSync(EVE, SP3);
+    const come = A2.games.filter(g => g.state === 'pre' && Date.parse(g.start) > Date.parse(later3) && g.line && g.line.dk && g.line.at === evening).sort((a, b) => a.start < b.start ? -1 : 1);
+    if (come.length < 4) chk(false, `run 1d needs four games still to come with ids (${come.length})`);
+    else {
+      const [tot, X, Y, Z, W] = come, plant = new Set([X.id, Y.id]);
+      const strip = o => { delete o.link; for (const m of [o.moneyline, o.pointSpread, o.total]) for (const side of Object.values(m || {})) if (side && side.close) delete side.close.link; };
+      const answers = {};
+      for (const g of come) {
+        const f = path.join(P3, `sb_${g.date}.json`), j = answers[f] = answers[f] || readJSON(f), ev = j.events.find(e => e.id === g.id), o = ev.competitions[0].odds[0];
+        o.provider.name = 'Draft Kings';
+        if (g.id === X.id) o.total.over.close.link = gw(`https://sportsbook.draftkings.com/event/${g.line.dk.event}?outcomes=${g.line.dk.over.replace(/O(\d+)_1$/, (m, n) => `O${+n + 100}_1`)}`);
+        else if (g.id === Y.id) o.moneyline.home.close.link = gw(`https://sportsbook.draftkings.com/event/${g.line.dk.event}?outcomes=${encodeURIComponent('0QA376553393#2311243956_13L88808Q1-249793997Q20')}`);
+        else if (g.id === Z.id) { o.link = { href: 'https://sportsbook.draftkings.com/gateway?preurl=%E0%A4%A' }; for (const m of [o.moneyline, o.pointSpread, o.total]) for (const side of Object.values(m || {})) if (side && side.close) side.close.link = { href: 'not a url' }; }
+        else if (W && g.id === W.id) { o.link = gw(`https://sportsbook.draftkings.com/event/${g.line.dk.event}`); for (const m of [o.moneyline, o.pointSpread, o.total]) for (const side of Object.values(m || {})) if (side && side.close) side.close.link = gw(`https://sportsbook.draftkings.com/event/${g.line.dk.event}`); }
+        else strip(o);
+        if (g.id === tot.id) { o.overUnder = g.line.total + 1; o.total.over.close.line = 'o' + (g.line.total + 1); o.total.under.close.line = 'u' + (g.line.total + 1); }
+      }
+      for (const [f, j] of Object.entries(answers)) fs.writeFileSync(f, JSON.stringify(j));
+      /* oddsOf never throws on a link that is not a URL: Z's answer gives no ids and every other field as it would with none */
+      const zEv = readJSON(path.join(P3, `sb_${Z.date}.json`)).events.find(e => e.id === Z.id), zBare = JSON.parse(JSON.stringify(zEv)); strip(zBare.competitions[0].odds[0]);
+      let zRow = null; try { zRow = E.gameRow(zEv); } catch (e) { zRow = null; }
+      chk(zRow && zRow.odds && !zRow.odds.dk && JSON.stringify(zRow.odds) === JSON.stringify(E.gameRow(zBare).odds), 'links that are not URLs ("not a url", a preurl of "%E0%A4%A") give no ids and a normal row');
+      /* links naming the event and no outcome: no id read (the event is no bet), the event kept */
+      if (W) { const wEv = readJSON(path.join(P3, `sb_${W.date}.json`)).events.find(e => e.id === W.id), r = E.dkOf(wEv.competitions[0].odds[0], E.gameRow(wEv).odds); chk(r.read === 0 && r.links === 6 && r.dk && JSON.stringify(r.dk) === JSON.stringify({ event: W.line.dk.event }), `links naming the event alone read no outcome id, and keep the event (${JSON.stringify(r)})`); }
+      const r1d = run('update.js', ['--offline'], Object.assign(env(later3), { NHL_OUT: P3, NHL_STATE: SP3 }), 'run 1d, prices with no links');
+      chk(r1d.status === 0, 'run 1d: answers with no links, an over on another number, an id in an unknown shape, links that are not URLs, links naming the event alone: the run goes on');
+      const lg = (/lines: (\d+) games? to come priced this run .*DraftKings ids on (\d+) of them \((\d+) read, (\d+) carried from the last state; (\d+) with an id for every price/.exec(r1d.out) || []).slice(1).map(Number);
+      {
+        const N1 = readJSON(SP3), fr = N1.games.filter(g => g.line && g.line.at === later3), hasIds = dk => !!dk && ['homeML', 'awayML', 'homePL', 'awayPL', 'over', 'under'].some(k => typeof dk[k] === 'string');
+        const rd = fr.filter(g => hasIds(g.line.dk) && !g.line.dk.at).length, cr = fr.filter(g => hasIds(g.line.dk) && g.line.dk.at).length;
+        const PR = { homeML: 'homeML', awayML: 'awayML', homePL: 'homeSpreadOdds', awayPL: 'awaySpreadOdds', over: 'overOdds', under: 'underOdds' };
+        const full = fr.filter(g => hasIds(g.line.dk) && Object.entries(PR).every(([k, f]) => g.line[f] === null || g.line[f] === undefined || typeof g.line.dk[k] === 'string')).length;
+        chk(lg.length === 5 && lg[0] === fr.length && lg[2] === rd && lg[3] === cr && lg[1] === rd + cr && lg[4] === full && full < rd + cr && (!W || fr.some(g => g.id === W.id && g.line.dk && g.line.dk.at)), `the run's log counts the lines with outcome ids read and those carried, an event alone never as read, and those with an id for every price, fewer where one was lost (${lg.join(', ')} vs ${fr.length}, ${rd}, ${cr}, ${full})`);
+      }
+      const N = readJSON(SP3), byN = new Map(N.games.map(g => [g.id, g]));
+      for (const g of come) {
+        const n = byN.get(g.id), dk = n && n.line && n.line.dk; if (!dk) { chk(false, `${g.id}: run 1d left no ids`); continue; }
+        if (g.id === X.id) chk(!dk.over && dk.under === g.line.dk.under && dk.homeML === g.line.dk.homeML && !dk.at, `an over link on another number is not stored, the rest of the answer's ids are (${JSON.stringify(dk)})`);
+        else if (g.id === Y.id) chk(!dk.homeML && dk.awayML === g.line.dk.awayML && !dk.at, `an id in a shape the job does not read is not stored (${JSON.stringify(dk)})`);
+        else if (g.id === tot.id) chk(n.line.total === g.line.total + 1 && !dk.over && !dk.under && dk.homeML === g.line.dk.homeML && dk.homePL === g.line.dk.homePL && dk.at === evening, `a total moved a goal with no links: the moneyline and puck line ids kept, dated ${evening}, the totals' dropped (${JSON.stringify(dk)})`);
+        else if (W && g.id === W.id) chk(JSON.stringify(idsOnly(dk)) === JSON.stringify(idsOnly(g.line.dk)) && dk.at === evening, `links naming the event and no outcome: the evening's outcome ids kept beside the event, dated ${evening} (${JSON.stringify(dk)})`);
+        else chk(JSON.stringify(idsOnly(dk)) === JSON.stringify(idsOnly(g.line.dk)) && dk.at === evening, `${g.id}: no usable link, the same numbers: the evening's ids kept, dated ${evening} (${JSON.stringify(dk)})`);
+      }
+      const sm1d = run('smoke.js', [], { NHL_STATE: SP3, NHL_DATA: B, NHL_PREV_STATE: EVE, NHL_OUT: P3 }, 'smoke.js over prices with no links');
+      chk(sm1d.status === 0 && / 0 failures/.test(sm1d.out), 'smoke over prices with no links: ' + sm1d.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+      /* sources.js: answers with no link at all are a note; answers whose every link is in a shape the job cannot read are broken */
+      const DS = mkdir('A-src'); fs.copyFileSync(path.join(B, 'starters.json'), path.join(DS, 'starters.json'));
+      const inj = readJSON(path.join(B, 'injuries.json')); inj.pulled = later3; fs.writeFileSync(path.join(DS, 'injuries.json'), JSON.stringify(inj));
+      const bare = copyOut('A-sb-bare'), odd = copyOut('A-sb-odd'), evo = copyOut('A-sb-event');
+      for (const f of fs.readdirSync(OUT)) {
+        const j = readJSON(path.join(OUT, f)), k = readJSON(path.join(OUT, f)), v = readJSON(path.join(OUT, f));
+        for (const ev of v.events || []) { const o = ev.competitions[0].odds && ev.competitions[0].odds[0]; if (!o) continue; const e = `https://sportsbook.draftkings.com/event/${34000000 + +String(ev.id).slice(-6)}`; o.link = gw(e); for (const m of [o.moneyline, o.pointSpread, o.total]) for (const side of Object.values(m || {})) if (side && side.close) side.close.link = gw(e); }
+        fs.writeFileSync(path.join(evo, f), JSON.stringify(v));
+        for (const ev of j.events || []) { const o = ev.competitions[0].odds && ev.competitions[0].odds[0]; if (o) { o.provider.name = 'Draft Kings'; strip(o); } }
+        for (const ev of k.events || []) { const o = ev.competitions[0].odds && ev.competitions[0].odds[0]; if (!o) continue; o.link = gw('https://sportsbook.draftkings.com/x?outcomes=0QA1'); for (const m of [o.moneyline, o.pointSpread, o.total]) for (const side of Object.values(m || {})) if (side && side.close) side.close.link = gw(`https://sportsbook.draftkings.com/event/x?outcomes=${encodeURIComponent('0QA376553393#2311243956_13L88808Q1')}`); }
+        fs.writeFileSync(path.join(bare, f), JSON.stringify(j)); fs.writeFileSync(path.join(odd, f), JSON.stringify(k));
+      }
+      const s1 = run('sources.js', [], { NHL_STATE: SP3, NHL_DATA: DS, NHL_OUT: bare }, 'sources.js, prices with no links');
+      chk(s1.status === 0 && /note: .*no DraftKings links/.test(s1.out), `sources.js notes prices with no links and passes (exit ${s1.status})`);
+      const s2 = run('sources.js', [], { NHL_STATE: SP3, NHL_DATA: DS, NHL_OUT: odd }, 'sources.js, ids in a shape the job does not read');
+      chk(s2.status === 1 && /BROKEN: .*DraftKings ids in a shape the job does not read/.test(s2.out), `sources.js fails the run when no link gives an id it reads (exit ${s2.status})`);
+      const s2e = run('sources.js', [], { NHL_STATE: SP3, NHL_DATA: DS, NHL_OUT: evo }, 'sources.js, links naming the event alone');
+      chk(s2e.status === 1 && /BROKEN: .*not one gave an outcome id/.test(s2e.out), `sources.js fails the run when the links name the event and no outcome (exit ${s2e.status})`);
+      const s3 = run('sources.js', [], { NHL_STATE: SP3, NHL_DATA: DS, NHL_OUT: OUT }, 'sources.js, the ids read');
+      chk(s3.status === 0 && /DraftKings ids: \d+ read/.test(s3.out), `sources.js passes when the ids are read (exit ${s3.status})`);
+      /* one market's shape moved: the totals' links alone give ids the job does not read, the moneylines and puck lines read as ever.
+         Broken, named by its market, though most ids still read */
+      const tt = copyOut('A-sb-totals');
+      for (const f of fs.readdirSync(OUT)) {
+        const j = readJSON(path.join(OUT, f));
+        for (const ev of j.events || []) { const o = ev.competitions[0].odds && ev.competitions[0].odds[0]; if (!o || !o.total) continue; const e = 34000000 + +String(ev.id).slice(-6); for (const [side, n] of [['over', 1], ['under', 3]]) if (o.total[side] && o.total[side].close) o.total[side].close.link = gw(`https://sportsbook.draftkings.com/event/${e}?outcomes=${encodeURIComponent(`0TT${86000000 + +String(ev.id).slice(-6)}#${side}_${n}`)}`); }
+        fs.writeFileSync(path.join(tt, f), JSON.stringify(j));
+      }
+      const s4 = run('sources.js', [], { NHL_STATE: SP3, NHL_DATA: DS, NHL_OUT: tt }, 'sources.js, the totals in a shape the job does not read');
+      chk(s4.status === 1 && /BROKEN: ESPN's DraftKings total links \(over on \d+ games?, under on \d+ games?\) gave not one id in a shape the job reads/.test(s4.out) && !/moneyline|puck line links/.test((/BROKEN: .*/.exec(s4.out) || [''])[0]), `sources.js fails the run when one market's ids are all in a shape it does not read, naming it (exit ${s4.status}: ${(/BROKEN: .*/.exec(s4.out) || [''])[0].slice(0, 160)})`);
+      /* run 1d's own answers: games with no link beside games with theirs are named, a note; the run passes */
+      const s5 = run('sources.js', [], { NHL_STATE: SP3, NHL_DATA: DS, NHL_OUT: P3 }, "sources.js, run 1d's answers");
+      const S3 = readJSON(SP3), pub3 = Date.parse(S3.published), days3 = new Set(S3.games.filter(g => g.state === 'pre' && Date.parse(g.start) > pub3 && Date.parse(g.start) - pub3 < 36 * 3600000).map(g => g.date));
+      const bareN = come.filter(g => ![X.id, Y.id, Z.id, W && W.id].includes(g.id) && days3.has(g.date)).length;
+      chk(s5.status === 0 && new RegExp(`note: ${bareN} of the \\d+ games priced at DraftKings carried no DraftKings links this run \\(`).test(s5.out) && /note: \d+ of the \d+ games priced at DraftKings carried links that gave no outcome id/.test(s5.out), `sources.js names the games with no link beside those with theirs, and passes (exit ${s5.status}: ${s5.out.split('\n').filter(l => /^note: \d+ of/.test(l)).join(' | ').slice(0, 240)})`);
+    }
+  }
   /* run 2: the next morning, T0 final */
   feed(T0, { lines: [T1] });
   chk(run('update.js', ['--offline'], env(T1 + 'T12:00Z'), 'run 2, the next morning').status === 0, 'run 2');
@@ -717,7 +871,7 @@ function partC(B, games, results) {
   playSeries(w1[0], w1[1], [false, true], day);
   playSeries(e2[0], e2[1], [true], day); playSeries(w2[0], w2[1], [false], day);
   const sched = { id: '900000999', date: addDays(day, 8), start: addDays(day, 8) + 'T23:00Z', home: e1[0], away: e1[1], neutral: false, state: 'pre' };
-  const writePo = list => { const pb = {}; for (const g of list) (pb[g.date] = pb[g.date] || []).push(event(g, g.state === 'post' ? { state: 'post', hs: g.hs, as: g.as, periods: g.periods, type: 3 } : { state: 'pre', type: 3, odds: oddsOfLine(invented(g)) })); for (const [d, evs] of Object.entries(pb)) { const f = path.join(OUT, `sb_${d}.json`); const had = fs.existsSync(f) ? readJSON(f).events : []; fs.writeFileSync(f, JSON.stringify({ events: had.filter(e => !evs.some(x => x.id === e.id)).concat(evs) })); } };
+  const writePo = list => { const pb = {}; for (const g of list) (pb[g.date] = pb[g.date] || []).push(event(g, g.state === 'post' ? { state: 'post', hs: g.hs, as: g.as, periods: g.periods, type: 3 } : { state: 'pre', type: 3, odds: oddsOfLine(invented(g), g) })); for (const [d, evs] of Object.entries(pb)) { const f = path.join(OUT, `sb_${d}.json`); const had = fs.existsSync(f) ? readJSON(f).events : []; fs.writeFileSync(f, JSON.stringify({ events: had.filter(e => !evs.some(x => x.id === e.id)).concat(evs) })); } };
   writePo(po.concat([sched]));
   chk(run('update.js', ['--offline'], env(addDays(day, 7)), 'the first round under way').status === 0, 'the first round runs');
   const C2 = readJSON(STATE);
@@ -730,7 +884,7 @@ function partC(B, games, results) {
   chk((C2.playoff.series || []).length === 6 && sw && sw.winner === e0[0] && sw.wins[e0[0]] === 4 && sw.wins[e0[1]] === 0 && C2.playoff.series.every(s => s.round === 1), `every first-round series with a game in it, each with its score and its winner once it has one (${(C2.playoff.series || []).length})`);
   chk(JSON.stringify(C2.playoff.bracket) === JSON.stringify(C1.playoff.bracket), 'the first round as drawn is kept');
   const sg = C2.games.find(g => g.id === sched.id);
-  chk(sg && sg.type === 3 && sg.line && sg.frozen, 'a playoff game to come has a call and a line');
+  chk(sg && sg.type === 3 && sg.line && sg.frozen && sg.line.dk && sg.line.dk.homeML, 'a playoff game to come has a call and a line, with DraftKings\' ids');
   chk(C2.record.byMonth.playoffs && C2.record.byMonth.playoffs.su.w + C2.record.byMonth.playoffs.su.l === po.length, 'the playoffs are their own row of the record');
   const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_PREV_STATE: 'none' }, 'smoke.js over the playoffs');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the playoffs: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));

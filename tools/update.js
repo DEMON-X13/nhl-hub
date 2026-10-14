@@ -398,6 +398,34 @@ async function main() {
     return callOf(view, p.line || null);
   };
   let rebuilt = 0;
+  /* a line read this run, dated by it. DraftKings' ids (line.dk) are this answer's own whenever it gave
+     an outcome id; an answer with none (no usable link at all: ESPN's DraftKings prices have come through
+     as "Draft Kings", and that shape may carry none; or links naming the event and no outcome) keeps the
+     last state's outcome ids for the same numbers: the moneylines, the puck lines only on the same puck
+     line, the totals only on the same total, beside the event (this answer's, else the last one's; none
+     are carried onto another event), dated by when they were read (dk.at, only ever on carried ids). An
+     answer with some outcome id never carries. Another book's prices carry none */
+  const lineCount = { games: 0, read: 0, carried: 0, event: 0, full: 0, books: {} };
+  /* a line with an id for every price it has (each side of the moneyline, the puck line and the total that ESPN priced):
+     counted in the log, so a market whose ids stop coming shows there as fewer games with all of them */
+  const PRICE = { homeML: 'homeML', awayML: 'awayML', homePL: 'homeSpreadOdds', awayPL: 'awaySpreadOdds', over: 'overOdds', under: 'underOdds' };
+  const fullIds = line => !!line.dk && Object.entries(PRICE).every(([k, f]) => line[f] === null || line[f] === undefined || typeof line.dk[k] === 'string');
+  const freshLine = (odds, p) => {
+    const line = Object.assign({}, odds, { at: now });
+    lineCount.games++; lineCount.books[odds.book || 'no book'] = (lineCount.books[odds.book || 'no book'] || 0) + 1;
+    if (E.dkHasIds(line.dk)) { lineCount.read++; if (fullIds(line)) lineCount.full++; return line; }
+    const q = p && p.line && p.line.dk, ev = line.dk && line.dk.event;
+    const none = () => { if (ev) lineCount.event++; return line; };
+    if (!E.dkHasIds(q) || E.bookKey(line.book) !== 'draftkings' || E.bookKey(p.line.book) !== 'draftkings') return none();
+    if (ev && q.event && ev !== q.event) return none();
+    const keep = ['homeML', 'awayML'].concat(p.line.homeLine === line.homeLine ? ['homePL', 'awayPL'] : [], p.line.total === line.total ? ['over', 'under'] : []);
+    const dk = {}; if (ev || typeof q.event === 'string') dk.event = ev || q.event;
+    for (const k of E.DK_OUTCOMES) if (keep.includes(k) && typeof q[k] === 'string') dk[k] = q[k];
+    if (!E.dkHasIds(dk)) return none();
+    dk.at = q.at || p.line.at;
+    line.dk = dk; lineCount.carried++; if (fullIds(line)) lineCount.full++;
+    return line;
+  };
   const out = [];
   /* --scores, the job's first pass, makes no call: every row keeps the last state's call as it was
      (a game still to come included), and only its score, state and schedule are new. players.js lines
@@ -420,7 +448,7 @@ async function main() {
       if (u) { view.pm = { pHome: u.pHome, mu: u.mu, xt: u.total, home: u.home, away: u.away, inj: u.inj || null }; if (usePM) { view.pHome = u.pHome; view.xt = u.total; view.pmMu = u.mu; } }
       /* the lines: taken while the game is still to come */
       view.before = g.start;
-      call = callOf(view, g.odds ? Object.assign({}, g.odds, { at: now }) : (p && p.line) || null);
+      call = callOf(view, g.odds ? freshLine(g.odds, p) : (p && p.line) || null);
     }
     /* started with no call made before it: the replay's view for a final, the current one while live; no line, no side */
     else if (replayed[g.id]) { const v = replayed[g.id]; call = callOf({ pHome: v.pHome, diff: v.diff, rh: v.rh, ra: v.ra, xt: v.xt, frozen: null }, null); }
@@ -445,6 +473,7 @@ async function main() {
     out.push(row);
   }
   if (rebuilt) log(`${rebuilt} calls an older job recomputed after puck drop put back to the call shown before it`);
+  if (!SCORES) log(`lines: ${lineCount.games} game${lineCount.games === 1 ? '' : 's'} to come priced this run (${Object.entries(lineCount.books).map(([b, n]) => `"${b}" ${n}`).join(', ') || 'no book'}); DraftKings ids on ${lineCount.read + lineCount.carried} of them (${lineCount.read} read, ${lineCount.carried} carried from the last state; ${lineCount.full} with an id for every price${lineCount.event ? `; ${lineCount.event} more with DraftKings' event and no outcome id` : ''})`);
 
   /* the record: straight up on every game, and on the moneyline, the puck line and the total where a side was taken */
   const fresh = () => ({ su: { w: 0, l: 0 }, ml: { w: 0, l: 0 }, pl: { w: 0, l: 0, p: 0 }, ou: { w: 0, l: 0, p: 0 } });

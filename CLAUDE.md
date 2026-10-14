@@ -115,7 +115,12 @@ the published calls an older job's, the night after a back to back to call) and 
 rewrote after puck drop put back exactly; a fabricated season whose evening runs the two passes either
 side of a puck drop and finds games under way, one still "scheduled" past its puck drop and one whose
 start moved an hour, then a scoreboard answer that is blank or leaves games out (one postponed, one
-moved to another day); the season played out and the playoffs (a sweep, an upset, the Final); and the
+moved to another day); DraftKings' ids throughout (every invented line carries ids in ESPN's real gateway
+wrapping: read whole, moved with a moved line, a flipped favourite's N and P swapped, kept by the games
+under way, taken afresh by a game moved to another day; answers as "Draft Kings" with no link, an over on
+another number, an id in an unknown shape, links that are not URLs and links naming the event alone, then
+sources.js on answers with no link, on links it cannot read, on links naming no outcome, on the totals' links alone in a shape it cannot read (broken, by market) and on run 1d's own answers (the link-less games named beside the linked ones); the same run on link-less answers changing no call field but
+`line.dk`; and a started game's id changed after puck drop, which the smoke must fail); the season played out and the playoffs (a sweep, an upset, the Final); and the
 rollover. On opening night, in the summer and before a schedule is out it plays what there is (last
 season's starters, last season's schedule a year on) and skips what needs a game to come. `NHL_TODAY`,
 `NHL_NOW`, `NHL_STATE`, `NHL_OUT`, `NHL_TEAMS`, `NHL_DATA` and `NHL_FIXTURES` are the hooks; the real
@@ -140,12 +145,124 @@ reach their games, no call was made after its puck drop or moved since (the last
 `NHL_PREV_STATE` or git's `HEAD:state.json`), no started call of that state is gone unless `removed`
 gives the feed's reason, the state is the second pass's, a call that is the player model's carries its
 margin, the page opened at a puck drop offers no bet on that game and calls the visitor's day Today,
-and a club knocked out of the playoffs has no Cup chance. The season is the Eastern date's
+and a club knocked out of the playoffs has no Cup chance. Its section THE PARLAY BUILDER holds the
+builder with rules of its own, sharing nothing with the page but the state: every line's DraftKings ids in
+their shape and on their number, and the ids against the run's saved answers (`NHL_OUT`, or `tools/out`
+for the real state); every level worked out by brute force on the default slate and Both days (the legs
+and their order, the rule line, the chance, fair chance, price and pays), the controls, the Bet amount,
+Add to builder, the builder's repricing, the card (its link, note, Share text, image, Escape, Tab order),
+the store an older page wrote and a junk one, a puck drop and the watch (a level finishing at once when
+another game has started, the Games tab redrawn once and not again when a builder leg leaves, a leg at a
+moved number never shown as in the parlay), a stale line, a whole-number total, a game priced at another
+book and one with no book named, and the panel's empty states on made-up copies (no games, every game
+started, no line, a two-game night, every game alike); only `state.json` and ESPN are read and only
+`nhl_v1` written. Every rule is an invariant of the state it is given, so it passes on any day: the
+games it plants on or clicks are taken from the day the panel shows (the Day control set where it needs a
+day kept), never from the whole schedule. `NHL_HTML`
+tries another page in place of `index.html`. The season is the Eastern date's
 (`E.seasonOf`), nowhere else. Between seasons the first run from August closes the old one into
 `data/season_<year>.json` (read beside `history.json` by `tools/hist.js`), so its results stay in
 both models; a season in neither file nor the last state is refused. In the playoffs the field is the
 real one, each series is played on from its real score and the bracket shows it; `phase` is preseason,
 regular, postseason, over (the champion named) or offseason.
+
+### The Parlay Builder
+
+The second tab (`#parlays`; `#parlay`, the NFL site's name, opens it too) is nfl-hub's Parlay Builder in
+hockey's terms, built in nhl v7 (13 October 2026) from a spec and its critic's changes, with the gates below.
+Three bet kinds (moneyline, puck line, total), one Eastern day as the slate, **one leg a game everywhere**
+(the levels, the builder, the bet buttons): two legs of one game would be a same-game parlay, which
+DraftKings prices on its own terms and this page cannot (the -1.5 and the over move together in hockey), so
+a parlay's chance is its legs' chances multiplied and its price DraftKings' own, their prices multiplied. A
+second bet on a game replaces the first, said in the builder and on the slip bar.
+
+- **What is offered.** A leg is offered only on a game not started by the visitor's clock (`hasStarted`)
+  whose line is fresh: `line.at` is the job's last run (`S.published`, to the minute), so a number DraftKings
+  has dropped is never put on a slip. Its numbers are the state's, nothing recomputed: the chance (`pHome`,
+  `cover`, `ou`), the edge (`mlEdge`, `plEdge`, `ouEdge`), the price and the other side's price, whose
+  margin-free share is DraftKings' **fair chance** (`legFair`; none without the other price).
+- **The panel** (`#pbPanel`): Bet amount (`#pbStake`, `P.stake`, the builder's stake too, $20 to start,
+  `stakeRead` as the NFL's), Build from (All, Teams only, Totals only) over three Bet types boxes, Day (today
+  and tomorrow, Eastern, each offered while it has a game to come; Both days when both have a fresh line; else
+  the next day with a game), and a Games fold (a game with no fresh line shown but not tickable). Notes say
+  how many legs are far off the market and how many games have no line yet; a one-line notice says when the
+  watch moved the slate on because every game of the day shown had started, and another when a level was
+  rebuilt because one of its own games dropped the puck ("FLA @ CBJ dropped the puck: the levels were
+  rebuilt without it."). Each holds while the panel is on the slate it was said on and its day is not over
+  (Eastern), and goes at the visitor's next pick. A control the panel redraws (a game's box, a Day, a
+  level's button) keeps the keyboard's focus, and Add to builder takes it to the builder's heading.
+- **The levels** (`PB_TIERS`): Safe the likeliest pair; Medium, Aggressive and Extreme the 3-, 4- and 5-leg
+  parlay with the best chance times decimal that lands 25%, 12% and 5% by the model's chance, else the
+  likeliest of that size (`likeliest`). A leg qualifies with both prices, the model at 45% to 97%, its edge 0
+  or more (the margin left in), no push (a whole-number line never goes in a level), and under 15 points over
+  the fair chance (`FAR_OFF`; those are counted in the far-off note and flagged on the Games cards). It is
+  preferred at the site's own bar (`S.edge`, so preferred is exactly the Games cards' call) and thin below it,
+  used only where the calls cannot make a level, the fewest first. The search is exact (`pbSearch`/`pbBest`:
+  branch and bound over every parlay of the size, pruning only what cannot reach the floor or the best found;
+  the 28-game worst Both days takes under 10 ms at 4x CPU throttle), chances and prices worked in leg order
+  (puck drop, the matchup, the kind), ties within 1e-12 to the lower sorted leg ids. A level's card leads
+  with the fair chance, the model's beside it; Add to builder (asks before replacing other legs), Finish, a
+  lock on each leg and New legs (the level's rule on the legs it has not shown, the locks kept; Reset), kept
+  outside `P` (`PB_VIEW`). Empty levels say why, worked out from the picks (tick more games, more bet types,
+  or Both days, only where it would help), and under two lined games the panel says so in one line.
+- **The builder** (`#builder`): rows, never a table; every stored leg read again from the state on every
+  draw, a game started, called off or gone, a stale line or a moved number taken out and a moved price
+  updated, each said in its live line. The same pruning runs when the page loads and when the watch looks
+  (every half minute, and on coming back into view) on any tab, said on the slip bar, so a Games card never
+  shows a bet as in the parlay that the builder would drop, and the Games tab is redrawn once when a leg
+  leaves, not at every look. A level's Add and Finish only redraw the panel when one of the level's own games
+  has started (or its line gone, the job published since, the picks changed); another game's puck drop
+  leaves a level as it is. The summary's figures step down to fit their tiles (two by two up to 1100px; 13px the
+  least, and a figure that still will not fit takes the whole row), so none is ever cut. Four tiles: the fair chance (or the model's), DraftKings' price, what
+  the stake pays, the confidence on the fair chance. Finish parlay and Save on this device (two legs or more
+  each; Save keeps the builder, and reads Saved, off, whenever the builder is a parlay already in this
+  device's list, so a reload never lets it be saved twice), Clear all. Pick your own legs (`#plLines`) lists the slate's
+  games with a fresh line, each with the same bet block the Games cards carry. The slip bar (`#slip`) shows
+  the builder on every other tab, and on this one while the builder is out of view; with no leg left it
+  shows only for a few seconds after the clock took the last ones out, saying why, and that reason is kept
+  in the store (`ui.bmsg`) until the builder has been drawn, so a builder emptied on another tab or before
+  a reload is still explained.
+- **The card** (`#pcWin`): the parlay drawn as a card, Download image (a canvas, context calls only, never a
+  remote image), Share link (`{title, text}`, the DraftKings link inside the text, never a `url`), Open in
+  DraftKings, and Start over from the builder. Nothing is saved by finishing. Close, Escape and a click
+  outside give the focus back to the button that opened it (or Finish parlay, if the watch redrew it away).
+- **Clocks.** Every time on the page is the visitor's own and names its zone ("3:30 PM PDT": the game
+  tiles, the level and builder rows, Pick your own legs, the Games cards, "as read at" and the header's
+  published stamp). The card, its image and its Share text go to other people, so they are in Eastern time
+  and say ET.
+- **DraftKings' ids** (`line.dk`): `tools/espn.js` reads them from the links ESPN carries on every price
+  (`dkHref` takes the gateway's `preurl` and keeps only the event and the outcome id, never the gateway;
+  it never throws), keeping an id only in its side's shape and naming the line's own number (`0ML<m>_1`,
+  `0HC<m>N150_1`, `0OU<m>O650_1`...). They ride in `line`, so they are taken while a game is to come and
+  frozen at its puck drop like the rest of the call. An answer with no usable link (ESPN has said "Draft
+  Kings" on some runs) keeps the last state's ids for the same numbers, dated (`dk.at`, only on carried
+  ids). Only the six outcome ids count as ids: an answer whose links name the event and no outcome is one
+  with none, keeps its event and carries the last state's outcome ids under the same rule (never onto another
+  event), and an answer with any outcome id never carries. The card opens
+  `https://sportsbook.draftkings.com/?outcomes=<id>+<id>` in leg order, names every leg it cannot open and why,
+  dates what it opens by the oldest read, and never promises every leg lands; with none it opens DraftKings'
+  NHL page. A game ESPN prices at another book (or names no book for) is offered like any other, but its price
+  is never called DraftKings', the panel and the builder name the book, and it gets no DraftKings link.
+  `update.js` logs the book and how many games carry outcome ids (read, carried, an event alone) on every run,
+  and how many have an id for every price they carry, so a market whose ids stop coming shows as fewer.
+  `sources.js` counts each of the six outcomes on its own and fails the run (after the commit) when one
+  had links on some game and not one of them gave an id in its side's shape (DraftKings or ESPN moved that
+  market's shape: those legs open no slip), or when no link at all gave an outcome id; it notes, by name,
+  games whose DraftKings prices carried no link or links with no outcome id even beside games that carried
+  theirs, ids on another number than the line, and another book's games.
+- **Saved parlays** stay the visitor's own record: graded from the scores, a leg on a game called off void,
+  one off the schedule "not on the schedule" (never pending forever), a settled grade kept in the entry.
+  The state lists a game called off (`removed`) for one publish only, so the first time the page sees a
+  saved leg's game there it writes the void into the leg (`void: {why, at}`), which holds from then on; a
+  game called off while this browser never opened the page reads "not on the schedule".
+
+`nhl_v1` now also holds `stake`, `ui.pb` (`k` the three boxes, `off` the games unticked, `gx` the
+games fold, `day`) and, until the builder is next drawn, `ui.bmsg`; a saved parlay keeps `dec` and `fair`
+and, once settled, `graded`, and a saved leg on a game called off `void`.
+
+On a phone (640px or less) the Day and Build from choices share one row equally, the Bet types and the
+game tiles go two a row, and nothing on any tab is wider than the screen (the Record tables scroll inside
+their card; the playoff bracket drops its points, which the odds table shows).
 
 ### The player model
 
@@ -177,8 +294,8 @@ The owner publishes a change and expects it on every device on the next load. No
 outrank what the job published:
 
 - **Published data wins over anything a browser kept.** Local storage holds only what the visitor
-  made: the parlay builder's legs, the parlays they saved and the tab they were on, under one key,
-  `nhl_v1`. Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture and
+  made: the parlay builder's legs, the parlays they saved, their stake, their picks on the Parlay
+  Builder and the tab they were on, under one key, `nhl_v1`. Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture and
   the record are read from `state.json` on every load. A leg whose game has started leaves the
   builder: its price is gone.
 - **A routine run is silent.** The job publishes up to five times a day; the page's stamp says when,

@@ -98,8 +98,6 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
 .tag.win{background:var(--lime-soft);color:var(--lime)} .tag.loss{background:var(--rose-soft);color:var(--rose)} .tag.push{background:var(--gold-soft);color:var(--gold)}
 .tag.replay{background:var(--ice-soft);color:var(--ice)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
-.legbtns{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
-.legbtns .k{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
 .tbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:13px}
 .tbl th,.tbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
 .tbl th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--panel-2);position:sticky;top:0}
@@ -123,9 +121,6 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
 .stat .k{color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .stat .v{font-family:var(--display);font-size:22px;font-weight:900;line-height:1.1;margin-top:4px}
 .stat .v.good{color:var(--lime)} .stat .v.bad{color:var(--rose)}
-.legs{display:flex;flex-direction:column;gap:6px}
-.leg{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:8px 10px;background:var(--panel-3);border:1px solid var(--line);border-radius:10px;font-size:13px}
-.leg .x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px}
 .saved{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;background:var(--panel)}
 .saved .top{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
 .empty{background:var(--panel);border:1px dashed var(--line-2);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--ink-2)}
@@ -144,7 +139,230 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
 .series.done .score{color:var(--lime)}
 .series .out{opacity:.45;text-decoration:line-through}
 .champ{font-family:var(--display);font-weight:900;font-size:20px;color:var(--gold);margin:4px 0 10px}
-@media (max-width:640px){.bracket{grid-template-columns:1fr}}
+/* a phone: one conference a row, never wider than the screen (each scrolls inside itself if it must); the points stay in the odds table below */
+@media (max-width:640px){.bracket{grid-template-columns:minmax(0,1fr)}.bracket .conf{min-width:0;overflow-x:auto}.series .pts{display:none}}
+/* ---------- the Parlay Builder (pb-) and the parlay card (pc-) ----------
+   Every control here is at least 44px tall and shows an --ice ring when focused by keyboard. Muted or
+   rose text sits only on --panel or darker; on --panel-2 and --panel-3 secondary text is --ink-2, and
+   the far-off flag is --rose-ink, so every text is 4.5:1 or more on its own background */
+:root{--rose-ink:#FF7A8F}
+.nw{white-space:nowrap}
+:focus-visible,.btn:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
+.pb .btn,#builder .btn,.pb-pick .btn,.pc-panel .btn,.pb-slip .btn,.pb-bet,.pb-seg button,.pb-box,.pb-gt,.pb-lock,.leg .x,.pb-games>summary,.pb-rules>summary,.pb-pick>summary,.saved .btn{min-height:44px}
+.pb-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pb-head h2{margin:0}
+.tag.pb-slate{background:var(--ice-soft);color:var(--ice)}
+.pb-sub{margin:6px 0 0;color:var(--ink-2);font-size:13px}
+.pb-ctl{background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:14px 0 12px}
+.pb-row{display:grid;grid-template-columns:104px minmax(0,1fr);gap:8px 14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.pb-row:last-child{border-bottom:0}
+.pb-k{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.pb-v{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;min-width:0}
+.pb-hint{font-size:12.5px;color:var(--ink-2)}
+.pb-stake{display:inline-flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line-2);border-radius:12px;padding:0 12px;min-height:44px;font:700 17px var(--display);color:var(--ink-2)}
+.pb-stake input{background:transparent;border:0;border-radius:0;padding:0;width:6.5em;min-height:42px;font:700 17px var(--display);color:var(--ink)}
+.pb-stake input:focus{outline:none}
+.pb-stake:focus-within{border-color:var(--ice);box-shadow:0 0 0 2px var(--ice)}
+.pb-seg{flex-wrap:wrap;max-width:100%}
+.pb-seg button{padding:0 15px;font-size:13px}
+.pb-seg button small{display:block;font-size:10.5px;font-weight:600;opacity:.85}
+.pb-box{display:inline-flex;align-items:center;gap:8px;padding:0 14px;border:1px solid var(--line-2);border-radius:999px;background:var(--panel);cursor:pointer;font-weight:700;font-size:13px;color:var(--ink)}
+.pb-box input{width:18px;height:18px;accent-color:var(--ice);margin:0;flex:none}
+.pb-box em{font-style:normal;font-weight:500;color:var(--ink-2)}
+.pb-box:has(input:checked){border-color:var(--ice);background:var(--ice-soft)}
+.pb-games{border-top:1px solid var(--line);padding:2px 0 8px}
+.pb-games>summary{display:flex;align-items:center;gap:14px;cursor:pointer;list-style:none}
+.pb-games>summary::-webkit-details-marker{display:none}
+.pb-games>summary::after,.pb-rules>summary::after,.pb-pick>summary::after{content:"";margin-left:auto;flex:none;width:8px;height:8px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);transition:transform .15s var(--ease)}
+.pb-games[open]>summary::after,.pb-rules[open]>summary::after,.pb-pick[open]>summary::after{transform:rotate(-135deg)}
+.pb-games>summary .pb-k{width:104px}
+.pb-gsum{font-weight:800}
+.pb-tap{color:var(--ink-2);font-size:12px;font-weight:600}
+@media(min-width:761px){.pb-tap{display:none}}
+.pb-gbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px}
+.pb-gbar .btn{padding:0 16px}
+.pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pb-gt{display:flex;align-items:center;gap:10px;padding:6px 12px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);cursor:pointer;min-width:0}
+.pb-gt input{width:18px;height:18px;accent-color:var(--ice);flex:none;margin:0}
+.pb-gt b{display:block;font-size:13px}
+.pb-gt span{display:block;font-size:12px;color:var(--ink-2)}
+.pb-gt.un,.pb-gt.no{border-style:dashed;background:transparent}
+.pb-gt.un b,.pb-gt.no b{color:var(--ink-2);font-weight:600}
+.pb-gt.no{cursor:default}
+.pb-dayh{grid-column:1/-1;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:6px 0 0}
+.pb-notes p{margin:8px 0 0;font-size:12.5px;color:var(--ink-2)}
+.pb-notes p b{color:var(--gold)}
+.pb-wide{margin-top:12px}
+.pb-tiers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
+@media(max-width:1100px){.pb-tiers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.pb-tiers{grid-template-columns:1fr}}
+.pb-tier{--ac:var(--ice);background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pb-tier[data-tier=safe]{--ac:var(--lime)} .pb-tier[data-tier=med]{--ac:var(--gold)} .pb-tier[data-tier=aggr]{--ac:var(--rose)} .pb-tier[data-tier=xtrm]{--ac:var(--ice)}
+.pb-tier.none{border-style:dashed;border-top-style:dashed}
+.pb-th{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pb-th{flex-wrap:nowrap;align-items:flex-start}
+.pb-tn{display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap;min-width:0;min-height:44px}
+.pb-tn>b{font:700 16px var(--display)}
+.pb-turn{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.pb-turn .btn{padding:0 11px;font-size:12px}
+.pb-rule{font-size:12px;color:var(--ink-2);margin:-4px 0 0}
+.pb-nums{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.pb-n{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.pb-n .v{font:900 20px var(--display);line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pb-n .k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-top:3px;overflow-wrap:anywhere;white-space:normal}
+.pb-n .s{font-size:12px;color:var(--ink-2);margin-top:1px}
+.pb-n.pay{grid-column:1/-1}
+.pb-n.pay .v{color:var(--lime)}
+.pb-tl{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.pb-tl:first-child{border-top:0}
+.pb-lock{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink-2);cursor:pointer;padding:0}
+.pb-lock svg{width:16px;height:16px}
+.pb-lock[aria-pressed=true]{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.pb-ll{min-width:0}
+.pb-ll b{display:block;font-size:13.5px;overflow-wrap:anywhere}
+.pb-ll span{display:block;font-size:12.5px;color:var(--ink-2)}
+.pb-ll .m,.pb-lr .m{color:var(--muted)}
+.pb-ll span.nw{display:inline;color:inherit;font-size:inherit}
+.pb-lr{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pb-lr b{display:block;font-size:14px}
+.pb-lr>span{display:block;font-size:12px;color:var(--ink-2)}
+.tag.thin{background:var(--gold-soft);color:var(--gold);margin-top:3px}
+.pb-far{display:block;font-size:12px;font-weight:700;color:var(--rose-ink)}
+.pb-why{font-size:12px;color:var(--ink-2);margin:0}
+.pb-empty{font-size:13px;color:var(--ink-2);margin:0}
+.pb-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.pb-acts .btn{white-space:normal}
+.pb-rules{margin-top:14px;border-top:1px solid var(--line);padding-top:4px}
+.pb-rules>summary,.pb-pick>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;font-weight:700;color:var(--ink-2)}
+.pb-rules>summary::-webkit-details-marker,.pb-pick>summary::-webkit-details-marker{display:none}
+.pb-rules p{font-size:12.5px;color:var(--ink-2);margin:6px 0 0}
+.pb-pick>summary h2{margin:0}
+.pb-pick>summary small{font-weight:500;color:var(--ink-2);font-size:12.5px}
+.pb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-top:10px}
+@media(max-width:640px){.pb-list{grid-template-columns:1fr}}
+.pb-pg{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+.pb-pgh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px}
+.pb-pgh span{color:var(--muted);font-size:12px}
+/* the bet block: a game's three markets, two sides a row, each a button */
+.pb-bets{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px}
+.pb-brow{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;align-items:start}
+.pb-bk{color:var(--ink-2);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding-top:12px}
+.pb-bb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.pb-bet{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 6px;align-items:baseline;align-content:start;text-align:left;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:6px 9px;cursor:pointer;color:var(--ink);font-size:12.5px;min-width:0}
+.pb-bet:hover{border-color:var(--ink-2)}
+.pb-bs{font-weight:800;overflow-wrap:anywhere}
+.pb-bp{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+.pb-bc{grid-column:1/-1;color:var(--ink-2);font-size:11.5px;font-variant-numeric:tabular-nums}
+.pb-bt{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--lime);margin-top:1px}
+.pb-bt.far{color:var(--rose-ink)}
+.pb-bin{grid-column:1/-1;font-size:11px;font-weight:800;color:var(--gold);margin-top:1px}
+.pb-bet.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.pb-key{margin:2px 0 0;font-size:11.5px;color:var(--ink-2)}
+.pb-stale{grid-column:1/-1;color:var(--gold);font-size:12px}
+/* the builder */
+#builder h2 small{font-family:var(--body)}
+#tab-parlays h2 small,#tab-parlays .muted{color:var(--ink-2)}
+.pb-msg{min-height:0;font-size:12.5px;color:var(--gold);margin:0 0 8px}
+.pb-msg:empty{display:none}
+#legs{display:flex;flex-direction:column;gap:6px}
+#legs .leg{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;gap:10px;align-items:center;padding:6px 6px 6px 12px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;font-size:13px}
+.leg .x{width:44px;height:44px;border-radius:10px;background:var(--panel);border:1px solid var(--line-2);color:var(--ink-2);cursor:pointer;font-size:18px;line-height:1}
+.leg .x:hover{color:var(--ink);border-color:var(--ink-2)}
+.pb-below{display:block;font-size:12px;color:var(--muted)}
+@media(max-width:640px){.pb-fm>span{display:block}.pb-fm .sep{display:none}}
+.pb-stakes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0}
+.pb-chip{padding:0 12px;min-width:52px}
+.pb-chip.on{background:var(--ice-soft);border-color:var(--ice);color:var(--ice)}
+.pb-tot{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1100px){.pb-tot{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pb-tot .stat{min-width:0}
+.pb-tot .stat .k{overflow-wrap:anywhere}
+/* a figure steps down to fit its tile (fitTiles), and wraps rather than being cut where even 13px will not fit */
+.pb-tot .stat .v{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pb-tot .stat.pb-span{grid-column:1/-1}
+.stat .s{font-size:12px;color:var(--ink-2);margin-top:2px}
+.pb-bnotes{font-size:12px;color:var(--ink-2);margin:4px 0 0}
+.pb-bacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pb-bacts .btn{padding:0 16px}
+.pb .btn[disabled],#builder .btn[disabled],.pc-panel .btn[disabled]{cursor:default;background:var(--panel);border-color:var(--line);color:var(--ink-2)}
+.saved .pb-sl{font-size:12.5px;color:var(--ink-2);margin:2px 0}
+.saved .pb-slegs{margin:6px 0 0;padding:0;list-style:none;font-size:12.5px}
+.saved .pb-slegs li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;border-top:1px solid var(--line)}
+.saved .pb-slegs li .tag{flex:none}
+.tag.void,.tag.gone{background:var(--panel-3);color:var(--ink-2)}
+/* the slip bar: the builder at a glance, on every tab but the builder's own */
+.pb-slip{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--bg-2);border-top:1px solid var(--line-2);box-shadow:0 -10px 30px rgba(0,0,0,.45);padding-bottom:env(safe-area-inset-bottom)}
+.pb-slip-in{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 16px;max-width:1240px;margin:0 auto}
+.pb-slip-t{flex:1;min-width:0;font-weight:800;font-size:14px}
+.pb-slip-t small{display:block;font-weight:600;font-size:12px;color:var(--gold)}
+.pb-slip-t small:empty{display:none}
+.pb-slip .btn{padding:0 16px;flex:none}
+@media(min-width:641px){.pb-slip{left:auto;right:20px;bottom:20px;border:1px solid var(--line-2);border-radius:16px;max-width:460px}.pb-slip-in{padding:6px 8px 6px 16px}}
+body.has-slip main{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+/* the parlay card's window */
+body.pc-open{overflow:hidden}
+.pc-back{position:fixed;inset:0;z-index:80;background:rgba(5,9,14,.74);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:28px 16px}
+.pc-panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:20px;width:100%;max-width:560px;padding:16px 18px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.pc-panel:focus{outline:none}
+.pc-top{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.pc-top h2{margin:0;flex:1}
+.pc-top .btn{padding:0 16px}
+.pc-card{background:var(--panel);border:1px solid var(--line-2);border-radius:18px;overflow:hidden}
+.pc-head{background:var(--bg);padding:15px 18px 14px;border-bottom:1px solid var(--line-2)}
+.pc-mark{display:flex;align-items:center;gap:8px;font:900 12px var(--display);letter-spacing:.12em;color:var(--ink);margin:0 0 10px;flex-wrap:wrap}
+.pc-mark i{width:7px;height:7px;border-radius:50%;background:var(--ice);box-shadow:0 0 8px rgba(95,212,255,.7)}
+.pc-kick{margin-left:auto;font:800 10.5px var(--body);letter-spacing:.08em;padding:4px 10px;border-radius:999px;background:var(--ice-soft);color:var(--ice);white-space:nowrap}
+.pc-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pc-title{font:700 22px var(--display)}
+.pc-price{font:900 30px var(--display);color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc-sub{margin-top:4px;font-size:12.5px;color:var(--ink-2)}
+.pc-legs{list-style:none;margin:0;padding:2px 18px}
+.pc-legs li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.pc-legs li:first-child{border-top:0}
+.pc-n{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-2);font-size:11px;font-weight:800;color:var(--ink-2);display:flex;align-items:center;justify-content:center}
+.pc-who{display:block;font-weight:800;font-size:15px;overflow-wrap:anywhere}
+.pc-what{display:block;font-size:14px;overflow-wrap:anywhere}
+.pc-meta{display:block;font-size:12px;color:var(--muted)}
+.pc-lp{font:700 16px var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc-money{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 0}
+.pc-money div{flex:1 1 0;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.pc-money span{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.pc-money b{display:block;font:700 18px var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc-money .pc-win b{color:var(--lime)}
+.pc-chance{padding:12px 18px 0;font-size:13px;color:var(--ink-2)}
+.pc-chance b{color:var(--ink)}
+.pc-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;margin-top:14px;padding:10px 18px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.pc-foot b{color:var(--ink-2)}
+.pc-acts{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+.pc-acts .btn{flex:1 1 auto;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.pc-acts .pc-dkb{background:var(--bg);border-color:var(--line-2);color:var(--ink)}
+.pc-note{font-size:12.5px;color:var(--ink-2);margin:12px 0 0;line-height:1.55}
+.pc-note p{margin:0 0 4px}
+.pc-note ul{margin:2px 0 4px;padding-left:18px}
+.pc-note a{color:var(--ice);font-weight:700;display:inline-block;min-width:24px;padding:2px 2px;text-align:center}
+.pc-msg{min-height:1.4em;font-size:12.5px;color:var(--gold);margin:8px 0 0}
+.pc-own{font-size:12px;color:var(--ink-2);margin:2px 0 0}
+@media(max-width:640px){
+  .pc-back{padding:0;align-items:stretch;overflow:hidden}
+  .pc-panel{border-radius:0;border:0;max-width:none;height:100%;overflow-y:auto;padding:12px 14px calc(24px + env(safe-area-inset-bottom))}
+  .pc-acts .btn{flex:1 1 calc(50% - 4px)}
+  .pc-legs{padding:2px 14px} .pc-money{padding:6px 14px 0;gap:6px} .pc-chance{padding:11px 14px 0} .pc-foot{padding:10px 14px 12px} .pc-head{padding:14px 14px 13px}
+  .pc-money b{font-size:clamp(14px,4.2vw,17px)} .pc-price{font-size:26px} .pc-title{font-size:19px}
+  .pb-row{grid-template-columns:1fr}
+  .pb-games>summary .pb-k{width:auto}
+  /* a phone: each segmented choice shares its row equally (never a ragged second row), the bet types and the game tiles two a row */
+  .pb-seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr);width:100%}
+  .pb-seg button{padding:4px 3px;font-size:12px;line-height:1.2;white-space:nowrap;letter-spacing:-.01em}
+  .pb-seg button small{font-size:10.5px}
+  #pbKinds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .pb-box{padding:6px 12px;border-radius:14px;min-width:0}
+  .pb-box em{display:block;font-size:12px}
+  .pb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pb-gt{padding:6px 8px;gap:7px}
+  .pb-gt b{font-size:12.5px;letter-spacing:-.01em}
+  .pb-brow{grid-template-columns:1fr}
+  .pb-bk{padding-top:0}
+}
 </style>
 </head>
 <body>
@@ -159,11 +377,11 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
   </div>
   <nav id="tabs">
     <button data-tab="games" class="on">Games</button>
+    <button data-tab="parlays">Parlay Builder <span id="legCount" class="n" hidden>0</span></button>
     <button data-tab="standings">Standings</button>
     <button data-tab="ratings">Power Ratings</button>
     <button data-tab="playoff">Playoff</button>
     <button data-tab="players">Players</button>
-    <button data-tab="parlays">Parlays <span id="legCount" class="n" hidden>0</span></button>
     <button data-tab="record">Record</button>
   </nav>
 </header>
@@ -228,23 +446,43 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
   </section>
 
   <section id="tab-parlays" hidden>
-    <div class="card">
-      <h2>Parlay builder</h2>
-      <p class="small muted">Add moneylines, puck lines and totals with the + buttons below, or on any game card. Priced at DraftKings' numbers as ESPN showed them when the job last ran; the model's chance is its own view of the same legs, multiplied, one leg a game.</p>
-      <div class="legs" id="legs"></div>
-      <div class="strip" id="parlayTotals"></div>
-      <div class="toolbar">
-        <label>Stake $<input type="number" id="stake" value="10" min="1" step="1" style="width:80px"></label>
-        <button class="btn ice" id="saveParlay">Save parlay</button>
-        <button class="btn ghost" id="clearParlay">Clear</button>
+    <div class="card pb" id="pbPanel">
+      <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Suggested parlays</h2><span class="tag pb-slate" id="pbSlate"></span></div>
+      <p class="pb-sub">Choose what to build from: every level below uses only the bet types and games ticked here.</p>
+      <p class="pb-sub" id="pbRead"></p>
+      <div class="pb-ctl">
+        <div class="pb-row"><span class="pb-k" id="pbStakeK">Bet amount</span><div class="pb-v"><label class="pb-stake">$<input type="number" id="pbStake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="pbStakeK" autocomplete="off"></label><span class="pb-hint">Every level pays on this amount, and the builder below uses it too.</span></div></div>
+        <div class="pb-row"><span class="pb-k">Build from</span><div class="pb-v"><div class="seg pb-seg" id="pbMix" role="group" aria-label="Build from"><button type="button" data-mix="all" aria-pressed="false">All</button><button type="button" data-mix="teams" aria-pressed="false">Teams only</button><button type="button" data-mix="totals" aria-pressed="false">Totals only</button></div></div></div>
+        <div class="pb-row"><span class="pb-k">Bet types</span><div class="pb-v" id="pbKinds"><label class="pb-box"><input type="checkbox" data-k="ml" checked><span>Moneyline <em>straight up</em></span></label><label class="pb-box"><input type="checkbox" data-k="pl" checked><span>Puck line <em>±1.5</em></span></label><label class="pb-box"><input type="checkbox" data-k="ou" checked><span>Total <em>over/under</em></span></label></div></div>
+        <div class="pb-row" id="pbDayRow" hidden><span class="pb-k">Day</span><div class="pb-v"><div class="seg pb-seg" id="pbDay" role="group" aria-label="Day"></div></div></div>
+        <details class="pb-games" id="pbGames"><summary><span class="pb-k">Games</span><span class="pb-gsum" id="pbGsum"></span><span class="pb-tap">tap to choose</span></summary>
+          <div class="pb-gbar"><button type="button" class="btn ghost" data-gall="1">All</button><button type="button" class="btn ghost" data-gall="0">None</button><span class="pb-hint">Puck drops in your time zone; a game leaves the list when the puck drops.</span></div>
+          <div class="pb-grid" id="pbGrid"></div>
+        </details>
       </div>
+      <div class="pb-notes" id="pbNotes" hidden></div>
+      <div id="pbBody"></div>
+      <details class="pb-rules"><summary>How the levels are chosen</summary><p id="pbRules"></p></details>
     </div>
-    <div class="card">
-      <div class="toolbar"><h2 style="margin:0">The lines</h2><span class="small muted" id="plNote"></span></div>
-      <div class="scroll"><table class="tbl linesTable" id="plLines"></table></div>
+    <details class="card pb-pick" id="pbPick"><summary><h2>Pick your own legs</h2><small id="pbPickN"></small></summary>
+      <div id="plLines" class="pb-list"></div>
+    </details>
+    <div class="card" id="builder">
+      <h2 id="bTitle" tabindex="-1">Your parlay <small id="bHead"></small></h2>
+      <div class="pb-msg" id="bMsg" aria-live="polite"></div>
+      <div id="legs"></div>
+      <div class="strip pb-tot" id="parlayTotals"></div>
+      <p class="pb-bnotes" id="bNotes"></p>
+      <div class="pb-stakes"><span class="pb-k" id="stakeK">Stake</span><label class="pb-stake">$<input type="number" id="stake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="stakeK" autocomplete="off"></label><span id="chips" class="pb-v"><button type="button" class="btn ghost pb-chip" data-chip="1">$1</button><button type="button" class="btn ghost pb-chip" data-chip="5">$5</button><button type="button" class="btn ghost pb-chip" data-chip="10">$10</button><button type="button" class="btn ghost pb-chip" data-chip="20">$20</button><button type="button" class="btn ghost pb-chip" data-chip="50">$50</button><button type="button" class="btn ghost pb-chip" data-chip="100">$100</button></span></div>
+      <div class="pb-bacts">
+        <button type="button" class="btn ice" id="pFinish">Finish parlay</button>
+        <button type="button" class="btn ghost" id="saveParlay">Save on this device</button>
+        <button type="button" class="btn ghost" id="clearParlay">Clear all</button>
+      </div>
+      <p class="pb-bnotes" id="bHint" hidden>Add one more leg, on another game, to finish a parlay.</p>
     </div>
-    <div class="card">
-      <h2>Saved parlays</h2>
+    <div class="card" id="saved">
+      <h2>Your saved parlays</h2>
       <p class="small muted">Kept in this browser only. Graded from the scores the job publishes.</p>
       <div id="savedList"></div>
     </div>
@@ -256,22 +494,41 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
       <p class="small muted" id="recordNote"></p>
       <div class="strip" id="recordTotals"></div>
       <h3>By month</h3>
-      <table class="tbl" id="recMonth"></table>
+      <div class="scroll"><table class="tbl" id="recMonth"></table></div>
       <h3>By confidence</h3>
-      <table class="tbl" id="recBand"></table>
+      <div class="scroll"><table class="tbl" id="recBand"></table></div>
       <h3>How it was fitted</h3>
       <p class="small muted" id="fitNote"></p>
     </div>
   </section>
 </main>
+<div class="pb-slip" id="slip" hidden>
+  <div class="pb-slip-in"><div class="pb-slip-t"><span id="slipText"></span><small id="slipMsg" aria-live="polite"></small></div><button type="button" class="btn ice" id="slipOpen">Open builder</button></div>
+</div>
+<div class="pc-back" id="pcWin" hidden>
+  <div class="pc-panel" id="pcPanel" role="dialog" aria-modal="true" aria-labelledby="pcTitle" tabindex="-1">
+    <div class="pc-top"><h2 id="pcTitle">Your parlay card</h2><button type="button" class="btn ghost" id="pcClose">Close</button></div>
+    <div id="pcView"></div>
+    <div class="pc-acts">
+      <button type="button" class="btn ice" id="pcFile" hidden>Share or save to Photos</button>
+      <a class="btn pc-dkb" id="pcDk" href="https://sportsbook.draftkings.com/leagues/hockey/nhl" target="_blank" rel="noopener">Open in DraftKings</a>
+      <button type="button" class="btn ghost" id="pcLink" title="Send this parlay and its DraftKings link to someone">Share link</button>
+      <button type="button" class="btn ice" id="pcDown">Download image</button>
+      <button type="button" class="btn ghost" id="pcAgain" title="Clear the builder and start a new parlay">Start over</button>
+    </div>
+    <div class="pc-note" id="pcNote"></div>
+    <p class="pc-msg" id="pcMsg" role="status" aria-live="polite"></p>
+    <p class="pc-own" id="pcOwn">Yours alone: this card is not saved anywhere. Save on this device keeps it in your saved parlays.</p>
+  </div>
+</div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v6 · 2026-10-10';
+const APP_BUILD = 'nhl v7 · 2026-10-13';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
 let S = null;                 // the published state
-let P = load();               // the visitor's: legs, saved parlays, ui
+let P;                        // the visitor's (nhl_v1): the builder's legs, saved parlays, the stake, ui; loaded below
 let LIVE = {};                // scores read from ESPN in this browser, by game id
 let DAY = null;               // the day open on the Games tab
 const $ = id => document.getElementById(id);
@@ -292,31 +549,100 @@ const etToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_
    frozen call was made before has passed and the start has moved less than half a day later */
 const hasStarted = g => g.state !== 'pre' || Date.parse(g.start) <= Date.now()
   || !!(g.frozen && g.before && Date.parse(g.before) <= Date.now() && Date.parse(g.start) - Date.parse(g.before) < 12 * 3600000);
-const hhmm = iso => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+/* on the page, every clock is the visitor's own and says its zone ("3:30 PM PDT"); the parlay card, its
+   image and its Share text, which go to other people, are in Eastern time and say ET */
+const hhmm = iso => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+const dayClock = iso => new Date(iso).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+const dateClock = iso => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 const ago = iso => (Date.parse(S.published) - Date.parse(iso)) / 3600000;      // hours the source is older than the publish
 const STALE_H = 12;                       // an injury report older than this at publish time is said to be stale (the job runs five times a day)
 
-function load() { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); return Object.assign({ legs: [], saved: [], ui: {} }, p); } catch (e) { return { legs: [], saved: [], ui: {} }; } }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} }
+/* ---------- the visitor's store: nhl_v1, in this browser alone ----------
+   The builder's legs, the parlays saved on this device, the stake (the panel's Bet amount and the
+   builder's stake, one number) and the choices (ui: the tab, the panel's picks). load() cleans for use
+   and never throws on any JSON: a field it does not know is kept, a saved parlay it cannot draw is
+   skipped when drawing, never dropped. save() reads the key again first and keeps every saved parlay
+   another tab of this site saved meanwhile (merged by id), so two tabs never write an older list over
+   each other, and a tab follows the other's change (the storage event) */
+const SIDES = { ml: ['home', 'away'], pl: ['home', 'away'], ou: ['over', 'under'] };
+const KINDS = ['ml', 'pl', 'ou'];
+const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
+/* an amount as typed: $, thousands commas and spaces allowed; a positive number is held to $1-$100,000 in cents, anything else is no amount */
+function stakeRead(v) {
+  if (typeof v === 'string') { const s = v.replace(/[$,\s]/g, ''); if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return null; v = +s; }
+  if (typeof v !== 'number' || !isFinite(v) || v <= 0) return null;
+  return Math.round(Math.min(100000, Math.max(1, v)) * 100) / 100;
+}
+/* the builder's legs: a game, a side and a kind that go together, one leg a game (the last wins) */
+function cleanLegs(a) {
+  if (!Array.isArray(a)) return [];
+  const by = new Map();
+  for (const l of a) {
+    if (!isObj(l) || typeof l.game !== 'string' || !SIDES[l.kind] || !SIDES[l.kind].includes(l.side)) continue;
+    by.delete(l.game); by.set(l.game, l);
+  }
+  return [...by.values()];
+}
+/* the panel's picks: the three bet types (ticked unless stored unticked), the games unticked, the games fold, the day */
+function cleanPb(u) {
+  const o = isObj(u) ? Object.assign({}, u) : {};
+  const k = isObj(o.k) ? o.k : {};
+  o.k = { ml: k.ml !== false, pl: k.pl !== false, ou: k.ou !== false };
+  o.off = Array.isArray(o.off) ? [...new Set(o.off.map(String).filter(x => /^\d{4,12}$/.test(x)))].slice(-64) : [];
+  if (typeof o.gx !== 'boolean') delete o.gx;
+  if (!(typeof o.day === 'string' && (o.day === 'both' || /^\d{4}-\d{2}-\d{2}$/.test(o.day)))) delete o.day;
+  return o;
+}
+function readStore() { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); return isObj(p) ? p : {}; } catch (e) { return {}; } }
+function load() {
+  const raw = readStore(), p = Object.assign({}, raw);
+  p.legs = cleanLegs(raw.legs);
+  p.saved = Array.isArray(raw.saved) ? raw.saved.slice() : [];
+  p.ui = isObj(raw.ui) ? Object.assign({}, raw.ui) : {};
+  p.ui.pb = cleanPb(p.ui.pb);
+  p.stake = stakeRead(raw.stake) || 20;
+  return p;
+}
+const DELETED = new Set();     // saved parlays deleted in this tab, never merged back from another's copy
+function save() {
+  try {
+    const cur = readStore(), have = new Set(P.saved.filter(isObj).map(s => s.id));
+    const theirs = Array.isArray(cur.saved) ? cur.saved.filter(s => isObj(s) && s.id && !have.has(s.id) && !DELETED.has(s.id)) : [];
+    if (theirs.length) P.saved = P.saved.concat(theirs).sort((a, b) => { const x = String(isObj(a) && a.at || ''), y = String(isObj(b) && b.at || ''); return x < y ? -1 : x > y ? 1 : 0; });
+    localStorage.setItem(KEY, JSON.stringify(Object.assign({}, cur, P)));
+  } catch (e) {}
+}
+P = load();
 
 const T = id => S.teams[id] || { abbr: id, name: id, short: id };
 const gameById = () => { const m = {}; for (const g of S.games) m[g.id] = g; return m; };
 const rec = t => `${t.w}-${t.l}-${t.otl}`;
-function when(g) { return new Date(g.start).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
-function timeOf(g) { return new Date(g.start).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+function when(g) { return new Date(g.start).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }); }
+function timeOf(g) { return hhmm(g.start); }
 function teamCell(id) { const t = T(id); return `<span class="tw">${t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : ''}<span>${esc(t.short)}</span></span>`; }
 const modelMargin = g => g.mu === 0 ? 'even' : (g.mu > 0 ? `${T(g.home).abbr} by ${Math.abs(g.mu).toFixed(1)}` : `${T(g.away).abbr} by ${Math.abs(g.mu).toFixed(1)}`);
 
 /* ---------- tabs ---------- */
+/* a tab by name; #parlay, the NFL site's name for the builder, opens it too. On a phone the bar scrolls
+   sideways, and the chosen tab's button is brought into it by scrolling the bar, never the page */
+const tabName = n => n === 'parlay' ? 'parlays' : n;
+function navTo(b) {
+  const nav = $('tabs'); if (!b || !nav) return;
+  const left = Math.max(0, b.offsetLeft - (nav.clientWidth - b.offsetWidth) / 2);
+  if (typeof nav.scrollTo === 'function') nav.scrollTo({ left, behavior: 'auto' }); else nav.scrollLeft = left;
+}
 function showTab(name) {
-  for (const b of $('tabs').querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === name);
+  name = tabName(name); if (!$('tab-' + name)) name = 'games';
+  for (const b of $('tabs').querySelectorAll('button')) { const on = b.dataset.tab === name; b.classList.toggle('on', on); if (on) { b.setAttribute('aria-current', 'page'); navTo(b); } else b.removeAttribute('aria-current'); }
   for (const s of document.querySelectorAll('main > section')) s.hidden = s.id !== 'tab-' + name;
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   P.ui.tab = name; save();
+  if (name === 'games') SHOWN = new Set();
   ({ games: renderGames, standings: renderStandings, ratings: renderRatings, playoff: renderPlayoff, players: renderPlayers, parlays: renderParlays, record: renderRecord })[name]();
+  updateSlip();
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
-window.addEventListener('hashchange', () => { const n = location.hash.slice(1); if (n && $('tab-' + n)) showTab(n); });
+window.addEventListener('hashchange', () => { const n = tabName(location.hash.slice(1)); if (n && $('tab-' + n)) showTab(n); });
 
 /* ---------- Games: a day strip from yesterday to ten days out, or the season's first days before it opens ---------- */
 function dayStrip() {
@@ -342,14 +668,12 @@ function dayStrip() {
    be read on the last runs, DailyFaceoff's goalies that could not be read */
 function sourceNote() {
   const PL = S.players, msgs = [];
-  if (PL && PL.injuries && PL.injuries.pulled && ago(PL.injuries.pulled) > STALE_H) msgs.push(`<b>Injury report from ${esc(new Date(PL.injuries.pulled).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}.</b> ESPN's report could not be read since; the lineups below leave out who it had out then.`);
+  if (PL && PL.injuries && PL.injuries.pulled && ago(PL.injuries.pulled) > STALE_H) msgs.push(`<b>Injury report from ${esc(dateClock(PL.injuries.pulled))}.</b> ESPN's report could not be read since; the lineups below leave out who it had out then.`);
   if (PL && PL.injuries === null && PL.teams) msgs.push('<b>No injury report.</b> The lineups are who dressed last, with nobody taken out.');
   if (PL && PL.starters && PL.starters.ok === false && S.games.some(g => g.date === etToday() && !hasStarted(g))) msgs.push(`<b>No announced goalies this run</b> (${esc(PL.starters.why || 'DailyFaceoff could not be read')}): each goalie is the model's own choice, said on the card.`);
   $('sourceNote').hidden = !msgs.length; $('sourceNote').innerHTML = msgs.join('<br>');
 }
 $('days').addEventListener('click', e => { const b = e.target.closest('button[data-day]'); if (!b) return; DAY = b.dataset.day; renderGames(); });
-
-function hasLeg(g, side, kind) { return P.legs.some(l => l.game === g.id && l.side === side && l.kind === kind); }
 
 function renderGames() {
   dayStrip();
@@ -379,10 +703,10 @@ function gameCard(g) {
     if (line.total !== null && line.total !== undefined) tot = `${line.total} · o ${fmtOdds(line.overOdds)} · u ${fmtOdds(line.underOdds)}`;
   }
   /* the calls: a side on the moneyline, the puck line or the total wherever the model's chance beats the book's by the edge */
-  const chips = [];
-  if (g.mlPick) chips.push(`<span class="tag pick">ML ${esc(T(g[g.mlPick]).abbr)} · +${Math.round(g.mlEdge[g.mlPick] * 100)}</span>`);
-  if (g.plPick) chips.push(`<span class="tag pick">${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? line.homeLine : -line.homeLine)} · +${Math.round(g.plEdge[g.plPick] * 100)}</span>`);
-  if (g.ouPick) chips.push(`<span class="tag pick">${g.ouPick} ${line.total} · +${Math.round(g.ouEdge[g.ouPick] * 100)}</span>`);
+  const chips = [], edgeT = e => `the model's chance is ${Math.round(e * 100)} points above the chance DraftKings' price implies`;
+  if (g.mlPick) chips.push(`<span class="tag pick" title="${edgeT(g.mlEdge[g.mlPick])}">ML ${esc(T(g[g.mlPick]).abbr)} · edge +${Math.round(g.mlEdge[g.mlPick] * 100)}</span>`);
+  if (g.plPick) chips.push(`<span class="tag pick" title="${edgeT(g.plEdge[g.plPick])}">${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? line.homeLine : -line.homeLine)} · edge +${Math.round(g.plEdge[g.plPick] * 100)}</span>`);
+  if (g.ouPick) chips.push(`<span class="tag pick" title="${edgeT(g.ouEdge[g.ouPick])}">${g.ouPick} ${line.total} · edge +${Math.round(g.ouEdge[g.ouPick] * 100)}</span>`);
   let calls = chips.length ? chips.join(' ') : (line ? '<span class="tag pass">no edge</span>' : '<span class="muted">no line yet</span>');
   let result = '';
   if (g.result) {
@@ -393,7 +717,8 @@ function gameCard(g) {
     if (!g.frozen) result += ` <span class="tag replay" title="this game was over before the job first ran; the call is the replay's">replayed</span>`;
   }
   const started = final || state === 'live' || hasStarted(g);
-  const legBtn = (sd, kind) => legButton(g, sd, kind, line, started);
+  /* a game still to come with a line DraftKings listed at the last run: its bets as buttons, under the model and the call */
+  const bets = !started && !!line && freshLine(g);
   /* a live score is the job's, as of its run, unless this browser read ESPN since; a game the state
      has as to come whose puck drop has passed says so instead of a time */
   let detail = '';
@@ -408,14 +733,15 @@ function gameCard(g) {
     ${side(g.home, g.hrec, g.pHome, hs, g.pick === 'home', homeWon, awayWon)}
     <div class="prob" style="--ac:${esc(ta.color || '#888')};--hc:${esc(th.color || '#888')}"><i style="width:${Math.round((1 - g.pHome) * 100)}%"></i><i class="h" style="width:${Math.round(g.pHome * 100)}%"></i></div>
     <div class="lines">
-      <div><div class="k">Model</div><div class="v">${modelMargin(g)} · total ${g.xt.toFixed(1)} · OT ${pct(g.tie)}</div></div>
-      <div><div class="k">Moneyline</div><div class="v">${ml}</div></div>
+      <div${bets ? ' style="grid-column:1/-1"' : ''}><div class="k">Model</div><div class="v">${modelMargin(g)} · total ${g.xt.toFixed(1)} · OT ${pct(g.tie)}</div></div>
+      ${bets ? '' : `<div><div class="k">Moneyline</div><div class="v">${ml}</div></div>
       <div><div class="k">Puck line</div><div class="v">${mkt}</div></div>
-      <div><div class="k">Total</div><div class="v">${tot}</div></div>
+      <div><div class="k">Total</div><div class="v">${tot}</div></div>`}
+      ${!started && line && !bets ? `<div class="pb-stale">line from ${esc(hhmm(line.at))}: not on DraftKings at the last run</div>` : ''}
       <div style="grid-column:1/-1"><div class="k">${g.result ? 'Result' : 'The call'}</div><div class="v chips">${g.result ? result : calls}</div></div>
     </div>
+    ${bets ? betBlock(g) : ''}
     ${lineupBlock(g)}
-    ${g.result || started ? '' : `<div class="legbtns"><span class="k">Add to parlay</span>${legBtn('away', 'ml')}${legBtn('home', 'ml')}${legBtn('away', 'pl')}${legBtn('home', 'pl')}${legBtn('over', 'ou')}${legBtn('under', 'ou')}</div>`}
   </div>`;
 }
 /* the player model's side of a card: each goalie and how he was chosen, who is out, and the two models' chances when the call is one of them */
@@ -424,41 +750,11 @@ function lineupBlock(g) {
   const boxNote = t => t.lastBox && t.lastFinal && t.lastFinal > t.lastBox ? `<div class="muted small">lineup from ${esc(t.lastBox)}: the box score of ${esc(t.lastFinal)} not read yet</div>` : '';
   const side = (code, t) => `<div><div class="k">${esc(T(code).abbr)}</div>${t.goalie ? `<div>${esc(t.goalie.name)} <span class="muted">in goal · ${esc(t.goalie.how)}${t.goalie.debut ? ' · first NHL start' : ''}</span></div>` : '<div class="muted">goalie unknown</div>'}${t.out && t.out.length ? `<div><span class="who">out</span> ${t.out.map(o => esc(o.name)).join(', ')}</div>` : ''}${t.dtd && t.dtd.length ? `<div><span class="muted">day to day</span> ${t.dtd.map(o => esc(o.name)).join(', ')}</div>` : ''}${boxNote(t)}</div>`;
   const both = g.elo ? `<div style="grid-column:1/-1" class="muted">Players ${pct(pm.pHome)} · ${pm.xt.toFixed(1)} goals; team Elo ${pct(g.elo.pHome)} · ${g.elo.xt.toFixed(1)}. The call is the ${g.by === 'players' ? 'player model' : 'team Elo'}.</div>` : `<div style="grid-column:1/-1" class="muted">Player model ${pct(pm.pHome)} · ${pm.xt.toFixed(1)} goals, shown beside the call; the team Elo makes it.</div>`;
-  const inj = pm.inj ? `<div style="grid-column:1/-1" class="muted small">Injury report of ${esc(new Date(pm.inj).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}${hasStarted(g) ? ', as the call was made' : ''}.</div>` : '';
+  const inj = pm.inj ? `<div style="grid-column:1/-1" class="muted small">Injury report of ${esc(dateClock(pm.inj))}${hasStarted(g) ? ', as the call was made' : ''}.</div>` : '';
   return `<div class="lineup">${side(g.away, pm.away)}${side(g.home, pm.home)}${both}${inj}</div>`;
 }
-/* the price, the number and the model's chance for one bet on one game: null when the book has no number for it */
-function betOf(g, side, kind) {
-  const line = g.line; if (!line) return null;
-  if (kind === 'ml') { const odds = side === 'home' ? line.homeML : line.awayML; if (odds === null || odds === undefined) return null; return { odds, line: null, p: side === 'home' ? g.pHome : 1 - g.pHome, label: `${T(g[side]).abbr} ML` }; }
-  if (kind === 'pl') { if (!g.cover || line.homeLine === null || line.homeLine === undefined) return null; const odds = side === 'home' ? line.homeSpreadOdds : line.awaySpreadOdds; if (odds === null || odds === undefined) return null; const ln = side === 'home' ? line.homeLine : -line.homeLine; return { odds, line: ln, p: g.cover[side], label: `${T(g[side]).abbr} ${fmtLine(ln)}` }; }
-  if (!g.ou || line.total === null || line.total === undefined) return null;
-  const odds = side === 'over' ? line.overOdds : line.underOdds; if (odds === null || odds === undefined) return null;
-  return { odds, line: line.total, p: g.ou[side], label: `${side} ${line.total}` };
-}
-function legButton(g, sd, kind, line, started) {
-  if (!line || started) return '';
-  const b = betOf(g, sd, kind); if (!b) return '';
-  const on = hasLeg(g, sd, kind);
-  return `<button class="btn tiny ${on ? 'on' : ''}" data-leg="${g.id}|${sd}|${kind}" title="${on ? 'in the parlay: click to take it out' : 'add to the parlay'}">${on ? '✓' : '+'} ${esc(b.label)} ${fmtOdds(b.odds)}</button>`;
-}
-/* a leg button anywhere on the page adds or removes that bet */
-document.addEventListener('click', e => {
-  const b = e.target.closest('button[data-leg]'); if (!b) return;
-  const [gid, side, kind] = b.dataset.leg.split('|'); const g = gameById()[gid];
-  const i = P.legs.findIndex(l => l.game === gid && l.side === side && l.kind === kind);
-  if (i >= 0) P.legs.splice(i, 1);
-  else {
-    if (!g || hasStarted(g)) { if (!$('tab-games').hidden) renderGames(); if (!$('tab-parlays').hidden) renderParlays(); return; }   // a page left open past puck drop: no bet on a started game
-    P.legs = P.legs.filter(l => l.game !== gid);         // one leg a game
-    const bet = betOf(g, side, kind); if (!bet) return;
-    P.legs.push({ game: gid, side, kind, odds: bet.odds, line: bet.line, p: bet.p, label: `${T(g.away).abbr} @ ${T(g.home).abbr}`, text: bet.label, date: g.date });
-  }
-  save(); updateLegCount();
-  if (!$('tab-games').hidden) renderGames();
-  if (!$('tab-parlays').hidden) renderParlays();
-});
-function updateLegCount() { const n = P.legs.length; $('legCount').hidden = !n; $('legCount').textContent = n; }
+/* the tab bar counts the builder's legs still on offer */
+function updateLegCount() { const n = S ? builderLegs(false).length : P.legs.length; $('legCount').hidden = !n; $('legCount').textContent = n; }
 
 /* live scores, read from ESPN in this browser: on the button, and once on opening when the open day
    has a game under way that the job has no final for */
@@ -526,7 +822,7 @@ function renderPlayoff() {
     : `The league's bracket: the top three of each division and two wild cards a conference, the stronger division winner against the second wild card, second against third within each division. Ties by points are broken by regulation wins, then wins past the shootout, then goal difference.`;
   const score = (a, b) => { const s = find(a, b); if (!s) return null; const wa = s.wins[a], wb = s.wins[b]; return { s, text: s.winner ? `${T(s.winner).abbr} won ${Math.max(wa, wb)}-${Math.min(wa, wb)}` : wa === wb ? `tied ${wa}-${wb}` : `${T(wa > wb ? a : b).abbr} leads ${Math.max(wa, wb)}-${Math.min(wa, wb)}` }; };
   const cell = t => `<span class="${lost.has(t) ? 'out' : ''}">${teamCell(t)}</span>`;
-  const serie = ([a, b], seedA, seedB) => { const sc = score(a, b); return `<div class="series ${sc && sc.s.winner ? 'done' : ''}"><span class="tw"><span class="seed">${seedA}</span>${cell(a)}<span class="muted small">${T(a).pts} pts</span></span>${sc ? `<span class="score">${esc(sc.text)}</span>` : '<span class="muted small">vs</span>'}<span class="tw"><span class="muted small">${T(b).pts} pts</span>${cell(b)}<span class="seed">${seedB}</span></span></div>`; };
+  const serie = ([a, b], seedA, seedB) => { const sc = score(a, b); return `<div class="series ${sc && sc.s.winner ? 'done' : ''}"><span class="tw"><span class="seed">${seedA}</span>${cell(a)}<span class="muted small pts">${T(a).pts} pts</span></span>${sc ? `<span class="score">${esc(sc.text)}</span>` : '<span class="muted small">vs</span>'}<span class="tw"><span class="muted small pts">${T(b).pts} pts</span>${cell(b)}<span class="seed">${seedB}</span></span></div>`; };
   const later = r => ser.filter(s => s.round === r).map(s => serie([s.a, s.b], 'R' + r, '')).join('');
   $('bracket').innerHTML = ['East', 'West'].map(conf => {
     const f = PO.bracket[conf]; const [d1, d2] = Object.keys(f.divs);
@@ -561,7 +857,7 @@ function renderPlayers() {
   for (const b of $('plKind').querySelectorAll('button')) b.classList.toggle('on', b.dataset.kind === kind);
   if ($('plTeam').options.length === 1) $('plTeam').innerHTML += Object.keys(S.teams).sort().map(c => `<option value="${c}">${esc(T(c).short)}</option>`).join('');
   const R = PL.report; const w = R.walk || {}; const ws = Object.keys(w).sort();
-  const I = PL.injuries, ST = PL.starters, when2 = iso => iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+  const I = PL.injuries, ST = PL.starters, when2 = iso => iso ? dateClock(iso) : '—';
   $('plSources').innerHTML = (I === undefined ? '' : I ? `ESPN's injury report of ${esc(when2(I.pulled))}: ${I.rows} players listed, ${I.out} rated players out (out, injured reserve or suspended; day to day stays in).` : 'No injury report has been read.') + ' ' +
     (ST ? (ST.ok === false ? `DailyFaceoff's goalies could not be read (${esc(ST.why || '')}); the goalie is the model's choice: the most starts in the club's last ten games, the other one on the second night of a back to back.` : `DailyFaceoff, read ${esc(when2(ST.pulled))}: ${ST.games} games from today with goalies named, ${ST.used} taken; otherwise the most starts in the club's last ten games, the other one on the second night of a back to back.`) : '');
   $('plModelNote').innerHTML = `Every skater carries an offence and a defence rating, every goalie a save rating, in goals a game for a player on the ice all game (shown ×100). A club is its lineup weighted by ice time plus its goalie. Fitted on ${R.fitSeasons}; held out ${R.holdout - 1}-${String(R.holdout).slice(2)}: player model ${pct1(R.holdoutKnown.acc)} of winners (log loss ${R.holdoutKnown.logloss}) against the team Elo's ${pct1(R.holdoutTeam.acc)} (${R.holdoutTeam.logloss}). Walk-forward, each season called cold: ${ws.map(s => `${s - 1}-${String(s).slice(2)} ${w[s].player.logloss} vs ${w[s].team.logloss}`).join('; ')}. <b>${PL.use ? 'The site\'s call is the player model\'s.' : 'The team Elo keeps the call until the player model beats it cold.'}</b> Ratings as of ${esc(PL.asOf)}.`;
@@ -579,68 +875,964 @@ function renderPlayers() {
   $('plTeams').innerHTML = '<thead><tr><th class="n">#</th><th>Club</th><th class="n">Strength</th><th class="n">Attack</th><th class="n">Defence</th><th>Goalie</th><th>Out</th></tr></thead><tbody>' + ts.map(([c, t], i) => `<tr><td class="n">${i + 1}</td><td>${teamCell(c)}</td><td class="n"><b>${x100(t.strength)}</b></td><td class="n">${x100(t.offence)}</td><td class="n">${x100(t.defence)}</td><td>${t.goalie ? `${esc(t.goalie.name)} <span class="muted small">${x100(t.goalie.gk)} · ${esc(t.goalie.how)}</span>` : '—'}</td><td class="small">${(t.out || []).map(o => esc(o.name)).join(', ') || '<span class="muted">nobody</span>'}</td></tr>`).join('') + '</tbody>';
 }
 
-/* ---------- Parlays ---------- */
-function priceLegs(legs) {
-  if (!legs.length) return null;
-  const d = legs.reduce((a, l) => a * dec(l.odds), 1), p = legs.reduce((a, l) => a * l.p, 1), imp = legs.reduce((a, l) => a * implied(l.odds), 1);
-  return { dec: d, am: toAm(d), p, imp, ev: p * (d - 1) - (1 - p) };
+/* ---------- a bet, as the page names it: the state's own numbers, nothing recomputed ----------
+   A leg is one side of one market on one game: the moneyline (home or away), the puck line (home or
+   away at DraftKings' number) or the total (over or under). Its chance is the model's as published
+   (pHome, cover, ou), its edge the state's own (mlEdge, plEdge, ouEdge: the chance less the chance
+   DraftKings' price implies, the margin left in), its price DraftKings' and `other` the other side's
+   price at the same number. Its fair chance is DraftKings' with the margin taken out: the two sides'
+   implied chances, each over their sum; with the other side's price missing it has none.
+   A line is offered only while it is fresh: read at the job's last run (line.at is S.published), so a
+   number DraftKings has dropped is never put on a slip. One leg a game, everywhere: two legs of one
+   game would be a same-game parlay, which DraftKings prices on its own terms and this page cannot. */
+const PB_TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12], ['xtrm', 'Extreme', 5, 0.05]];
+const PB_PMIN = 0.45, PB_PMAX = 0.97;   // a leg the model gives 45% to 97%
+const FAR_OFF = 0.15;                   // 15 points or more above DraftKings' fair chance: more likely the model's error than the book's
+const SITE = 'demon-x13.github.io/nhl-hub';
+const DK_SLIP = 'https://sportsbook.draftkings.com/?outcomes=', DK_EVENT = 'https://sportsbook.draftkings.com/event/', DK_NHL = 'https://sportsbook.draftkings.com/leagues/hockey/nhl';
+const ETZ = { timeZone: 'America/New_York' };
+const money = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const stakeShort = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(+v) ? 0 : 2, maximumFractionDigits: 2 });
+const whole = p => Math.round(p * 100) + '%';
+const cents = x => Math.round(x * 100) / 100;
+const etDay = iso => new Date(iso).toLocaleDateString('en-US', Object.assign({ weekday: 'short', month: 'short', day: 'numeric' }, ETZ));
+const etRead = iso => new Date(iso).toLocaleString('en-US', Object.assign({ weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, ETZ)) + ' ET';
+const etWhen = iso => new Date(iso).toLocaleString('en-US', Object.assign({ weekday: 'short', hour: 'numeric', minute: '2-digit' }, ETZ)) + ' ET';
+const etDate = iso => new Intl.DateTimeFormat('en-CA', Object.assign({ year: 'numeric', month: '2-digit', day: '2-digit' }, ETZ)).format(new Date(iso));
+const dayText = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+const bookKey = s => String(s || '').toLowerCase().replace(/\s+/g, '');
+const isDK = line => !!line && bookKey(line.book) === 'draftkings';
+const bookName = line => isDK(line) ? 'DraftKings' : (line && line.book ? String(line.book) : 'the book');
+const poss = name => /s$/.test(name) ? name + "'" : name + "'s";
+/* fresh: DraftKings listed it at the job's last run */
+const freshLine = g => !!(g && g.line && g.line.at && S && S.published) && Math.floor(Date.parse(g.line.at) / 60000) === Math.floor(Date.parse(S.published) / 60000);
+const matchup = g => `${T(g.away).abbr} @ ${T(g.home).abbr}`;
+const strCmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+const gameCmp = (a, b) => (Date.parse(a.start) - Date.parse(b.start)) || strCmp(matchup(a), matchup(b));
+/* the builder's order, the levels', the card's and the DraftKings link's: puck drop, then the matchup, then the kind */
+const legCmp = (a, b) => (Date.parse(a.start) - Date.parse(b.start)) || strCmp(a.mu, b.mu) || (KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
+const priced = v => v !== null && v !== undefined && isFinite(v) && v !== 0;
+const descOf = (kind, side, num, g) => kind === 'ml' ? `${T(g[side]).short} to win` : kind === 'pl' ? `${T(g[side]).short} ${fmtLine(num)}` : `${side === 'over' ? 'Over' : 'Under'} ${num}`;
+function legOf(g, side, kind) {
+  const L = g && g.line; if (!L || !SIDES[kind] || !SIDES[kind].includes(side)) return null;
+  let price, oth, num = null, p, edge, push = 0, pick;
+  if (kind === 'ml') {
+    price = side === 'home' ? L.homeML : L.awayML; oth = side === 'home' ? L.awayML : L.homeML;
+    p = side === 'home' ? g.pHome : 1 - g.pHome; edge = g.mlEdge ? g.mlEdge[side] : null; pick = g.mlPick;
+  } else if (kind === 'pl') {
+    if (!g.cover || L.homeLine === null || L.homeLine === undefined) return null;
+    price = side === 'home' ? L.homeSpreadOdds : L.awaySpreadOdds; oth = side === 'home' ? L.awaySpreadOdds : L.homeSpreadOdds;
+    num = side === 'home' ? L.homeLine : -L.homeLine; p = g.cover[side]; push = g.cover.push || 0; edge = g.plEdge ? g.plEdge[side] : null; pick = g.plPick;
+  } else {
+    if (!g.ou || L.total === null || L.total === undefined) return null;
+    price = side === 'over' ? L.overOdds : L.underOdds; oth = side === 'over' ? L.underOdds : L.overOdds;
+    num = L.total; p = g.ou[side]; push = g.ou.push || 0; edge = g.ouEdge ? g.ouEdge[side] : null; pick = g.ouPick;
+  }
+  if (!priced(price) || typeof p !== 'number') return null;
+  const other = priced(oth) ? oth : null;
+  const fair = other === null ? null : implied(price) / (implied(price) + implied(other));
+  return {
+    id: `${g.id}|${side}|${kind}`, game: g.id, side, kind, g, price, other, num, p, edge: typeof edge === 'number' ? edge : null, push, pick: pick || null, fair, dec: dec(price),
+    who: kind === 'ou' ? `${T(g.away).short} @ ${T(g.home).short}` : T(g[side]).short,
+    bet: kind === 'ml' ? 'To win' : kind === 'pl' ? `Puck line ${fmtLine(num)}` : `${side === 'over' ? 'Over' : 'Under'} ${num} goals`,
+    desc: descOf(kind, side, num, g), start: g.start, mu: matchup(g),
+  };
 }
+/* a leg's name for a screen reader, its game in it: "Sabres @ Canadiens under 6.5", "Red Wings to win, Devils @ Red Wings" */
+const legName = L => L.kind === 'ou' ? `${T(L.g.away).short} @ ${T(L.g.home).short} ${L.side} ${L.num}` : `${L.desc}, ${T(L.g.away).short} @ ${T(L.g.home).short}`;
+/* far off the market: the model 15 points or more above DraftKings' fair chance on that side */
+const legFarOff = L => !!L && L.fair !== null && L.p - L.fair >= FAR_OFF;
+const farText = L => `model ${whole(L.p)} · market ${whole(L.fair)}: far off the market`;
+/* a leg for the levels: both of DraftKings' prices, the model 45% to 97%, at or above the price (the
+   margin left in), no push (a whole-number line never goes in a level), and not far off the market.
+   'far' when only the last fails, so the panel can count it */
+function pbQual(L) {
+  if (!L || L.other === null || L.fair === null || L.edge === null) return null;
+  if (!(L.p >= PB_PMIN && L.p < PB_PMAX) || !(L.edge >= 0) || L.push !== 0) return null;
+  return L.p - L.fair >= FAR_OFF ? 'far' : 'ok';
+}
+/* a parlay of one leg a game: every leg's chance multiplied, DraftKings' prices multiplied (how it pays
+   a parlay of different games), the fair chances multiplied (none when a leg has none), all in leg order */
+function quote(legs) {
+  if (!legs.length) return null;
+  let p = 1, d = 1, f = 1;
+  for (const L of legs) { p *= L.p; d *= L.dec; f = f === null || L.fair === null ? null : f * L.fair; }
+  const stake = pbStake(), pays = cents(stake * d);
+  return { n: legs.length, p, dec: d, am: toAm(d), imp: 1 / d, fair: f, stake, pays, profit: cents(pays - stake) };
+}
+const pbStake = () => stakeRead(P.stake) || 20;
+const confOf = c => c >= 0.7 ? 'High' : c >= 0.45 ? 'Medium' : 'Low';
+const lockSvg = on => `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0${on ? 'v2' : ''}" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+
+/* ---------- the Parlay Builder's suggested parlays (#pbPanel) ----------
+   The slate is one Eastern day: today or tomorrow by the visitor's clock (each offered while it has a
+   game still to come), Both days when both have a fresh line, else the next day with a game to come.
+   From the bet types and games ticked, four levels, each on its own: Safe, the likeliest pair; Medium,
+   Aggressive and Extreme, the 3-, 4- and 5-leg parlay with the best return (chance times payout) that
+   lands at least 25%, 12% and 5% of the time by the model's chance, or the likeliest of that size
+   where none does. A leg 5 points (S.edge) or more above DraftKings' price is the model's call, the one
+   the Games cards show; a leg above it by less is thin and is used only where the calls cannot make a
+   level, the fewest first. The search is exact: branch and bound over every parlay of the level's size,
+   one leg a game, pruning only what cannot reach the floor or the best already found, and every number
+   is worked in leg order, the builder's, so Add to builder shows exactly what the level did */
+let PB_CUR = null;                          // the panel as last drawn: { sig, sl, pool, levels, why }
+const PB_CACHE = new Map();                 // the default levels by signature (the picks, the slate, the publish)
+let PB_VIEW = { sig: null, t: {} };         // New legs and locks, per level, while the page is open; never saved
+/* the lines said when the clock changes the panel under the visitor: the slate moved on (every game of the
+   day shown has dropped the puck), or a level rebuilt because one of its own games dropped the puck. Each
+   holds while the panel is on the slate it was said on and its day is still today (Eastern), and goes at
+   the visitor's next pick; the days last drawn tell the first */
+let PB_NOTICE = null, PB_DROP = null, PB_DATES = null;
+const andList = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join('');
+const pbQuiet = () => { PB_NOTICE = PB_DROP = null; };
+const pbUi = () => (P.ui.pb = isObj(P.ui.pb) && isObj(P.ui.pb.k) && Array.isArray(P.ui.pb.off) ? P.ui.pb : cleanPb(P.ui.pb));
+function pbSlate() {
+  const today = etToday(), tom = addDays(today, 1);
+  const come = S.games.filter(g => !hasStarted(g));
+  const on = d => come.filter(g => g.date === d);
+  let days = [today, tom].filter(d => on(d).length);
+  if (!days.length) { const nx = come.map(g => g.date).filter(d => d >= today).sort()[0]; if (nx) days = [nx]; }
+  const lined = d => on(d).some(freshLine);
+  const both = days.length === 2 && days.every(lined);
+  const ui = pbUi();
+  let pick = ui.day === 'both' ? (both ? 'both' : null) : (days.includes(ui.day) ? ui.day : null);
+  if (!pick) pick = days.find(lined) || days[0] || null;
+  const dates = pick === 'both' ? days.slice() : pick ? [pick] : [];
+  return { today, tom, days, both, pick, dates, on, lined, come, games: come.filter(g => dates.includes(g.date)).sort(gameCmp) };
+}
+const slateText = sl => sl.dates.length > 1 ? `${dayText(sl.dates[0])} – ${dayText(sl.dates[sl.dates.length - 1])}` : sl.dates.length ? dayText(sl.dates[0]) : '';
+function pbPool(sl, ui) {
+  const kinds = KINDS.filter(k => ui.k[k]), off = new Set(ui.off);
+  const tickable = sl.games.filter(freshLine), ticked = tickable.filter(g => !off.has(g.id));
+  const scan = (gs, ks) => { const ok = [], far = []; for (const g of gs) for (const k of ks) for (const s of SIDES[k]) { const L = legOf(g, s, k), q = pbQual(L); if (q === 'ok') ok.push(L); else if (q === 'far') far.push(L); } return { ok, far }; };
+  const { ok, far } = scan(ticked, kinds);
+  for (const L of ok) L.thin = !(L.edge >= S.edge);
+  ok.sort(legCmp);
+  return { kinds, tickable, ticked, legs: ok, far, scan, games: new Set(ok.map(L => L.game)).size };
+}
+/* the best parlay of `need` more legs beside `locks`, one leg a game, at most `thinCap` thin legs among
+   the new ones; obj 'p' the likeliest, 'ret' the best chance times decimal with the chance at or over
+   `floor`. Ties within 1e-12 go to the lower of the sorted leg ids joined by commas */
+function pbBest(groups, need, thinCap, obj, floor, locks) {
+  const val = obj === 'p' ? (L => L.p) : (L => L.p * L.dec);
+  const max = (a, f) => a.reduce((m, L) => Math.max(m, f(L)), 0);
+  const gs = groups.map(gr => { const legs = gr.slice().sort((a, b) => val(b) - val(a)); const pref = legs.filter(L => !L.thin); return { legs, vA: max(legs, val), vP: max(pref, val), pA: max(legs, L => L.p), pP: max(pref, L => L.p) }; }).sort((a, b) => b.vA - a.vA);
+  const G = gs.length;
+  /* top[i][r]: the largest product of r of the per-game best values among games i on (all positive) */
+  const table = key => { const t = new Array(G + 1); t[G] = [1].concat(new Array(need).fill(0)); for (let i = G - 1; i >= 0; i--) { const row = [1]; for (let r = 1; r <= need; r++) row[r] = Math.max(t[i + 1][r], gs[i][key] * t[i + 1][r - 1]); t[i] = row; } return t; };
+  const TV = table('vA'), TVp = table('vP'), TP = table('pA'), TPp = table('pP');
+  let p0 = 1, v0 = 1; for (const L of locks) { p0 *= L.p; v0 *= val(L); }
+  const EPS = 1e-12, SLACK = 1 - 1e-9, chosen = [];
+  let bestV = -1, cands = [];
+  const leaf = () => {
+    const legs = locks.concat(chosen).sort(legCmp);
+    let p = 1, d = 1; for (const L of legs) { p *= L.p; d *= L.dec; }
+    if (floor && !(p >= floor)) return;
+    const v = obj === 'p' ? p : p * d;
+    if (v < bestV - EPS) return;
+    if (v > bestV) { bestV = v; cands = cands.filter(c => c.v >= v - EPS); }
+    cands.push({ v, legs, p, d, key: legs.map(L => L.id).sort().join(',') });
+  };
+  const dfs = (i, r, thinLeft, pp, vv) => {
+    if (r === 0) { if (floor && pp < floor * SLACK) return; if (bestV >= 0 && vv < bestV * SLACK) return; leaf(); return; }
+    if (G - i < r) return;
+    const tv = thinLeft > 0 ? TV : TVp, tp = thinLeft > 0 ? TP : TPp;
+    if (floor && pp * tp[i][r] < floor * SLACK) return;
+    if (bestV >= 0 && vv * tv[i][r] < bestV * SLACK) return;
+    for (const L of gs[i].legs) {
+      if (L.thin && thinLeft <= 0) continue;
+      chosen.push(L); dfs(i + 1, r - 1, thinLeft - (L.thin ? 1 : 0), pp * L.p, vv * val(L)); chosen.pop();
+    }
+    dfs(i + 1, r, thinLeft, pp, vv);
+  };
+  dfs(0, need, thinCap, p0, v0);
+  if (bestV < 0) return null;
+  const win = cands.filter(c => c.v >= bestV - EPS).sort((a, b) => strCmp(a.key, b.key))[0];
+  let fair = 1; for (const L of win.legs) fair = fair === null || L.fair === null ? null : fair * L.fair;
+  return { legs: win.legs, p: win.p, dec: win.d, fair };
+}
+/* a level: the first k (thin legs allowed, 0 up) with a parlay of its size, then the floor's rule, else the likeliest */
+function pbSearch(legs, n, floor, locks, exclude) {
+  const lockGames = new Set(locks.map(L => L.game));
+  const by = new Map();
+  for (const L of legs) { if (lockGames.has(L.game) || exclude.has(L.id)) continue; if (!by.has(L.game)) by.set(L.game, []); by.get(L.game).push(L); }
+  const groups = [...by.values()], need = n - locks.length, lockThin = locks.filter(L => L.thin).length;
+  if (need < 0 || groups.length < need) return null;
+  const prefGames = groups.filter(gr => gr.some(L => !L.thin)).length;
+  let k0 = -1; for (let k = lockThin; k <= n; k++) if (prefGames >= need - (k - lockThin)) { k0 = k; break; }
+  if (k0 < 0) return null;
+  const run = (k, obj) => need === 0 ? pbBest([], 0, 0, obj, obj === 'p' ? 0 : floor, locks) : pbBest(groups, need, k - lockThin, obj, obj === 'p' ? 0 : floor, locks);
+  if (!floor) { const r = run(k0, 'p'); return r && Object.assign(r, { k: k0 }); }
+  for (let k = k0; k <= n; k++) { const r = run(k, 'ret'); if (r) return Object.assign(r, { k }); }
+  const r = run(k0, 'p'); return r && Object.assign(r, { k: k0, likeliest: true });
+}
+/* why a level is empty: nothing ticked, no leg at or above the price, or too few games, with what would help */
+function pbWhy(n, sl, pool, ui) {
+  if (!pool.kinds.length) return 'No bet types ticked: tick at least one above.';
+  if (!pool.ticked.length) return 'No games ticked: tick at least one above.';
+  const m = pool.games, off = new Set(ui.off);
+  const moreGames = pool.scan(pool.tickable.filter(g => off.has(g.id)), pool.kinds).ok.length > 0;
+  const moreTypes = new Set(pool.scan(pool.ticked, KINDS).ok.map(L => L.game)).size > m;
+  const bothHint = sl.both && sl.pick !== 'both';
+  const fixes = moreGames && moreTypes ? 'tick more games or bet types' : moreGames ? 'tick more games' : moreTypes ? 'tick more bet types' : '';
+  const help = fixes && bothHint ? `${fixes} or choose Both days above` : fixes || (bothHint ? 'choose Both days above' : '');
+  const head = m === 0 ? "No leg on your picks qualifies (the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market)" : `Only ${m} leg${m > 1 ? 's' : ''} on your picks (one a game)`;
+  if (help) return `${head}: ${help}.`;
+  const last = sl.dates[sl.dates.length - 1], next = last && addDays(last, 1);
+  const nextNote = sl.pick !== 'both' && next && sl.on(next).length && !sl.on(next).some(freshLine) ? ` ${dayText(next)}'s lines come about a day ahead.` : '';
+  if (m === 0) return `${head}.${nextNote}`;
+  if (m === pool.tickable.length) return `Only ${m} game${m > 1 ? 's' : ''} on ${slateText(sl)} (one leg a game).${nextNote}`;
+  return `Only ${m} of the ${pool.tickable.length} games on ${slateText(sl)} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).${nextNote}`;
+}
+/* the picks (the days, the bet types, the games unticked) and the publish; the signature adds the games still to come */
+function pbPicks(sl, ui) { return [sl.dates.join(','), KINDS.map(k => ui.k[k] ? 1 : 0).join(''), ui.off.slice().sort().join(','), S.published].join('|'); }
+function pbSig(sl, ui) { return pbPicks(sl, ui) + '|' + sl.games.map(g => g.id).join(','); }
+/* the panel as it stands: the slate, the pool and the four levels (each card's New legs and locks applied) */
+function pbCompute() {
+  const sl = pbSlate(), ui = pbUi(), sig = pbSig(sl, ui), picks = pbPicks(sl, ui), pool = pbPool(sl, ui);
+  if (PB_VIEW.sig !== sig) PB_VIEW = { sig, t: {} };
+  let base = PB_CACHE.get(sig);
+  if (!base) {
+    base = {};
+    for (const t of PB_TIERS) base[t[0]] = pbSearch(pool.legs, t[2], t[3], [], new Set());
+    PB_CACHE.set(sig, base); if (PB_CACHE.size > 24) PB_CACHE.delete(PB_CACHE.keys().next().value);
+  }
+  const levels = {}, why = {};
+  for (const t of PB_TIERS) {
+    const v = PB_VIEW.t[t[0]];
+    levels[t[0]] = v && v.res !== undefined ? v.res : base[t[0]];
+    if (!levels[t[0]]) why[t[0]] = pbWhy(t[2], sl, pool, ui);
+  }
+  return { sig, picks, sl, ui, pool, levels, why };
+}
+/* New legs on a level: its rule on the legs it has not shown yet, the locked ones kept; once every leg has had its turn, back to the first */
+function pbTurn(id) {
+  const t = PB_TIERS.find(x => x[0] === id), C = PB_CUR; if (!t || !C) return;
+  const v = PB_VIEW.t[id] || (PB_VIEW.t[id] = { shown: new Set(), locks: new Set() });
+  const cur = C.levels[id]; if (!cur) return;
+  for (const L of cur.legs) if (!v.locks.has(L.id)) v.shown.add(L.id);
+  const locks = cur.legs.filter(L => v.locks.has(L.id));
+  let res = pbSearch(C.pool.legs, t[2], t[3], locks, v.shown);
+  v.wrapped = false;
+  if (!res) { v.shown = new Set(); v.wrapped = true; res = pbSearch(C.pool.legs, t[2], t[3], locks, new Set()) || cur; }
+  v.res = res; v.turned = true;
+}
+function pbLock(id, legId) {
+  const v = PB_VIEW.t[id] || (PB_VIEW.t[id] = { shown: new Set(), locks: new Set() });
+  if (v.locks.has(legId)) v.locks.delete(legId); else v.locks.add(legId);
+  if (v.res === undefined && PB_CUR) v.res = PB_CUR.levels[id];
+}
+function pbRule(t, res, v) {
+  const [, , n, floor] = t, left = v && v.turned, locked = v && res ? res.legs.filter(L => v.locks.has(L.id)).length : 0;
+  const tail = (left ? ' left' : '') + (locked ? ` beside your lock${locked > 1 ? 's' : ''}` : '');
+  if (!floor) return `the likeliest pair${tail}`;
+  if (res.likeliest) return `the likeliest ${n} legs${tail}`;
+  return `best return${left ? ' left' : ''} that lands ${Math.round(floor * 100)}%+ by the model${locked ? ` beside your lock${locked > 1 ? 's' : ''}` : ''}`;
+}
+const sameLegs = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+function pbTierCard(t, res, why, sl) {
+  const [id, label, n] = t;
+  if (!res) return `<div class="pb-tier none" data-tier="${id}"><div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="tag">${n} legs</span></span></div><p class="pb-empty">${esc(why)}</p></div>`;
+  const v = PB_VIEW.t[id], stake = pbStake();
+  const inB = sameLegs(P.legs.map(l => `${l.game}|${l.side}|${l.kind}`), res.legs.map(L => L.id));
+  const thin = res.legs.filter(L => L.thin).length;
+  const allLocked = v && res.legs.every(L => v.locks.has(L.id));
+  const both = sl.dates.length > 1;
+  const rows = res.legs.map(L => { const lk = !!(v && v.locks.has(L.id)); return `<div class="pb-tl" data-id="${esc(L.id)}">
+      <button type="button" class="pb-lock" data-pb-lock="${id}|${esc(L.id)}" aria-pressed="${lk}" aria-label="${lk ? 'Unlock' : 'Lock'} ${esc(legName(L))} (${lk ? 'locked: ' : ''}New legs keeps it)" title="${lk ? 'Locked: New legs keeps it' : 'Lock it: New legs keeps it'}">${lockSvg(lk)}</button>
+      <div class="pb-ll"><b>${esc(L.who)}</b><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(both ? dayClock(L.start) : timeOf(L.g))}</span></span>${L.thin ? '<span class="tag thin">thin edge</span>' : ''}</div>
+      <div class="pb-lr"><b>${fmtOdds(L.price)}</b><span>fair ${whole(L.fair)}</span><span class="m">model ${whole(L.p)}</span></div></div>`; }).join('');
+  return `<div class="pb-tier" data-tier="${id}">
+    <div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="tag">${n} legs</span></span><span class="pb-turn"><button type="button" class="btn ghost" data-pb-new="${id}"${allLocked ? ' disabled' : ''} title="Other legs on your picks, by this level's rule; a locked leg stays">↻ New legs</button>${v && (v.turned || v.locks.size) ? `<button type="button" class="btn ghost" data-pb-reset="${id}">Reset</button>` : ''}</span></div>
+    <div class="pb-rule">${esc(pbRule(t, res, v))}</div>
+    ${v && v.wrapped ? '<p class="pb-why">Every other leg on your picks has had its turn here: back to the first.</p>' : ''}
+    <div class="pb-nums">
+      <div class="pb-n"><div class="v">${res.fair === null ? whole(res.p) : whole(res.fair)}</div><div class="k">${res.fair === null ? "Model's chance" : 'Fair chance'}</div><div class="s">${res.fair === null ? 'no fair chance' : `model says ${whole(res.p)}`}</div></div>
+      <div class="pb-n"><div class="v">${toAm(res.dec)}</div><div class="k">Price</div></div>
+      <div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>
+    </div>
+    <div class="pb-tlegs">${rows}</div>
+    ${thin ? `<p class="pb-why">${thin} leg${thin > 1 ? 's have' : ' has'} a thin edge: the model rates ${thin > 1 ? 'them' : 'it'} at or above DraftKings' price, but not ${Math.round(S.edge * 100)} points above it.</p>` : ''}
+    <div class="pb-acts"><button type="button" class="btn ghost" data-pb-add="${id}"${inB ? ' disabled' : ''}>${inB ? 'In the builder' : 'Add to builder'}</button><button type="button" class="btn ice" data-pb-finish="${id}">Finish</button></div>
+  </div>`;
+}
+/* the panel-wide line in place of the four levels: no season left, before the opener, no line yet, one game */
+function pbWide(sl, pool) {
+  const phase = S.phase || (S.playoff && S.playoff.phase);
+  if (!S.games.length || !sl.come.length) return 'No games to build from: the season is over. The panel comes back with next season\'s first lines.';
+  const other = sl.days.find(d => !sl.dates.includes(d) && sl.lined(d));
+  const otherNote = other ? ` ${dayText(other)} is in the Day choice above.` : '';
+  if (!pool.tickable.length) {
+    const opener = S.games[0] && S.games[0].date;
+    if (opener && opener > sl.today && sl.dates.every(d => d <= opener)) return `The season opens ${dayText(opener)}. DraftKings posts the first lines about a day before.`;
+    if (phase === 'offseason' || phase === 'over') return 'No games to build from: the season is over. The panel comes back with next season\'s first lines.';
+    return `No DraftKings lines yet for ${slateText(sl)}: DraftKings posts a day's lines about a day before puck drop, and the job reads them at its next run (five times a day).${otherNote}`;
+  }
+  if (pool.tickable.length < 2) return `Only one game on ${slateText(sl)} is still to come with a DraftKings line, and a parlay needs two.${otherNote}`;
+  return '';
+}
+function renderPb() {
+  const prev = PB_CUR, C = PB_CUR = pbCompute(), { sl, ui, pool } = C;
+  /* the watch moved the slate on: the day shown before has every game under way */
+  if (PB_DATES && PB_DATES.length && !PB_DATES.every(d => sl.dates.includes(d)) && PB_DATES.every(d => !sl.on(d).length) && sl.dates.length) {
+    PB_NOTICE = { text: `Every game on ${PB_DATES.map(dayText).join(' and ')} has dropped the puck: the panel moved to ${slateText(sl)}.`, from: PB_DATES.slice(), to: sl.dates.slice() };
+    PB_DROP = null;
+  } else if (prev && sameLegs(prev.sl.dates, sl.dates)) {
+    /* a level drawn before, on this same slate, held a game that has dropped the puck since: say so, as the builder does */
+    const gb = gameById(), was = new Map();
+    for (const t of PB_TIERS) for (const L of (prev.levels[t[0]] ? prev.levels[t[0]].legs : [])) was.set(L.game, L.mu);
+    const gone = [...was.keys()].filter(id => !gb[id] || hasStarted(gb[id]));
+    if (gone.length) PB_DROP = { text: `${andList(gone.map(id => was.get(id)))} dropped the puck: the levels were rebuilt without ${gone.length > 1 ? 'them' : 'it'}.`, from: sl.dates.slice(), to: sl.dates.slice() };
+  }
+  PB_DATES = sl.dates.slice();
+  const holds = n => !!n && sameLegs(n.to, sl.dates) && n.from.some(d => d >= sl.today);
+  if (!holds(PB_NOTICE)) PB_NOTICE = null;
+  if (!holds(PB_DROP)) PB_DROP = null;
+  $('pbSlate').textContent = slateText(sl) || 'no games';
+  $('pbSlate').hidden = !sl.dates.length;
+  /* the prices are DraftKings' unless ESPN carried another book for a game, which is then named */
+  const other = pool.tickable.filter(g => !isDK(g.line)), others = [...new Set(other.map(g => g.line.book ? String(g.line.book) : 'a book ESPN did not name'))].join(' and ');
+  $('pbRead').textContent = !S.published ? '' : other.length ? `Prices as read at ${hhmm(S.published)}, the job's last run: ${other.length} of the ${pool.tickable.length} games ${other.length > 1 ? 'are' : 'is'} priced at ${others}, not DraftKings.` : `DraftKings' prices as read at ${hhmm(S.published)}, the job's last run.`;
+  if (document.activeElement !== $('pbStake')) $('pbStake').value = String(pbStake());
+  for (const b of $('pbKinds').querySelectorAll('input[data-k]')) b.checked = !!ui.k[b.dataset.k];
+  const mix = ui.k.ml && ui.k.pl && ui.k.ou ? 'all' : ui.k.ml && ui.k.pl && !ui.k.ou ? 'teams' : !ui.k.ml && !ui.k.pl && ui.k.ou ? 'totals' : null;
+  for (const b of $('pbMix').querySelectorAll('button')) { b.classList.toggle('on', b.dataset.mix === mix); b.setAttribute('aria-pressed', String(b.dataset.mix === mix)); }
+  /* the Day choice, shown only when two days are offered */
+  $('pbDayRow').hidden = sl.days.length < 2;
+  const opts = sl.days.map(d => [d, `${d === sl.today ? 'Today' : d === sl.tom ? 'Tomorrow' : dayText(d)} · ${sl.on(d).length}`, dayText(d)]).concat(sl.both ? [['both', 'Both days', `${sl.on(sl.days[0]).length + sl.on(sl.days[1]).length} games`]] : []);
+  $('pbDay').innerHTML = sl.days.length < 2 ? '' : opts.map(([v, a, b]) => `<button type="button" data-day="${v}" class="${sl.pick === v ? 'on' : ''}" aria-pressed="${sl.pick === v}">${esc(a)}<small>${esc(b)}</small></button>`).join('');
+  /* the games: every game on the slate still to come; one with no fresh line is shown but cannot be ticked */
+  const off = new Set(ui.off), tick = pool.tickable.filter(g => !off.has(g.id)).length;
+  $('pbGsum').textContent = pool.tickable.length === tick ? `All ${tick}` : `${tick} of ${pool.tickable.length}`;
+  const wide = !(window.matchMedia && window.matchMedia('(max-width:760px)').matches) && !!window.matchMedia;
+  const gx = typeof ui.gx === 'boolean' ? ui.gx : wide;
+  if ($('pbGames').open !== gx) { PB_GX_QUIET = true; $('pbGames').open = gx; }
+  const tile = g => { const fr = freshLine(g), un = off.has(g.id), when = timeOf(g);
+    return fr ? `<label class="pb-gt${un ? ' un' : ''}"><input type="checkbox" data-g="${g.id}"${un ? '' : ' checked'}><span><b>${esc(matchup(g))}</b><span>${esc(when)}</span></span></label>`
+      : `<div class="pb-gt no" aria-disabled="true"><span><b>${esc(matchup(g))}</b><span>${g.line ? 'line not on DraftKings at the last run' : 'no line yet'}</span></span></div>`; };
+  $('pbGrid').innerHTML = sl.dates.length > 1 ? sl.dates.map(d => `<div class="pb-dayh">${esc(dayText(d))}</div>` + sl.games.filter(g => g.date === d).map(tile).join('')).join('') : sl.games.map(tile).join('') || '<span class="pb-hint">No game to come on this day.</span>';
+  /* the notes, when they apply */
+  const notes = [];
+  for (const n of [PB_NOTICE, PB_DROP]) if (n) notes.push(`<p class="pb-said"><b>${esc(n.text)}</b></p>`);
+  const far = pool.far.length;
+  if (far) notes.push(`<p>${far} leg${far > 1 ? 's are' : ' is'} left out: the model rates ${far > 1 ? 'each' : 'it'} 15 points or more above DraftKings' fair chance (its two prices with the margin taken out), and edges that large are more likely the model's error than the book's. ${far > 1 ? 'They are' : 'It is'} still on the Games cards, flagged far off the market.</p>`);
+  const noLine = sl.games.filter(g => !g.line).length, stale = sl.games.filter(g => g.line && !freshLine(g)).length;
+  const whose = sl.dates.length > 1 ? 'these days\'' : sl.pick === sl.today ? "today's" : sl.pick === sl.tom ? "tomorrow's" : `${dayText(sl.pick || '')}'s`;
+  if (noLine && pool.tickable.length) notes.push(`<p>${noLine} of ${whose} games ${noLine > 1 ? 'have' : 'has'} no DraftKings line yet: DraftKings posts a day's lines about a day ahead, and the job reads them at its next run.</p>`);
+  if (stale) notes.push(`<p>${stale} game${stale > 1 ? "s' lines were" : "'s line was"} not on DraftKings at the job's last run: ${stale > 1 ? 'they are' : 'it is'} offered nowhere until DraftKings lists ${stale > 1 ? 'them' : 'it'} again.</p>`);
+  $('pbNotes').innerHTML = notes.join(''); $('pbNotes').hidden = !notes.length;
+  const w = pbWide(sl, pool);
+  $('pbBody').innerHTML = w ? `<div class="empty pb-wide" id="pbWide">${esc(w)}</div>` : `<div class="pb-tiers">${PB_TIERS.map(t => pbTierCard(t, C.levels[t[0]], C.why[t[0]], sl)).join('')}</div>`;
+  $('pbRules').textContent = `Each level is built only from the bet types and games ticked above, one leg a game. A leg qualifies when DraftKings prices both sides of it, the model gives it 45% to 97%, and its chance is at or above the chance DraftKings' price implies (the book's margin left in). Legs ${Math.round(S.edge * 100)} points or more above it are the model's calls, the ones the Games cards show; legs above it by less are used only where the calls cannot make a level, the fewest first, and are marked thin edge. A leg the model rates 15 points or more above DraftKings' fair chance (its two prices with the margin taken out) is left out. Safe is the likeliest pair; Medium, Aggressive and Extreme are the 3-, 4- and 5-leg parlays with the best return (chance times payout) that land at least 25%, 12% and 5% of the time by the model's chance, or, where none does, the likeliest of that size. Each leads with DraftKings' fair chance, the model's beside it; the levels are chosen on the model's. The price is DraftKings' parlay price: the legs' prices multiplied, as it pays a parlay of different games.`;
+  for (const g of sl.games) SHOWN.add(g.id);
+}
+let PB_GX_QUIET = false;
+/* every level's pays line, redrawn in place as the amount is typed */
+function pbPays() {
+  const stake = pbStake();
+  for (const el of document.querySelectorAll('[data-pb-pay]')) { const d = +el.dataset.pbPay; el.querySelector('.v').textContent = money(cents(stake * d)); el.querySelector('.k').textContent = `${stakeShort(stake)} pays`; }
+}
+let PB_STAKE_T = null;
+$('pbStake').addEventListener('input', () => {
+  const v = stakeRead($('pbStake').value); if (v === null) return;
+  P.stake = v; save(); pbPays(); updateSlip();
+  clearTimeout(PB_STAKE_T); PB_STAKE_T = setTimeout(() => renderBuilder(builderLegs(false)), 250);
+});
+$('pbStake').addEventListener('change', () => {
+  const v = stakeRead($('pbStake').value);
+  if (v !== null) { P.stake = v; save(); }
+  $('pbStake').value = String(pbStake()); pbPays();
+  clearTimeout(PB_STAKE_T); renderBuilder(builderLegs(false)); updateSlip();
+});
+$('pbKinds').addEventListener('change', e => { const b = e.target.closest('input[data-k]'); if (!b) return; pbUi().k[b.dataset.k] = b.checked; pbQuiet(); save(); renderPb(); });
+$('pbMix').addEventListener('click', e => {
+  const b = e.target.closest('button[data-mix]'); if (!b) return;
+  pbUi().k = { all: { ml: true, pl: true, ou: true }, teams: { ml: true, pl: true, ou: false }, totals: { ml: false, pl: false, ou: true } }[b.dataset.mix];
+  pbQuiet(); save(); renderPb();
+});
+/* a control the panel redraws keeps the keyboard's focus: the same Day, the same game's box */
+const refocus = (sel, had, ...rest) => { if (!had) return; for (const q of [sel, ...rest, '#pbTitle']) { const nb = document.querySelector(q); if (nb && nb.focus && !nb.disabled) { nb.focus(); return; } } };
+$('pbDay').addEventListener('click', e => {
+  const b = e.target.closest('button[data-day]'); if (!b) return;
+  const had = document.activeElement === b, v = b.dataset.day;
+  pbUi().day = v; pbQuiet(); save(); renderPb(); renderParlayLines();
+  refocus(`#pbDay button[data-day="${v}"]`, had);
+});
+$('pbGames').addEventListener('toggle', () => { if (PB_GX_QUIET) { PB_GX_QUIET = false; return; } pbUi().gx = $('pbGames').open; save(); });
+$('pbGames').addEventListener('change', e => {
+  const b = e.target.closest('input[data-g]'); if (!b) return;
+  const ui = pbUi(), off = new Set(ui.off), had = document.activeElement === b, gid = b.dataset.g; if (b.checked) off.delete(gid); else off.add(gid);
+  ui.off = [...off].slice(-64); pbQuiet(); save(); renderPb();
+  refocus(`#pbGrid input[data-g="${gid}"]`, had);
+});
+$('pbGames').addEventListener('click', e => {
+  const b = e.target.closest('button[data-gall]'); if (!b) return;
+  const ui = pbUi(), ids = PB_CUR ? PB_CUR.pool.tickable.map(g => g.id) : [];
+  const off = new Set(ui.off); for (const id of ids) { if (b.dataset.gall === '1') off.delete(id); else off.add(id); }
+  ui.off = [...off].slice(-64); pbQuiet(); save(); renderPb();
+});
+/* a level's buttons: on a level the clock has overtaken (one of its own games started or its line gone, the job published
+   since, or the picks changed) they only redraw the panel. Another game dropping the puck leaves a level as it is: the
+   parlay chosen is still among the parlays of its kind, and every other has only fewer to choose from. New legs, which
+   searches the pool again, wants the panel exactly as it stands (strict) */
+function pbStale(res, strict) {
+  if (!PB_CUR || !res) return true;
+  const sl = pbSlate(), ui = pbUi();
+  if (strict ? PB_CUR.sig !== pbSig(sl, ui) : PB_CUR.picks !== pbPicks(sl, ui)) return true;
+  const gb = gameById();
+  return res.legs.some(L => !gb[L.game] || hasStarted(gb[L.game]) || !freshLine(gb[L.game]));
+}
+$('pbBody').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.pbLock) { const key = b.dataset.pbLock, [id, ...rest] = key.split('|'); pbLock(id, rest.join('|')); renderPb(); const nb = [...document.querySelectorAll('[data-pb-lock]')].find(x => x.dataset.pbLock === key); if (nb) nb.focus(); return; }
+  if (b.dataset.pbNew) { if (pbStale(PB_CUR && PB_CUR.levels[b.dataset.pbNew], true)) { renderParlays(); return; } pbTurn(b.dataset.pbNew); renderPb(); const nb = document.querySelector(`[data-pb-new="${b.dataset.pbNew}"]`); if (nb) nb.focus(); return; }
+  if (b.dataset.pbReset) { delete PB_VIEW.t[b.dataset.pbReset]; renderPb(); return; }
+  const id = b.dataset.pbAdd || b.dataset.pbFinish; if (!id) return;
+  const res = PB_CUR && PB_CUR.levels[id], t = PB_TIERS.find(x => x[0] === id);
+  if (pbStale(res)) { const sel = b.dataset.pbFinish ? `[data-pb-finish="${id}"]` : `[data-pb-add="${id}"]`, had = document.activeElement === b; renderParlays(); refocus(sel, had, `[data-pb-finish="${id}"]`); return; }
+  if (b.dataset.pbFinish) { openCard(res.legs, `${t[1]} parlay`, b, false); return; }
+  const have = P.legs.length;
+  if (have && !sameLegs(P.legs.map(l => `${l.game}|${l.side}|${l.kind}`), res.legs.map(L => L.id)) && !confirm(`Replace the ${have} leg${have > 1 ? 's' : ''} in the builder with the ${t[1]} ${t[2]}-leg parlay?`)) return;
+  P.legs = res.legs.map(storeLeg); BMSG = []; save();
+  renderParlays();
+  scrollToEl($('builder'));
+  try { $('bTitle').focus({ preventScroll: true }); } catch (err) { $('bTitle').focus(); }   // the keyboard follows the legs to the builder
+});
+
+/* ---------- picking legs by hand: the bet block on a game card and in Pick your own legs ----------
+   A game still to come with a fresh line shows its three markets as buttons, two sides a row: the side
+   and its number, DraftKings' price and the model's chance; the model's call wears its edge, a side far
+   off the market its two numbers. A tap adds the leg, or takes it out; a second bet on a game replaces
+   the first, said aloud */
+let SHOWN = new Set();          // the games drawn as still to come, which the watch looks at
+/* a stored leg at this leg's number (a moneyline has none; an older store's leg without one is taken at the line shown) */
+const sameNum = (l, L) => L.kind === 'ml' || l.line === null || l.line === undefined || l.line === '' || +l.line === L.num;
+function betBtn(g, side, kind) {
+  const L = legOf(g, side, kind); if (!L) return '';
+  const on = P.legs.some(l => l.game === g.id && l.side === side && l.kind === kind && sameNum(l, L));
+  const call = L.pick === side, far = legFarOff(L);
+  const lab = kind === 'ou' ? (side === 'over' ? 'Over' : 'Under') : kind === 'ml' ? T(g[side]).abbr : `${T(g[side]).abbr} ${fmtLine(L.num)}`;
+  const tag = call && far ? `<span class="pb-bt far">model's call · far off the market: left out of the levels · model ${whole(L.p)} · market ${whole(L.fair)}</span>`
+    : call ? `<span class="pb-bt">model's call · edge +${Math.round(L.edge * 100)}</span>`
+    : far ? `<span class="pb-bt far">far off the market · model ${whole(L.p)} · market ${whole(L.fair)}</span>` : '';
+  return `<button type="button" class="pb-bet${on ? ' on' : ''}${call ? ' call' : ''}${far ? ' far' : ''}" data-leg="${g.id}|${side}|${kind}" aria-pressed="${on}" aria-label="${esc(`${L.desc}, ${fmtOdds(L.price)}, model ${whole(L.p)}${on ? ', in your parlay' : ''}`)}"><span class="pb-bs">${esc(lab)}</span><span class="pb-bp">${fmtOdds(L.price)}</span><span class="pb-bc">model ${whole(L.p)}</span>${tag}${on ? '<span class="pb-bin">✓ In your parlay</span>' : ''}</button>`;
+}
+function betBlock(g) {
+  const L = g.line;
+  const row = (k, label, a, b) => { const x = betBtn(g, a, k) + betBtn(g, b, k); return x ? `<div class="pb-brow"><span class="pb-bk">${esc(label)}</span><div class="pb-bb">${x}</div></div>` : ''; };
+  SHOWN.add(g.id);
+  return `<div class="pb-bets">${row('ml', 'Moneyline', 'away', 'home')}${row('pl', 'Puck line', 'away', 'home')}${L.total !== null && L.total !== undefined ? row('ou', `Total ${L.total}`, 'over', 'under') : ''}<p class="pb-key">Tap a bet to add it. Edge: the model's chance less the price's, in points.</p></div>`;
+}
+/* a leg button anywhere on the page adds or removes that bet */
+document.addEventListener('click', e => {
+  const b = e.target.closest('button[data-leg]'); if (!b || !S) return;
+  const [gid, side, kind] = b.dataset.leg.split('|'); const g = gameById()[gid];
+  const cur = g && legOf(g, side, kind);
+  /* the same bet at the same number is taken out; one stored at a number DraftKings has moved since is replaced */
+  const i = P.legs.findIndex(l => l.game === gid && l.side === side && l.kind === kind && (!cur || sameNum(l, cur)));
+  if (i >= 0) { P.legs.splice(i, 1); BMSG = []; }
+  else {
+    if (!g || hasStarted(g) || !freshLine(g)) { rerender(); return; }        // a page left open past puck drop, or a line gone: no bet
+    const L = cur; if (!L) return;
+    const was = P.legs.find(l => l.game === gid);
+    const msg = was ? `${L.desc} replaced ${descOf(was.kind, was.side, was.line === null || was.line === undefined ? null : +was.line, g)} on ${matchup(g)}: one leg a game.` : '';
+    P.legs = P.legs.filter(l => l.game !== gid);
+    P.legs.push(storeLeg(L));
+    BMSG = []; builderLegs(true);                       // in the builder's order, every other leg read again
+    if (msg) { BMSG.unshift(msg); slipSay(msg); }
+  }
+  save(); rerender();
+});
+
+/* ---------- the builder (#builder) ----------
+   Every stored leg is read again from the state on every draw, by its game, side and kind: a game that
+   has started, been called off or left the schedule leaves the builder, as does a line DraftKings did not
+   list at the last run or a number it has moved; a price it has moved is updated in place. Each is said
+   in the builder's live line, and the stored legs are rewritten to what is shown */
+let BMSG = [];
+const storeLeg = L => ({ game: L.game, side: L.side, kind: L.kind, odds: L.price, line: L.num, p: L.p, fair: L.fair, label: L.mu, text: L.desc, date: L.g.date, start: L.start });
+function builderLegs(say) {
+  const gb = gameById(), out = [], msgs = [];
+  let moved = 0;
+  for (const l of P.legs) {
+    const g = gb[l.game], name = g ? matchup(g) : (typeof l.label === 'string' ? l.label : 'A leg');
+    if (!g) { const r = (S.removed || []).find(x => x.id === l.game); msgs.push(`${name} left the builder: ${r && /postponed|cancelled/.test(r.why) ? 'the game was ' + r.why : 'it is no longer on the schedule'}.`); continue; }
+    if (hasStarted(g)) { msgs.push(`${name} left the builder: the puck dropped.`); continue; }
+    if (!freshLine(g)) { msgs.push(`${name} left the builder: its line was not on DraftKings at the last run.`); continue; }
+    const L = legOf(g, l.side, l.kind);
+    if (!L) { msgs.push(`${name} left the builder: DraftKings had no price on it at the last run.`); continue; }
+    const had = l.line === null || l.line === undefined || l.line === '' ? null : +l.line;
+    if (l.kind !== 'ml' && had !== null && had !== L.num) { msgs.push(`${descOf(l.kind, l.side, had, g)} left the builder: ${poss(bookName(g.line))} ${l.kind === 'pl' ? 'puck line' : 'total'} is now ${l.kind === 'pl' ? fmtLine(L.num) : L.num} (as read ${hhmm(S.published)}).`); continue; }
+    if (+l.odds !== L.price) moved++;
+    out.push(L);
+  }
+  out.sort(legCmp);
+  if (moved) msgs.push(`${moved} price${moved > 1 ? 's have' : ' has'} changed since you added ${moved > 1 ? 'them' : 'it'}: the builder shows DraftKings' price at the job's last run.`);
+  if (say) {
+    const next = out.map(storeLeg), changed = JSON.stringify(next) !== JSON.stringify(P.legs);
+    /* why, kept in the store too until the builder has been drawn, so a leg taken out on another tab, or
+       before a reload, is still explained when the builder is next opened */
+    if (changed) { P.legs = next; if (msgs.length) P.ui.bmsg = msgs.slice(0, 8); save(); }
+    if (msgs.length) BMSG = msgs;
+  }
+  out.msgs = msgs;
+  return out;
+}
+function legRow(L, i) {
+  const below = L.edge !== null && L.edge < 0, thin = L.edge !== null && L.edge >= 0 && L.edge < S.edge;
+  return `<div class="leg" data-id="${esc(L.id)}"><div class="pb-ll"><b>${esc(L.who)}</b><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(dayClock(L.start))}</span></span>${thin ? '<span class="tag thin">thin edge</span>' : ''}${legFarOff(L) ? `<span class="pb-far">${esc(farText(L))}</span>` : ''}${below ? `<span class="pb-below">the model rates it below DraftKings' price</span>` : ''}</div>
+    <div class="pb-lr"><b>${fmtOdds(L.price)}</b><span class="pb-fm"><span>${L.fair === null ? 'no fair chance' : `fair ${whole(L.fair)}`}</span><span class="sep"> · </span><span>model ${whole(L.p)}</span></span></div>
+    <button type="button" class="x" data-i="${i}" aria-label="Remove ${esc(legName(L))}" title="Remove">×</button></div>`;
+}
+/* the summary's figures, each stepped down a pixel at a time until it fits its tile on one line (13px the
+   least), as the card's image does with its money; one that will not fit at 13px takes the whole row (a
+   $100,000 stake's pays figure on a phone) and is fitted again there, so no figure is ever cut. Again
+   whenever the width or the fonts change (Unbounded is wider than the fallback it replaces) */
+function fitTiles() {
+  const fit = v => {
+    v.style.fontSize = ''; v.style.whiteSpace = 'nowrap';
+    let s = parseFloat(getComputedStyle(v).fontSize) || 22;
+    while (v.clientWidth > 0 && v.scrollWidth > v.clientWidth && s > 13) { s -= 1; v.style.fontSize = s + 'px'; }
+    const ok = !(v.clientWidth > 0 && v.scrollWidth > v.clientWidth);
+    v.style.whiteSpace = '';
+    return ok;
+  };
+  for (const v of document.querySelectorAll('#parlayTotals .stat .v')) {
+    const tile = v.closest('.stat'); tile.classList.remove('pb-span');
+    if (!fit(v)) { tile.classList.add('pb-span'); fit(v); }
+  }
+}
+let FIT_T = null;
+window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(fitTiles, 120); });
+if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(fitTiles, () => {});
+if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => fitTiles());
+/* a parlay as saved: its legs (each bet, price and number) and its stake. Save says Saved, and is off,
+   while the builder is a parlay already in this device's list, so a reload never lets it be saved twice */
+const savedKey = (legs, stake) => legs.map(l => `${l.game}|${l.side}|${l.kind}:${+l.odds}:${l.line === null || l.line === undefined || l.line === '' ? '' : +l.line}`).join(',') + '|' + stakeRead(stake);
+const isSaved = legs => { const k = savedKey(legs.map(storeLeg), pbStake()); return P.saved.some(sp => savedOk(sp) && savedKey(sp.legs, sp.stake) === k); };
+function renderBuilder(legs) {
+  const n = legs.length, q = quote(legs);
+  for (const L of legs) SHOWN.add(L.game);
+  $('bHead').textContent = n ? `${n}-leg parlay` : '';
+  $('bMsg').innerHTML = BMSG.map(esc).join('<br>');
+  $('legs').innerHTML = n ? legs.map(legRow).join('') : `<div class="empty">No legs yet. Add a level's legs above, or tap a bet in Pick your own legs or on the Games tab. One leg a game: DraftKings prices two bets on one game as a same-game parlay, which this page cannot price.</div>`;
+  if (document.activeElement !== $('stake')) $('stake').value = String(pbStake());
+  for (const c of document.querySelectorAll('#chips [data-chip]')) c.classList.toggle('on', +c.dataset.chip === pbStake());
+  const all = n === 1 ? 'it lands' : `all ${n} land`;
+  $('parlayTotals').innerHTML = q ? `
+    <div class="stat"><div class="v">${pct1(q.fair === null ? q.p : q.fair)}</div><div class="k">${q.fair === null ? `Model's chance ${all}` : `Fair chance ${all}`}</div><div class="s">${q.fair === null ? "No fair chance: it needs both of DraftKings' prices on every leg" : `model says ${pct1(q.p)}`}</div></div>
+    <div class="stat"><div class="v">${q.am}</div><div class="k">${legs.every(L => isDK(L.g.line)) ? 'DraftKings price' : 'Book price'}</div><div class="s">${q.dec.toFixed(2)} decimal · ${pct1(q.imp)} implied</div></div>
+    <div class="stat"><div class="v">${money(q.pays)}</div><div class="k">${stakeShort(q.stake)} pays</div><div class="s">${money(q.profit)} profit</div></div>
+    <div class="stat"><div class="v">${confOf(q.fair === null ? q.p : q.fair)}</div><div class="k">Confidence ${all}, on the ${q.fair === null ? "model's chance" : 'fair chance'}</div><div class="s">High at 70%+, Medium at 45%+</div></div>` : '';
+  $('parlayTotals').hidden = !q;
+  fitTiles();
+  const allDK = legs.every(L => isDK(L.g.line)), books = [...new Set(legs.map(L => bookName(L.g.line)))].join(', ');
+  $('bNotes').innerHTML = !q ? '' : allDK ? `The chance is every leg's chance multiplied: one leg a game, and different games are unrelated. The price is DraftKings' parlay price: their prices multiplied.<br>Prices as DraftKings had them at ${esc(hhmm(S.published))}, the job's last run; check the slip.`
+    : `The chance is every leg's chance multiplied: one leg a game, and different games are unrelated. The price is the legs' prices multiplied, as a book pays a parlay of different games.<br>Prices as the books had them at ${esc(hhmm(S.published))}, the job's last run (${esc(books)}); check the slip.`;
+  $('bHint').hidden = n !== 1;
+  $('pFinish').disabled = n < 2; $('pFinish').title = n < 2 ? 'A parlay needs two legs or more' : 'Your parlay as a card: an image to keep, a link to send, the slip on DraftKings';
+  const savedNow = n >= 2 && isSaved(legs);
+  $('saveParlay').disabled = n < 2 || savedNow; $('saveParlay').textContent = savedNow ? 'Saved' : 'Save on this device';
+  $('saveParlay').title = n < 2 ? 'A parlay needs two legs or more' : savedNow ? 'This parlay is in Your saved parlays below' : 'Keep it in Your saved parlays, on this device only';
+  $('clearParlay').disabled = !n;
+}
+$('legs').addEventListener('click', e => {
+  const b = e.target.closest('button.x'); if (!b) return;
+  const legs = builderLegs(true), L = legs[+b.dataset.i]; if (!L) return;
+  P.legs = P.legs.filter(l => !(l.game === L.game && l.side === L.side && l.kind === L.kind)); BMSG = []; save(); rerender();
+  const nx = document.querySelector('#legs button.x') || $('bTitle'); if (nx && nx.focus) nx.focus();
+});
+function setStake(v) { P.stake = v; save(); renderBuilder(builderLegs(false)); pbPays(); updateSlip(); if (document.activeElement !== $('pbStake')) $('pbStake').value = String(pbStake()); }
+$('stake').addEventListener('input', () => { const v = stakeRead($('stake').value); if (v !== null) { P.stake = v; save(); pbPays(); updateSlip(); $('pbStake').value = String(v); const legs = builderLegs(false), q = quote(legs); if (q) renderBuilder(legs); } });
+$('stake').addEventListener('change', () => { const v = stakeRead($('stake').value); setStake(v === null ? pbStake() : v); $('stake').value = String(pbStake()); });
+$('chips').addEventListener('click', e => { const b = e.target.closest('[data-chip]'); if (b) setStake(+b.dataset.chip); });
+$('pFinish').addEventListener('click', () => { const legs = builderLegs(true); if (legs.length < 2) { rerender(); return; } openCard(legs, 'Your parlay', $('pFinish'), true); });
+$('saveParlay').addEventListener('click', () => {
+  const legs = builderLegs(true), q = quote(legs); if (!q || legs.length < 2 || isSaved(legs)) { rerender(); return; }
+  P.saved.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), at: new Date().toISOString(), stake: q.stake, legs: legs.map(storeLeg), am: q.am, dec: q.dec, p: q.p, imp: q.imp, fair: q.fair });
+  BMSG = ['Saved: see Your saved parlays below.']; save(); rerender();
+});
+$('clearParlay').addEventListener('click', () => {
+  const n = P.legs.length; if (!n) return;
+  if (n >= 2 && !confirm(`Clear the ${n} legs from the builder?`)) return;
+  P.legs = []; BMSG = []; slipQuiet(); save(); rerender();
+});
+
+/* ---------- Your saved parlays (#savedList): this device's own record, graded from the published scores ----------
+   A leg on a game called off (the feed's postponed or cancelled, in `removed`) is void and drops out,
+   the rest paid on what is left. The state lists a game called off for one publish only, so the first
+   time this page sees it there the void is written into the saved leg itself (void: {why, at}) and
+   holds from then on; a leg whose game left the schedule otherwise, or was called off while this
+   browser never opened the page, cannot be graded here. A settled parlay keeps its grade in its own
+   entry (graded), so a new season's schedule never ungrades it */
 function gradeLeg(l) {
-  const g = gameById()[l.game]; if (!g || g.state !== 'final' || g.hs === null) return 'pending';
+  if (isObj(l.void)) return 'void';
+  const g = gameById()[l.game];
+  if (!g) {
+    const r = (S.removed || []).find(x => x.id === l.game);
+    if (r && /postponed|cancelled/.test(r.why)) { l.void = { why: String(r.why), at: S.published }; SAVED_DIRTY = true; return 'void'; }
+    return 'gone';
+  }
+  if (g.state !== 'final' || g.hs === null) return 'pending';
   if (l.kind === 'ou') { const tot = g.hs + g.as; return tot > l.line ? (l.side === 'over' ? 'win' : 'loss') : tot < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push'; }
   const margin = l.side === 'home' ? g.hs - g.as : g.as - g.hs;
   if (l.kind === 'ml') return margin > 0 ? 'win' : 'loss';
   const c = margin + l.line; return c > 0 ? 'win' : c < 0 ? 'loss' : 'push';
 }
-/* every game still to come, today and tomorrow, that the book has a number on, each with its six buttons */
-function renderParlayLines() {
-  const today = etToday();
-  let gs = S.games.filter(g => !hasStarted(g) && g.line && g.date >= today && g.date <= addDays(today, 1));
-  if (!gs.length) gs = S.games.filter(g => !hasStarted(g) && g.line).slice(0, 20);      // nothing today: the next lined games
-  gs.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
-  $('plNote').textContent = gs.length ? `${gs.length} games still to come with a DraftKings number, as of the job's last run. The green figure is the model's chance for the side listed first.` : '';
-  if (!gs.length) { $('plLines').innerHTML = '<tbody><tr><td class="empty">Nothing to bet yet: no game still to come has a line. The job posts the next slate\'s lines when DraftKings does.</td></tr></tbody>'; return; }
-  $('plLines').innerHTML = '<thead><tr><th>Game</th><th>Puck drop</th><th>Model</th><th>Moneyline</th><th>Puck line</th><th>Total</th></tr></thead><tbody>' + gs.map(g => `<tr>
-    <td>${teamCell(g.away)} <span class="muted">@</span> ${teamCell(g.home)}</td>
-    <td class="muted small">${when(g)}</td>
-    <td class="small"><span class="lime" style="font-weight:700">${T(g.away).abbr} ${pct(1 - g.pHome)}</span> · ${modelMargin(g)} · ${g.xt.toFixed(1)}</td>
-    <td>${legButton(g, 'away', 'ml', g.line, false)}${legButton(g, 'home', 'ml', g.line, false)}</td>
-    <td>${legButton(g, 'away', 'pl', g.line, false)}${legButton(g, 'home', 'pl', g.line, false)}</td>
-    <td>${legButton(g, 'over', 'ou', g.line, false)}${legButton(g, 'under', 'ou', g.line, false)}</td></tr>`).join('') + '</tbody>';
+const savedOk = sp => isObj(sp) && Array.isArray(sp.legs) && sp.legs.length > 0 && sp.legs.every(l => isObj(l) && typeof l.game === 'string' && SIDES[l.kind] && SIDES[l.kind].includes(l.side) && priced(+l.odds));
+function savedGrade(sp) {
+  if (isObj(sp.graded) && /^(win|loss|push)$/.test(sp.graded.status)) return sp.graded;
+  const legs = sp.legs.map(gradeLeg);
+  const stake = +sp.stake || 0;
+  let status;
+  if (legs.includes('loss')) status = 'loss';
+  else if (legs.includes('gone')) status = 'gone';             // never pending forever: a leg off the schedule cannot settle here
+  else if (legs.includes('pending')) status = 'pending';
+  else if (legs.every(x => x === 'push' || x === 'void')) status = 'push';
+  else status = 'win';
+  const pays = status === 'win' ? cents(stake * sp.legs.reduce((a, l, i) => legs[i] === 'win' ? a * dec(+l.odds) : a, 1)) : status === 'push' ? stake : status === 'loss' ? 0 : null;
+  const gr = { status, legs, pays };
+  if (/^(win|loss|push)$/.test(status)) { sp.graded = Object.assign({ at: new Date().toISOString() }, gr); SAVED_DIRTY = true; }
+  return gr;
 }
-function renderParlays() {
-  /* a leg whose game has started leaves the builder: its price is gone */
-  const games = gameById(); const gone = P.legs.filter(l => !games[l.game] || hasStarted(games[l.game]));
-  if (gone.length) { P.legs = P.legs.filter(l => !gone.includes(l)); save(); }
-  updateLegCount(); renderParlayLines();
-  if (gone.length) $('plNote').textContent = `${gone.length} leg${gone.length > 1 ? 's' : ''} left the builder: the game started. ` + $('plNote').textContent;
-  $('legs').innerHTML = P.legs.length ? P.legs.map((l, i) => `<div class="leg"><span>${esc(l.label)} · ${esc(l.text)} <span class="muted">${fmtOdds(l.odds)}</span></span><span class="muted small">${esc(l.date)}</span><span class="num" title="the model's chance">${pct(l.p)}</span><button class="x" data-i="${i}" title="remove">×</button></div>`).join('') : '<div class="empty">No legs yet. Pick moneylines, puck lines and totals on the Games tab or below.</div>';
-  const pr = priceLegs(P.legs); const stake = +$('stake').value || 0;
-  $('parlayTotals').innerHTML = pr ? `
-    <div class="stat"><div class="k">Parlay odds</div><div class="v">${pr.am}</div></div>
-    <div class="stat"><div class="k">Book's implied</div><div class="v">${pct1(pr.imp)}</div></div>
-    <div class="stat"><div class="k">Model's chance</div><div class="v ${pr.p > pr.imp ? 'good' : 'bad'}">${pct1(pr.p)}</div></div>
-    <div class="stat"><div class="k">Pays</div><div class="v">$${(stake * pr.dec).toFixed(2)}</div></div>
-    <div class="stat"><div class="k">Model EV a $</div><div class="v ${pr.ev >= 0 ? 'good' : 'bad'}">${signed(pr.ev.toFixed(2))}</div></div>` : '';
-  $('savedList').innerHTML = P.saved.length ? P.saved.slice().reverse().map(sp => {
-    const grades = sp.legs.map(gradeLeg);
-    const status = grades.includes('loss') ? 'loss' : grades.includes('pending') ? 'pending' : grades.every(x => x === 'push') ? 'push' : 'win';
-    const live = sp.legs.filter((l, i) => grades[i] !== 'push'); const pr2 = priceLegs(live);
-    const pays = status === 'win' ? (sp.stake * (pr2 ? pr2.dec : 1)).toFixed(2) : status === 'push' ? sp.stake.toFixed(2) : null;
-    return `<div class="saved"><div class="top"><b>${sp.legs.length}-leg parlay · ${sp.am}</b><span><span class="tag ${status === 'pending' ? '' : status}">${status}${pays !== null ? ' · $' + pays : ''}</span> <button class="btn tiny ghost" data-del="${sp.id}">delete</button></span></div>
-      <div class="small muted">$${sp.stake} · saved ${sp.at.slice(0, 10)} · model ${pct1(sp.p)} vs implied ${pct1(sp.imp)}</div>
-      <div class="small chips" style="margin-top:6px">${sp.legs.map((l, i) => `<span class="tag ${grades[i] === 'pending' ? '' : grades[i]}">${esc(l.text)} ${fmtOdds(l.odds)}</span>`).join(' ')}</div></div>`;
-  }).join('') : '<div class="empty">Nothing saved.</div>';
+let SAVED_DIRTY = false;
+function renderSaved() {
+  const list = P.saved.filter(savedOk);
+  $('savedList').innerHTML = list.length ? list.slice().reverse().map(sp => {
+    const gr = savedGrade(sp), d = isFinite(+sp.dec) && +sp.dec > 1 ? +sp.dec : sp.legs.reduce((a, l) => a * dec(+l.odds), 1);
+    const n = sp.legs.length, stake = +sp.stake || 0, am = toAm(d);
+    const st = { win: 'won', loss: 'lost', push: 'push: stake back', pending: 'pending', gone: "can't be graded here" }[gr.status];
+    const tag = `<span class="tag ${gr.status === 'win' ? 'win' : gr.status === 'loss' ? 'loss' : gr.status === 'push' ? 'push' : ''}">${st}${gr.status === 'win' ? ' · ' + money(gr.pays) : ''}</span>`;
+    const p = +sp.p, imp = +sp.imp || 1 / d, fair = sp.fair === null || sp.fair === undefined ? null : +sp.fair;
+    const legs = sp.legs.map((l, i) => {
+      const g = gameById()[l.game], gl = gr.legs[i];
+      const word = { win: 'won', loss: 'lost', push: 'push', pending: 'pending', void: 'void: called off', gone: 'not on the schedule' }[gl] || gl;
+      const day = l.start ? new Date(l.start).toLocaleDateString('en-US', Object.assign({ weekday: 'short', month: 'short', day: 'numeric' }, ETZ)).replace(',', '') : l.date ? dayText(l.date).replace(',', '') : '';
+      const desc = g ? descOf(l.kind, l.side, l.line === null || l.line === undefined ? null : +l.line, g) : String(l.text || '');
+      return `<li><span>${esc(g ? matchup(g) : String(l.label || ''))}${day ? ', ' + esc(day) : ''} · ${esc(desc)} ${fmtOdds(+l.odds)}</span><span class="tag ${gl === 'win' || gl === 'loss' || gl === 'push' ? gl : gl === 'void' ? 'void' : gl === 'gone' ? 'gone' : ''}">${esc(word)}</span></li>`;
+    }).join('');
+    const when = typeof sp.at === 'string' ? new Date(sp.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    return `<div class="saved"><div class="top"><b>${n}-leg parlay ${am}</b><span>${tag} <button type="button" class="btn ghost" data-del="${esc(sp.id)}" aria-label="Delete this saved parlay">Delete</button></span></div>
+      <div class="pb-sl">${stakeShort(stake)} · pays ${money(cents(stake * d))} if it lands${when ? ' · saved ' + esc(when) : ''}</div>
+      <ul class="pb-slegs">${legs}</ul>
+      <div class="pb-sl">${fair !== null && isFinite(fair) ? `fair ${whole(fair)} · model ${whole(p)}` : isFinite(p) ? `model ${whole(p)} · the price says ${whole(imp)}` : ''}</div></div>`;
+  }).join('') : '<div class="empty">Nothing saved on this device.</div>';
+  if (SAVED_DIRTY) { SAVED_DIRTY = false; save(); }
 }
-$('legs').addEventListener('click', e => { const b = e.target.closest('button.x'); if (!b) return; P.legs.splice(+b.dataset.i, 1); save(); renderParlays(); });
-$('stake').addEventListener('input', renderParlays);
-$('saveParlay').addEventListener('click', () => {
-  const pr = priceLegs(P.legs); if (!pr) return;
-  P.saved.push({ id: Date.now().toString(36), at: new Date().toISOString(), stake: +$('stake').value || 0, legs: P.legs, am: pr.am, p: pr.p, imp: pr.imp });
-  P.legs = []; save(); renderParlays();
+$('savedList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-del]'); if (!b) return;
+  if (!confirm('Delete this saved parlay?')) return;
+  DELETED.add(b.dataset.del); P.saved = P.saved.filter(s => !(isObj(s) && s.id === b.dataset.del)); save(); renderSaved();
 });
-$('clearParlay').addEventListener('click', () => { P.legs = []; save(); renderParlays(); });
-$('savedList').addEventListener('click', e => { const b = e.target.closest('button[data-del]'); if (!b) return; P.saved = P.saved.filter(s => s.id !== b.dataset.del); save(); renderParlays(); });
+
+/* ---------- the slip bar (#slip): the builder at a glance on every other tab ---------- */
+/* shown with legs on any other tab (and on this one while the builder is out of view); with none, only
+   while it says why the last ones left, so a builder emptied by the clock is never emptied in silence */
+let BUILDER_OUT = false, SLIP_T = null, SLIP_SAY = false;
+function slipSay(msg, ms, empty) {
+  $('slipMsg').textContent = msg; SLIP_SAY = !!(msg && empty); clearTimeout(SLIP_T);
+  SLIP_T = setTimeout(() => { $('slipMsg').textContent = ''; SLIP_SAY = false; updateSlip(); }, ms || 4000);
+  updateSlip();
+}
+const slipQuiet = () => { clearTimeout(SLIP_T); SLIP_SAY = false; $('slipMsg').textContent = ''; };
+function updateSlip() {
+  if (!S) return;
+  const legs = builderLegs(false), q = quote(legs), tab = curTab();
+  const show = q ? (tab !== 'parlays' || BUILDER_OUT) : (SLIP_SAY && tab !== 'parlays');
+  $('slip').hidden = !show; document.body.classList.toggle('has-slip', show);
+  $('slipText').textContent = q ? `${q.n} leg${q.n > 1 ? 's' : ''} · ${q.am} · ${stakeShort(q.stake)} pays ${money(q.pays)}` : 'No legs in the builder';
+  updateLegCount();
+}
+$('slipOpen').addEventListener('click', () => { showTab('parlays'); scrollToEl($('builder')); });
+if (typeof IntersectionObserver === 'function') new IntersectionObserver(es => { for (const e of es) BUILDER_OUT = !e.isIntersecting; updateSlip(); }).observe($('builder'));
+
+/* ---------- the parlay card (#pcWin): a window over the page ----------
+   Finish (a level's) and Finish parlay (the builder's) open the parlay as a card: every leg and its
+   price, the parlay's price, the stake and what it pays, DraftKings' fair chance first and the model's
+   beside it, the days, the site's mark. Download image draws the same card on a canvas at twice its
+   size (context calls only: no remote image is ever drawn, so the canvas is never tainted); Share link
+   sends a few lines of text with the DraftKings link inside the text, never in a share's url (an
+   iPhone's share sheet shortens or drops that); Open in DraftKings opens the legs on DraftKings'
+   betslip from line.dk, DraftKings' own ids as the job last read them, and the note under the buttons
+   says what it opens, as of when, and which legs it cannot open and why. Nothing is saved */
+let PC = null;
+const dkKey = L => L.kind === 'ou' ? L.side : L.side + (L.kind === 'ml' ? 'ML' : 'PL');
+/* the number a DraftKings id names, for a puck line or a total: null for a moneyline or an id in another shape */
+function dkNum(key, id) {
+  let m;
+  if (key === 'homePL' || key === 'awayPL') { m = new RegExp(`^0HC\\d+([NP])(\\d+)_${key === 'homePL' ? 1 : 3}$`).exec(id); return m ? (m[1] === 'N' ? -1 : 1) * (+m[2]) / 100 : null; }
+  if (key === 'over' || key === 'under') { m = new RegExp(`^0OU\\d+${key === 'over' ? 'O' : 'U'}(\\d+)_${key === 'over' ? 1 : 3}$`).exec(id); return m ? +m[1] / 100 : null; }
+  return null;
+}
+const DK_SHAPE = { homeML: /^0ML\d+_1$/, awayML: /^0ML\d+_3$/, homePL: /^0HC\d+[NP]\d+_1$/, awayPL: /^0HC\d+[NP]\d+_3$/, over: /^0OU\d+O\d+_1$/, under: /^0OU\d+U\d+_3$/ };
+const dkUrl = ids => DK_SLIP + ids.map(encodeURIComponent).join('+');
+/* each leg: its id when one can go on the slip, else why not; a leg's own link (its id, or its game's DraftKings page) */
+function dkPlan(legs) {
+  const rows = legs.map((L, i) => {
+    const line = L.g.line || {}, dk = isObj(line.dk) ? line.dk : null, r = { L, n: i + 1, id: null, why: null, short: null, read: null };
+    r.event = dk && typeof dk.event === 'string' && /^\d+$/.test(dk.event) ? dk.event : null;
+    if (hasStarted(L.g)) { r.why = r.short = 'its game has started'; r.event = null; return r; }
+    if (!isDK(line)) { r.why = r.short = `priced at ${bookName(line)}, not DraftKings`; return r; }
+    if (!dk) { r.why = 'no DraftKings ids were read for its game'; r.short = 'no DraftKings id was read for its game'; return r; }
+    const key = dkKey(L), id = dk[key];
+    if (typeof id !== 'string' || !DK_SHAPE[key].test(id)) { r.why = r.short = 'not among the DraftKings ids read for its game'; return r; }
+    const had = dkNum(key, id);
+    if (L.kind !== 'ml' && had !== L.num) { r.why = `DraftKings had it at ${L.kind === 'pl' ? fmtLine(had) : had} when its lines were last read (${etRead(dk.at || line.at)})`; r.short = `DraftKings had it at ${L.kind === 'pl' ? fmtLine(had) : had} when its lines were last read`; return r; }
+    r.id = id; r.read = dk.at || line.at || null; return r;
+  });
+  const open = rows.filter(r => r.id), reads = open.map(r => r.read).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
+  return { rows, open, ids: open.map(r => r.id), url: open.length ? dkUrl(open.map(r => r.id)) : DK_NHL, read: reads[0] || null, link: r => r.id ? dkUrl([r.id]) : r.event ? DK_EVENT + r.event : null };
+}
+function cardOf(legs, origin, fromBuilder) {
+  legs = legs.slice().sort(legCmp);
+  const q = quote(legs), plan = dkPlan(legs), n = legs.length;
+  const days = [...new Set(legs.map(L => etDay(L.start)))];
+  const dates = days.length > 1 ? `${days[0]} – ${days[days.length - 1]}` : days[0] || '';
+  const allDK = legs.every(L => isDK(L.g.line));
+  const priceSays = `the price says ${pct1(q.imp)}`;
+  const chance = q.fair === null ? [`Model's chance all ${n} land ${pct1(q.p)} · ${priceSays}`, "No fair chance: it needs both of DraftKings' prices on every leg"] : [`Fair chance all ${n} land ${pct1(q.fair)}`, `model says ${pct1(q.p)} · ${priceSays}`];
+  const title = `${n}-leg parlay ${q.am}`;
+  const lines = legs.map((L, i) => `${i + 1}. ${L.who}: ${L.bet} (${fmtOdds(L.price)})`);
+  lines.push(`Stake ${money(q.stake)} · Pays ${money(q.pays)}`);
+  lines.push(q.fair === null ? `Model's chance all ${n} land ${pct1(q.p)} · ${priceSays}` : `Fair chance all ${n} land ${pct1(q.fair)} · model says ${pct1(q.p)} · ${priceSays}`);
+  const hand = plan.rows.filter(r => !r.id), k = plan.open.length;
+  if (k) {
+    const handNums = hand.map(r => r.n), handText = handNums.length ? `; add leg${handNums.length > 1 ? 's' : ''} ${handNums.length > 1 ? handNums.slice(0, -1).join(', ') + ' and ' + handNums[handNums.length - 1] : handNums[0]} by hand` : '';
+    lines.push(`DraftKings betslip (opens ${k === n ? `the ${n} legs` : `${k} of the ${n} legs`} as DraftKings had them${handText}):`, plan.url);
+    lines.push(plan.read ? `DraftKings lines as read ${etRead(plan.read)}: a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet` : "When DraftKings' lines were read is not recorded: a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet");
+  } else lines.push("DraftKings' NHL page (add the legs by hand):", DK_NHL);
+  if (hand.length) { lines.push('Add by hand at DraftKings:'); for (const r of hand) lines.push(`${r.n}. ${r.L.who} ${r.L.bet} (${r.short})`); }
+  lines.push(SITE);
+  const first = legs.map(L => L.start).sort((a, b) => Date.parse(a) - Date.parse(b))[0];
+  return { legs, q, plan, origin, fromBuilder, dates, allDK, chance, title, text: lines.join('\n'), file: `nhl-parlay-${etDate(first)}-${n}legs.png`, made: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
+}
+function cardHtml(c) {
+  const q = c.q;
+  return `<div class="pc-card">
+    <div class="pc-head"><div class="pc-mark"><span>X NHL BETS</span><i></i><span class="pc-kick">${esc(c.origin.toUpperCase())}</span></div>
+      <div class="pc-row"><div class="pc-title">${q.n}-leg parlay</div><div class="pc-price">${q.am}</div></div>
+      <div class="pc-sub">${esc(c.dates)}</div>
+      <div class="pc-sub">${q.dec.toFixed(2)} decimal · ${pct1(q.imp)} implied · ${c.allDK ? "DraftKings' price" : "the book's price"}</div></div>
+    <ol class="pc-legs">${c.legs.map((L, i) => `<li><span class="pc-n">${i + 1}</span><div><span class="pc-who">${esc(L.who)}</span><span class="pc-what">${esc(L.bet)}</span><span class="pc-meta">${esc(L.mu)} · ${esc(etWhen(L.start))}</span></div><span class="pc-lp">${fmtOdds(L.price)}</span></li>`).join('')}</ol>
+    <div class="pc-money"><div><span>Stake</span><b>${money(q.stake)}</b></div><div><span>Pays</span><b>${money(q.pays)}</b></div><div class="pc-win"><span>Profit</span><b>+${money(q.profit)}</b></div></div>
+    <div class="pc-chance">${q.fair === null ? `<div>Model's chance all ${q.n} land <b>${pct1(q.p)}</b> · the price says <b>${pct1(q.imp)}</b></div><div>No fair chance: it needs both of DraftKings' prices on every leg</div>` : `<div>Fair chance all ${q.n} land <b>${pct1(q.fair)}</b></div><div>model says <b>${pct1(q.p)}</b> · the price says <b>${pct1(q.imp)}</b></div>`}</div>
+    <div class="pc-foot"><b>${SITE}</b><span>Made ${esc(c.made)}</span></div></div>`;
+}
+function noteHtml(c) {
+  const P2 = c.plan, n = c.legs.length, k = P2.open.length;
+  const links = P2.rows.map(r => { const u = P2.link(r); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener" aria-label="Leg ${r.n} on DraftKings">${r.n}</a>` : ''; }).filter(Boolean);
+  const one = links.length ? ` One leg at a time: ${links.join(' · ')}.` : '';
+  const head = k ? `${P2.read ? `DraftKings' lines as read ${esc(etRead(P2.read))}` : "When DraftKings' lines were read is not recorded"}: Open in DraftKings opens ${k === n ? `the ${n} legs` : `${k} of the ${n} legs`} as DraftKings had them then; a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet.${one}`
+    : `Open DraftKings opens DraftKings' NHL page: add the legs by hand.${one}`;
+  const hand = P2.rows.filter(r => !r.id);
+  return `<p>${head}</p>${hand.length ? `<p>${k ? 'Not on the slip, to add by hand:' : 'Why none can go on the slip:'}</p><ul>${hand.map(r => `<li>Leg ${r.n}, ${esc(r.L.who)} ${esc(r.L.bet)}: ${esc(r.why)}.</li>`).join('')}</ul>` : ''}`;
+}
+function canShareFile(name) {
+  try { return typeof navigator.canShare === 'function' && typeof navigator.share === 'function' && typeof File === 'function' && !!navigator.canShare({ files: [new File([new Uint8Array([137, 80, 78, 71])], name, { type: 'image/png' })] }); } catch (e) { return false; }
+}
+function openCard(legs, origin, opener, fromBuilder) {
+  const c = PC = cardOf(legs, origin, fromBuilder);
+  PC.opener = opener || null;
+  $('pcView').innerHTML = cardHtml(c);
+  const k = c.plan.open.length;
+  $('pcDk').href = c.plan.url; $('pcDk').textContent = k ? 'Open in DraftKings' : 'Open DraftKings';
+  $('pcDk').title = k ? "Opens the legs as DraftKings had them at the job's last read; a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet" : "DraftKings' NHL page, to add the legs by hand";
+  $('pcNote').innerHTML = noteHtml(c);
+  $('pcAgain').hidden = !fromBuilder;
+  $('pcOwn').textContent = fromBuilder ? 'Yours alone: this card is not saved anywhere. Save on this device keeps it in your saved parlays.'
+    : 'Yours alone: this card is not saved anywhere. To keep it, Add to builder, then Save on this device: it goes in your saved parlays.';
+  const file = canShareFile(c.file);
+  $('pcFile').hidden = !file; $('pcDown').className = file ? 'btn ghost' : 'btn ice';
+  $('pcMsg').textContent = '';
+  $('pcWin').hidden = false; document.body.classList.add('pc-open');
+  $('pcPanel').scrollTop = 0; $('pcWin').scrollTop = 0;
+  (file ? $('pcFile') : $('pcDown')).focus();
+}
+function closeCard(to) {
+  if ($('pcWin').hidden) return;
+  if (!(to instanceof Element)) to = null;          // never an event: Close's click hands its own in
+  $('pcWin').hidden = true; document.body.classList.remove('pc-open');
+  const o = PC && PC.opener; PC = null;
+  const back = to || (o && document.contains(o) && !o.disabled ? o : !$('pFinish').disabled ? $('pFinish') : $('bTitle'));
+  if (back && back.focus) back.focus();
+}
+let PC_T = null;
+function pcSay(msg, ms) { $('pcMsg').textContent = msg; clearTimeout(PC_T); if (ms) PC_T = setTimeout(() => { $('pcMsg').textContent = ''; }, ms); }
+$('pcClose').addEventListener('click', () => closeCard());
+$('pcWin').addEventListener('click', e => { if (e.target === $('pcWin')) closeCard(); });
+document.addEventListener('keydown', e => {
+  if ($('pcWin').hidden) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeCard(); return; }
+  if (e.key !== 'Tab') return;
+  const f = [...$('pcPanel').querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])')].filter(x => !x.hidden && !x.disabled && !x.closest('[hidden]'));
+  if (!f.length) return;
+  const i = f.indexOf(document.activeElement);
+  if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && (i === -1 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+});
+$('pcAgain').addEventListener('click', () => { P.legs = []; BMSG = []; slipQuiet(); save(); rerender(); closeCard($('bTitle')); });
+/* Share link: one plain text, the link inside it, by the share sheet; else copied */
+async function copyText(t) {
+  let ok = false;
+  try { if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') { await navigator.clipboard.writeText(t); ok = true; } } catch (e) { ok = false; }
+  if (!ok) {
+    const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    $('pcPanel').appendChild(ta); ta.focus(); ta.select();
+    try { ok = typeof document.execCommand === 'function' && document.execCommand('copy') !== false; } catch (e) { ok = false; }
+    ta.remove(); $('pcLink').focus();
+  }
+  pcSay(ok ? 'Link copied' : 'This browser would not copy it: select the text from a share instead.', 2500);
+}
+$('pcLink').addEventListener('click', async () => {
+  if (!PC) return;
+  const data = { title: PC.title, text: PC.text };
+  let can = false;
+  try { can = typeof navigator.share === 'function' && (typeof navigator.canShare !== 'function' || !!navigator.canShare(data)); } catch (e) { can = false; }
+  if (can) { try { await navigator.share(data); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  await copyText(data.text);
+});
+/* the card as a picture: the same card drawn on a canvas 540 CSS px wide, at twice its size */
+function drawCard(ctx, c, paint) {
+  const W = 540, pad = 22, q = c.q;
+  const F = (w, s, fam) => `${w} ${s}px ${fam === 'd' ? 'Unbounded, Manrope, system-ui, sans-serif' : 'Manrope, system-ui, -apple-system, "Segoe UI", sans-serif'}`;
+  const col = { bg: '#0F1720', bg2: '#141E29', panel: '#1A2533', line: '#2C3B4D', line2: '#3A4C62', ink: '#F3F7FB', ink2: '#C3CDD9', muted: '#8393A6', ice: '#5FD4FF', gold: '#FFD166', lime: '#CDFF4F' };
+  const text = (s, x, y, font, color, align) => { ctx.font = font; if (paint) { ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.fillText(s, x, y); } };
+  const width = (s, font) => { ctx.font = font; const m = ctx.measureText(s); return m && isFinite(m.width) ? m.width : s.length * 8; };
+  const rect = (x, y, w, h, r, fill, stroke) => { if (!paint) return; ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); } };
+  const wrap = (s, font, maxW) => { const out = []; let cur = ''; for (const w of String(s).split(' ')) { const t = cur ? cur + ' ' + w : w; if (cur && width(t, font) > maxW) { out.push(cur); cur = w; } else cur = t; } if (cur) out.push(cur); return out; };
+  if (paint) { ctx.textBaseline = 'alphabetic'; }
+  let y = 0;
+  /* the header */
+  const headH = 132;
+  if (paint) { rect(0, 0, W, c.height || 800, 18, col.panel); ctx.fillStyle = col.bg; ctx.fillRect(0, 0, W, headH); }
+  text('X NHL BETS', pad, 34, F(900, 13, 'd'), col.ink);
+  if (paint) { ctx.beginPath(); ctx.arc(pad + width('X NHL BETS', F(900, 13, 'd')) + 10, 29.5, 3.5, 0, Math.PI * 2); ctx.fillStyle = col.ice; ctx.fill(); }
+  const kick = c.origin.toUpperCase(), kf = F(800, 11), kw = width(kick, kf) + 20;
+  rect(W - pad - kw, 18, kw, 24, 12, 'rgba(95,212,255,.16)'); text(kick, W - pad - kw / 2, 34, kf, col.ice, 'center');
+  text(`${q.n}-leg parlay`, pad, 76, F(700, 24, 'd'), col.ink);
+  text(q.am, W - pad, 78, F(900, 30, 'd'), col.gold, 'right');
+  text(c.dates, pad, 100, F(600, 13), col.ink2);
+  text(`${q.dec.toFixed(2)} decimal · ${pct1(q.imp)} implied · ${c.allDK ? "DraftKings' price" : "the book's price"}`, pad, 120, F(600, 13), col.ink2);
+  y = headH + 6;
+  /* the legs */
+  const lw = W - pad * 2 - 34 - 70;
+  c.legs.forEach((L, i) => {
+    const who = wrap(L.who, F(800, 15), lw), what = wrap(L.bet, F(500, 14), lw);
+    const h = 14 + who.length * 19 + what.length * 18 + 18 + 10;
+    if (i && paint) { ctx.fillStyle = col.line; ctx.fillRect(pad, y, W - pad * 2, 1); }
+    if (paint) { ctx.beginPath(); ctx.arc(pad + 11, y + 24, 11, 0, Math.PI * 2); ctx.strokeStyle = col.line2; ctx.lineWidth = 1.5; ctx.stroke(); }
+    text(String(i + 1), pad + 11, y + 28, F(800, 11), col.ink2, 'center');
+    let yy = y + 28;
+    for (const s of who) { text(s, pad + 34, yy, F(800, 15), col.ink); yy += 19; }
+    for (const s of what) { text(s, pad + 34, yy, F(500, 14), col.ink); yy += 18; }
+    text(`${L.mu} · ${etWhen(L.start)}`, pad + 34, yy, F(600, 12), col.muted);
+    text(fmtOdds(L.price), W - pad, y + 29, F(700, 16, 'd'), col.ink, 'right');
+    y += h;
+  });
+  /* the money: three tiles a row, the figures stepping down from 19px to 14px, then onto a second row */
+  const tiles = [['STAKE', money(q.stake), col.ink], ['PAYS', money(q.pays), col.ink], ['PROFIT', '+' + money(q.profit), col.lime]];
+  const gap = 8, inner = W - pad * 2;
+  let size = 19, perRow = 3;
+  const fits = (s, k) => tiles.every(t => width(t[1], F(700, s, 'd')) + 20 <= (inner - gap * (k - 1)) / k);
+  while (size > 14 && !fits(size, 3)) size--;
+  if (!fits(size, 3)) { perRow = fits(size, 2) ? 2 : 1; }
+  y += 6;
+  for (let r = 0; r * perRow < tiles.length; r++) {
+    const row = tiles.slice(r * perRow, r * perRow + perRow), tw = (inner - gap * (row.length - 1)) / row.length;
+    row.forEach((t, j) => { const x = pad + j * (tw + gap); rect(x, y, tw, 56, 10, col.bg2, col.line); text(t[0], x + 10, y + 20, F(800, 10), col.ink2); text(t[1], x + 10, y + 44, F(700, size, 'd'), t[2]); });
+    y += 56 + gap;
+  }
+  /* the chances */
+  y += 10;
+  for (const s of c.chance) for (const part of wrap(s, F(600, 13.5), inner)) { text(part, pad, y + 4, F(600, 13.5), col.ink2); y += 20; }
+  /* the footer */
+  y += 12;
+  if (paint) { ctx.fillStyle = col.line; ctx.fillRect(0, y, W, 1); }
+  text(SITE, pad, y + 26, F(700, 12.5), col.ink2);
+  text(`Made ${c.made}`, W - pad, y + 26, F(600, 12.5), col.muted, 'right');
+  return y + 42;
+}
+async function cardBlob(c) {
+  try { if (document.fonts && typeof document.fonts.load === 'function') await Promise.all([document.fonts.load('900 20px Unbounded'), document.fonts.load('700 14px Manrope')]); } catch (e) {}
+  const cv = document.createElement('canvas'), ctx = cv.getContext && cv.getContext('2d'); if (!ctx) return null;
+  const h = Math.ceil(drawCard(ctx, c, false));
+  cv.width = 1080; cv.height = h * 2;
+  const ctx2 = cv.getContext('2d'); ctx2.scale(2, 2); c.height = h;
+  drawCard(ctx2, c, true);
+  return new Promise(res => { try { if (typeof cv.toBlob === 'function') cv.toBlob(b => res(b || null), 'image/png'); else res(null); } catch (e) { res(null); } });
+}
+$('pcDown').addEventListener('click', async () => {
+  if (!PC) return; const c = PC;
+  pcSay('Drawing the image…');
+  const blob = await cardBlob(c);
+  if (!blob) { pcSay('This browser could not draw the image.', 4000); return; }
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = c.file; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 4000);
+  pcSay(`Saved as ${c.file}.`, 4000);
+});
+$('pcFile').addEventListener('click', async () => {
+  if (!PC) return; const c = PC;
+  pcSay('Drawing the image…');
+  const blob = await cardBlob(c); if (!blob) { pcSay('This browser could not draw the image.', 4000); return; }
+  try { await navigator.share({ files: [new File([blob], c.file, { type: 'image/png' })], title: c.title }); pcSay('', 0); }
+  catch (e) { pcSay(e && e.name === 'AbortError' ? '' : 'Could not share the image: Download image saves it instead.', 4000); }
+});
+
+/* ---------- Pick your own legs (#plLines): the panel's day, every game still to come with a fresh line ---------- */
+function renderParlayLines() {
+  const sl = pbSlate(), gs = sl.games.filter(freshLine);
+  $('pbPickN').textContent = gs.length ? `${gs.length} game${gs.length > 1 ? 's' : ''} on ${slateText(sl)}` : '';
+  if (!PICK_SET) { PICK_SET = true; $('pbPick').open = !(window.matchMedia && window.matchMedia('(max-width:760px)').matches); }
+  $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh"><b>${esc(matchup(g))}</b><span>${esc(sl.dates.length > 1 ? when(g) : timeOf(g))} · model ${esc(T(g.pHome >= 0.5 ? g.home : g.away).abbr)} ${pct(Math.max(g.pHome, 1 - g.pHome))}</span></div>${betBlock(g)}</div>`).join('')
+    : `<div class="empty">Nothing to bet yet: no game on ${esc(slateText(sl) || 'the schedule')} still to come has a DraftKings line. Lines come about a day before puck drop.</div>`;
+}
+let PICK_SET = false;
+
+/* ---------- drawing it all, and the watch ---------- */
+const curTab = () => { const b = $('tabs').querySelector('button.on'); return b ? b.dataset.tab : 'games'; };
+function renderParlays() {
+  SHOWN = new Set();
+  const legs = builderLegs(true);
+  if (!BMSG.length && Array.isArray(P.ui.bmsg)) BMSG = P.ui.bmsg.filter(x => typeof x === 'string').slice(0, 8);
+  renderPb(); renderParlayLines(); renderBuilder(legs); renderSaved(); updateSlip();
+  if (P.ui.bmsg !== undefined) { delete P.ui.bmsg; save(); }          // said in the builder now
+}
+function rerender() {
+  const t = curTab(), a = document.activeElement, leg = a && a.dataset ? a.dataset.leg : null, box = leg && a.closest('#games, #plLines');
+  if (t === 'parlays') renderParlays(); else if (t === 'games') { SHOWN = new Set(); renderGames(); }
+  updateSlip();
+  /* a bet button redrawn under the visitor's finger keeps the focus, where it is still offered */
+  if (leg && box && !document.contains(a)) { const nb = [...box.querySelectorAll('button[data-leg]')].find(x => x.dataset.leg === leg); if (nb) nb.focus(); }
+}
+/* every half minute, and when the page comes back into view: a game shown as still to come that has
+   started leaves every level, the lists and the builder (said there), and an emptied slate moves on */
+function pbWatch() {
+  if (!S) return;
+  const gb = gameById();
+  const shownGone = [...SHOWN].some(id => !gb[id] || hasStarted(gb[id]));
+  /* a line said when the slate moved on goes once the day it names is over (Eastern), redrawn though nothing else moved */
+  const today = etToday(), over = n => !!n && !n.from.some(d => d >= today);
+  let said = false;
+  if (over(PB_NOTICE)) { PB_NOTICE = null; said = true; }
+  if (over(PB_DROP)) { PB_DROP = null; said = true; }
+  if (pruneLegs() || shownGone || (said && curTab() === 'parlays')) rerender();      // once: a pruned builder holds no leg the watch would see again
+}
+/* the stored legs read again from the state, on any tab: a leg that can no longer be bet leaves the
+   builder (said there and on the slip bar) and a moved price is updated, so the Games cards, the slip and
+   the badge all show what the builder will. True when the store changed */
+function pruneLegs() {
+  if (!S || !P.legs.length) return false;
+  const before = JSON.stringify(P.legs), r = builderLegs(true);
+  const changed = JSON.stringify(P.legs) !== before;
+  if (changed && r.msgs.length) slipSay(r.msgs.join(' '), 9000, !r.length);
+  return changed;
+}
+setInterval(pbWatch, 30000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'hidden') pbWatch(); });
+window.addEventListener('storage', e => { if (e.key !== KEY || !S) return; P = load(); rerender(); });
+const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function scrollToEl(el) { if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' }); }
 
 /* ---------- Record ---------- */
 function renderRecord() {
@@ -671,12 +1863,11 @@ async function boot() {
     const r = await fetch(STATE_URL + '?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
     S = await r.json();
   } catch (e) { $('stamp').textContent = 'Could not read state.json (' + e.message + ')'; return; }
-  const pub = new Date(S.published);
   const phase = S.playoff && S.playoff.phase;
   $('stamp').innerHTML = `${S.season - 1}-${String(S.season).slice(2)} season${phase === 'postseason' ? ' · the playoffs' : phase === 'over' && S.playoff.champion ? ' · ' + esc(T(S.playoff.champion).short) + ' won the Cup' : ''} · ${S.record.su.w}-${S.record.su.l} SU, ${S.record.pl.w}-${S.record.pl.l} puck line, ${S.record.ou.w}-${S.record.ou.l} totals`;
-  $('stamp').insertAdjacentHTML('afterend', `<span class="small muted">published ${pub.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} · </span>`);
-  updateLegCount();
-  const h = location.hash.slice(1);
+  $('stamp').insertAdjacentHTML('afterend', `<span class="small muted">published ${esc(dateClock(S.published))} · </span>`);
+  pruneLegs();                  // the builder as this state allows it, on whichever tab opens: no leg on a game started, gone or moved
+  const h = tabName(location.hash.slice(1));
   showTab(h && $('tab-' + h) ? h : (P.ui.tab && $('tab-' + P.ui.tab) ? P.ui.tab : 'games'));
   autoLive();
 }

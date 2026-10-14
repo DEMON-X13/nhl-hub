@@ -12,11 +12,22 @@
    game could be read from it (its shape moved), or none it named matched a game on the schedule
    (its dates or club names are being misread). DailyFaceoff not answering at all is a warning only:
    it answers GitHub's runners and not every network, and the next run asks again.
-   NHL_STATE and NHL_DATA move the files (simulate.js). */
+   DraftKings' ids: on the run's saved scoreboard answers (tools/out/sb_<date>.json, NHL_OUT) for the
+   days with a game in that day and a half, each of the six outcomes is counted on its own (each side
+   of the moneyline, the puck line and the total). An outcome ESPN gave links for on some game and
+   whose links gave not one id in its side's shape on any game is broken (DraftKings or ESPN moved
+   that market's shape): those legs then open no slip, so a lost market is seen even while the rest
+   read; every link with no id the job reads is the old, wider break, and the card opens DraftKings'
+   NHL page. A game whose DraftKings prices carried no link at all (ESPN has answered as "Draft
+   Kings" on some runs), or links giving no outcome id, is a note, named, even beside games that
+   carried theirs: the job keeps the last ids read for the same numbers.
+   NHL_STATE, NHL_DATA and NHL_OUT move the files (simulate.js). */
 'use strict';
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), DATA = process.env.NHL_DATA || path.join(ROOT, 'data');
 const read = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return null; } };
+const OUT = process.env.NHL_OUT || path.join(__dirname, 'out');
+const E = require('./espn');
 const S = read(process.env.NHL_STATE || path.join(ROOT, 'state.json'));
 const inj = read(path.join(DATA, 'injuries.json')), st = read(path.join(DATA, 'starters.json'));
 const now = S ? Date.parse(S.published) : Date.now();
@@ -33,6 +44,40 @@ if (soon) {
   }
   if (st && st.ok === false && /answered/.test(st.why || '')) problems.push(`DailyFaceoff: ${st.why}; the goalies are the model's own choice until starters.js reads the new shape`);
   else if (st && st.ok === false) notes.push(`DailyFaceoff: ${st.why}`);
+  /* DraftKings' ids on the answers this run saved for the days with a game in the next day and a half */
+  const days = [...new Set(S.games.filter(g => g.state === 'pre' && Date.parse(g.start) > now && Date.parse(g.start) - now < 36 * 3600000).map(g => g.date))].sort();
+  let priced = 0, links = 0, ids = 0, answers = 0, elsewhere = 0; const books = new Set(), others = new Set();
+  const OUTS = E.DK_OUTCOMES, byKey = Object.fromEntries(OUTS.map(k => [k, { link: 0, shape: 0, id: 0 }])), bare = [], blind = [];
+  for (const d of days) {
+    const j = read(path.join(OUT, `sb_${d}.json`)); if (!j) continue; answers++;
+    for (const ev of j.events || []) {
+      const comp = ev && ev.competitions && ev.competitions[0], o = comp && Array.isArray(comp.odds) ? comp.odds[0] : null;
+      const row = (() => { try { return E.gameRow(ev); } catch (e) { return null; } })();
+      if (!o || !row || !row.odds) continue;
+      /* another book's prices carry no DraftKings id by nature: named, never counted against DraftKings' */
+      if (E.bookKey(row.odds.book) !== 'draftkings') { elsewhere++; others.add(String(row.odds.book || 'no book named')); continue; }
+      priced++; books.add(String(row.odds.book));
+      const r = E.dkOf(o, row.odds); links += r.links; ids += r.read;      // the outcomes' links and ids alone: an event is no bet
+      for (const k of OUTS) { const x = r.keys[k] || {}; if (x.link) byKey[k].link++; if (x.shape) byKey[k].shape++; if (x.id) byKey[k].id++; }
+      const name = `${row.away}@${row.home}`;
+      if (!r.links) bare.push(name); else if (!r.read) blind.push(name);
+    }
+  }
+  if (elsewhere) notes.push(`${elsewhere} games priced at ${[...others].join(', ')}, not DraftKings: no DraftKings ids for them, and the page names the book`);
+  /* an outcome whose links, on every game that had one, gave no id in its side's shape */
+  const lost = OUTS.filter(k => byKey[k].link && !byKey[k].shape);
+  const MKT = { homeML: 'moneyline', awayML: 'moneyline', homePL: 'puck line', awayPL: 'puck line', over: 'total', under: 'total' };
+  if (priced && links && !ids) problems.push(`ESPN's DraftKings prices carried ${links} outcome links on ${priced} games and not one gave an outcome id the job reads: DraftKings ids in a shape the job does not read; the card opens DraftKings' NHL page`);
+  else if (lost.length) problems.push(`ESPN's DraftKings ${[...new Set(lost.map(k => MKT[k]))].join(' and ')} links (${lost.map(k => `${k} on ${byKey[k].link} game${byKey[k].link > 1 ? 's' : ''}`).join(', ')}) gave not one id in a shape the job reads: DraftKings ids in a shape the job does not read for ${lost.length > 1 ? 'those outcomes' : 'that outcome'}; those legs open no slip, and the card names them to add by hand`);
+  if (priced && !links) notes.push(`ESPN's prices (${[...books].join(', ')}) carried no DraftKings links on ${priced} games this run: the job keeps the last ids read for the same numbers, and the card opens DraftKings' NHL page for a leg with none`);
+  else if (priced) {
+    if (bare.length) notes.push(`${bare.length} of the ${priced} games priced at DraftKings carried no DraftKings links this run (${bare.join(', ')}): the job keeps the last ids read for the same numbers`);
+    if (blind.length) notes.push(`${blind.length} of the ${priced} games priced at DraftKings carried links that gave no outcome id the job reads (${blind.join(', ')})`);
+    const short = OUTS.filter(k => byKey[k].shape && byKey[k].id < byKey[k].shape);
+    if (short.length) notes.push(`ids on another number than the line, not kept: ${short.map(k => `${k} on ${byKey[k].shape - byKey[k].id}`).join(', ')}`);
+    console.log(`DraftKings ids: ${ids} read from ${links} outcome links on ${priced} games (${[...books].join(', ')}); by outcome, games with a link / an id read: ${OUTS.map(k => `${k} ${byKey[k].link}/${byKey[k].id}`).join(', ')}`);
+  }
+  else if (days.length && !answers) notes.push(`no saved scoreboard answer for ${days.join(', ')} in ${path.relative(ROOT, OUT) || OUT}: DraftKings' ids not checked`);
 }
 for (const n of notes) console.log('note: ' + n);
 for (const p of problems) { console.log('BROKEN: ' + p); if (process.env.GITHUB_ACTIONS) console.log(`::error title=nhl source broken::${p}`); }

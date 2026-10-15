@@ -404,26 +404,18 @@ async function main() {
      last state's outcome ids for the same numbers: the moneylines, the puck lines only on the same puck
      line, the totals only on the same total, beside the event (this answer's, else the last one's; none
      are carried onto another event), dated by when they were read (dk.at, only ever on carried ids). An
-     answer with some outcome id never carries. Another book's prices carry none */
+     answer with some outcome id never carries. Another book's prices carry none. The rule is E.carryDk
+     (tools/espn.js), shared with the page's Refresh odds */
   const lineCount = { games: 0, read: 0, carried: 0, event: 0, full: 0, books: {} };
   /* a line with an id for every price it has (each side of the moneyline, the puck line and the total that ESPN priced):
      counted in the log, so a market whose ids stop coming shows there as fewer games with all of them */
   const PRICE = { homeML: 'homeML', awayML: 'awayML', homePL: 'homeSpreadOdds', awayPL: 'awaySpreadOdds', over: 'overOdds', under: 'underOdds' };
   const fullIds = line => !!line.dk && Object.entries(PRICE).every(([k, f]) => line[f] === null || line[f] === undefined || typeof line.dk[k] === 'string');
   const freshLine = (odds, p) => {
-    const line = Object.assign({}, odds, { at: now });
     lineCount.games++; lineCount.books[odds.book || 'no book'] = (lineCount.books[odds.book || 'no book'] || 0) + 1;
-    if (E.dkHasIds(line.dk)) { lineCount.read++; if (fullIds(line)) lineCount.full++; return line; }
-    const q = p && p.line && p.line.dk, ev = line.dk && line.dk.event;
-    const none = () => { if (ev) lineCount.event++; return line; };
-    if (!E.dkHasIds(q) || E.bookKey(line.book) !== 'draftkings' || E.bookKey(p.line.book) !== 'draftkings') return none();
-    if (ev && q.event && ev !== q.event) return none();
-    const keep = ['homeML', 'awayML'].concat(p.line.homeLine === line.homeLine ? ['homePL', 'awayPL'] : [], p.line.total === line.total ? ['over', 'under'] : []);
-    const dk = {}; if (ev || typeof q.event === 'string') dk.event = ev || q.event;
-    for (const k of E.DK_OUTCOMES) if (keep.includes(k) && typeof q[k] === 'string') dk[k] = q[k];
-    if (!E.dkHasIds(dk)) return none();
-    dk.at = q.at || p.line.at;
-    line.dk = dk; lineCount.carried++; if (fullIds(line)) lineCount.full++;
+    const { line, how } = E.carryDk(Object.assign({}, odds, { at: now }), p && p.line);      // the rule itself is in espn.js, which the page's Refresh odds shares
+    if (how === 'read') lineCount.read++; else if (how === 'carried') lineCount.carried++; else if (how === 'event') lineCount.event++;
+    if ((how === 'read' || how === 'carried') && fullIds(line)) lineCount.full++;
     return line;
   };
   const out = [];

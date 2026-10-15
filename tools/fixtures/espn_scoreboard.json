@@ -1,0 +1,4826 @@
+{
+ "what": "ESPN's NHL scoreboard answers, recorded for tools/smoke.js: the page's Refresh odds parse is held equal to tools/espn.js's on every event here (and on variants the smoke derives from them). Trimmed to the fields the two parsers and the job's gameRow read (each event's id, date, season and status; its competition's date, neutral site, notes, status, competitors without leaders, statistics or links, and odds whole).",
+ "recorded": "2026-10-15T06:24Z",
+ "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=YYYYMMDD&limit=100",
+ "answers": {
+  "2026-10-15": {
+   "events": [
+    {
+     "id": "401892506",
+     "date": "2026-10-15T23:00Z",
+     "name": "Buffalo Sabres at Toronto Maple Leafs",
+     "shortName": "BUF @ TOR",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 7:00 PM EDT",
+       "shortDetail": "10/15 - 7:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892506",
+       "date": "2026-10-15T23:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 7:00 PM EDT",
+         "shortDetail": "10/15 - 7:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ],
+          "displayName": "DraftKings"
+         },
+         "details": "TOR -118",
+         "overUnder": 6.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "2",
+           "uid": "s:70~l:90~t:2",
+           "abbreviation": "BUF",
+           "name": "Sabres",
+           "displayName": "Buffalo Sabres",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/buf.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "21",
+           "uid": "s:70~l:90~t:21",
+           "abbreviation": "TOR",
+           "name": "Maple Leafs",
+           "displayName": "Toronto Maple Leafs",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/tor.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-118",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827963%3Foutcomes%3D0ML86733611_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892506,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-120"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "-102",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827963%3Foutcomes%3D0ML86733611_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892506,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+100"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+200",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827963%3Foutcomes%3D0HC86733611N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892506,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:TOR-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+200"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-245",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827963%3Foutcomes%3D0HC86733611P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892506,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:BUF+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-245"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o6.5",
+            "odds": "-122",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827963%3Foutcomes%3D0OU86733611O650_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892506,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o6.5",
+            "odds": "-112"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u6.5",
+            "odds": "+102",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827963%3Foutcomes%3D0OU86733611U650_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892506,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u6.5",
+            "odds": "-108"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827963",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892506,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "21",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-3-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-2-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-1-1"
+          }
+         ],
+         "team": {
+          "id": "21",
+          "abbreviation": "TOR",
+          "displayName": "Toronto Maple Leafs",
+          "shortDisplayName": "Maple Leafs",
+          "name": "Maple Leafs",
+          "color": "003e7e",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/tor.png"
+         }
+        },
+        {
+         "id": "2",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-3-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "3-2-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "0-1-1"
+          }
+         ],
+         "team": {
+          "id": "2",
+          "abbreviation": "BUF",
+          "displayName": "Buffalo Sabres",
+          "shortDisplayName": "Sabres",
+          "name": "Sabres",
+          "color": "00468b",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/buf.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892507",
+     "date": "2026-10-15T23:00Z",
+     "name": "New York Islanders at Ottawa Senators",
+     "shortName": "NYI @ OTT",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 7:00 PM EDT",
+       "shortDetail": "10/15 - 7:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892507",
+       "date": "2026-10-15T23:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 7:00 PM EDT",
+         "shortDetail": "10/15 - 7:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "OTT -166",
+         "overUnder": 5.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "12",
+           "uid": "s:70~l:90~t:12",
+           "abbreviation": "NYI",
+           "name": "Islanders",
+           "displayName": "New York Islanders",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nyi.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "14",
+           "uid": "s:70~l:90~t:14",
+           "abbreviation": "OTT",
+           "name": "Senators",
+           "displayName": "Ottawa Senators",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/ott.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-166",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827961%3Foutcomes%3D0ML86733629_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892507,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-155"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+140",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827961%3Foutcomes%3D0ML86733629_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892507,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+130"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+164",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827961%3Foutcomes%3D0HC86733629N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892507,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:OTT-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+170"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-198",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827961%3Foutcomes%3D0HC86733629P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892507,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:NYI+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-205"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o5.5",
+            "odds": "-112",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827961%3Foutcomes%3D0OU86733629O550_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892507,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o5.5",
+            "odds": "-115"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u5.5",
+            "odds": "-108",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827961%3Foutcomes%3D0OU86733629U550_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892507,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u5.5",
+            "odds": "-105"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827961",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892507,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "14",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "5-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "3-1-0"
+          }
+         ],
+         "team": {
+          "id": "14",
+          "abbreviation": "OTT",
+          "displayName": "Ottawa Senators",
+          "shortDisplayName": "Senators",
+          "name": "Senators",
+          "color": "dd1a32",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/ott.png"
+         }
+        },
+        {
+         "id": "12",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-3-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "3-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "0-2-0"
+          }
+         ],
+         "team": {
+          "id": "12",
+          "abbreviation": "NYI",
+          "displayName": "New York Islanders",
+          "shortDisplayName": "Islanders",
+          "name": "Islanders",
+          "color": "00529b",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nyi.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892509",
+     "date": "2026-10-15T23:00Z",
+     "name": "Seattle Kraken at Tampa Bay Lightning",
+     "shortName": "SEA @ TB",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 7:00 PM EDT",
+       "shortDetail": "10/15 - 7:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892509",
+       "date": "2026-10-15T23:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 7:00 PM EDT",
+         "shortDetail": "10/15 - 7:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "TB -258",
+         "overUnder": 6.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "124292",
+           "uid": "s:70~l:90~t:124292",
+           "abbreviation": "SEA",
+           "name": "Kraken",
+           "displayName": "Seattle Kraken",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/sea.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "20",
+           "uid": "s:70~l:90~t:20",
+           "abbreviation": "TB",
+           "name": "Lightning",
+           "displayName": "Tampa Bay Lightning",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/tb.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-258",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827962%3Foutcomes%3D0ML86733615_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892509,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-245"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+210",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827962%3Foutcomes%3D0ML86733615_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892509,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+200"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+105",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827962%3Foutcomes%3D0HC86733615N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892509,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:TB-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+105"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-125",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827962%3Foutcomes%3D0HC86733615P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892509,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:SEA+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-125"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o6.5",
+            "odds": "+102",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827962%3Foutcomes%3D0OU86733615O650_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892509,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o5.5",
+            "odds": "-135"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u6.5",
+            "odds": "-122",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827962%3Foutcomes%3D0OU86733615U650_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892509,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u5.5",
+            "odds": "+114"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827962",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892509,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "20",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "4-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "3-0-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-2-0"
+          }
+         ],
+         "team": {
+          "id": "20",
+          "abbreviation": "TB",
+          "displayName": "Tampa Bay Lightning",
+          "shortDisplayName": "Lightning",
+          "name": "Lightning",
+          "color": "003e7e",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/tb.png"
+         }
+        },
+        {
+         "id": "124292",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "5-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "1-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "4-1-0"
+          }
+         ],
+         "team": {
+          "id": "124292",
+          "abbreviation": "SEA",
+          "displayName": "Seattle Kraken",
+          "shortDisplayName": "Kraken",
+          "name": "Kraken",
+          "color": "000d33",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/sea.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892510",
+     "date": "2026-10-15T23:00Z",
+     "name": "Vancouver Canucks at Florida Panthers",
+     "shortName": "VAN @ FLA",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 7:00 PM EDT",
+       "shortDetail": "10/15 - 7:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892510",
+       "date": "2026-10-15T23:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 7:00 PM EDT",
+         "shortDetail": "10/15 - 7:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "FLA -298",
+         "overUnder": 6.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "22",
+           "uid": "s:70~l:90~t:22",
+           "abbreviation": "VAN",
+           "name": "Canucks",
+           "displayName": "Vancouver Canucks",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/van.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "26",
+           "uid": "s:70~l:90~t:26",
+           "abbreviation": "FLA",
+           "name": "Panthers",
+           "displayName": "Florida Panthers",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/fla.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-298",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827949%3Foutcomes%3D0ML86733621_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892510,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-298"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+240",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827949%3Foutcomes%3D0ML86733621_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892510,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+240"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "-115",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827949%3Foutcomes%3D0HC86733621N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892510,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:FLA-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "-118"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-105",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827949%3Foutcomes%3D0HC86733621P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892510,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:VAN+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-102"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o6.5",
+            "odds": "+110",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827949%3Foutcomes%3D0OU86733621O650_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892510,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o6.5",
+            "odds": "+102"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u6.5",
+            "odds": "-130",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827949%3Foutcomes%3D0OU86733621U650_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892510,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u6.5",
+            "odds": "-122"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827949",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892510,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "26",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-2-2"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "0-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "3-1-2"
+          }
+         ],
+         "team": {
+          "id": "26",
+          "abbreviation": "FLA",
+          "displayName": "Florida Panthers",
+          "shortDisplayName": "Panthers",
+          "name": "Panthers",
+          "color": "e51937",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/fla.png"
+         }
+        },
+        {
+         "id": "22",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "2-6-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "1-2-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-4-0"
+          }
+         ],
+         "team": {
+          "id": "22",
+          "abbreviation": "VAN",
+          "displayName": "Vancouver Canucks",
+          "shortDisplayName": "Canucks",
+          "name": "Canucks",
+          "color": "003e7e",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/van.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892511",
+     "date": "2026-10-15T23:00Z",
+     "name": "New York Rangers at New Jersey Devils",
+     "shortName": "NYR @ NJ",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 7:00 PM EDT",
+       "shortDetail": "10/15 - 7:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892511",
+       "date": "2026-10-15T23:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 7:00 PM EDT",
+         "shortDetail": "10/15 - 7:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "NJ -148",
+         "overUnder": 5.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "13",
+           "uid": "s:70~l:90~t:13",
+           "abbreviation": "NYR",
+           "name": "Rangers",
+           "displayName": "New York Rangers",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nyr.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "11",
+           "uid": "s:70~l:90~t:11",
+           "abbreviation": "NJ",
+           "name": "Devils",
+           "displayName": "New Jersey Devils",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nj.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-148",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827950%3Foutcomes%3D0ML86733631_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892511,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-148"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+124",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827950%3Foutcomes%3D0ML86733631_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892511,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+124"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+180",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827950%3Foutcomes%3D0HC86733631N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892511,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:NJ-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+170"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-218",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827950%3Foutcomes%3D0HC86733631P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892511,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:NYR+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-205"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o5.5",
+            "odds": "-135",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827950%3Foutcomes%3D0OU86733631O550_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892511,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o5.5",
+            "odds": "-130"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u5.5",
+            "odds": "+114",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827950%3Foutcomes%3D0OU86733631U550_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892511,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u5.5",
+            "odds": "+110"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827950",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892511,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "11",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-3-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-2-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-1-0"
+          }
+         ],
+         "team": {
+          "id": "11",
+          "abbreviation": "NJ",
+          "displayName": "New Jersey Devils",
+          "shortDisplayName": "Devils",
+          "name": "Devils",
+          "color": "e30b2b",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nj.png"
+         }
+        },
+        {
+         "id": "13",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "6-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "5-0-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-2-0"
+          }
+         ],
+         "team": {
+          "id": "13",
+          "abbreviation": "NYR",
+          "displayName": "New York Rangers",
+          "shortDisplayName": "Rangers",
+          "name": "Rangers",
+          "color": "0056ae",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nyr.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892508",
+     "date": "2026-10-15T23:30Z",
+     "name": "Philadelphia Flyers at Detroit Red Wings",
+     "shortName": "PHI @ DET",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 7:30 PM EDT",
+       "shortDetail": "10/15 - 7:30 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892508",
+       "date": "2026-10-15T23:30Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 7:30 PM EDT",
+         "shortDetail": "10/15 - 7:30 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "DET -142",
+         "overUnder": 5.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "15",
+           "uid": "s:70~l:90~t:15",
+           "abbreviation": "PHI",
+           "name": "Flyers",
+           "displayName": "Philadelphia Flyers",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/phi.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "5",
+           "uid": "s:70~l:90~t:5",
+           "abbreviation": "DET",
+           "name": "Red Wings",
+           "displayName": "Detroit Red Wings",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/det.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-142",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827968%3Foutcomes%3D0ML86733603_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892508,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-135"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+120",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827968%3Foutcomes%3D0ML86733603_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892508,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+114"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+185",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827968%3Foutcomes%3D0HC86733603N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892508,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:DET-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+185"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-225",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827968%3Foutcomes%3D0HC86733603P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892508,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:PHI+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-225"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o5.5",
+            "odds": "-120",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827968%3Foutcomes%3D0OU86733603O550_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892508,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o5.5",
+            "odds": "-120"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u5.5",
+            "odds": "+100",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827968%3Foutcomes%3D0OU86733603U550_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892508,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u5.5",
+            "odds": "+100"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827968",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892508,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "5",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "1-3-2"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "1-3-1"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "0-0-1"
+          }
+         ],
+         "team": {
+          "id": "5",
+          "abbreviation": "DET",
+          "displayName": "Detroit Red Wings",
+          "shortDisplayName": "Red Wings",
+          "name": "Red Wings",
+          "color": "e30526",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/det.png"
+         }
+        },
+        {
+         "id": "15",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "0-5-3"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "0-2-2"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "0-3-1"
+          }
+         ],
+         "team": {
+          "id": "15",
+          "abbreviation": "PHI",
+          "displayName": "Philadelphia Flyers",
+          "shortDisplayName": "Flyers",
+          "name": "Flyers",
+          "color": "fe5823",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/phi.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892512",
+     "date": "2026-10-16T00:00Z",
+     "name": "Winnipeg Jets at Chicago Blackhawks",
+     "shortName": "WPG @ CHI",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 8:00 PM EDT",
+       "shortDetail": "10/15 - 8:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892512",
+       "date": "2026-10-16T00:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 8:00 PM EDT",
+         "shortDetail": "10/15 - 8:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "WPG -135",
+         "overUnder": 6.5,
+         "spread": 1.5,
+         "awayTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "28",
+           "uid": "s:70~l:90~t:28",
+           "abbreviation": "WPG",
+           "name": "Jets",
+           "displayName": "Winnipeg Jets",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/wpg.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "homeTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "4",
+           "uid": "s:70~l:90~t:4",
+           "abbreviation": "CHI",
+           "name": "Blackhawks",
+           "displayName": "Chicago Blackhawks",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/chi.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "+114",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827969%3Foutcomes%3D0ML86733605_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892512,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+124"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "-135",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827969%3Foutcomes%3D0ML86733605_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892512,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-148"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-230",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827969%3Foutcomes%3D0HC86733605P150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892512,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:CHI+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-205"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+190",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827969%3Foutcomes%3D0HC86733605N150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892512,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:WPG-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+170"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o6.5",
+            "odds": "+110",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827969%3Foutcomes%3D0OU86733605O650_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892512,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o5.5",
+            "odds": "-125"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u6.5",
+            "odds": "-130",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827969%3Foutcomes%3D0OU86733605U650_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892512,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u5.5",
+            "odds": "+105"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827969",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892512,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "4",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "2-5-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "0-4-0"
+          }
+         ],
+         "team": {
+          "id": "4",
+          "abbreviation": "CHI",
+          "displayName": "Chicago Blackhawks",
+          "shortDisplayName": "Blackhawks",
+          "name": "Blackhawks",
+          "color": "e31937",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/chi.png"
+         }
+        },
+        {
+         "id": "28",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "4-1-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-1-1"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "2-0-0"
+          }
+         ],
+         "team": {
+          "id": "28",
+          "abbreviation": "WPG",
+          "displayName": "Winnipeg Jets",
+          "shortDisplayName": "Jets",
+          "name": "Jets",
+          "color": "002d62",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/wpg.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892513",
+     "date": "2026-10-16T00:00Z",
+     "name": "San Jose Sharks at Nashville Predators",
+     "shortName": "SJ @ NSH",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 8:00 PM EDT",
+       "shortDetail": "10/15 - 8:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892513",
+       "date": "2026-10-16T00:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 8:00 PM EDT",
+         "shortDetail": "10/15 - 8:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "NSH -148",
+         "overUnder": 6.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "18",
+           "uid": "s:70~l:90~t:18",
+           "abbreviation": "SJ",
+           "name": "Sharks",
+           "displayName": "San Jose Sharks",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/sj.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "27",
+           "uid": "s:70~l:90~t:27",
+           "abbreviation": "NSH",
+           "name": "Predators",
+           "displayName": "Nashville Predators",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nsh.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-148",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827971%3Foutcomes%3D0ML86733627_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892513,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-135"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+124",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827971%3Foutcomes%3D0ML86733627_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892513,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+114"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+180",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827971%3Foutcomes%3D0HC86733627N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892513,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:NSH-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+190"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-218",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827971%3Foutcomes%3D0HC86733627P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892513,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:SJ+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-230"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o6.5",
+            "odds": "+102",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827971%3Foutcomes%3D0OU86733627O650_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892513,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o6.5",
+            "odds": "-102"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u6.5",
+            "odds": "-122",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827971%3Foutcomes%3D0OU86733627U650_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892513,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u6.5",
+            "odds": "-118"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827971",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892513,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "27",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "2-2-2"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "1-2-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-0-2"
+          }
+         ],
+         "team": {
+          "id": "27",
+          "abbreviation": "NSH",
+          "displayName": "Nashville Predators",
+          "shortDisplayName": "Predators",
+          "name": "Predators",
+          "color": "fdba31",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/nsh.png"
+         }
+        },
+        {
+         "id": "18",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-3-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-2-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-1-0"
+          }
+         ],
+         "team": {
+          "id": "18",
+          "abbreviation": "SJ",
+          "displayName": "San Jose Sharks",
+          "shortDisplayName": "Sharks",
+          "name": "Sharks",
+          "color": "00788a",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/sj.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892514",
+     "date": "2026-10-16T00:00Z",
+     "name": "St. Louis Blues at Minnesota Wild",
+     "shortName": "STL @ MIN",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 8:00 PM EDT",
+       "shortDetail": "10/15 - 8:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892514",
+       "date": "2026-10-16T00:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 8:00 PM EDT",
+         "shortDetail": "10/15 - 8:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "MIN -148",
+         "overUnder": 5.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "19",
+           "uid": "s:70~l:90~t:19",
+           "abbreviation": "STL",
+           "name": "Blues",
+           "displayName": "St. Louis Blues",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/stl.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "30",
+           "uid": "s:70~l:90~t:30",
+           "abbreviation": "MIN",
+           "name": "Wild",
+           "displayName": "Minnesota Wild",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/min.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-148",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827970%3Foutcomes%3D0ML86733607_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892514,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-166"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+124",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827970%3Foutcomes%3D0ML86733607_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892514,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+140"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+180",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827970%3Foutcomes%3D0HC86733607N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892514,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:MIN-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+150"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-218",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827970%3Foutcomes%3D0HC86733607P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892514,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:STL+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-180"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o5.5",
+            "odds": "-135",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827970%3Foutcomes%3D0OU86733607O550_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892514,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o5.5",
+            "odds": "-122"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u5.5",
+            "odds": "+114",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827970%3Foutcomes%3D0OU86733607U550_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892514,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:5.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u5.5",
+            "odds": "+102"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827970",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892514,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "30",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "4-2-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-0-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "2-2-1"
+          }
+         ],
+         "team": {
+          "id": "30",
+          "abbreviation": "MIN",
+          "displayName": "Minnesota Wild",
+          "shortDisplayName": "Wild",
+          "name": "Wild",
+          "color": "124734",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/min.png"
+         }
+        },
+        {
+         "id": "19",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-2-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "1-0-1"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "2-2-0"
+          }
+         ],
+         "team": {
+          "id": "19",
+          "abbreviation": "STL",
+          "displayName": "St. Louis Blues",
+          "shortDisplayName": "Blues",
+          "name": "Blues",
+          "color": "0070b9",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/stl.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892515",
+     "date": "2026-10-16T01:00Z",
+     "name": "Utah Mammoth at Edmonton Oilers",
+     "shortName": "UTA @ EDM",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 9:00 PM EDT",
+       "shortDetail": "10/15 - 9:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892515",
+       "date": "2026-10-16T01:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 9:00 PM EDT",
+         "shortDetail": "10/15 - 9:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "EDM -130",
+         "overUnder": 6.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "129764",
+           "uid": "s:70~l:90~t:129764",
+           "abbreviation": "UTA",
+           "name": "Mammoth",
+           "displayName": "Utah Mammoth",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/uta.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "6",
+           "uid": "s:70~l:90~t:6",
+           "abbreviation": "EDM",
+           "name": "Oilers",
+           "displayName": "Edmonton Oilers",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/edm.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-130",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827972%3Foutcomes%3D0ML86733624_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892515,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-148"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+110",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827972%3Foutcomes%3D0ML86733624_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892515,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+124"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "+180",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827972%3Foutcomes%3D0HC86733624N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892515,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:EDM-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "+170"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "-218",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827972%3Foutcomes%3D0HC86733624P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892515,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:UTA+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "-205"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o6.5",
+            "odds": "-112",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827972%3Foutcomes%3D0OU86733624O650_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892515,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o6.5",
+            "odds": "-102"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u6.5",
+            "odds": "-108",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827972%3Foutcomes%3D0OU86733624U650_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892515,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u6.5",
+            "odds": "-118"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827972",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892515,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "6",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "5-0-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "1-0-1"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "4-0-0"
+          }
+         ],
+         "team": {
+          "id": "6",
+          "abbreviation": "EDM",
+          "displayName": "Edmonton Oilers",
+          "shortDisplayName": "Oilers",
+          "name": "Oilers",
+          "color": "00205b",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/edm.png"
+         }
+        },
+        {
+         "id": "129764",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "5-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-0-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "3-2-0"
+          }
+         ],
+         "team": {
+          "id": "129764",
+          "abbreviation": "UTA",
+          "displayName": "Utah Mammoth",
+          "shortDisplayName": "Mammoth",
+          "name": "Mammoth",
+          "color": "000000",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/uta.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892516",
+     "date": "2026-10-16T02:00Z",
+     "name": "Calgary Flames at Vegas Golden Knights",
+     "shortName": "CGY @ VGK",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Thu, October 15th at 10:00 PM EDT",
+       "shortDetail": "10/15 - 10:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892516",
+       "date": "2026-10-16T02:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Thu, October 15th at 10:00 PM EDT",
+         "shortDetail": "10/15 - 10:00 PM EDT"
+        }
+       },
+       "odds": [
+        {
+         "provider": {
+          "id": "100",
+          "name": "DraftKings",
+          "priority": 1,
+          "logos": [
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+             "light"
+            ]
+           },
+           {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+             "dark"
+            ]
+           }
+          ]
+         },
+         "details": "VGK -305",
+         "overUnder": 6.5,
+         "spread": -1.5,
+         "awayTeamOdds": {
+          "favorite": false,
+          "underdog": true,
+          "team": {
+           "id": "3",
+           "uid": "s:70~l:90~t:3",
+           "abbreviation": "CGY",
+           "name": "Flames",
+           "displayName": "Calgary Flames",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/cgy.png"
+          },
+          "favoriteAtOpen": false
+         },
+         "homeTeamOdds": {
+          "favorite": true,
+          "underdog": false,
+          "team": {
+           "id": "37",
+           "uid": "s:70~l:90~t:37",
+           "abbreviation": "VGK",
+           "name": "Golden Knights",
+           "displayName": "Vegas Golden Knights",
+           "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/vgk.png"
+          },
+          "favoriteAtOpen": true
+         },
+         "moneyline": {
+          "displayName": "Moneyline",
+          "shortDisplayName": "ML",
+          "home": {
+           "close": {
+            "odds": "-305",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "home",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827973%3Foutcomes%3D0ML86733593_1",
+             "text": "Home Bet",
+             "shortText": "Home Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892516,
+               "betSide": "home",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "-290"
+           }
+          },
+          "away": {
+           "close": {
+            "odds": "+245",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "away",
+              "desktop",
+              "bets",
+              "draftkings"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827973%3Foutcomes%3D0ML86733593_3",
+             "text": "Away Bet",
+             "shortText": "Away Bet",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892516,
+               "betSide": "away",
+               "betType": "straight"
+              }
+             }
+            }
+           },
+           "open": {
+            "odds": "+235"
+           }
+          }
+         },
+         "pointSpread": {
+          "displayName": "Spread",
+          "shortDisplayName": "Spread",
+          "home": {
+           "close": {
+            "line": "-1.5",
+            "odds": "-125",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "homeSpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827973%3Foutcomes%3D0HC86733593N150_1",
+             "text": "Home Point Spread",
+             "shortText": "Home Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892516,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:VGK-1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "-1.5",
+            "odds": "-120"
+           }
+          },
+          "away": {
+           "close": {
+            "line": "+1.5",
+            "odds": "+105",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "awaySpread",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827973%3Foutcomes%3D0HC86733593P150_3",
+             "text": "Away Point Spread",
+             "shortText": "Away Point Spread",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892516,
+               "betSide": "none",
+               "betType": "straight",
+               "betDetails": "Spread:CGY+1.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "+1.5",
+            "odds": "+100"
+           }
+          }
+         },
+         "total": {
+          "displayName": "Total",
+          "shortDisplayName": "Total",
+          "over": {
+           "close": {
+            "line": "o6.5",
+            "odds": "+105",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "over",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827973%3Foutcomes%3D0OU86733593O650_1",
+             "text": "Over Odds",
+             "shortText": "Over Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892516,
+               "betSide": "over",
+               "betType": "straight",
+               "betDetails": "Over:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "o5.5",
+            "odds": "-130"
+           }
+          },
+          "under": {
+           "close": {
+            "line": "u6.5",
+            "odds": "-125",
+            "link": {
+             "language": "en-US",
+             "rel": [
+              "under",
+              "desktop",
+              "bets"
+             ],
+             "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827973%3Foutcomes%3D0OU86733593U650_3",
+             "text": "Under Odds",
+             "shortText": "Under Odds",
+             "isExternal": true,
+             "isPremium": false,
+             "tracking": {
+              "campaign": "betting-integrations",
+              "tags": {
+               "league": "nhl",
+               "sport": "hockey",
+               "gameId": 401892516,
+               "betSide": "under",
+               "betType": "straight",
+               "betDetails": "Under:6.5"
+              }
+             }
+            }
+           },
+           "open": {
+            "line": "u5.5",
+            "odds": "+110"
+           }
+          }
+         },
+         "link": {
+          "language": "en-US",
+          "rel": [
+           "game",
+           "desktop",
+           "bets"
+          ],
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34827973",
+          "text": "See More Odds",
+          "shortText": "Game",
+          "isExternal": true,
+          "isPremium": false,
+          "tracking": {
+           "campaign": "betting-integrations",
+           "tags": {
+            "league": "nhl",
+            "sport": "hockey",
+            "gameId": 401892516,
+            "betSide": "none",
+            "betType": "straight"
+           }
+          }
+         },
+         "header": {
+          "logo": {
+           "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+           "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+           "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+           "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+          },
+          "text": "Game Odds"
+         },
+         "footer": {
+          "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+         }
+        }
+       ],
+       "competitors": [
+        {
+         "id": "37",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "6-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "3-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "3-1-0"
+          }
+         ],
+         "team": {
+          "id": "37",
+          "abbreviation": "VGK",
+          "displayName": "Vegas Golden Knights",
+          "shortDisplayName": "Golden Knights",
+          "name": "Golden Knights",
+          "color": "344043",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/vgk.png"
+         }
+        },
+        {
+         "id": "3",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "1-5-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "0-3-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-2-0"
+          }
+         ],
+         "team": {
+          "id": "3",
+          "abbreviation": "CGY",
+          "displayName": "Calgary Flames",
+          "shortDisplayName": "Flames",
+          "name": "Flames",
+          "color": "dd1a32",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/cgy.png"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "2026-10-16": {
+   "events": [
+    {
+     "id": "401892517",
+     "date": "2026-10-17T01:00Z",
+     "name": "Pittsburgh Penguins at Colorado Avalanche",
+     "shortName": "PIT @ COL",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Fri, October 16th at 9:00 PM EDT",
+       "shortDetail": "10/16 - 9:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892517",
+       "date": "2026-10-17T01:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Fri, October 16th at 9:00 PM EDT",
+         "shortDetail": "10/16 - 9:00 PM EDT"
+        }
+       },
+       "competitors": [
+        {
+         "id": "17",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "4-2-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-1-1"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "2-1-0"
+          }
+         ],
+         "team": {
+          "id": "17",
+          "abbreviation": "COL",
+          "displayName": "Colorado Avalanche",
+          "shortDisplayName": "Avalanche",
+          "name": "Avalanche",
+          "color": "860038",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/col.png"
+         }
+        },
+        {
+         "id": "16",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "3-3-1"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "2-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "1-2-1"
+          }
+         ],
+         "team": {
+          "id": "16",
+          "abbreviation": "PIT",
+          "displayName": "Pittsburgh Penguins",
+          "shortDisplayName": "Penguins",
+          "name": "Penguins",
+          "color": "000000",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/pit.png"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "401892518",
+     "date": "2026-10-17T02:00Z",
+     "name": "Boston Bruins at Anaheim Ducks",
+     "shortName": "BOS @ ANA",
+     "season": {
+      "year": 2027,
+      "type": 2,
+      "slug": "regular-season"
+     },
+     "status": {
+      "clock": 0,
+      "displayClock": "0:00",
+      "period": 0,
+      "type": {
+       "id": "1",
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false,
+       "description": "Scheduled",
+       "detail": "Fri, October 16th at 10:00 PM EDT",
+       "shortDetail": "10/16 - 10:00 PM EDT"
+      }
+     },
+     "competitions": [
+      {
+       "id": "401892518",
+       "date": "2026-10-17T02:00Z",
+       "neutralSite": false,
+       "notes": [],
+       "status": {
+        "clock": 0,
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+         "id": "1",
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false,
+         "description": "Scheduled",
+         "detail": "Fri, October 16th at 10:00 PM EDT",
+         "shortDetail": "10/16 - 10:00 PM EDT"
+        }
+       },
+       "competitors": [
+        {
+         "id": "25",
+         "homeAway": "home",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "4-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "1-2-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "3-0-0"
+          }
+         ],
+         "team": {
+          "id": "25",
+          "abbreviation": "ANA",
+          "displayName": "Anaheim Ducks",
+          "shortDisplayName": "Ducks",
+          "name": "Ducks",
+          "color": "fc4c02",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/ana.png"
+         }
+        },
+        {
+         "id": "1",
+         "homeAway": "away",
+         "score": "0",
+         "records": [
+          {
+           "name": "overall",
+           "abbreviation": "TOTAL",
+           "type": "total",
+           "summary": "5-2-0"
+          },
+          {
+           "name": "Home",
+           "abbreviation": "HOME",
+           "type": "home",
+           "summary": "3-1-0"
+          },
+          {
+           "name": "Road",
+           "abbreviation": "AWAY",
+           "type": "road",
+           "summary": "2-1-0"
+          }
+         ],
+         "team": {
+          "id": "1",
+          "abbreviation": "BOS",
+          "displayName": "Boston Bruins",
+          "shortDisplayName": "Bruins",
+          "name": "Bruins",
+          "color": "231f20",
+          "logo": "https://a.espncdn.com/i/teamlogos/nhl/500/scoreboard/bos.png"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

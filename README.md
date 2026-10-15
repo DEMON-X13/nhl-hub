@@ -6,7 +6,9 @@ player and goalie model and a parlay builder that lives in the visitor's own bro
 
 Served by GitHub Pages from the repo root: https://demon-x13.github.io/nhl-hub/
 
-- **The page** is `index.html`, one hand-written file. It fetches `state.json` on every load.
+- **The page** is `index.html`, one hand-written file. It fetches `state.json` on every load, and
+  DraftKings' latest lines from ESPN's scoreboard only when Refresh odds is pressed (in memory: a
+  reload is the published state again).
 - **The data** comes from ESPN's public feeds (scoreboards with DraftKings' lines, box scores,
   the injury report) and DailyFaceoff's announced starting goalies. All free: no key, no credits.
 - **The job**, `.github/workflows/update.yml`, runs five times a day (queued at 06:17, 12:17, 15:17,

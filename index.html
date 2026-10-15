@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>X NHL Bets</title>
-<meta name="description" content="A rating model's call on every NHL game: win chances, puck lines and totals against DraftKings' numbers, the standings, the playoff picture and a parlay builder.">
+<meta name="description" content="A rating model's call on every NHL game: win chances, puck lines and totals against DraftKings' numbers, DraftKings' player props beside a props model on trial, the standings, the playoff picture and a parlay builder.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -381,6 +381,50 @@ body.pc-open{overflow:hidden}
   .pb-brow{grid-template-columns:1fr}
   .pb-bk{padding-top:0}
 }
+/* ---------- player props (pp-): DraftKings' player prices read from ESPN on a Refresh odds press, the props model on trial beside
+   them. A Player props button on each game card still to come (and in Pick your own legs) opens a window over the page, the
+   parlay card's (pc-back, pc-panel: a sheet on a phone); every control 44px; quiet text --ink-2 on --panel and --bg-2 */
+body.pp-on{overflow:hidden}
+.pp-open{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center;width:100%;min-height:44px;padding:6px 12px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink);cursor:pointer;text-align:left;font-size:13px}
+.pp-open:hover{border-color:var(--ink-2)}
+.pp-open b{grid-column:1;font-weight:800}
+.pp-open span{grid-column:1;color:var(--ink-2);font-size:12px;min-width:0}
+.pp-open::after{content:"›";grid-column:2;grid-row:1/span 2;font:700 22px/1 var(--body);color:var(--ice)}
+.pp-panel{max-width:720px}
+.pp-game{margin:-4px 0 10px;color:var(--ink-2);font-size:13px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+.pp-game b{color:var(--ink)}
+.tag.trial{background:var(--gold-soft);color:var(--gold)}
+.pp-odds{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 8px}
+.pp-read{margin:0 0 10px;font-size:13px;color:var(--ink)}
+.pp-trial{background:linear-gradient(var(--gold-soft),var(--gold-soft)),var(--bg-2);border:1px solid rgba(255,209,102,.35);border-radius:12px;padding:9px 12px;font-size:12.5px;color:var(--ink-2);margin:0 0 12px}
+.pp-trial b{color:var(--gold)}
+.pp-trial p{margin:0 0 4px} .pp-trial p:last-child{margin:0}
+.pp-stats{display:flex;flex-wrap:wrap;margin:0 0 6px}
+.pp-stats button{min-height:44px;padding:0 12px;font-size:12.5px}
+.pp-stats button small{font-weight:600;margin-left:5px;opacity:.85}
+.pp-key{margin:0 0 4px;font-size:12px;color:var(--ink-2)}
+.pp-team h3{display:flex;align-items:center;gap:8px;margin:14px 0 6px}
+.pp-team h3 img{width:20px;height:20px;object-fit:contain}
+.pp-team h3 small{font:600 11.5px var(--body);color:var(--ink-2);text-transform:none;letter-spacing:0}
+.pp-row{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 6px;min-width:0}
+.pp-who{display:flex;justify-content:space-between;align-items:baseline;gap:2px 10px;flex-wrap:wrap}
+.pp-who b{font-size:13.5px;overflow-wrap:anywhere}
+.pp-who span{color:var(--ink-2);font-size:12px}
+.pp-main{display:flex;flex-wrap:wrap;gap:4px 16px;font-variant-numeric:tabular-nums;font-size:13px;margin-top:4px}
+.pp-main b{font-weight:800}
+.pp-cmp{font-size:12.5px;color:var(--ink-2);margin-top:2px;font-variant-numeric:tabular-nums}
+.pp-lad{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pp-k{background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.pp-k b{color:var(--ink);font-weight:800}
+.pp-none{font-size:12.5px;color:var(--ink-2);margin:0 0 6px}
+.pp-more{margin:2px 0 6px}
+.pp-more>summary,.pp-how>summary{display:flex;align-items:center;min-height:44px;cursor:pointer;list-style:none;font-weight:700;font-size:12.5px;color:var(--ink-2)}
+.pp-more>summary::-webkit-details-marker,.pp-how>summary::-webkit-details-marker{display:none}
+.pp-more>summary::after,.pp-how>summary::after{content:"";margin-left:10px;flex:none;width:7px;height:7px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);transition:transform .15s var(--ease)}
+.pp-more[open]>summary::after,.pp-how[open]>summary::after{transform:rotate(-135deg)}
+.pp-how{margin-top:12px;border-top:1px solid var(--line);padding-top:2px}
+.pp-how p{font-size:12.5px;color:var(--ink-2);margin:4px 0 6px}
+@media(max-width:640px){.pp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.pp-stats button{padding:4px 4px;white-space:normal;line-height:1.2}.pp-stats button small{display:block;margin:0}}
 </style>
 </head>
 <body>
@@ -410,7 +454,7 @@ body.pc-open{overflow:hidden}
     <div id="opening" hidden></div>
     <div class="toolbar">
       <button class="btn ghost" id="refreshScores" title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>
-      <button type="button" class="btn ghost odds-btn" id="refreshOdds" data-odds title="Read DraftKings' lines from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published lines.">Refresh odds</button>
+      <button type="button" class="btn ghost odds-btn" id="refreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button>
       <span class="odds-note" id="oddsNote" role="status" aria-live="polite"></span>
       <span class="small muted" id="gamesNote"></span>
     </div>
@@ -470,7 +514,7 @@ body.pc-open{overflow:hidden}
       <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Suggested parlays</h2><span class="tag pb-slate" id="pbSlate"></span></div>
       <p class="pb-sub">Choose what to build from: every level below uses only the bet types and games ticked here.</p>
       <p class="pb-sub" id="pbRead"></p>
-      <div class="pb-odds"><button type="button" class="btn ghost odds-btn" id="pbRefreshOdds" data-odds title="Read DraftKings' lines from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published lines.">Refresh odds</button><span class="odds-note" id="pbOddsNote" role="status" aria-live="polite"></span></div>
+      <div class="pb-odds"><button type="button" class="btn ghost odds-btn" id="pbRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="pbOddsNote" role="status" aria-live="polite"></span></div>
       <div class="pb-ctl">
         <div class="pb-row"><span class="pb-k" id="pbStakeK">Bet amount</span><div class="pb-v"><label class="pb-stake">$<input type="number" id="pbStake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="pbStakeK" autocomplete="off"></label><span class="pb-hint">Every level pays on this amount, and the builder below uses it too.</span></div></div>
         <div class="pb-row"><span class="pb-k">Build from</span><div class="pb-v"><div class="seg pb-seg" id="pbMix" role="group" aria-label="Build from"><button type="button" data-mix="all" aria-pressed="false">All</button><button type="button" data-mix="teams" aria-pressed="false">Teams only</button><button type="button" data-mix="totals" aria-pressed="false">Totals only</button></div></div></div>
@@ -542,9 +586,21 @@ body.pc-open{overflow:hidden}
     <p class="pc-own" id="pcOwn">Yours alone: this card is not saved anywhere. Save on this device keeps it in your saved parlays.</p>
   </div>
 </div>
+<div class="pc-back" id="ppWin" hidden>
+  <div class="pc-panel pp-panel" id="ppPanel" role="dialog" aria-modal="true" aria-labelledby="ppTitle" tabindex="-1">
+    <div class="pc-top"><h2 id="ppTitle">Player props</h2><button type="button" class="btn ghost" id="ppClose">Close</button></div>
+    <div class="pp-game" id="ppGame"></div>
+    <div class="pp-odds"><button type="button" class="btn ghost odds-btn" id="ppRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="ppOddsNote" role="status" aria-live="polite"></span></div>
+    <p class="pp-read" id="ppRead"></p>
+    <div class="pp-trial" id="ppTrial"></div>
+    <div class="seg pp-stats" id="ppStats" role="group" aria-label="Stat"></div>
+    <div id="ppBody"></div>
+    <details class="pp-how"><summary>How these numbers are worked out</summary><div id="ppHow"></div></details>
+  </div>
+</div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v9 · 2026-10-15';
+const APP_BUILD = 'nhl v10 · 2026-10-15';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -771,6 +827,7 @@ function gameCard(g) {
       <div style="grid-column:1/-1"><div class="k">${g.result ? 'Result' : 'The call'}</div><div class="v chips">${g.result ? result : calls}</div></div>
     </div>
     ${bets ? betBlock(g) : ''}
+    ${started ? '' : ppBtn(g)}
     ${lineupBlock(g)}
   </div>`;
 }
@@ -1851,7 +1908,7 @@ function renderParlayLines() {
   const sl = pbSlate(), gs = sl.games.filter(freshLine);
   $('pbPickN').textContent = gs.length ? `${gs.length} game${gs.length > 1 ? 's' : ''} on ${slateText(sl)}` : '';
   if (!PICK_SET) { PICK_SET = true; $('pbPick').open = !(window.matchMedia && window.matchMedia('(max-width:760px)').matches); }
-  $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh"><b>${esc(matchup(g))}</b><span>${esc(sl.dates.length > 1 ? when(g) : timeOf(g))} · model ${esc(T(g.pHome >= 0.5 ? g.home : g.away).abbr)} ${pct(Math.max(g.pHome, 1 - g.pHome))}</span></div>${betBlock(g)}</div>`).join('')
+  $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh"><b>${esc(matchup(g))}</b><span>${esc(sl.dates.length > 1 ? when(g) : timeOf(g))} · model ${esc(T(g.pHome >= 0.5 ? g.home : g.away).abbr)} ${pct(Math.max(g.pHome, 1 - g.pHome))}</span></div>${betBlock(g)}${ppBtn(g)}</div>`).join('')
     : `<div class="empty">Nothing to bet yet: no game on ${esc(slateText(sl) || 'the schedule')} still to come has a DraftKings line. Lines come about a day before puck drop.</div>`;
 }
 let PICK_SET = false;
@@ -1884,6 +1941,7 @@ function pbWatch() {
   if (over(PB_NOTICE)) { PB_NOTICE = null; said = true; }
   if (over(PB_DROP)) { PB_DROP = null; said = true; }
   if (pruneLegs() || shownGone || (said && curTab() === 'parlays')) rerender();      // once: a pruned builder holds no leg the watch would see again
+  ppWatch();                                                                         // the props window on a game whose puck dropped says so
 }
 /* the stored legs read again from the state, on any tab: a leg that can no longer be bet leaves the
    builder (said there and on the slip bar) and a moved price is updated, so the Games cards, the slip and
@@ -2103,7 +2161,7 @@ async function readOddsDay(day) {
   } catch (e) { return null; }
 }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-function oddsSay(text) { ODDS.said = text; for (const id of ['oddsNote', 'pbOddsNote']) if ($(id)) $(id).textContent = text; }
+function oddsSay(text) { ODDS.said = text; for (const id of ['oddsNote', 'pbOddsNote', 'ppOddsNote']) if ($(id)) $(id).textContent = text; }
 function oddsIdle() { if (!ODDS.said && S) oddsSay(`Lines published ${hhmm(S.published)}, the job's last run.`); }
 function oddsBusy(on) { ODDS.busy = on; for (const b of document.querySelectorAll('[data-odds]')) { if (on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); } }
 function oddsText(r) {
@@ -2140,10 +2198,14 @@ async function refreshOdds(btn) {
   const come = S.games.filter(g => shown.has(g.date) && !hasStarted(g));
   const days = [...new Set(come.map(g => g.date))].sort();
   if (!days.length) { oddsSay('No game still to come on the days shown: there are no lines to read.'); return; }
-  oddsBusy(true); oddsSay("Reading DraftKings' lines from ESPN…");
-  let answers;
-  try { answers = await Promise.all(days.map(readOddsDay)); } catch (e) { answers = days.map(() => null); }
+  /* the player props: each game still to come today and tomorrow (Eastern), read beside the scoreboards (ppAsk) */
+  const pgames = ppAsk(come);
+  oddsBusy(true); oddsSay(pgames.length ? "Reading DraftKings' lines and player props from ESPN…" : "Reading DraftKings' lines from ESPN…");
+  let answers, pans;
+  try { [answers, pans] = await Promise.all([Promise.all(days.map(readOddsDay)), Promise.all(pgames.map(g => readPropsGame(g.id).catch(() => ({ status: 'failed', why: 'no answer' }))))]); }
+  catch (e) { answers = days.map(() => null); pans = pgames.map(() => ({ status: 'failed', why: 'no answer' })); }
   const at = new Date().toISOString(), byDay = {}; days.forEach((d, i) => { byDay[d] = answers[i]; });
+  const espnSt = {};                                      // ESPN's word on each game it answered for: 'started' (under way or over) or 'off' (postponed, cancelled)
   const r = { at, read: 0, moved: 0, first: 0, noLine: 0, unread: 0, started: 0, postponed: 0, cancelled: 0, older: 0, books: new Set(), answered: answers.some(Boolean), lined: come.some(g => g.line), days: days.length, silent: days.filter(d => !byDay[d]) };
   /* what the levels stand on, game by game: a read that changes none of it leaves their cache (and the visitor's place) as it is */
   const poolOf = g => JSON.stringify([freshLine(g), g.line ? PRICE_KEYS.map(k => g.line[k]) : null, ['mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'].map(k => g[k])]);
@@ -2158,8 +2220,8 @@ async function refreshOdds(btn) {
     /* ESPN's word on the game, as the job's gameRow reads it: postponed or cancelled is a game called off (the job takes it
        off the schedule at its next run), state 'in' or 'post' one under way or over; either way the published line stands */
     const st = isObj(comp.status) && isObj(comp.status.type) ? comp.status.type : {}, word = `${st.name || ''} ${st.description || ''}`;
-    if (/POSTPONED|CANCEL/i.test(word)) { if (/CANCEL/i.test(word)) r.cancelled++; else r.postponed++; continue; }
-    if (st.state === 'in' || st.state === 'post') { r.started++; continue; }
+    if (/POSTPONED|CANCEL/i.test(word)) { espnSt[g.id] = 'off'; if (/CANCEL/i.test(word)) r.cancelled++; else r.postponed++; continue; }
+    if (st.state === 'in' || st.state === 'post') { espnSt[g.id] = 'started'; r.started++; continue; }
     let odds = null; try { odds = ESPN.oddsOf(comp); } catch (e) { odds = null; }
     if (!odds) { if (had) r.noLine++; continue; }
     if (had && !(Date.parse(at) > Date.parse(g.line.at))) { r.older++; continue; }
@@ -2169,6 +2231,7 @@ async function refreshOdds(btn) {
     r.read++; r.books.add(line.book || '');
   }
   } catch (e) { broke = true; }                            // never left busy: what was taken stands, the rest as shown
+  const pq = ppTake(pgames, pans, espnSt, at);           // the props read: in memory alone, never a level, a pick or a leg
   if (come.some(g => poolOf(g) !== pool0.get(g.id))) ODDS.v++;
   oddsBusy(false);
   /* redrawn where the visitor is: the pressed button stays where it was on the screen, the builder draws its legs on the new
@@ -2181,11 +2244,296 @@ async function refreshOdds(btn) {
     const b = builderLegs(true);                        // a game whose puck dropped during the read leaves the builder too (the clock's, stored later)
     if (b.msgs.length) slipSay(b.msgs.join(' '), 9000, !b.length);
     rerender(); card = cardAfterRead(at);
+    if (PP && !$('ppWin').hidden) renderProps();
   } finally { NO_SAVE = false; }
   if (top !== null && btn.getBoundingClientRect) { const dy = btn.getBoundingClientRect().top - top; if (dy && typeof window.scrollBy === 'function') window.scrollBy(0, dy); }
-  oddsSay((broke ? `ESPN's answer could not be read whole at ${hhmm(at)}: ${r.read ? `${plural(r.read, 'game', 'games')} took the new line, the rest stand as shown` : 'every line stands as shown'}.` : oddsText(r)) + card);
+  oddsSay((broke ? `ESPN's answer could not be read whole at ${hhmm(at)}: ${r.read ? `${plural(r.read, 'game', 'games')} took the new line, the rest stand as shown` : 'every line stands as shown'}.` : oddsText(r)) + ppText(pq) + card);
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-odds]'); if (b) refreshOdds(b); });
+
+/* ---------- Player props: DraftKings' player prices read from ESPN on a Refresh odds press, the props model on trial beside them ----------
+   The same press reads, beside the scoreboards, ESPN's DraftKings propBets for every game still to come today and tomorrow
+   (Eastern: DraftKings posts player props on game day, and a game further off answers 404), one request a game (a second only
+   if ESPN pages it), no-store, a cache-buster, no custom header (ESPN answers `access-control-allow-origin: *`, 404s too).
+   PROPS_FEED is tools/espn.js's propsOf word for word (the smoke holds the two equal on the recorded answer and variants of
+   it): two-sided main lines, the first item of a pair the Over, cross-checked with the ladder; Yes-only milestones and
+   anytime goalscorer. Players are matched by ESPN's athlete id, the id the props model projects. Only a game not started
+   by the visitor's clock and by ESPN's word is kept, and the window on a game whose puck drops says so. A 404 is none
+   posted yet; a failed request keeps this page's earlier read of the game, if any.
+   Beside each DraftKings line: the props model's projection (its mean) and its chance of the Over (pOver, word for word
+   from tools/props.js, on the distribution the job published), and DraftKings' fair chance (a main line: all of the margin
+   on the Over, 1 - the Under's implied; a Yes price: its implied chance over DraftKings' measured margin for the stat,
+   S.props.fair.yes, marked est.). The model is ON TRIAL: it suggests nothing (no prop goes into a level, a pick or the
+   builder: player legs are display only), and nothing here calls its chance an edge or says "model says" until its
+   shadow ledger's bar is passed. Everything read is in memory alone (PROPS): nothing is stored, and a reload is the
+   published page with the model's projections alone. */
+const PROPS_FEED = (() => {
+  const num = v => (v === undefined || v === null || v === '' ? null : (isFinite(+v) ? +v : null));
+  const PROPS_URL = (e, p) => `https://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/events/${e}/competitions/${e}/odds/100/propBets?lang=en&region=us&limit=1000&page=${p}`;
+  const PROP_MAIN = { 'Total Points': 'pts', 'Total Assists': 'a', 'Total Shots on Goal': 's', 'Total Blocked Shots': 'bs', 'Total Saves': 'sv' };
+  const PROP_YES = { 'Anytime Goalscorer': ['g', 1], 'To Score 2+ Goals': ['g', 2], 'To Score 3+ Goals': ['g', 3], 'Goals Milestones': ['g', null], 'Points Milestones': ['pts', null],
+    'Assists Milestones': ['a', null], 'Shots on Goal Milestones': ['s', null], 'Blocked Shots Milestones': ['bs', null], 'Goalkeeper Saves Milestones': ['sv', null] };
+  const LADDER_OF = { pts: 'Points Milestones', a: 'Assists Milestones', s: 'Shots on Goal Milestones', bs: 'Blocked Shots Milestones', sv: 'Goalkeeper Saves Milestones' };
+  const propPrice = v => { const t = String(v === undefined || v === null ? '' : v).trim().toUpperCase(); if (t === 'EVEN' || t === 'EV') return 100; return /^[+-]?\d+$/.test(t) && +t !== 0 && Math.abs(+t) >= 100 ? +t : null; };
+  const propAthlete = it => { const m = /\/athletes\/(\d+)/.exec((it && it.athlete && it.athlete.$ref) || ''); return m ? m[1] : null; };
+  const propImplied = am => am > 0 ? 100 / (am + 100) : -am / (-am + 100);
+  /* items (every page's, in the feed's order) -> { main, yes, skipped }.
+     main: [athlete, stat, line, over, under]. ESPN does not say which item of a main line is the Over: the two items of
+     a pair are adjacent, and the FIRST is the Over (the Over at L is the same bet as the (L+0.5)+ milestone, and where
+     the milestone's price matched one item exactly it was the first 5,991 times in 6,022; where the two prices are more
+     than 15 points apart, 7,691 of 7,693). Each pair is cross-checked with its ladder: where the milestone's price is
+     nearer the second item's than the first's (in implied chance) and the two items are more than 5 points apart, the
+     pair is contradicted and left out (`skipped.contradicted`), never guessed. A group of one or of three, or two not
+     adjacent, is left out (`skipped.unpaired`).
+     yes: [athlete, stat, k, price] for each Yes-only market (anytime goalscorer is goals 1+), the first of any two
+     naming the same athlete, stat and k (Goals Milestones 2+ and To Score 2+ Goals are one bet).
+     An item with no athlete (a team or period market), an unreadable price or line, or a type not read is skipped */
+  function propsOf(items) {
+    const out = { main: [], yes: [], skipped: { unpaired: 0, contradicted: 0, junk: 0 } };
+    if (!Array.isArray(items)) return out;
+    const groups = new Map(), ladder = new Map(), seenYes = new Set();
+    items.forEach((it, n) => {
+      if (!it || typeof it !== 'object' || !it.type) { out.skipped.junk++; return; }
+      const t = it.type.name, a = propAthlete(it);
+      if (!PROP_MAIN[t] && !PROP_YES[t]) return;
+      const price = propPrice(it.odds && it.odds.american && it.odds.american.value);
+      if (!a || price === null) { out.skipped.junk++; return; }
+      if (PROP_MAIN[t]) {
+        const L = num(it.odds && it.odds.total && it.odds.total.value);
+        if (L === null) { out.skipped.junk++; return; }
+        const k = t + '|' + a + '|' + L;
+        if (!groups.has(k)) groups.set(k, { stat: PROP_MAIN[t], a, L, list: [] });
+        groups.get(k).list.push({ n, price });
+      } else {
+        let [stat, k] = PROP_YES[t];
+        if (k === null) { const v = num(it.current && it.current.target && it.current.target.value); k = v === null ? null : Math.round(v); }
+        if (!k || k < 1) { out.skipped.junk++; return; }
+        if (LADDER_OF[stat] === t || (stat === 'g')) ladder.set(stat + '|' + a + '|' + k, price);
+        const key = stat + '|' + a + '|' + k;
+        if (seenYes.has(key)) return;
+        seenYes.add(key); out.yes.push([a, stat, k, price]);
+      }
+    });
+    for (const g of groups.values()) {
+      if (g.list.length !== 2 || g.list[1].n !== g.list[0].n + 1) { out.skipped.unpaired++; continue; }
+      const over = g.list[0].price, under = g.list[1].price;
+      const m = ladder.get(g.stat + '|' + g.a + '|' + Math.floor(g.L + 1));
+      if (m !== undefined && Math.abs(propImplied(m) - propImplied(under)) < Math.abs(propImplied(m) - propImplied(over)) && Math.abs(propImplied(over) - propImplied(under)) > 0.05) { out.skipped.contradicted++; continue; }
+      out.main.push([g.a, g.stat, g.L, over, under]);
+    }
+    return out;
+  }
+  return { num, PROPS_URL, PROP_MAIN, PROP_YES, LADDER_OF, propPrice, propAthlete, propImplied, propsOf };
+})();
+const PP_DAYS = 2;                                // today and tomorrow (Eastern): the days DraftKings posts player props for and the props model projects
+const PP_PAGES = 3;                               // limit=1000 holds a whole game (the most items seen was 522): a second page only if ESPN pages it
+const PP_STATS = [['pts', 'Points'], ['g', 'Goals'], ['s', 'Shots'], ['a', 'Assists'], ['bs', 'Blocks'], ['sv', 'Saves']];
+const PP_NAME = { pts: 'points', g: 'goals', s: 'shots on goal', a: 'assists', bs: 'blocked shots', sv: 'saves' };
+const PROPS = { games: {} };                      // what the presses read, by game id: { status: 200 | 404 | 'failed', at, main, yes, why }; never stored
+let PP = null;                                    // the window: { gid, opener, gone }
+let PP_STAT = 'pts';                              // the stat the window shows, while the page is open; never stored
+/* tools/props.js's pOver, word for word: the chance of the Over at line L from a distribution, P(X >= floor(L) + 1) */
+function pOver(D, L) {
+  const k = Math.floor(L) + 1, top = D.lo + D.d.length - 1;
+  if (k > top) return 0;
+  let s = 0; for (let i = 0; i < D.d.length; i++) { const v = D.lo + i; if (v >= k || (i === 0 && k <= D.lo)) s += D.d[i]; }
+  return s / 10000;
+}
+/* DraftKings' fair chance of the Over on a main line: all of the margin on the Over (tools/props.js's fairOver) */
+const fairOver = (po, pu) => 1 - implied(pu);
+/* of a Yes-only price: its implied chance over DraftKings' measured margin for the stat (goals at 2 or more: g2+), an estimate */
+function fairYes(stat, k, price) {
+  const key = stat === 'g' && k >= 2 ? 'g2+' : stat, m = S && S.props && S.props.fair && S.props.fair.yes ? +S.props.fair.yes[key] : NaN;
+  return isFinite(m) && m > 0 ? implied(price) / m : null;
+}
+const ppPct = p => p > 0 && p < 0.005 ? '<1%' : p < 1 && p > 0.995 ? '>99%' : Math.round(p * 100) + '%';
+const ppMu = (stat, mu) => stat === 's' || stat === 'sv' ? mu.toFixed(1) : mu.toFixed(2);
+const ppLad = (stat, k) => stat === 'g' && k === 1 ? 'Anytime goal' : `${k}+`;
+const ppProj = gid => (S && S.props && isObj(S.props.games) && isObj(S.props.games[gid])) ? S.props.games[gid] : null;
+/* the games a press reads props for: still to come (the press's own list) on today or tomorrow, Eastern */
+const ppAsk = come => { const last = addDays(etToday(), PP_DAYS - 1); return come.filter(g => g.date <= last); };
+/* one game's propBets, every page: { status: 200, items } | { status: 404 } | { status: 'failed', why } */
+async function readPropsGame(event) {
+  const items = [];
+  for (let p = 1; p <= PP_PAGES; p++) {
+    let res;
+    try { res = await fetch(`${PROPS_FEED.PROPS_URL(event, p)}&_=${Date.now()}`, { cache: 'no-store' }); } catch (e) { return { status: 'failed', why: 'no answer' }; }
+    if (res.status === 404) return p === 1 ? { status: 404 } : { status: 200, items };
+    if (!res.ok) return { status: 'failed', why: 'HTTP ' + res.status };
+    let j; try { j = await res.json(); } catch (e) { return { status: 'failed', why: 'an answer that is not JSON' }; }
+    if (!isObj(j) || !Array.isArray(j.items)) return { status: 'failed', why: "an answer not in the feed's shape" };
+    items.push(...j.items);
+    if (!(+j.pageCount > p)) break;
+  }
+  return { status: 200, items };
+}
+/* a press's answers into PROPS, game by game, and the counts the status line says */
+function ppTake(pgames, pans, espnSt, at) {
+  const q = { asked: pgames.length, got: 0, lines: 0, none: 0, failed: 0, kept: 0, started: 0, off: 0 };
+  pgames.forEach((g, i) => {
+    const a = isObj(pans && pans[i]) ? pans[i] : { status: 'failed', why: 'no answer' }, was = PROPS.games[g.id];
+    if (hasStarted(g) || espnSt[g.id] === 'started') { q.started++; delete PROPS.games[g.id]; return; }      // the puck dropped: not shown
+    if (espnSt[g.id] === 'off') { q.off++; delete PROPS.games[g.id]; return; }                                // postponed or cancelled at ESPN
+    let parsed = null;
+    if (a.status === 200) { try { parsed = PROPS_FEED.propsOf(a.items); } catch (e) { parsed = null; } }
+    if (a.status === 404 || (parsed && !parsed.main.length && !parsed.yes.length)) { q.none++; PROPS.games[g.id] = { status: 404, at }; return; }
+    if (!parsed) {
+      q.failed++;
+      if (was && was.status !== 'failed') q.kept++;                                                             // this page's earlier read stands
+      else PROPS.games[g.id] = { status: 'failed', at, why: a.why || 'an answer that could not be read' };
+      return;
+    }
+    q.got++; q.lines += parsed.main.length;
+    PROPS.games[g.id] = { status: 200, at, main: parsed.main, yes: parsed.yes, skipped: parsed.skipped };
+  });
+  return q;
+}
+function ppText(q) {
+  if (!q || !q.asked) return '';
+  const parts = [];
+  if (q.got) parts.push(`${plural(q.got, 'game', 'games')} read (${plural(q.lines, 'main line', 'main lines')})`);
+  if (q.none) parts.push(`${plural(q.none, 'game', 'games')} with none posted yet`);
+  if (q.failed) parts.push(`${plural(q.failed, 'game', 'games')} could not be read${q.kept ? ` (${plural(q.kept, 'earlier read', 'earlier reads')} kept)` : ''}`);
+  if (q.started) parts.push(`${plural(q.started, 'game', 'games')} started: not shown`);
+  if (q.off) parts.push(`${plural(q.off, 'game', 'games')} called off at ESPN: not shown`);
+  return ` DraftKings' player props: ${parts.join(', ')}.`;
+}
+/* the button on a game card (and in Pick your own legs): there for a game still to come with projections or a read */
+function ppBtn(g) {
+  if (!S || hasStarted(g)) return '';
+  const pr = ppProj(g.id), rd = PROPS.games[g.id];
+  if (!pr && !rd) return '';
+  SHOWN.add(g.id);                              // the watch redraws the card when its puck drops
+  const sub = !rd ? "the model's projections (on trial) · press Refresh odds for DraftKings' props"
+    : rd.status === 200 ? `DraftKings: ${plural(rd.main.length, 'main line', 'main lines')} and ${plural(rd.yes.length, 'milestone price', 'milestone prices')}, read ${hhmm(rd.at)}`
+    : rd.status === 404 ? `DraftKings: none posted yet (read ${hhmm(rd.at)})` : "DraftKings' props could not be read";
+  return `<button type="button" class="pp-open" data-pp="${esc(g.id)}" aria-haspopup="dialog"><b>Player props</b> <span>${esc(sub)}</span></button>`;
+}
+/* every player of the game: the props model's projection for each stat (the published distribution), DraftKings' main line
+   and Yes ladder for each stat from the read, matched by ESPN's athlete id; the club and name from the projections, else the
+   player model's table */
+function ppPeople(g) {
+  const pr = ppProj(g.id), rd = PROPS.games[g.id], out = new Map(), PL = S.players && isObj(S.players.players) ? S.players.players : {};
+  const add = id => {
+    id = String(id);
+    if (!out.has(id)) { const p = isObj(PL[id]) ? PL[id] : null; out.set(id, { id, name: p ? p.name : null, pos: p ? p.pos : null, team: p ? p.team : null, toi: null, how: null, proj: {}, main: {}, yes: {}, dk: false, mine: false }); }
+    return out.get(id);
+  };
+  if (pr) for (const side of ['away', 'home']) {
+    const Q = pr[side + 'P'], club = g[side]; if (!isObj(Q)) continue;
+    for (const p of Array.isArray(Q.skaters) ? Q.skaters : []) {
+      if (!isObj(p) || !p.id) continue;
+      const x = add(p.id); Object.assign(x, { name: p.name, pos: p.pos, team: club, toi: p.toi, mine: true });
+      for (const [k] of PP_STATS) if (k !== 'sv' && isObj(p[k]) && Array.isArray(p[k].d)) x.proj[k] = p[k];
+    }
+    if (isObj(Q.goalie) && Q.goalie.id) { const x = add(Q.goalie.id); Object.assign(x, { name: Q.goalie.name, pos: 'G', team: club, how: Q.goalie.how || null, mine: true }); if (isObj(Q.goalie.sv) && Array.isArray(Q.goalie.sv.d)) x.proj.sv = Q.goalie.sv; }
+  }
+  if (rd && rd.status === 200) {
+    for (const [a, stat, L, po, pu] of rd.main) { const x = add(a); x.main[stat] = { L, po, pu }; x.dk = true; }
+    for (const [a, stat, k, price] of rd.yes) { const x = add(a); (x.yes[stat] = x.yes[stat] || []).push({ k, price }); x.dk = true; }
+  }
+  return out;
+}
+const ppPriced = (x, stat) => !!x.main[stat] || !!(x.yes[stat] && x.yes[stat].length);
+const ppDist = D => ({ lo: +D.lo || 0, d: D.d });
+/* one player's row for a stat: DraftKings' line and prices, then "projection · model · DraftKings" (chances of the Over), and
+   the Yes ladder, each milestone's price with the model's chance and DraftKings' fair chance, est. */
+function ppRow(x, stat, unseen) {
+  /* a milestone that is the main line's Over (the Over at L is the (L+0.5)+ milestone) is shown once, as the main line */
+  const D = x.proj[stat], M = x.main[stat], Y = (x.yes[stat] || []).filter(y => !M || y.k !== Math.floor(M.L) + 1).sort((a, b) => a.k - b.k), dist = D ? ppDist(D) : null;
+  const who = `<div class="pp-who"><b>${esc(x.name || `ESPN athlete ${x.id}`)}</b><span>${esc([x.pos, x.toi ? `${(+x.toi).toFixed(1)} min expected` : '', x.how || ''].filter(Boolean).join(' · '))}</span></div>`;
+  const proj = D ? `projection ${ppMu(stat, D.mu)}` : `no projection (${unseen ? 'the props model has not projected this game' : stat === 'sv' ? 'not the goalie the model expects' : x.mine ? 'no number for this stat' : "not in the model's expected lineup"})`;
+  let h = who;
+  if (M) h += `<div class="pp-main"><span>Over ${M.L} <b>${fmtOdds(M.po)}</b></span><span>Under ${M.L} <b>${fmtOdds(M.pu)}</b></span></div><div class="pp-cmp">${[proj, dist ? `model ${ppPct(pOver(dist, M.L))}` : '', `DraftKings ${ppPct(fairOver(M.po, M.pu))}`].filter(Boolean).join(' · ')}</div>`;
+  else h += `<div class="pp-cmp">${proj}</div>`;
+  if (Y.length) h += `<div class="pp-lad">${Y.map(y => { const f = fairYes(stat, y.k, y.price); return `<span class="pp-k" data-pp-k="${y.k}"><b>${esc(ppLad(stat, y.k))} ${fmtOdds(y.price)}</b>${dist ? ` · model ${ppPct(pOver(dist, y.k - 0.5))}` : ''} · DraftKings ${f === null ? '—' : ppPct(f) + ' est.'}</span>`; }).join('')}</div>`;
+  return `<div class="pp-row" data-pp-row="${esc(x.id)}" data-pp-stat="${stat}">${h}</div>`;
+}
+/* the ledger's running numbers, quietly: graded lines of the bar's count, the model's log loss and Brier beside DraftKings';
+   never a verdict, or a word of passing, before the bar is decided */
+function ppLedger() {
+  const Lg = S.props && isObj(S.props.ledger) ? S.props.ledger : null; if (!Lg) return '';
+  const of = (+Lg.of || 0).toLocaleString('en-US'), n = (+Lg.compared || 0).toLocaleString('en-US'), f6 = v => (+v).toFixed(4);
+  const nums = isObj(Lg.model) && isObj(Lg.market) ? ` Log loss: model ${f6(Lg.model.logloss)}, DraftKings ${f6(Lg.market.logloss)}; Brier: model ${f6(Lg.model.brier)}, DraftKings ${f6(Lg.market.brier)} (lower is better).` : '';
+  if (Lg.decision === 'PASS' || Lg.decision === 'FAIL') return `Its shadow ledger was decided at ${of} graded lines: ${Lg.decision}.${nums}`;
+  return `Its shadow ledger: ${n} of ${of} DraftKings main lines graded${+Lg.graded_games ? `, in ${plural(+Lg.graded_games, 'game', 'games')}` : ''}.${nums} The verdict comes at ${of}, not before.`;
+}
+function ppHow() {
+  const y = S.props && S.props.fair && isObj(S.props.fair.yes) ? S.props.fair.yes : null;
+  const ys = y ? Object.entries(y).map(([k, v]) => `${k === 'g2+' ? 'goals 2+' : k === 'g' ? 'anytime goal' : PP_NAME[k] || k} ×${(+v).toFixed(3)}`).join(', ') : '';
+  return `<p><b>Projection</b>: the props model's mean for the player in this game: his own rate from his box scores (recent games weigh more, shrunk toward his position's), times the minutes he is expected to play, times the player model's view of the game; a goalie's saves from the shots the player model expects against his club. The model is fitted on finished seasons only.</p>`
+    + `<p><b>model</b>: the props model's chance of the Over (of reaching a milestone), from its whole distribution as the job published it. <b>DraftKings</b>: DraftKings' own chance with its margin taken out. On a main line, all of the margin comes off the Over (1 − the chance the Under's price implies), which matched the results best on DraftKings' recorded closing lines. A milestone or anytime price has a Yes price alone, so its chance is the price's over DraftKings' measured margin for that stat${ys ? ` (${ys})` : ''}: an estimate, measured on the prices recorded when the model was fitted, marked est.</p>`
+    + `<p>Players are matched by ESPN's athlete id; a player DraftKings prices whom the model does not expect to play has no projection. Read in this browser on a press of Refresh odds, for the games today and tomorrow still to come; nothing is saved, and a reload brings back the published page with the projections alone.</p>`;
+}
+function renderProps() {
+  if (!PP || !S) return;
+  const g = gameById()[PP.gid];
+  PP.gone = !g || hasStarted(g);
+  $('ppGame').innerHTML = g ? `<b>${esc(T(g.away).short)} @ ${esc(T(g.home).short)}</b><span>${esc(when(g))}</span><span class="tag trial">props model on trial</span>` : '';
+  const trial = `<p><b>The props model is on trial.</b> Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. Player props are display only: they cannot go in the Parlay Builder.</p>${ppLedger() ? `<p>${esc(ppLedger())}</p>` : ''}`;
+  $('ppTrial').innerHTML = S.props ? trial : `<p><b>No props model in this publish.</b> DraftKings' prices are shown alone.</p>`;
+  $('ppHow').innerHTML = ppHow();
+  if (PP.gone) {
+    $('ppRead').textContent = g ? 'The puck has dropped on this game: its player props are no longer shown.' : 'This game is no longer on the schedule.';
+    $('ppStats').innerHTML = ''; $('ppBody').innerHTML = ''; return;
+  }
+  const pr = ppProj(g.id), rd = PROPS.games[g.id], dkIn = !!rd && rd.status === 200;
+  const ago2 = rd ? hhmm(rd.at) : '';
+  $('ppRead').textContent = !rd ? `Press Refresh odds for DraftKings' player props on this game.${pr ? " Shown until then: the props model's projections for the expected players." : ''}`
+    : rd.status === 200 ? `DraftKings' player props from ESPN, read ${ago2}: ${plural(rd.main.length, 'main line', 'main lines')} and ${plural(rd.yes.length, 'milestone price', 'milestone prices')}. Gone with a reload; Refresh odds reads them again.`
+    : rd.status === 404 ? `DraftKings has posted no player props for this game yet (ESPN, read ${ago2}): they usually go up on game day, the goalies' saves last.${pr ? " Shown: the props model's projections." : ''}`
+    : `ESPN's player props could not be read at ${ago2} (${rd.why}): press Refresh odds to try again.${pr ? " Shown: the props model's projections." : ''}`;
+  const people = [...ppPeople(g).values()];
+  if (!PP_STATS.some(([k]) => k === PP_STAT)) PP_STAT = 'pts';
+  const count = k => people.filter(x => ppPriced(x, k)).length;
+  $('ppStats').innerHTML = PP_STATS.map(([k, name]) => `<button type="button" data-pp-tab="${k}" class="${k === PP_STAT ? 'on' : ''}" aria-pressed="${k === PP_STAT}">${esc(name)}${dkIn ? `<small>${count(k)}</small>` : ''}</button>`).join('');
+  const stat = PP_STAT, byProj = (a, b) => ((b.proj[stat] ? b.proj[stat].mu : -1) - (a.proj[stat] ? a.proj[stat].mu : -1)) || String(a.name || a.id).localeCompare(String(b.name || b.id));
+  const teams = [g.away, g.home], other = people.filter(x => !teams.includes(x.team) && ppPriced(x, stat));
+  const block = (club, list, label) => {
+    const priced = list.filter(x => ppPriced(x, stat)).sort(byProj), rest = list.filter(x => !ppPriced(x, stat) && x.proj[stat]).sort(byProj);
+    const t = club ? T(club) : null;
+    const head = `<h3>${t && t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : ''}${esc(t ? t.short : 'Not matched to either club')}${label ? ` <small>${esc(label)}</small>` : ''}</h3>`;
+    let body = '';
+    if (dkIn) {
+      body += priced.length ? priced.map(x => ppRow(x, stat, !pr)).join('') : `<p class="pp-none">DraftKings has no ${PP_NAME[stat]} line on ${esc(t ? t.short : 'them')}.</p>`;
+      if (rest.length) body += `<details class="pp-more"><summary>${plural(rest.length, 'more expected player', 'more expected players')}, no DraftKings line</summary>${rest.map(x => ppRow(x, stat)).join('')}</details>`;
+    } else body += rest.length ? rest.map(x => ppRow(x, stat)).join('') : `<p class="pp-none">No ${PP_NAME[stat]} projection for ${esc(t ? t.short : 'them')}.</p>`;
+    return `<section class="pp-team" data-pp-team="${esc(club || '')}">${head}${body}</section>`;
+  };
+  $('ppBody').innerHTML = `<p class="pp-key">${dkIn ? "model and DraftKings: each one's chance of the Over (of reaching a milestone). est.: DraftKings' margin on a Yes price estimated." : "Projection: the props model's expected " + PP_NAME[stat] + ' in this game.'}</p>`
+    + block(g.away, people.filter(x => x.team === g.away), 'away') + block(g.home, people.filter(x => x.team === g.home), 'home') + (dkIn && other.length ? block(null, other, '') : '');
+}
+function openProps(gid, opener) {
+  if (!S) return;
+  PP = { gid: String(gid), opener: opener || null, gone: false };
+  renderProps();
+  $('ppWin').hidden = false; document.body.classList.add('pp-on');
+  $('ppPanel').scrollTop = 0; $('ppWin').scrollTop = 0;
+  $('ppPanel').focus();
+}
+function closeProps() {
+  if ($('ppWin').hidden) return;
+  $('ppWin').hidden = true; document.body.classList.remove('pp-on');
+  const o = PP && PP.opener, gid = PP && PP.gid; PP = null;
+  const back = o && document.contains(o) ? o : [...document.querySelectorAll('button[data-pp]')].find(b => b.dataset.pp === gid) || $('tabs').querySelector('button.on');
+  if (back && back.focus) back.focus();
+}
+/* the watch: the window on a game whose puck has dropped is drawn again, once, to say so */
+function ppWatch() { if (PP && !$('ppWin').hidden && !PP.gone) { const g = gameById()[PP.gid]; if (!g || hasStarted(g)) renderProps(); } }
+document.addEventListener('click', e => { const b = e.target.closest('button[data-pp]'); if (b) openProps(b.dataset.pp, b); });
+$('ppStats').addEventListener('click', e => { const b = e.target.closest('button[data-pp-tab]'); if (!b) return; PP_STAT = b.dataset.ppTab; renderProps(); const nb = $('ppStats').querySelector(`button[data-pp-tab="${PP_STAT}"]`); if (nb) nb.focus(); });
+$('ppClose').addEventListener('click', () => closeProps());
+$('ppWin').addEventListener('click', e => { if (e.target === $('ppWin')) closeProps(); });
+document.addEventListener('keydown', e => {
+  if ($('ppWin').hidden) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeProps(); return; }
+  if (e.key !== 'Tab') return;
+  const f = [...$('ppPanel').querySelectorAll('button, a[href], summary, input, [tabindex]:not([tabindex="-1"])')].filter(x => !x.hidden && !x.disabled && !(x.closest('[hidden]')) && !(x.tagName !== 'SUMMARY' && x.closest('details:not([open])')));
+  if (!f.length) return;
+  const i = f.indexOf(document.activeElement);
+  if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && (i === -1 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+});
 
 /* ---------- Record ---------- */
 function renderRecord() {

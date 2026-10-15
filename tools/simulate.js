@@ -19,11 +19,13 @@
       it names), naming a goalie with no NHL game and an unconfirmed one (dated by a zone-less GMT stamp
       when its game is past midnight GMT), a stale entry from the day before, and the first night of a
       club's back to back postponed in the feed. The job runs in the workflow's order (read from update.yml)
-      and the smoke test holds the result to those sources. Then the refusals: a scoreboard day that does
+      and the smoke test holds the result to those sources (props.js among the steps: last night's final's closing props,
+      planted in ESPN's prop-feed shape, recorded once and its frozen call graded; the box summaries carry ESPN's real
+      columns, its SOG shootout column planted non-zero, half of them by label alone). Then the refusals: a scoreboard day that does
       not answer (exit 1, nothing written), an injury report that does not answer or comes back empty
       (the last one kept; one in use with no rows is a broken source), DailyFaceoff silent, in a changed
       shape, or naming games that match nothing on the schedule (said, never applied, and sources.js
-      fails the run).
+      fails the run), and sources.js on a props step whose every closing-props request failed (broken) or one of them (a note).
    B2. The first evening after a change: the published state's first game day with its first puck drop
       an hour gone, those games under way and not boxed, last night's over and mostly not boxed, the
       published calls an older job's; the job and the smoke against the published state must pass (the
@@ -58,7 +60,7 @@ const { spawnSync } = require('child_process');
 const E = require('./espn');
 const Hist = require('./hist');
 const { goals, spreadOf, coverProbs, totalProbs } = require('./elo');
-const { injuriesOf } = require('./fetch_box');
+const { injuriesOf, boxOf } = require('./fetch_box');
 
 const ROOT = path.join(__dirname, '..'), REAL_DATA = path.join(ROOT, 'data');
 const real = JSON.parse(fs.readFileSync(path.join(ROOT, 'state.json'), 'utf8'));
@@ -84,9 +86,11 @@ function run(script, args, env, label) {
 /* a data folder: the fixed files copied, the box scores linked (the current season's copied, since fetch_box.js appends to it) */
 function dataDir(name, from = REAL_DATA) {
   const d = mkdir(name);
-  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json'].concat(fs.readdirSync(from).filter(f => /^season_\d{4}\.json$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
+  /* the props model's constants (source), its ledger and the record of closing props come too, so props.js plays its part */
+  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json', 'props_model.json', 'props_ledger.json', 'props.json'].concat(fs.readdirSync(from).filter(f => /^(season_\d{4}\.json|props_\d{4}\.jsonl)$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
+  /* this season's box scores from the folder copied (B's has last night's final boxed, which its props ledger graded) */
   for (const f of fs.readdirSync(REAL_DATA).filter(f => /^box_\d+\.jsonl$/.test(f))) {
-    if (+f.slice(4, 8) >= SEASON) fs.copyFileSync(path.join(REAL_DATA, f), path.join(d, f)); else fs.symlinkSync(path.join(REAL_DATA, f), path.join(d, f));
+    if (+f.slice(4, 8) >= SEASON) fs.copyFileSync(path.join(fs.existsSync(path.join(from, f)) ? from : REAL_DATA, f), path.join(d, f)); else fs.symlinkSync(path.join(REAL_DATA, f), path.join(d, f));
   }
   return d;
 }
@@ -152,10 +156,33 @@ function score(g) {
 }
 /* a box line back into ESPN's game summary, which fetch_box.js reads */
 const mmss = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-const summaryOf = b => ({ boxscore: { players: [b.home, b.away].map(code => ({ team: { id: E.CLUBS[code].id }, statistics: [
-  { name: 'forwards', labels: ['G', 'A', '+/-', 'SOG', 'TOI'], athletes: b.skaters.filter(s => s.team === code && s.pos !== 'D').map(s => ({ athlete: { id: s.id, displayName: s.name, position: { abbreviation: s.pos } }, stats: [s.g, s.a, s.pm, s.sog, mmss(s.toi)].map(String) })) },
-  { name: 'defenses', labels: ['G', 'A', '+/-', 'SOG', 'TOI'], athletes: b.skaters.filter(s => s.team === code && s.pos === 'D').map(s => ({ athlete: { id: s.id, displayName: s.name, position: { abbreviation: s.pos } }, stats: [s.g, s.a, s.pm, s.sog, mmss(s.toi)].map(String) })) },
-  { name: 'goalies', labels: ['SA', 'GA', 'TOI'], athletes: b.goalies.filter(x => x.team === code).map(x => ({ athlete: { id: x.id, displayName: x.name, position: { abbreviation: 'G' } }, stats: [x.sa, x.ga, mmss(x.toi)].map(String) })) }] })) } });
+/* ESPN's skater columns in its own order, [key, label, the box line's field]; 'SOG' is SHOOTOUT goals in ESPN's
+   summary, planted here non-zero on every third skater so a parser that read it as shots would be caught */
+const SK_COLS = [['blockedShots', 'BS', 'bs'], ['hits', 'HT', 'ht'], ['plusMinus', '+/-', 'pm'], ['timeOnIce', 'TOI', 'toi'], ['powerPlayTimeOnIce', 'PPTOI', 'pptoi'],
+  ['goals', 'G', 'g'], ['assists', 'A', 'a'], ['shotsTotal', 'S', 's'], ['shotsMissed', 'SM', null], ['shootoutGoals', 'SOG', 'so']];
+const GK_COLS = [['goalsAgainst', 'GA', 'ga'], ['shotsAgainst', 'SA', 'sa'], ['shootoutSaves', 'SOS', null], ['saves', 'SV', 'sv'], ['timeOnIce', 'TOI', 'toi']];
+const shootout = (s, i) => i % 3 === 0 ? 1 + (s.s || 0) : 0;
+/* a box line back into ESPN's game summary, which fetch_box.js reads: every column the line has, in ESPN's order, with
+   its keys beside its labels; `labelsOnly` drops the keys (the parser falls back to the labels). Its plays name each side's
+   starter (`st`) making the side's first save and every other goalie a save after it, listed newest first with their
+   sequence numbers, so a parser that took the list's order, or the goalie who played most, would mark the wrong one */
+const playsOf = b => {
+  const out = []; let seq = 1;
+  for (const first of [true, false]) for (const x of b.goalies.filter(x => !!x.st === first && (first || b.goalies.some(y => y.st && y.team === x.team))))
+    out.push({ sequenceNumber: String(seq++), type: { text: 'Shot' }, participants: [{ athlete: { id: '1' }, type: 'shooter' }, { athlete: { id: x.id }, type: 'saver' }] });
+  return out.reverse();
+};
+const summaryOf = (b, labelsOnly) => ({ plays: playsOf(b), boxscore: { players: [b.home, b.away].map(code => {
+  const group = (name, list) => {
+    const cols = SK_COLS.filter(([, , f]) => !f || f === 'so' || list.some(s => s[f] !== undefined));
+    return Object.assign({ name, labels: cols.map(c => c[1]), athletes: list.map((s, i) => ({ athlete: { id: s.id, displayName: s.name, position: { abbreviation: s.pos } },
+      stats: cols.map(([, , f]) => f === 'so' ? shootout(s, i) : !f ? 0 : f === 'toi' || f === 'pptoi' ? mmss(s[f]) : s[f]).map(String) })) }, labelsOnly ? {} : { keys: cols.map(c => c[0]) });
+  };
+  const sk = b.skaters.filter(s => s.team === code), gk = b.goalies.filter(x => x.team === code);
+  return { team: { id: E.CLUBS[code].id }, statistics: [group('forwards', sk.filter(s => s.pos !== 'D')), group('defenses', sk.filter(s => s.pos === 'D')),
+    Object.assign({ name: 'goalies', labels: GK_COLS.map(c => c[1]), athletes: gk.map(x => ({ athlete: { id: x.id, displayName: x.name, position: { abbreviation: 'G' } },
+      stats: GK_COLS.map(([, , f]) => f === 'toi' ? mmss(x.toi) : f === 'sv' ? x.sa - x.ga : f ? x[f] : 0).map(String) })) }, labelsOnly ? {} : { keys: GK_COLS.map(c => c[0]) })] };
+}) } });
 /* an injury row in ESPN's shape: no athlete id field, the id in the player's links when we give one */
 const injRow = (name, pos, status, id, detail) => ({ status, date: '2026-10-01T12:00Z', athlete: Object.assign({ displayName: name, position: { abbreviation: pos || 'C' } },
   id ? { links: [{ rel: ['playercard', 'desktop', 'athlete'], href: `https://www.espn.com/nhl/player/_/id/${id}/${String(name).toLowerCase().replace(/[^a-z]+/g, '-')}` }, { rel: ['stats'], href: `sportscenter://x-callback-url/showClubhouse?uid=s:70~l:90~a:${id}` }] } : {}),
@@ -178,8 +205,8 @@ const postponed = ev => { ev.competitions[0].status = { type: { state: 'post', n
 /* the job in the workflow's own order (read from .github/workflows/update.yml, so a step moved there is a step moved here) */
 function jobSteps() {
   const yml = path.join(ROOT, '.github', 'workflows', 'update.yml');
-  return (fs.existsSync(yml) ? [...fs.readFileSync(yml, 'utf8').matchAll(/run: node tools\/(\S+\.js)([^\n]*)/g)].map(m => [m[1], m[2].trim().split(/\s+/).filter(Boolean)]) : [['update.js', ['--scores']], ['fetch_box.js', []], ['starters.js', []], ['players.js', []], ['update.js', []]])
-    .filter(([s]) => ['update.js', 'fetch_box.js', 'starters.js', 'players.js'].includes(s));
+  return (fs.existsSync(yml) ? [...fs.readFileSync(yml, 'utf8').matchAll(/run: node tools\/(\S+\.js)([^\n]*)/g)].map(m => [m[1], m[2].trim().split(/\s+/).filter(Boolean)]) : [['update.js', ['--scores']], ['fetch_box.js', []], ['starters.js', []], ['players.js', []], ['props.js', []], ['update.js', []]])
+    .filter(([s]) => ['update.js', 'fetch_box.js', 'starters.js', 'players.js', 'props.js'].includes(s));
 }
 const runJob = (env, tag) => jobSteps().map(([s, a]) => ({ s, a, r: run(s, s === 'update.js' ? ['--offline'].concat(a) : a, env, `${tag}: ${s}`) }));
 
@@ -210,12 +237,18 @@ function partB() {
     const hb = lastOf(fresh.home), ab = lastOf(fresh.away);
     fs.writeFileSync(path.join(FX, `summary_${fresh.id}.json`), JSON.stringify(summaryOf({ home: fresh.home, away: fresh.away,
       skaters: hb.skaters.filter(s => s.team === fresh.home).concat(ab.skaters.filter(s => s.team === fresh.away)), goalies: hb.goalies.filter(x => x.team === fresh.home).concat(ab.goalies.filter(x => x.team === fresh.away)) })));
+    /* its closing props at ESPN, in the feed's shape: a points line on each side's two busiest skaters, the Over first */
+    const ref = id => ({ $ref: `http://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/seasons/${SEASON}/athletes/${id}?lang=en&region=us` });
+    const it = (type, id, price, total) => ({ type: { id: '1', name: type }, athlete: ref(id), odds: { american: { value: price }, total: { value: String(total) } } });
+    const top = (b, c) => b.skaters.filter(s => s.team === c).sort((x, y) => y.toi - x.toi).slice(0, 2);
+    const items = [].concat(...top(hb, fresh.home).concat(top(ab, fresh.away)).map(s => [it('Total Points', s.id, '+105', 0.5), it('Total Points', s.id, '-135', 0.5)]));
+    fs.writeFileSync(path.join(FX, `props_${fresh.id}_p1.json`), JSON.stringify({ count: items.length, pageIndex: 1, pageSize: 1000, pageCount: 1, items }));
   }
   /* three boxed finals held back, to be read again from summaries in ESPN's shape */
   const finals = new Set(real.games.filter(g => g.state === 'final').map(g => String(g.id)));
   const held = lines.filter(l => finals.has(JSON.parse(l).id)).slice(-3).map(l => JSON.parse(l));
   if (lines.length) fs.writeFileSync(boxFile, lines.filter(l => !held.some(h => h.id === JSON.parse(l).id)).join('\n') + '\n');
-  for (const h of held) fs.writeFileSync(path.join(FX, `summary_${h.id}.json`), JSON.stringify(summaryOf(h)));
+  held.forEach((h, i) => fs.writeFileSync(path.join(FX, `summary_${h.id}.json`), JSON.stringify(summaryOf(h, i === 1))));      // the second with labels and no keys
   /* the injury report in ESPN's shape: every row of the committed one, its id in the link when the box scores know him, one in four with no link */
   const inj = fs.existsSync(path.join(REAL_DATA, 'injuries.json')) ? readJSON(path.join(REAL_DATA, 'injuries.json')) : { teams: {} };
   const feed = {}; let k = 0;
@@ -273,11 +306,32 @@ function partB() {
     chk(pj.teams[fresh.home].lastBox === fresh.date && pj.asOf >= fresh.date, `and the lineups are rated through it (${fresh.home} last box ${pj.teams[fresh.home].lastBox}, ratings as of ${pj.asOf})`);
   }
   const again = fs.existsSync(boxFile) ? fs.readFileSync(boxFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
-  const byId = l => JSON.stringify(l.slice().sort((x, y) => x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+  /* each player's fields, key order aside; `sog` was the old files' misread shootout column, never kept since */
+  const byId = l => JSON.stringify(l.slice().sort((x, y) => x.id < y.id ? -1 : x.id > y.id ? 1 : 0).map(p => Object.keys(p).filter(k => k !== 'sog').sort().map(k => [k, p[k]])));
   for (const h of held) {
     const b = again.find(x => x.id === h.id);
     chk(b && byId(b.skaters) === byId(h.skaters) && byId(b.goalies) === byId(h.goalies), `a box score read from ESPN's summary shape is the one the job read before: ${h.id}`);
+    chk(b && b.skaters.every(s => s.sog === undefined && s.so === undefined), `ESPN's SOG column (shootout goals, planted non-zero) is kept under no name: ${h.id}`);
+    if (h.skaters.some(s => s.s !== undefined)) chk(b && b.skaters.every(s => { const o = h.skaters.find(x => x.id === s.id); return o && s.s === o.s && s.bs === o.bs && s.ht === o.ht && s.pptoi === o.pptoi; }),
+      `shots are ESPN's S column (shotsTotal), never SOG, with blocks, hits and power-play time beside them${held.indexOf(h) === 1 ? ', read by label where the summary has no keys' : ''}: ${h.id}`);
     chk(b && b.hs !== undefined && b.hs !== null && b.periods, `a box line carries its game's score: ${h.id}`);
+  }
+  /* the starting goalie from ESPN's plays: a side whose starter was pulled after fifteen minutes, his reliever playing the
+     rest, marks the starter (the first save by the plays' sequence), never the goalie who played most or the list's first */
+  if (held.length) {
+    const h = held[0], club = h.home, [g0] = h.goalies.filter(x => x.team === club);
+    const two = Object.assign({}, h, { goalies: [{ id: '990001', name: 'Relief Goalie', team: club, toi: 2700, sa: 24, ga: 1 }, Object.assign({}, g0, { toi: 900, sa: 8, ga: 4, st: 1 })]
+      .concat(h.goalies.filter(x => x.team !== club)) });
+    const j = summaryOf(two), b = boxOf(j, {});
+    const mark = b ? b.goalies.filter(x => x.team === club).map(x => x.id + (x.st ? '*' : '')) : null;
+    chk(b && JSON.stringify(mark) === JSON.stringify(['990001', g0.id + '*']), `a starter pulled early is the side's starter, read from the plays' first save (${JSON.stringify(mark)})`);
+    const nb = boxOf(Object.assign({}, j, { plays: [] }), {});
+    chk(nb && nb.goalies.every(x => x.st === undefined), 'a summary whose plays name no save marks no starter (the reader then takes the goalie who played most)');
+  }
+  if (freshOk) {
+    const recs = fs.readdirSync(B).filter(f => /^props_\d{4}\.jsonl$/.test(f)).flatMap(f => fs.readFileSync(path.join(B, f), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)));
+    const rf = recs.filter(r => r.id === String(fresh.id));
+    chk(rf.length === 1 && rf[0].status === 200 && rf[0].main.length === 4 && rf[0].main.every(m => m[1] === 'pts' && m[3] === 105 && m[4] === -135), `last night's final's closing props are recorded once, the first item the Over (${rf.length ? rf[0].main.length + ' lines' : 'none'})`);
   }
   const injOut = readJSON(path.join(B, 'injuries.json'));
   const rows = Object.values(injOut.teams).reduce((a, l) => a.concat(l), []);
@@ -325,9 +379,20 @@ function partB() {
   const readNow = SB.games.filter(g => g.state === 'pre' && g.line && g.line.at === NOW);
   const idsBad = readNow.filter(g => { const r = realById.get(g.id), want = r && r.line && r.line.dk ? idsOnly(r.line.dk) : r && r.line ? inventIds(r, r.line) : null; return !want || JSON.stringify(g.line.dk) !== JSON.stringify(want); });
   chk(!idsBad.length, `every line read in B carries the feed's DraftKings ids (${readNow.length - idsBad.length} of ${readNow.length}${idsBad[0] ? `, e.g. ${idsBad[0].id}: ${JSON.stringify(idsBad[0].line.dk)}` : ''})`);
-  const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB }, 'smoke.js over B');
+  const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB, NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json') }, 'smoke.js over B');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the real data through the new job: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B }).status === 0, 'sources.js: every source read');
+  /* the props model's record: every final asked for its closing props failing is a broken source; one failing among others a note */
+  {
+    const BP = mkdir('B-props'); for (const f of ['injuries.json', 'starters.json', 'props.json']) if (fs.existsSync(path.join(B, f))) fs.copyFileSync(path.join(B, f), path.join(BP, f));
+    const pj = fs.existsSync(path.join(BP, 'props.json')) ? readJSON(path.join(BP, 'props.json')) : { v: 1, games: {} };
+    fs.writeFileSync(path.join(BP, 'props.json'), JSON.stringify(Object.assign({}, pj, { record: { asked: 3, read: 0, none: 0, failed: 3, waiting: 0, why: 'HTTP 503' } })));
+    const rp = run('sources.js', [], { NHL_STATE: STB, NHL_DATA: BP }, 'sources.js, every closing props request failed');
+    chk(rp.status === 1 && /DraftKings props/.test(rp.out), 'every final asked for its closing props failing fails sources.js after the commit');
+    fs.writeFileSync(path.join(BP, 'props.json'), JSON.stringify(Object.assign({}, pj, { record: { asked: 3, read: 1, none: 1, failed: 1, waiting: 0, why: 'HTTP 503' } })));
+    const rq = run('sources.js', [], { NHL_STATE: STB, NHL_DATA: BP }, 'sources.js, one closing props request failed');
+    chk(rq.status === 0 && /note: ESPN's DraftKings props/.test(rq.out), 'one failing among answers is a note');
+  }
 
   /* the refusals */
   const OUT2 = mkdir('B-sb-missing'); for (const f of fs.readdirSync(OUTB)) fs.copyFileSync(path.join(OUTB, f), path.join(OUT2, f));
@@ -431,7 +496,7 @@ function partB2(b) {
     const t = S2.games.find(g => g.id === conf.tonight.id), gl = t && t.pm && t.pm[t.home === conf.c ? 'home' : 'away'].goalie;
     chk(gl && gl.id !== conf.second.id, `${conf.c} tonight: not ${conf.second.name} again, whom DailyFaceoff confirmed for last night's game not yet boxed (${gl && gl.name}, ${gl && gl.how})`);
   }
-  const sm = run('smoke.js', [], { NHL_STATE: STE, NHL_DATA: DB, NHL_PREV_STATE: path.join(ROOT, 'state.json') }, 'smoke.js over the evening, against the published state');
+  const sm = run('smoke.js', [], { NHL_STATE: STE, NHL_DATA: DB, NHL_PREV_STATE: path.join(ROOT, 'state.json'), NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json') }, 'smoke.js over the evening, against the published state');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the first evening after a change: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
 
   /* B3. rows an older job rewrote after puck drop (the margin and the puck-line, total and overtime chances
@@ -497,6 +562,7 @@ function partB4(b) {
   writeDays(OUT4, feedAt(T1, false));
   for (const { s, r } of runJob(env(T1, FX1), 'B4 run 1')) chk(r.status === 0, `B4, the call before puck drop: ${s} runs`);
   fs.copyFileSync(ST4, R1);
+  const R1L = path.join(SCRATCH, 'B4-run1-ledger.json'); if (fs.existsSync(path.join(DB, 'props_ledger.json'))) fs.copyFileSync(path.join(DB, 'props_ledger.json'), R1L);
   const g1 = readJSON(R1).games.find(g => g.id === G.id), gl = g1 && g1.pm && g1.pm.home && g1.pm.home.goalie;
   chk(g1 && g1.state === 'pre' && g1.frozen === T1 && g1.before === G.start && g1.pm && g1.pm.inj === pulled1 && gl, `${G.away}@${G.home} is called before its puck drop on the report of ${pulled1}: ${g1 && [g1.frozen, g1.before, g1.pm && g1.pm.inj].join(' ')}`);
   if (!gl) return;
@@ -514,7 +580,7 @@ function partB4(b) {
   const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
   const moved = g2 ? CALL.filter(k => JSON.stringify(g2[k] ?? null) !== JSON.stringify(g1[k] ?? null)) : ['missing'];
   chk(g2 && g2.state === 'pre' && g2.start === MOVED && !moved.length, `a game whose start the feed moved later after its puck drop keeps the call made before it, ${gl.name} in goal on the report of ${pulled1}: ${moved.join(', ')}`);
-  const sm = run('smoke.js', [], { NHL_STATE: ST4, NHL_DATA: DB, NHL_PREV_STATE: R1 }, 'smoke.js over the delayed game, against the run before its puck drop');
+  const sm = run('smoke.js', [], { NHL_STATE: ST4, NHL_DATA: DB, NHL_PREV_STATE: R1, NHL_PREV_LEDGER: fs.existsSync(R1L) ? R1L : 'none' }, 'smoke.js over the delayed game, against the run before its puck drop');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over a start moved later after its puck drop, the report re-pulled since: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
 }
 

@@ -54,6 +54,8 @@ jobs:
         run: node tools/starters.js
       - name: Replay the player and goalie model and line up every game to come
         run: node tools/players.js
+      - name: The props model (on trial) - closing props of new finals, the shadow ledger graded and called, every game through tomorrow projected
+        run: node tools/props.js
       - name: Read the season, rate, call, grade and write state.json
         run: node tools/update.js
       - name: Smoke test the page and the state against its sources and the last published state
@@ -63,7 +65,7 @@ jobs:
           git config user.name "nhl-hub bot"
           git config user.email "bot@users.noreply.github.com"
           git add state.json data/teams.json data/box_*.jsonl data/injuries.json data/starters.json data/players.json
-          for f in data/season_*.json; do [ -e "$f" ] && git add "$f"; done
+          for f in data/season_*.json data/props.json data/props_ledger.json data/props_*.jsonl; do [ -e "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "nothing changed"; else
             git commit -m "update $(date -u +'%Y-%m-%d %H:%M UTC')"
             ok=0

@@ -2,13 +2,17 @@
 
 A rating model's call on every NHL game: win chances, puck lines and totals against DraftKings'
 numbers, frozen before puck drop and graded after, with the standings, the playoff picture, a
-player and goalie model and a parlay builder that lives in the visitor's own browser.
+player and goalie model, a player props model on trial against DraftKings' own player prices
+(shown, never suggested, until its pre-registered bar is passed) and a parlay builder that lives
+in the visitor's own browser.
 
 Served by GitHub Pages from the repo root: https://demon-x13.github.io/nhl-hub/
 
 - **The page** is `index.html`, one hand-written file. It fetches `state.json` on every load, and
-  DraftKings' latest lines from ESPN's scoreboard only when Refresh odds is pressed (in memory: a
-  reload is the published state again).
+  DraftKings' latest lines from ESPN's scoreboard and DraftKings' player props from ESPN's propBets
+  feed only when Refresh odds is pressed (in memory: a reload is the published state again). Each
+  game still to come has a Player props window: the props model's projections, and after a press
+  DraftKings' lines with the model's chance and DraftKings' fair chance beside each.
 - **The data** comes from ESPN's public feeds (scoreboards with DraftKings' lines, box scores,
   the injury report) and DailyFaceoff's announced starting goalies. All free: no key, no credits.
 - **The job**, `.github/workflows/update.yml`, runs five times a day (queued at 06:17, 12:17, 15:17,

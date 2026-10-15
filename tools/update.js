@@ -489,12 +489,18 @@ async function main() {
 
   /* the player rankings, for the Players tab: every rated player, the club strengths, the report */
   const players = PM ? { asOf: PM.asOf, generated: PM.generated, use: usePM, report: PM.report, params: PM.params, players: PM.players, teams: PM.teams, injuries: PM.injuries || null, starters: PM.starters || null } : null;
+  /* the props model (props.js, ON TRIAL: shown beside DraftKings' lines, never suggested): its projections for each game still to
+     come by this run's clock, and the shadow ledger's running numbers. Copied as props.js wrote them; a game that has started
+     since it ran is left out (its call is in the ledger, frozen) */
+  const PR = fs.existsSync(path.join(DATA, 'props.json')) ? JSON.parse(fs.readFileSync(path.join(DATA, 'props.json'), 'utf8')) : null;
+  const toComeNow = r => r && r.state === 'pre' && Date.parse(r.start) > Date.parse(NOW) && !(r.before && Date.parse(r.before) <= Date.parse(NOW) && Date.parse(r.start) - Date.parse(r.before) < DELAY);
+  const props = PR ? Object.assign({}, PR, { games: Object.fromEntries(Object.entries(PR.games || {}).filter(([id, g]) => toComeNow(out.find(x => x.id === id)) && Date.parse(g.start) > Date.parse(NOW))) }) : null;
   /* `removed`: the games taken off the schedule since the last published state, each with the feed's
      reason, so the smoke test can hold every started call of that state to this one; `kept`: games a
      partial answer left out, kept as they were; `pass`: only on the first pass's state, never published */
   /* published at the run's own clock, the one every call was made and frozen by, so a puck drop while the run reads
      the feed is not a call "made after puck drop" to the smoke test */
-  const state = Object.assign({ published: new Date(Date.parse(NOW)).toISOString(), season: SEASON, today: TODAY, phase: playoff.phase, model, teams, games: out, record, playoff, edge: EDGE, players },
+  const state = Object.assign({ published: new Date(Date.parse(NOW)).toISOString(), season: SEASON, today: TODAY, phase: playoff.phase, model, teams, games: out, record, playoff, edge: EDGE, players, props },
     removedNow.length ? { removed: removedNow } : {}, kept.length ? { kept } : {}, SCORES ? { pass: 'scores' } : {});
   const before = prev ? JSON.stringify(Object.assign({}, prev, { published: null, today: null })) : null;
   const after = JSON.stringify(Object.assign({}, state, { published: null, today: null }));

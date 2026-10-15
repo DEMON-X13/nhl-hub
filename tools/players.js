@@ -193,7 +193,8 @@ function replay(P, games, elo, mode, collect) {
     else if (mode === 'last') { const lh = m.last[g.home], la = m.last[g.away]; hs = lh ? m.projectedShares(lh, g.home) : m.projectedShares(g, g.home); as = la ? m.projectedShares(la, g.away) : m.projectedShares(g, g.away); hg = lh ? Model.goalieOf(lh, g.home) : Model.goalieOf(g, g.home); ag = la ? Model.goalieOf(la, g.away) : Model.goalieOf(g, g.away); }
     else { hs = m.projectedShares(g, g.home); as = m.projectedShares(g, g.away); hg = Model.goalieOf(g, g.home); ag = Model.goalieOf(g, g.away); }
     const e = elo[g.id]; const view = m.predict(g, hs, as, hg, ag, e ? e.diff : 0);
-    if (collect) recs.push({ season: g.season, pHome: view.pHome, pElo: e ? e.pHome : 0.5, mu: view.mu, total: view.total, margin: g.hs - g.as, tot: g.hs + g.as, win: g.hs > g.as ? 1 : 0 });
+    /* id, sh, sa, lh, la: the pre-game view's expected shots and goals each side, which props.js reads (never the score's) */
+    if (collect) recs.push({ id: g.id, season: g.season, pHome: view.pHome, pElo: e ? e.pHome : 0.5, mu: view.mu, total: view.total, margin: g.hs - g.as, tot: g.hs + g.as, win: g.hs > g.as ? 1 : 0, sh: view.sh, sa: view.sa, lh: view.lh, la: view.la });
     /* the update always uses what actually happened */
     const real = mode === 'actual' ? view : m.predict(g, Model.actualShares(g, g.home), Model.actualShares(g, g.away), Model.goalieOf(g, g.home), Model.goalieOf(g, g.away), e ? e.diff : 0);
     m.play(g, real);
@@ -397,7 +398,9 @@ function main() {
       const diff = eloModel.predict(g).diff;
       const v = m.predict(g, th._shares, ta._shares, ch ? ch.id : null, ca ? ca.id : null, diff);
       /* `inj`: the injury report this lineup was built on, so the page and the smoke can hold it to that report */
+      /* sh, sa, lh, la: each side's expected shots on goal and goals, which props.js reads for its projections */
       upcoming[g.id] = { pHome: +v.pHome.toFixed(4), pGoals: +v.pGoals.toFixed(4), mu: +v.mu.toFixed(2), total: +v.total.toFixed(2), tie: +v.tie.toFixed(3), diff: +diff.toFixed(2),
+        sh: +v.sh.toFixed(2), sa: +v.sa.toFixed(2), lh: +v.lh.toFixed(3), la: +v.la.toFixed(3),
         home: th._side(ch), away: ta._side(ca), inj: injuries.pulled || null };
     }
     for (const t of Object.values(teams)) { delete t._shares; delete t._side; }
@@ -421,3 +424,4 @@ function main() {
   log(`players.json: ${Object.keys(players).length} players, ${Object.keys(upcoming).length} upcoming, ${same ? 'unchanged' : 'written'}. Top skaters: ${top}. Top goalies: ${topG}`);
 }
 if (require.main === module) main();
+module.exports = { loadGames, replay, Model, LEAGUE, regGoals, shotsFor };

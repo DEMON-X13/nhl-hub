@@ -64,6 +64,7 @@ function fixtureName(url) {
   if ((m = /scoreboard\?dates=(\d{4})(\d{2})(\d{2})/.exec(u))) return `sb_${m[1]}-${m[2]}-${m[3]}.json`;
   if (/\/injuries/.test(u)) return 'injuries.json';
   if (/dailyfaceoff\.com/.test(u)) return 'dailyfaceoff.html';
+  if ((m = /\/events\/(\d+)\/competitions\/\d+\/odds\/100\/propBets\?.*\bpage=(\d+)/.exec(u))) return `props_${m[1]}_p${m[2]}.json`;
   return null;
 }
 function fromFixture(url) {
@@ -92,6 +93,97 @@ async function getJSON(url, tries = 3) {
     await new Promise(res => setTimeout(res, 1500 * (i + 1)));
   }
   throw last;
+}
+
+/* DraftKings' player props for one game, from ESPN's core feed (provider 100 is DraftKings): every item on every
+   page, as { status, items, pages }. status 200 with the items; 404 when ESPN says there are none ("No propBets
+   found": none posted yet, or none kept), which is an answer, not a failure, so it is asked for once and never
+   retried; 'failed' (with `why`) when the feed could not be read (a network error, a 5xx, a body that is not the
+   feed's shape), which is asked for again next run. ESPN's own `lastUpdated` on each item runs three hours ahead of
+   UTC though it is labelled Z, so nothing here reads it for timing. One request a page; limit=1000 holds a whole
+   game (the most items seen was 522) */
+const PROPS_URL = (e, p) => `https://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/events/${e}/competitions/${e}/odds/100/propBets?lang=en&region=us&limit=1000&page=${p}`;
+async function propBets(event, maxPages = 5) {
+  const items = []; let pages = 0;
+  for (let p = 1; p <= maxPages; p++) {
+    const url = PROPS_URL(event, p);
+    let r = null, why = null;
+    for (let i = 0; i < 3 && !r; i++) {
+      try {
+        if (process.env.NHL_FIXTURES) {
+          const j = JSON.parse(fromFixture(url));
+          r = j && j.error && +j.error.code === 404 ? { status: 404 } : { status: 200, json: j };
+          break;
+        }
+        const res = await fetch(url, { headers: HEADER_SETS[0], redirect: 'follow' });
+        if (res.status === 404) { r = { status: 404 }; break; }
+        if (!res.ok) { why = `HTTP ${res.status}`; if (res.status < 500 && res.status !== 408 && res.status !== 429) break; }
+        else r = { status: 200, json: await res.json() };
+      } catch (e) { why = e.message; if (process.env.NHL_FIXTURES) break; }
+      if (!r) await new Promise(res => setTimeout(res, 1500 * (i + 1)));
+    }
+    if (!r) return { status: 'failed', items: [], pages, why: why || 'no answer' };
+    if (r.status === 404) return p === 1 ? { status: 404, items: [], pages: 0 } : { status: 200, items, pages };
+    const j = r.json;
+    if (!j || typeof j !== 'object' || !Array.isArray(j.items)) return { status: 'failed', items: [], pages, why: 'an answer not in the feed\'s shape' };
+    items.push(...j.items); pages = p;
+    if (!(+j.pageCount > p)) break;
+  }
+  return { status: 200, items, pages };
+}
+/* the props the site reads: two-sided main lines and Yes-only ladders, each stat by this site's code */
+const PROP_MAIN = { 'Total Points': 'pts', 'Total Assists': 'a', 'Total Shots on Goal': 's', 'Total Blocked Shots': 'bs', 'Total Saves': 'sv' };
+const PROP_YES = { 'Anytime Goalscorer': ['g', 1], 'To Score 2+ Goals': ['g', 2], 'To Score 3+ Goals': ['g', 3], 'Goals Milestones': ['g', null], 'Points Milestones': ['pts', null],
+  'Assists Milestones': ['a', null], 'Shots on Goal Milestones': ['s', null], 'Blocked Shots Milestones': ['bs', null], 'Goalkeeper Saves Milestones': ['sv', null] };
+const LADDER_OF = { pts: 'Points Milestones', a: 'Assists Milestones', s: 'Shots on Goal Milestones', bs: 'Blocked Shots Milestones', sv: 'Goalkeeper Saves Milestones' };
+const propPrice = v => { const t = String(v === undefined || v === null ? '' : v).trim().toUpperCase(); if (t === 'EVEN' || t === 'EV') return 100; return /^[+-]?\d+$/.test(t) && +t !== 0 && Math.abs(+t) >= 100 ? +t : null; };
+const propAthlete = it => { const m = /\/athletes\/(\d+)/.exec((it && it.athlete && it.athlete.$ref) || ''); return m ? m[1] : null; };
+const propImplied = am => am > 0 ? 100 / (am + 100) : -am / (-am + 100);
+/* items (every page's, in the feed's order) -> { main, yes, skipped }.
+   main: [athlete, stat, line, over, under]. ESPN does not say which item of a main line is the Over: the two items of
+   a pair are adjacent, and the FIRST is the Over (the Over at L is the same bet as the (L+0.5)+ milestone, and where
+   the milestone's price matched one item exactly it was the first 5,991 times in 6,022; where the two prices are more
+   than 15 points apart, 7,691 of 7,693). Each pair is cross-checked with its ladder: where the milestone's price is
+   nearer the second item's than the first's (in implied chance) and the two items are more than 5 points apart, the
+   pair is contradicted and left out (`skipped.contradicted`), never guessed. A group of one or of three, or two not
+   adjacent, is left out (`skipped.unpaired`).
+   yes: [athlete, stat, k, price] for each Yes-only market (anytime goalscorer is goals 1+), the first of any two
+   naming the same athlete, stat and k (Goals Milestones 2+ and To Score 2+ Goals are one bet).
+   An item with no athlete (a team or period market), an unreadable price or line, or a type not read is skipped */
+function propsOf(items) {
+  const out = { main: [], yes: [], skipped: { unpaired: 0, contradicted: 0, junk: 0 } };
+  if (!Array.isArray(items)) return out;
+  const groups = new Map(), ladder = new Map(), seenYes = new Set();
+  items.forEach((it, n) => {
+    if (!it || typeof it !== 'object' || !it.type) { out.skipped.junk++; return; }
+    const t = it.type.name, a = propAthlete(it);
+    if (!PROP_MAIN[t] && !PROP_YES[t]) return;
+    const price = propPrice(it.odds && it.odds.american && it.odds.american.value);
+    if (!a || price === null) { out.skipped.junk++; return; }
+    if (PROP_MAIN[t]) {
+      const L = num(it.odds && it.odds.total && it.odds.total.value);
+      if (L === null) { out.skipped.junk++; return; }
+      const k = t + '|' + a + '|' + L;
+      if (!groups.has(k)) groups.set(k, { stat: PROP_MAIN[t], a, L, list: [] });
+      groups.get(k).list.push({ n, price });
+    } else {
+      let [stat, k] = PROP_YES[t];
+      if (k === null) { const v = num(it.current && it.current.target && it.current.target.value); k = v === null ? null : Math.round(v); }
+      if (!k || k < 1) { out.skipped.junk++; return; }
+      if (LADDER_OF[stat] === t || (stat === 'g')) ladder.set(stat + '|' + a + '|' + k, price);
+      const key = stat + '|' + a + '|' + k;
+      if (seenYes.has(key)) return;
+      seenYes.add(key); out.yes.push([a, stat, k, price]);
+    }
+  });
+  for (const g of groups.values()) {
+    if (g.list.length !== 2 || g.list[1].n !== g.list[0].n + 1) { out.skipped.unpaired++; continue; }
+    const over = g.list[0].price, under = g.list[1].price;
+    const m = ladder.get(g.stat + '|' + g.a + '|' + Math.floor(g.L + 1));
+    if (m !== undefined && Math.abs(propImplied(m) - propImplied(under)) < Math.abs(propImplied(m) - propImplied(over)) && Math.abs(propImplied(over) - propImplied(under)) > 0.05) { out.skipped.contradicted++; continue; }
+    out.main.push([g.a, g.stat, g.L, over, under]);
+  }
+  return out;
 }
 
 /* one day's scoreboard. `day` is YYYY-MM-DD, Eastern */
@@ -266,4 +358,4 @@ const normName = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/
 /* a book's name as two runs agree on it: ESPN has said both "DraftKings" and "Draft Kings" */
 const bookKey = s => String(s || '').toLowerCase().replace(/\s+/g, '');
 
-module.exports = { getJSON, getText, scoreboard, gameRow, teamsOf, CLUBS, TEAMS, codeOf, seasonOf, etDate, normName, dkHref, dkOf, dkIdOk, DK_KEYS, DK_OUTCOMES, dkHasIds, bookKey, carryDk };
+module.exports = { propBets, propsOf, PROPS_URL, PROP_MAIN, PROP_YES, propPrice, getJSON, getText, scoreboard, gameRow, teamsOf, CLUBS, TEAMS, codeOf, seasonOf, etDate, normName, dkHref, dkOf, dkIdOk, DK_KEYS, DK_OUTCOMES, dkHasIds, bookKey, carryDk };

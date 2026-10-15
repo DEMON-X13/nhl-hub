@@ -9,15 +9,25 @@
       team markets and junk skipped; pages read on and joined; a 404 an answer of none; a body not in the feed's shape,
       a request that fails, each a failure to ask again; every athlete by his ESPN id.
    B. The distributions (props.js dist and pOver): every one parts of 10,000 summing to exactly 10,000, its ladder
-      never rising, its tail at one and its mean the negative binomial's or the normal's own, worked out here.
+      never rising, its tail at one and its mean the negative binomial's or the normal's own, worked out here. The
+      goalies: a side's starter is the one the box file marks (from ESPN's plays), pulled or not, else the one who
+      played most; the walk hands every goalie who played to its reader, the starter said, and builds a goalie's history
+      from his starts alone; the market test scores a starter pulled early (DraftKings' line stands on a goalie who
+      plays, and the ledger grades it so).
    C. The job's step in a scratch copy of the data, on the real schedule, players.json and the fitted constants: the bar
       written before the first call; a call for every game projected, number for number props.json's; a run at a puck
       drop freezing that game's call unchanged; the game made final with a box score and closing props planted, graded
       line by line against this file's own sums (a player who did not play void, one not projected left out);
+      a second final whose closing props ESPN answers 404 written into the record once, never asked for again, and its
+      call graded as none;
       props_check.js clean after each run and failing on each broken ledger (a frozen mean moved, a grade changed, the
-      bar changed or registered late, a frozen call gone or open again, a call made after its puck drop, a verdict
-      written early, the summary off); the verdict worked on made-up ledgers of 12,000 lines (a PASS, a FAIL on each
-      leg of the bar); a FAIL stopping new calls; constants not the registered ones making no new call. */
+      bar or one of its numbers changed or registered late, a frozen call gone or open again, a call made after its puck
+      drop, a verdict written early, the summary off); the bar's numbers written into the ledger beside its words (the
+      edge, the bootstrap's resamples, seed and percentiles, the clip); the verdict worked on made-up ledgers of 12,000
+      lines (a PASS, a FAIL on each leg of the bar), each score worked out again here by the registered numbers (its own
+      bootstrap: 10,000 resamples of the games from seed 0, the 5th and 95th percentiles; bets at 5 points, never 4), and a
+      ledger whose log-loss interval's upper end sits just above 0 failing where one just below passes; a FAIL stopping
+      new calls; constants not the registered ones making no new call. */
 'use strict';
 const fs = require('fs'), path = require('path'), os = require('os');
 const { spawnSync } = require('child_process');
@@ -131,6 +141,29 @@ function partB() {
   chk(!sums.length && Math.abs(tn - 1) < 1e-3, `every log-likelihood the fit searches on sums to one over the counts (${sums.slice(0, 2).join('; ')}; saves ${tn.toFixed(5)})`);
   chk(J(P.toBasis([0.3333333, 0.3333333, 0.3333334])) === J([3333, 3333, 3334]) && P.toBasis([0.5, 0.25, 0.25]).reduce((a, b) => a + b) === 10000, 'parts of 10,000 by the largest remainder');
   chk(Math.abs(P.fairOver(-140, 100) - 0.5) < 1e-12 && Math.abs(P.fairOver(160, -220) - (1 - 220 / 320)) < 1e-12, 'DraftKings\' fair chance of the Over is 1 - the Under\'s implied');
+  partBGoalies(C);
+}
+/* the goalies: the starter, the walk's readers and the market test, on two made-up games */
+function partBGoalies(C) {
+  const g1 = { id: '700001', season: 2027, type: 2, date: '2026-10-10', home: 'TOR', away: 'BOS', hs: 2, as: 5, periods: 3, skaters: [],
+    goalies: [{ id: '9001', name: 'Relief', team: 'TOR', toi: 2700, sa: 24, ga: 1 }, { id: '9002', name: 'Starter', team: 'TOR', toi: 900, sa: 8, ga: 4, st: 1 }, { id: '9003', name: 'Away', team: 'BOS', toi: 3600, sa: 30, ga: 2 }] };
+  const g2 = Object.assign({}, g1, { id: '700002', date: '2026-10-12', goalies: [{ id: '9002', name: 'Starter', team: 'TOR', toi: 3600, sa: 31, ga: 3, st: 1 }, { id: '9003', name: 'Away', team: 'BOS', toi: 3600, sa: 28, ga: 2 }] });
+  const unmarked = Object.assign({}, g1, { goalies: g1.goalies.map(x => { const o = Object.assign({}, x); delete o.st; return o; }) });
+  chk(P.starterOf(g1, 'TOR').id === '9002' && P.starterOf(unmarked, 'TOR').id === '9001' && P.starterOf(g1, 'BOS').id === '9003',
+    'a side\'s starter is the goalie the box file marks, pulled after fifteen minutes or not; unmarked, the one who played most');
+  const seen = []; let hist = null;
+  P.walk([g1, g2], new Map(), { H: 20, carry: 0.5 }, null, ({ b, gl, start, x }) => { seen.push(`${b.id}:${gl.id}:${start ? 'start' : 'relief'}`); if (b.id === '700002' && gl.id === '9002') hist = x ? { c: x.c, rawSv: x.rawSv, sa: x.sa } : null; });
+  chk(J(seen) === J(['700001:9001:relief', '700001:9002:start', '700001:9003:start', '700002:9002:start', '700002:9003:start']),
+    `the walk hands every goalie who played to its reader, the starter said (${seen.join(', ')})`);
+  chk(hist && hist.c === 1 && hist.rawSv === 4 && hist.sa > 7.9 && hist.sa < 8.1, `a goalie's history is his starts, a start he was pulled from among them (${hist && JSON.stringify({ c: hist.c, rawSv: hist.rawSv, sa: hist.sa })})`);
+  let relief = 'unset'; P.walk([g1, Object.assign({}, g2, { goalies: [{ id: '9001', name: 'Relief', team: 'TOR', toi: 3600, sa: 30, ga: 2, st: 1 }, g2.goalies[1]] })], new Map(), { H: 20, carry: 0.5 }, null, ({ b, gl, x }) => { if (b.id === '700002' && gl.id === '9001') relief = x; });
+  chk(relief === undefined, 'a relief appearance is no start: the reliever has no history from it');
+  /* the market test: a saves line on the starter pulled early is scored (it was dropped when the goalie who played most was the only one) */
+  const rec = { id: '700002', season: 2027, type: 2, status: 200, main: [['9002', 'sv', 24.5, -110, -110], ['9001', 'sv', 24.5, -110, -110]], yes: [] };
+  const pulledGame = Object.assign({}, g2, { goalies: [{ id: '9002', name: 'Starter', team: 'TOR', toi: 700, sa: 6, ga: 3, st: 1 }, { id: '9001', name: 'Relief', team: 'TOR', toi: 2900, sa: 25, ga: 1 }, g2.goalies[1]] });
+  const mt = P.marketTest(new Map([['700002', rec]]), () => ({ games: [g1, pulledGame], view: new Map() }), {}, { params: {} }, {}, C, 2027);
+  const sv = mt.report.groups.sv;
+  chk(sv && sv.lines === 2 && sv.over === 0, `the market test scores every goalie DraftKings priced who played, the starter pulled early on his 3 saves among them (${sv && sv.lines} lines)`);
 }
 
 /* ---------- C. the job's step, the record and the ledger ---------- */
@@ -162,6 +195,8 @@ function partC() {
   chk(r1.status === 0, 'the job\'s step runs on the real data');
   const L1 = readJSON(LF), O1 = readJSON(OF);
   chk(J(L1.bar) === J(P.BAR) && L1.bar_registered === T0 && Object.values(L1.calls).every(c => c.called_at >= L1.bar_registered), `the bar is written into the ledger before its first call (${L1.bar_registered})`);
+  chk(L1.bar.lines === 12000 && L1.bar.edge === 0.05 && L1.bar.resamples === 10000 && L1.bar.seed === 0 && J(L1.bar.ci) === J([0.05, 0.95]) && L1.bar.clip === 1e-6,
+    `the bar's numbers are written into the ledger beside its words: 12,000 lines, a 5-point edge, 10,000 resamples from seed 0, the 5th and 95th percentiles, chances clipped to 1e-6 (${J({ lines: L1.bar.lines, edge: L1.bar.edge, resamples: L1.bar.resamples, seed: L1.bar.seed, ci: L1.bar.ci, clip: L1.bar.clip })})`);
   chk(!!L1.calls[g.id] && !!O1.games[g.id], `${g.away}@${g.home} is projected and called`);
   const games1 = Object.keys(O1.games);
   chk(games1.length && games1.every(id => { const x = S0.games.find(y => y.id === id); return x && x.date <= E.etDate(new Date(Date.parse(T0d + 'T12:00Z') + 86400000).toISOString()); }), `only the games through tomorrow are projected (${games1.length})`);
@@ -197,8 +232,18 @@ function partC() {
     pair('Total Blocked Shots', playing[3], 1.5, 130, -160), pair('Total Points', sat, 0.5, 150, -190), pair('Total Points', '999999999', 0.5, 300, -400),
     gk[0] ? pair('Total Saves', gk[0], 26.5, -115, -105) : []);
   fs.writeFileSync(path.join(FX, `props_${g.id}_p1.json`), J({ count: items.length, pageCount: 1, items }));
+  /* a second final, boxed, whose closing props ESPN answers 404 ("No propBets found"): written into the record once as none */
+  const g2id = Object.keys(L2.calls).filter(id => id !== g.id && !L2.calls[id].frozen && O1.games[id]).sort((a, b) => L2.calls[a].start < L2.calls[b].start ? -1 : 1)[0];
+  if (g2id) {
+    const row2 = S3.games.find(x => x.id === g2id), o2 = O1.games[g2id]; Object.assign(row2, { state: 'final', hs: 1, as: 4, periods: 3, detail: 'Final' }); fs.writeFileSync(ST, J(S3));
+    const one = (side, team) => o2[side].skaters.slice(0, 1).map(p => ({ id: p.id, name: p.name, team, pos: p.pos, toi: 1000, pptoi: 0, g: 0, a: 0, s: 2, bs: 1, ht: 0, pm: 0 }));
+    const gl2 = (side, team) => o2[side].goalie ? [{ id: o2[side].goalie.id, name: o2[side].goalie.name, team, toi: 3600, sa: 25, ga: 2, st: 1 }] : [];
+    fs.appendFileSync(path.join(D, `box_${S0.season}.jsonl`), J({ id: g2id, season: S0.season, type: row2.type, date: row2.date, home: row2.home, away: row2.away, hs: 1, as: 4, periods: 3, neutral: false,
+      skaters: one('homeP', row2.home).concat(one('awayP', row2.away)), goalies: gl2('homeP', row2.home).concat(gl2('awayP', row2.away)) }) + '\n');
+    fs.writeFileSync(path.join(FX, `props_${g2id}_p1.json`), J({ error: { message: 'No propBets found.', code: 404 } }));
+  }
   const T2 = new Date(Date.parse(g.start) + 4 * 3600000).toISOString().slice(0, 16) + 'Z';
-  const r3 = runProps(env(T2)); const L3 = readJSON(LF);
+  const r3 = runProps(env(T2)); const L3 = readJSON(LF), rec3 = readJSON(OF).record;
   const rec = fs.readFileSync(path.join(D, `props_${S0.season}.jsonl`), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).find(x => x.id === g.id);
   chk(r3.status === 0 && rec && rec.status === 200 && rec.main.length === (gk[0] ? 7 : 6), `the final's closing props are recorded once (${rec && rec.main.length} main lines)`);
   const fin = L3.calls[g.id].final;
@@ -218,6 +263,14 @@ function partC() {
   chk(L3.summary.graded_lines === want.length && L3.summary.compared === want.length && /of 12000/.test(L3.summary.standing) && !L3.decision, `the summary counts the graded lines toward the bar, no verdict (${L3.summary.standing})`);
   /* a run that changes nothing writes nothing */
   const before = fs.readFileSync(LF, 'utf8'); runProps(env(T2)); chk(fs.readFileSync(LF, 'utf8') === before, 'a run that changes nothing writes nothing');
+  if (g2id) {
+    const rec4 = readJSON(OF).record;
+    const lines2 = fs.readFileSync(path.join(D, `props_${S0.season}.jsonl`), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(x => x.id === g2id);
+    chk(lines2.length === 1 && lines2[0].status === 404 && rec3.none >= 1, `a final ESPN has no props for (404) is written into the record once, as none (${lines2.length} lines, status ${lines2[0] && lines2[0].status})`);
+    chk(rec4.asked === rec3.asked - 2 && rec4.none === 0, `and is never asked for again: the next run asks for neither final it recorded (asked ${rec3.asked} then ${rec4.asked}, none ${rec3.none} then ${rec4.none})`);
+    const f2 = L3.calls[g2id] && L3.calls[g2id].final;
+    chk(!!(f2 && f2.none === true && f2.lines.length === 0 && L3.calls[g2id].frozen), `its frozen call is graded as none, on no line (${J(f2)})`);
+  }
   /* the check fails on each broken ledger */
   const ctx = Object.assign(PC.context(D, L3), { now: T2, finals: new Set([g.id]) });
   const broken = (name, f, prev = L2) => { const X = JSON.parse(J(L3)); f(X); const b = PC.check(X, prev, ctx); chk(b.length > 0, `props_check.js fails ${name} (${b[0] || 'it passed'})`); };
@@ -229,6 +282,9 @@ function partC() {
   broken('a grade missing a line', X => { X.calls[g.id].final.lines.pop(); });
   broken('a grade the last commit had, changed', X => { X.calls[g.id].final.graded_at = T1; }, L3);
   broken('the bar changed', X => { X.bar = Object.assign({}, X.bar, { lines: 1000 }); });
+  broken('the bar\'s edge changed (3 points for 5)', X => { X.bar = Object.assign({}, X.bar, { edge: 0.03 }); });
+  broken('the bar\'s bootstrap changed (seed 1)', X => { X.bar = Object.assign({}, X.bar, { seed: 1 }); });
+  broken('a bar with another edge, its summary worked on it, and no earlier ledger to hold it to', X => { X.bar = Object.assign({}, X.bar, { edge: 0.03 }); X.summary = P.summarize(X); }, null);
   broken('the bar registered after a call', X => { X.bar_registered = T2; });
   broken('a frozen call gone', X => { delete X.calls[g.id]; });
   broken('a frozen call open again', X => { X.calls[g.id].frozen = false; });
@@ -267,6 +323,49 @@ function partC() {
   const shaded = fake(t => t, (t, R) => { const m = Math.min(0.9, Math.max(0.1, t + (R() - 0.5) * 0.2)); return [am(Math.min(0.97, m + 0.25)), am(Math.min(0.97, 1 - m + 0.25))]; });
   const dh = P.decide(shaded, '2026-12-01T00:00Z');
   chk(dh && dh.scores.bets.units <= 0 && dh.verdict === 'FAIL', `a better chance with no flat bet up still fails (${dh && dh.verdict}: ${dh && dh.scores.bets.n} bets ${dh && dh.scores.bets.units} units, log loss ${dh && J(dh.scores.logloss_diff_ci90)})`);
+  /* every verdict's numbers worked out again here, by the registered bar's numbers and this file's own bootstrap */
+  const own = L => {
+    const rows = P.compared(L).slice(0, 12000), byLL = new Map(), byBr = new Map(); let n4 = 0;
+    const bets = { n: 0, units: 0 }, ll = (p, y) => { const q = Math.min(1 - 1e-6, Math.max(1e-6, p)); return -(y ? Math.log(q) : Math.log(1 - q)); };
+    for (const [gid, l] of rows) {
+      const y = l[7] > l[2] ? 1 : 0;
+      (byLL.get(gid) || byLL.set(gid, []).get(gid)).push(ll(l[5], y) - ll(l[6], y));
+      (byBr.get(gid) || byBr.set(gid, []).get(gid)).push((l[5] - y) ** 2 - (l[6] - y) ** 2);
+      const ov = l[5] - implied(l[3]), un = (1 - l[5]) - implied(l[4]);
+      if (ov >= 0.05) { bets.n++; bets.units += y ? (l[3] > 0 ? l[3] / 100 : 100 / -l[3]) : -1; }
+      else if (un >= 0.05) { bets.n++; bets.units += y ? -1 : (l[4] > 0 ? l[4] / 100 : 100 / -l[4]); }
+      else if (ov >= 0.04 || un >= 0.04) n4++;
+    }
+    const boot = by => {
+      const keys = [...by.keys()], R = mul(0), sums = keys.map(k => by.get(k).reduce((a, b) => a + b, 0)), ns = keys.map(k => by.get(k).length), m = new Float64Array(10000);
+      for (let b = 0; b < 10000; b++) { let s = 0, n = 0; for (let i = 0; i < keys.length; i++) { const j = Math.floor(R() * keys.length); s += sums[j]; n += ns[j]; } m[b] = s / n; }
+      const so = Array.from(m).sort((a, b) => a - b), r6 = x => Math.round(x * 1e6) / 1e6;
+      return [r6(so[500]), r6(so[9500])];
+    };
+    const llci = boot(byLL), brci = boot(byBr);
+    return { llci, brci, bets: { n: bets.n, units: Math.round(bets.units * 10000) / 10000 }, n4, pass: llci[1] < 0 && brci[1] < 0 && bets.n > 0 && bets.units > 0 };
+  };
+  const ownBad = [];
+  for (const [name, L, d] of [['the knowing model', good, dg], ['the noisy model', bad, db], ['the sharp market', sharp, ds], ['the shaded prices', shaded, dh]]) {
+    const o = own(L);
+    if (J(o.llci) !== J(d.scores.logloss_diff_ci90) || J(o.brci) !== J(d.scores.brier_diff_ci90) || o.bets.n !== d.scores.bets.n || o.bets.units !== d.scores.bets.units || (o.pass ? 'PASS' : 'FAIL') !== d.verdict)
+      ownBad.push(`${name}: ${J([o.llci, o.brci, o.bets, o.pass])} where the verdict has ${J([d.scores.logloss_diff_ci90, d.scores.brier_diff_ci90, { n: d.scores.bets.n, units: d.scores.bets.units }, d.verdict])}`);
+  }
+  chk(!ownBad.length, `each verdict's intervals, bets and call are this file's own sums by the registered numbers: 10,000 resamples of the games from seed 0, the 5th and 95th percentiles, bets at 5 points (${ownBad.slice(0, 2).join('; ')})`);
+  const o4 = own(good);
+  chk(o4.n4 > 0, `the made-up lines include bets at 4 to 5 points, which the bar's 5-point edge leaves out (${o4.n4})`);
+  /* a model better on Brier and up on its bets whose log-loss interval's upper end sits just above 0: FAIL; just below: PASS */
+  const wild = q => fake((t, y, R) => { const u = R(), v = R(); return u < q ? (v < 0.5 ? 0.02 : 0.98) : t; }, fairPrices);
+  let qlo = 0, qhi = 0.03;
+  for (let i = 0; i < 32; i++) { const q = (qlo + qhi) / 2, d = P.decide(wild(q), '2026-12-01T00:00Z'); if (d.scores.logloss_diff_ci90[1] < 0) qlo = q; else qhi = q; }
+  const dAbove = P.decide(wild(qhi), '2026-12-01T00:00Z'), dBelow = P.decide(wild(qlo), '2026-12-01T00:00Z'), oAbove = own(wild(qhi));
+  const up = dAbove.scores.logloss_diff_ci90[1];
+  chk(up > 0 && up < 0.001 && dAbove.scores.brier_diff_ci90[1] < 0 && dAbove.scores.bets.units > 0 && dAbove.verdict === 'FAIL' && J(oAbove.llci) === J(dAbove.scores.logloss_diff_ci90),
+    `a log-loss interval whose upper end is just above 0 fails, though Brier's is below 0 and the bets are up (${J(dAbove.scores.logloss_diff_ci90)}, Brier ${J(dAbove.scores.brier_diff_ci90)}, ${dAbove.scores.bets.units} units: ${dAbove.verdict})`);
+  chk(dBelow.scores.logloss_diff_ci90[1] < 0 && dBelow.verdict === 'PASS', `and the same model just below 0 passes (${J(dBelow.scores.logloss_diff_ci90)}: ${dBelow.verdict})`);
+  chk(!P.passes({ logloss_diff_ci90: [-0.01, 1e-6], brier_diff_ci90: [-0.01, -0.001], bets: { n: 9, units: 2 } }) && !P.passes({ logloss_diff_ci90: [-0.01, -0.001], brier_diff_ci90: [-0.01, 0], bets: { n: 9, units: 2 } })
+    && !P.passes({ logloss_diff_ci90: [-0.01, -0.001], brier_diff_ci90: [-0.01, -0.001], bets: { n: 9, units: 0 } }) && !P.passes({ logloss_diff_ci90: [-0.01, -0.001], brier_diff_ci90: [-0.01, -0.001], bets: { n: 0, units: 0 } })
+    && P.passes({ logloss_diff_ci90: [-0.01, -1e-6], brier_diff_ci90: [-0.01, -1e-6], bets: { n: 1, units: 0.01 } }), 'the three legs: each interval\'s upper end under 0 (0 itself is not under), and the bets up (none is not up)');
   const short = fake(t => t, fairPrices); const ids = Object.keys(short.calls); for (const id of ids.slice(170)) delete short.calls[id];
   chk(P.decide(short, '2026-12-01T00:00Z') === null, `no verdict under 12,000 lines (${P.compared(short).length})`);
   /* the check holds a written verdict to the calls, and keeps it */

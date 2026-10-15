@@ -270,6 +270,18 @@ function propsReality(toCome, isOut, listedElsewhere) {
     const off = lines.filter(b => [b.home, b.away].some(t => { const o = t === b.home ? b.away : b.home; const sh = b.skaters.filter(x => x.team === t).reduce((a, x) => a + (x.s || 0), 0), sa = b.goalies.filter(x => x.team === o).reduce((a, x) => a + x.sa, 0); return Math.abs(sh - sa) > 3; }));
     chk(off.length <= Math.max(2, lines.length * 0.05), `${f}: each side's skater shots are what the other side's goalies faced, within three (an empty net, ESPN's own slips), on all but ${off.length} of ${lines.length} games (e.g. ${off[0] && off[0].id})`);
   }
+  /* the starting goalie (`st`, from ESPN's plays): at most one a side, on a goalie of that side who played, and marked on every side
+     that used two goalies (the props model fits and grades the starter, pulled or not; without the mark it would take the goalie
+     who played most, the reliever when a starter is pulled before half the game) */
+  for (const f of fs.readdirSync(DATA).filter(f => /^box_\d{4}\.jsonl$/.test(f)).sort()) {
+    const lines = fs.readFileSync(path.join(DATA, f), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
+    const badSt = lines.filter(b => b.goalies.some(x => x.st !== undefined && (x.st !== 1 || !(x.toi > 0) || ![b.home, b.away].includes(x.team))) || [b.home, b.away].some(t => b.goalies.filter(x => x.team === t && x.st).length > 1));
+    const two = lines.filter(b => [b.home, b.away].some(t => b.goalies.filter(x => x.team === t && x.toi > 0).length > 1));
+    const unmarked = two.filter(b => [b.home, b.away].some(t => { const gs = b.goalies.filter(x => x.team === t && x.toi > 0); return gs.length > 1 && !gs.some(x => x.st); }));
+    chk(!badSt.length, `${f}: each side's starting goalie mark is one goalie of that side who played (${badSt.length} lines wrong, e.g. ${badSt[0] && badSt[0].id})`);
+    /* a game whose plays named no save carries no mark (the reader falls back), so a few are allowed; a reader that marks none is not */
+    chk(unmarked.length <= Math.max(3, two.length * 0.1), `${f}: the sides that used two goalies mark their starter, read from ESPN's plays (${unmarked.length} of ${two.length} games unmarked, e.g. ${unmarked[0] && unmarked[0].id}; node tools/fetch_box.js --starters)`);
+  }
   /* the record of DraftKings' closing props: its shape, one line a final */
   const STAT = new Set(['pts', 'a', 's', 'bs', 'sv']), YSTAT = new Set(['g', 'pts', 'a', 's', 'bs', 'sv']);
   const am = x => Number.isInteger(x) && Math.abs(x) >= 100;
@@ -1949,13 +1961,18 @@ async function playerPropsChecks() {
   if (!projected.length) { console.log('  no projected game to come today or tomorrow: the press with props is skipped'); return; }
   /* the press. Roles among the games it reads props for: one whose puck drops during the read (the clock passes the first puck drop
      before ESPN answers), the projected game read in two pages, one that fails, one with a junk body, one of the wrong shape, one
-     whose page two answers 404, one ESPN's scoreboard has under way; the rest ESPN's 404 */
+     whose page two answers 404, one ESPN's scoreboard has under way, one it has postponed and one cancelled (each with a full props
+     answer that would otherwise be kept; and at the second press the game read in its first page postponed too, its earlier read
+     dropped); the rest ESPN's 404 */
   const first = ask.slice().sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
   const later2 = projected.filter(g => Date.parse(g.start) > Date.parse(first.start));
   const T2 = later2.length ? Date.parse(first.start) + 60000 : AT;
   const live = ask.filter(g => !sStarted(g, T2)), taken = new Set();
   const pick = f => { const g = live.find(x => !taken.has(x.id) && f(x)) || null; if (g) taken.add(g.id); return g; };
   const G = pick(x => S.props.games[x.id]), H = pick(() => true), N = pick(() => true), K = pick(() => true), P2 = pick(x => S.props.games[x.id]), I = pick(() => true);
+  const PO = pick(x => S.props.games[x.id]), CA = pick(x => S.props.games[x.id]);
+  const OFF = { name: 'STATUS_POSTPONED', state: 'pre', description: 'Postponed', shortDetail: 'Postponed' }, CANC = { name: 'STATUS_CANCELED', state: 'pre', description: 'Canceled', shortDetail: 'Canceled' };
+  const offNow = new Map([[PO && PO.id, OFF], [CA && CA.id, CANC]].filter(([id]) => id));        // ESPN's word on the games called off; the second press adds P2
   const A = propsAnswer(G), half = Math.floor(A.items.length / 2), ansP2 = P2 ? propsAnswer(P2).items.slice(0, 2) : null;
   const parsedG = E.propsOf(A.items), parsedP2 = P2 ? E.propsOf(ansP2) : null;
   chk(parsedG.main.length > 10 && parsedG.skipped.contradicted >= (A.back ? 1 : 0) && parsedG.skipped.unpaired >= 1 && parsedG.skipped.junk >= 2, `the made-up answer is a real test: ${parsedG.main.length} main lines, ${parsedG.yes.length} milestones, ${parsedG.skipped.contradicted} read backwards, ${parsedG.skipped.unpaired} unpaired, ${parsedG.skipped.junk} junk`);
@@ -1968,11 +1985,12 @@ async function playerPropsChecks() {
     if (N && id === N.id) return { ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token <'); } };
     if (K && id === K.id) return { ok: true, status: 200, json: async () => ({ items: 'x' }) };
     if (P2 && id === P2.id) return pg === 1 ? { ok: true, status: 200, json: async () => ({ pageCount: 2, items: JSON.parse(JSON.stringify(ansP2)) }) } : PROPS_404(url);
+    for (const g of [PO, CA]) if (g && id === g.id) return { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(propsAnswer(g).items)) }) };
     return PROPS_404(url);
   };
   /* ESPN's scoreboard: every game with no odds (no line moves, so nothing the levels stand on moves), the one under way as under way */
   const sbFn = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; if (gate.on) await gated;
-    return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null, I && g.id === I.id ? { name: 'STATUS_IN_PROGRESS', state: 'in', description: 'In Progress', shortDetail: '1st' } : undefined)) }) }; };
+    return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null, I && g.id === I.id ? { name: 'STATUS_IN_PROGRESS', state: 'in', description: 'In Progress', shortDetail: '1st' } : offNow.get(g.id))) }) }; };
   let propsNow = propsFn;                       // the answer the props stub gives, swapped for the second press
   const errs = [], w = await boot(AT, errs, { hash: 'parlays', espn: sbFn, props: url => propsNow(url) }), d = w.document;
   const writes0 = w.__writes.length, store0 = w.localStorage.getItem('nhl_v1'), games0 = canon(pageGames(w)), v0 = w.eval('ODDS.v');
@@ -1993,12 +2011,15 @@ async function playerPropsChecks() {
   for (const g of ask) {
     const r = PR[g.id];
     if (sStarted(g, T2) || g === I) { q.started++; if (r) badK.push(`${g.id} started but kept`); continue; }
+    if (g === PO || g === CA) { q.off++; if (r) badK.push(`${g.id}: ${g === PO ? 'postponed' : 'cancelled'} at ESPN, yet its props are kept`); continue; }
     if (g === G) { q.got++; q.lines += parsedG.main.length; if (!r || r.status !== 200 || canon(r.main) !== canon(parsedG.main) || canon(r.yes) !== canon(parsedG.yes)) badK.push(`${g.id}: not the job's parse of its two pages`); continue; }
     if (g === P2) { q.got++; q.lines += parsedP2.main.length; if (!r || r.status !== 200 || canon(r.main) !== canon(parsedP2.main)) badK.push(`${g.id}: page one's lines not kept when page two answered 404`); continue; }
     if (g === H || g === N || g === K) { q.failed++; if (!r || r.status !== 'failed') badK.push(`${g.id}: a ${g === H ? '503' : g === N ? 'junk body' : 'body of the wrong shape'} not a failed read`); continue; }
     q.none++; if (!r || r.status !== 404) badK.push(`${g.id}: a 404 not none`);
   }
-  chk(!badK.length, `each game keeps what its answer gave: the joined pages parsed as the job parses them, a page two's 404 the end, a 503, a junk body and a wrong shape failed, a 404 none posted yet, a game started (by the clock or at ESPN) not kept (${badK.join('; ')})`);
+  chk(!badK.length, `each game keeps what its answer gave: the joined pages parsed as the job parses them, a page two's 404 the end, a 503, a junk body and a wrong shape failed, a 404 none posted yet, a game started (by the clock or at ESPN) or called off at ESPN (postponed, cancelled) not kept (${badK.join('; ')})`);
+  if (PO || CA) chk(q.off === [PO, CA].filter(Boolean).length && sPropsText(q).includes(`${q.off} game${q.off === 1 ? '' : 's'} called off at ESPN: not shown`), `the games ESPN has postponed and cancelled are counted as called off (${sPropsText(q).trim()})`);
+  else console.log('  too few projected games to come for a postponed and a cancelled one: those cases are skipped');
   chk(Object.keys(PR).every(id => ask.some(g => g.id === id)), 'no props kept for a game the press did not ask for');
   chk(txt(d.getElementById('pbOddsNote')).endsWith(sPropsText(q)) && txt(d.getElementById('oddsNote')).endsWith(sPropsText(q)), `the status line says what the props read gave ("${sPropsText(q).trim()}": ${txt(d.getElementById('pbOddsNote')).slice(-200)})`);
   /* nothing suggested from the model, nothing stored: the lines, the levels' cache, every level and the builder as before, no player anywhere in the panel or the builder */
@@ -2034,6 +2055,11 @@ async function playerPropsChecks() {
   if (H && S.props.games[H.id] && winOn(H)) chk(txt(d.getElementById('ppRead')) === `ESPN's player props could not be read at ${clockOf(at)} (HTTP 503): press Refresh odds to try again. Shown: the props model's projections.`, `a failed read says so, the projections shown (${txt(d.getElementById('ppRead'))})`);
   const g404 = live.find(g => !taken.has(g.id) && S.props.games[g.id]);
   if (g404 && winOn(g404)) { chk(txt(d.getElementById('ppRead')) === `DraftKings has posted no player props for this game yet (ESPN, read ${clockOf(at)}): they usually go up on game day, the goalies' saves last. Shown: the props model's projections.`, `a 404 says none posted yet (${txt(d.getElementById('ppRead'))})`); ppHold(w, g404, null, 'a game with none posted'); }
+  for (const g of [PO, CA].filter(Boolean)) if (winOn(g)) {
+    chk(!w.eval(`PROPS.games[${JSON.stringify(g.id)}]`) && txt(d.getElementById('ppRead')).startsWith("Press Refresh odds for DraftKings' player props on this game.") && !d.querySelector('#ppBody .pp-main, #ppBody .pp-k'),
+      `${g.id}, ${g === PO ? 'postponed' : 'cancelled'} at ESPN: no DraftKings row in its window, though ESPN answered its props (${txt(d.getElementById('ppRead')).slice(0, 80)})`);
+    ppHold(w, g, null, `a game ${g === PO ? 'postponed' : 'cancelled'} at ESPN`);
+  }
   winOn(G);
   /* a second press, the game read before failing now: its earlier read stands, said */
   const n1 = propReqs(w).length, T3 = T2 + 120000;
@@ -2041,9 +2067,13 @@ async function playerPropsChecks() {
     w.__setClock(T3);
     propsNow = async url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: false, status: 502, json: async () => ({}) } : PROPS_404(url); };
     const before2 = JSON.stringify(JSON.parse(w.eval('JSON.stringify(PROPS.games)'))[G.id]);
+    const p2had = P2 ? w.eval(`PROPS.games[${JSON.stringify(P2.id)}] && PROPS.games[${JSON.stringify(P2.id)}].status`) : null;
+    if (P2) offNow.set(P2.id, OFF);                                                          // ESPN now has the game read in its first page postponed
     d.getElementById('ppRefreshOdds').click(); await oddsDone(w); await wait(20);           // the window's own Refresh odds: the same press
     const ask3 = sPropsAsk(T3), after2 = JSON.stringify(JSON.parse(w.eval('JSON.stringify(PROPS.games)'))[G.id]);
-    const q3 = { asked: ask3.length, none: ask3.filter(g => g !== G && g !== I).length, failed: 1, kept: 1, started: ask3.includes(I) ? 1 : 0 };
+    const off3 = ask3.filter(g => offNow.has(g.id) && g !== I);
+    const q3 = { asked: ask3.length, none: ask3.filter(g => g !== G && g !== I && !offNow.has(g.id)).length, failed: 1, kept: 1, started: ask3.includes(I) ? 1 : 0, off: off3.length };
+    if (P2 && ask3.includes(P2)) chk(p2had === 200 && !w.eval(`PROPS.games[${JSON.stringify(P2.id)}]`), `a game ESPN postpones after a read loses that earlier read: its props are no longer shown (${p2had} before, ${w.eval(`JSON.stringify(PROPS.games[${JSON.stringify(P2.id)}] || null)`)} after)`);
     chk(propReqs(w).length - n1 === ask3.length && after2 === before2, `a second press reads again, and a game whose read fails keeps this page's earlier read (${propReqs(w).length - n1} asked of ${ask3.length}; ${after2 === before2 ? 'kept' : 'changed'})`);
     chk(txt(d.getElementById('ppOddsNote')).endsWith(sPropsText(q3)), `and the status line, beside the window's own Refresh odds, says so ("${sPropsText(q3).trim()}": ${txt(d.getElementById('ppOddsNote')).slice(-160)})`);
     chk(!d.getElementById('ppWin').hidden && d.querySelectorAll('#ppBody .pp-row .pp-main').length > 0 && txt(d.getElementById('ppRead')).includes(`read ${clockOf(at)}:`), 'the window stays open through the press, on the read it keeps');

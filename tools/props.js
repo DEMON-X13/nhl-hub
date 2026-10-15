@@ -13,9 +13,11 @@
    is negative binomial with a dispersion r for the stat (Poisson where r is null). A goalie's saves are the shots
    players.js expects against his side, to the power e over its average, times his save rate (decayed, shrunk to
    the league's by M shots) times a share (the starts that end early), a normal with a fitted sd, rounded to whole
-   saves. Every constant is chosen by a grid search on the log-likelihood of finished seasons only (2022-23 on,
-   2021-22 warming up); `node tools/props.js fit` searches them again and writes data/props_model.json, which is
-   SOURCE: the job reads it and never refits, so nothing is ever tuned on the season in play.
+   saves; it is fitted and scored on each side's starter (the box files' mark, read from ESPN's plays), pulled or not,
+   as the page projects him and the ledger grades him, and a goalie's history is his starts. Every constant is chosen
+   by a grid search on the log-likelihood of finished seasons only (2022-23 on, 2021-22 warming up); `node
+   tools/props.js fit` searches them again and writes data/props_model.json, which is SOURCE: the job reads it and
+   never refits, so nothing is ever tuned on the season in play.
 
    The fit also scores the model honestly and writes the numbers beside the constants: walk-forward (each season
    from 2023-24 scored by constants searched only on the seasons before it, and the context from players.js's
@@ -40,8 +42,9 @@
    at or after it, never changed after. Once the game is final, boxed and its closing props recorded, every
    DraftKings main line on a projected player who played is graded: the model's chance of the Over, DraftKings'
    fair chance (all of the margin on the Over: 1 - the Under's implied chance), and the result from the box score.
-   The bar (BAR below) was written into the ledger before its first call; props_check.js fails the run if a frozen
-   call moved, a grade is wrong, the bar changed or the verdict does not follow.
+   The bar (BAR below, its words and its numbers) was written into the ledger before its first call, and the verdict is
+   judged by the ledger's own copy of its numbers; props_check.js fails the run if a frozen call moved, a grade is
+   wrong, the bar changed or the verdict does not follow.
 
     node tools/props.js              the job's step: record new finals' closing props, grade, freeze and make calls,
                                      project every game to come through tomorrow -> data/props.json
@@ -130,12 +133,20 @@ function gamesWithViews(PJ, params) {
   const view = new Map(r.recs.map(x => [String(x.id), x]));
   return { games: L.games, view, league: Object.assign({}, PJ.LEAGUE), state: L.state, model: r.m };
 }
-/* the starter proxy: the goalie who played most of the game for a side */
-const starterOf = (b, team) => { const gs = b.goalies.filter(x => x.team === team).sort((x, y) => y.toi - x.toi); return gs[0] || null; };
+/* a side's starting goalie: the one the box file marks (`st`, read from ESPN's plays by fetch_box.js: the first of its goalies
+   to make a save), else the one who played most. The goalie who played most is the reliever when a starter is pulled before
+   half the game (425 of the 899 sides that used two goalies, 2021-22 to 15 October 2026), and the model is fitted on, and the
+   ledger grades, the starter, pulled or not */
+const starterOf = (b, team) => {
+  const gs = b.goalies.filter(x => x.team === team && x.toi > 0);
+  return gs.find(x => x.st) || gs.sort((x, y) => y.toi - x.toi)[0] || null;
+};
 
 /* the walk: every game in date order, each player's decayed sums before the game (one decay track, H and carry), the
-   league's by position, and each row's naive own-average. Calls `row(...)` for every skater and starter game with
-   what was known before it, then updates. Returns the final state, for tonight */
+   league's by position, and each row's naive own-average. Calls `onSkater` for every skater game and `onGoalie` for every
+   goalie who played (`start` says whether he started: the fit and the walk-forward score the starters, the market test
+   every goalie DraftKings priced who played, as the ledger grades him) with what was known before it, then updates: a
+   goalie's history from his starts alone. Returns the final state, for tonight */
 function walk(games, view, track, onSkater, onGoalie) {
   const d = Math.pow(0.5, 1 / track.H), carry = track.carry, LD = Math.pow(0.5, 1 / 500);
   const P = new Map(), G = new Map();
@@ -162,11 +173,12 @@ function walk(games, view, track, onSkater, onGoalie) {
       }
       if (onGoalie) {
         const st = starterOf(b, team);
-        if (st) {
-          const x = G.get(st.id);
+        for (const gl of b.goalies) {
+          if (gl.team !== team || !(gl.toi > 0)) continue;
+          const x = G.get(gl.id);
           const lgsv = lgG.sa ? lgG.sv / lgG.sa : 0.9;
           const naive = x && x.c ? x.rawSv / x.c : (lgG.n ? lgG.svTot / lgG.n : 25);
-          onGoalie({ b, gl: st, x, lgsv, naive, ctx: v ? { oxs: side === 'home' ? v.sa : v.sh } : null });
+          onGoalie({ b, gl, start: gl === st, x, lgsv, naive, ctx: v ? { oxs: side === 'home' ? v.sa : v.sh } : null });
         }
       }
     }
@@ -251,7 +263,8 @@ function skaterRows(games, view, track) {
 }
 function goalieRows(games, view, track) {
   const rows = [];
-  walk(games, view, track, null, ({ b, gl, x, lgsv, naive, ctx }) => {
+  walk(games, view, track, null, ({ b, gl, start, x, lgsv, naive, ctx }) => {
+    if (!start) return;                                // the starters, pulled or not: the goalie the page projects and the ledger grades
     rows.push({ season: b.season, date: b.date, id: b.id, pid: gl.id, x: x ? { sv: x.sv, sa: x.sa } : null, lgsv, naive, ctx, y: gl.sa - gl.ga });
   });
   return rows;
@@ -379,6 +392,9 @@ async function record(S, backfill) {
    ledger whose bar is not this one, or not the last commit's, or registered after a call */
 const BAR = {
   lines: 12000,
+  /* the rule's numbers, read from the ledger's own copy by decide(), scores() and betOf(), so the code cannot judge by numbers
+     other than the ones registered: the flat-bet edge, the bootstrap's resamples, seed and percentiles, the log loss's clip */
+  edge: 0.05, resamples: 10000, seed: 0, ci: [0.05, 0.95], clip: 1e-6,
   sample: ('the first 12,000 DraftKings main lines graded over or under (a push on a whole-number line drops out) on calls made with the '
     + 'registered constants, in the order they were graded (then the puck drop, the game id, the line\'s place in the record); about 170 '
     + 'games at some 70 graded lines a game, three to four weeks of the regular season'),
@@ -393,24 +409,26 @@ const BAR = {
   if_pass: 'PASS makes it a candidate to be shown as more than on trial, by a change of its own; nothing on the page moves by itself',
   before: 'no verdict before 12,000: until then the summary gives the running numbers and how many of the 12,000 are in, never a verdict or a word of passing',
 };
-const BET_EDGE = 0.05, N_BOOT = 10000;
+/* the market test's report uses the same bootstrap as the bar */
+const REPORT_BOOT = { resamples: BAR.resamples, seed: BAR.seed, ci: BAR.ci };
 /* a seeded generator for the bootstrap (mulberry32), so a verdict is the same number on every machine */
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-const clip = p => Math.min(1 - 1e-6, Math.max(1e-6, p));
-const llOf = (p, y) => -(y ? Math.log(clip(p)) : Math.log(1 - clip(p)));
-/* paired cluster bootstrap 90% interval of the mean of per-line differences, resampling games */
-function bootCI(byGame, seed = 0) {
-  const keys = [...byGame.keys()], R = rng(seed), means = new Float64Array(N_BOOT);
+const llOf = (p, y, c = BAR.clip) => { const q = Math.min(1 - c, Math.max(c, p)); return -(y ? Math.log(q) : Math.log(1 - q)); };
+/* paired cluster bootstrap interval of the mean of per-line differences, resampling games: `opt.resamples` resamples from
+   the seed `opt.seed`, the `opt.ci` percentiles of the sorted means (the bar's: 10,000, 0, the 5th and 95th) */
+function bootCI(byGame, opt = REPORT_BOOT) {
+  const N = opt.resamples, keys = [...byGame.keys()], R = rng(opt.seed), means = new Float64Array(N);
   const sums = keys.map(k => byGame.get(k).reduce((a, b) => a + b, 0)), ns = keys.map(k => byGame.get(k).length);
-  for (let b = 0; b < N_BOOT; b++) { let s = 0, n = 0; for (let i = 0; i < keys.length; i++) { const j = Math.floor(R() * keys.length); s += sums[j]; n += ns[j]; } means[b] = s / n; }
+  for (let b = 0; b < N; b++) { let s = 0, n = 0; for (let i = 0; i < keys.length; i++) { const j = Math.floor(R() * keys.length); s += sums[j]; n += ns[j]; } means[b] = s / n; }
   const sorted = Array.from(means).sort((a, b) => a - b);
-  return [r6(sorted[Math.floor(0.05 * N_BOOT)]), r6(sorted[Math.floor(0.95 * N_BOOT)])];
+  return [r6(sorted[Math.floor(opt.ci[0] * N)]), r6(sorted[Math.floor(opt.ci[1] * N)])];
 }
-/* a graded line: [player, stat, line, over price, under price, model chance, fair chance, the stat in the box score] */
-const betOf = ([, , L, po, pu, pm, , x]) => {
+/* a graded line: [player, stat, line, over price, under price, model chance, fair chance, the stat in the box score]; a bet
+   where the model's chance beats the price's implied chance by the bar's edge or more, the Over first */
+const betOf = ([, , L, po, pu, pm, , x], edge) => {
   const over = x > L;
-  if (pm - implied(po) >= BET_EDGE) return { side: 'over', units: over ? payout(po) : -1 };
-  if ((1 - pm) - implied(pu) >= BET_EDGE) return { side: 'under', units: over ? -1 : payout(pu) };
+  if (pm - implied(po) >= edge) return { side: 'over', units: over ? payout(po) : -1 };
+  if ((1 - pm) - implied(pu) >= edge) return { side: 'under', units: over ? -1 : payout(pu) };
   return null;
 };
 /* every graded line the bar counts, in the bar's order: [gid, line] */
@@ -421,36 +439,38 @@ function compared(L) {
   for (const [gid, c] of calls) for (const l of c.final.lines) if (l[7] !== l[2]) out.push([gid, l]);
   return out;
 }
-function scores(rows) {
+function scores(rows, bar) {
   const byLL = new Map(), byBr = new Map(); let lm = 0, lf = 0, bm = 0, bf = 0, over = 0, sm = 0, sf = 0;
   const bets = { n: 0, won: 0, units: 0, over: { n: 0, won: 0, units: 0 }, under: { n: 0, won: 0, units: 0 } };
   for (const [gid, l] of rows) {
     const y = l[7] > l[2] ? 1 : 0, pm = l[5], pf = l[6];
-    const dl = llOf(pm, y) - llOf(pf, y), db = (pm - y) ** 2 - (pf - y) ** 2;
-    lm += llOf(pm, y); lf += llOf(pf, y); bm += (pm - y) ** 2; bf += (pf - y) ** 2; over += y; sm += pm; sf += pf;
+    const dl = llOf(pm, y, bar.clip) - llOf(pf, y, bar.clip), db = (pm - y) ** 2 - (pf - y) ** 2;
+    lm += llOf(pm, y, bar.clip); lf += llOf(pf, y, bar.clip); bm += (pm - y) ** 2; bf += (pf - y) ** 2; over += y; sm += pm; sf += pf;
     (byLL.get(gid) || byLL.set(gid, []).get(gid)).push(dl); (byBr.get(gid) || byBr.set(gid, []).get(gid)).push(db);
-    const b = betOf(l); if (b) { bets.n++; bets[b.side].n++; bets.units += b.units; bets[b.side].units += b.units; if (b.units > 0) { bets.won++; bets[b.side].won++; } }
+    const b = betOf(l, bar.edge); if (b) { bets.n++; bets[b.side].n++; bets.units += b.units; bets[b.side].units += b.units; if (b.units > 0) { bets.won++; bets[b.side].won++; } }
   }
   const n = rows.length;
   bets.units = r4(bets.units); bets.over.units = r4(bets.over.units); bets.under.units = r4(bets.under.units);
   return { lines: n, games: byLL.size, over: r4(over / n), model: { logloss: r6(lm / n), brier: r6(bm / n), mean: r4(sm / n) }, market: { logloss: r6(lf / n), brier: r6(bf / n), mean: r4(sf / n) },
-    logloss_diff: r6((lm - lf) / n), logloss_diff_ci90: bootCI(byLL), brier_diff: r6((bm - bf) / n), brier_diff_ci90: bootCI(byBr), bets };
+    logloss_diff: r6((lm - lf) / n), logloss_diff_ci90: bootCI(byLL, bar), brier_diff: r6((bm - bf) / n), brier_diff_ci90: bootCI(byBr, bar), bets };
 }
+/* the bar's three legs on a sample's scores: both intervals wholly below 0 (their upper percentile under 0) and the flat bets up */
+const passes = sc => sc.logloss_diff_ci90[1] < 0 && sc.brier_diff_ci90[1] < 0 && sc.bets.n > 0 && sc.bets.units > 0;
+/* the verdict, by the numbers of the ledger's own registered bar (L.bar), never the code's */
 function decide(L, at) {
-  const rows = compared(L);
-  if (rows.length < BAR.lines) return null;
-  const sample = rows.slice(0, BAR.lines), sc = scores(sample);
-  const ok = sc.logloss_diff_ci90[1] < 0 && sc.brier_diff_ci90[1] < 0 && sc.bets.n > 0 && sc.bets.units > 0;
-  return { verdict: ok ? 'PASS' : 'FAIL', decided_at: at, lines: BAR.lines, scores: sc, last: sample[sample.length - 1][0] };
+  const bar = L.bar, rows = compared(L);
+  if (rows.length < bar.lines) return null;
+  const sample = rows.slice(0, bar.lines), sc = scores(sample, bar);
+  return { verdict: passes(sc) ? 'PASS' : 'FAIL', decided_at: at, lines: bar.lines, scores: sc, last: sample[sample.length - 1][0] };
 }
 function summarize(L) {
-  const vals = Object.values(L.calls), rows = compared(L);
+  const bar = L.bar, vals = Object.values(L.calls), rows = compared(L);
   const graded = vals.filter(c => c.final);
   return {
     calls: vals.length, to_come: vals.filter(c => !c.frozen).length, frozen_awaiting_final: vals.filter(c => c.frozen && !c.final).length,
     graded_games: graded.length, graded_lines: graded.reduce((a, c) => a + c.final.lines.length, 0), other_model_lines: graded.filter(c => c.v !== L.model.sha).reduce((a, c) => a + c.final.lines.length, 0),
-    compared: rows.length, scores: rows.length ? scores(rows) : null,
-    standing: L.decision ? `decided at ${L.decision.lines} graded lines on ${L.decision.decided_at}: ${L.decision.verdict}` : `${Math.min(rows.length, BAR.lines)} of ${BAR.lines} graded lines toward the verdict; the bar is judged at ${BAR.lines}, not before`,
+    compared: rows.length, scores: rows.length ? scores(rows, bar) : null,
+    standing: L.decision ? `decided at ${L.decision.lines} graded lines on ${L.decision.decided_at}: ${L.decision.verdict}` : `${Math.min(rows.length, bar.lines)} of ${bar.lines} graded lines toward the verdict; the bar is judged at ${bar.lines}, not before`,
   };
 }
 const CALL_FIELDS = ['start', 'home', 'away', 'called_at', 'v', 'sk', 'gk'];
@@ -609,7 +629,7 @@ async function main() {
     v: 1, label: 'on trial', generated: NOW, model: { sha, fitted: M.fitted, through: M.through, warm: M.warm },
     params: { r: Object.fromEntries(STATS.map(k => [k, C.sk[k].r])), svSd: C.gk.sd },
     fair: { main: 'over', yes: M.report && M.report.fair ? M.report.fair.yes : null, yesFrom: M.report && M.report.fair ? M.report.fair.from : null },
-    ledger: { of: BAR.lines, compared: s.compared, graded_games: s.graded_games, standing: s.standing, decision: L.decision ? L.decision.verdict : null,
+    ledger: { of: L.bar.lines, compared: s.compared, graded_games: s.graded_games, standing: s.standing, decision: L.decision ? L.decision.verdict : null,
       model: sc ? sc.model : null, market: sc ? sc.market : null, bets: sc ? { n: sc.bets.n, won: sc.bets.won, units: sc.bets.units } : null, registered: L.bar_registered },
     record: rec, games: P.games, skipped: P.skipped,
   };
@@ -676,6 +696,8 @@ function marketTest(records, viewsFor, walkParams, PJson, wfC, Cprod, current) {
       const [H, carry] = t.split('|').map(Number);
       walk(V.games, V.view, { H, carry }, ({ b, s: sk, x, prior, etoi, ctx }) => { if (!want.has(String(b.id))) return; for (const k of ks) mu.set(b.id + '|' + sk.id + '|' + k, skMean(k, x, prior, etoi, ctx, C.sk[k])); }, null);
     }
+    /* every goalie who played, starter or not: DraftKings' saves line stands on a goalie who plays, and the ledger grades it so
+       (scoring only the goalie who played most dropped the lines on a starter pulled early, every one of them an Under) */
     walk(V.games, V.view, { H: C.gk.H, carry: C.gk.carry }, null, ({ b, gl, x, lgsv, ctx }) => { if (want.has(String(b.id))) mu.set(b.id + '|' + gl.id + '|sv', gkMean(x, lgsv, ctx, C.gk, C.lgShotsHalf)); });
     const boxes = new Map(V.games.filter(b => want.has(String(b.id))).map(b => [String(b.id), b]));
     for (const r of recs) {
@@ -711,7 +733,7 @@ function marketTest(records, viewsFor, walkParams, PJson, wfC, Cprod, current) {
   const yesFin = yesOf(x => x.season < current), yesNow = yesOf(x => x.season === current), yesAll = yesOf(() => true);
   const yes = {}; for (const [k, o] of Object.entries(yesAll)) if (o.ratio && o.n >= 30) yes[k] = o.ratio;
   /* the model against DraftKings' fair chance (all of the margin on the Over), by stat and by phase; flat bets at a few bars */
-  const report = { note: 'each archived game scored by its own season\'s model: the 2026 playoffs by constants searched through 2024-25 (and players.js\'s walk-forward parameters for 2026), 2026-27 by the constants the job runs; a player who did not play is left out (DraftKings voids him)', groups: {} };
+  const report = { note: 'each archived game scored by its own season\'s model: the 2026 playoffs by constants searched through 2024-25 (and players.js\'s walk-forward parameters for 2026), 2026-27 by the constants the job runs; a player who did not play is left out (DraftKings voids him); every goalie who played is scored, a starter pulled early among them', groups: {} };
   const group = (name, rs) => {
     if (!rs.length) return;
     const by = new Map(); for (const x of rs) (by.get(x.gid) || by.set(x.gid, []).get(x.gid)).push(x);
@@ -747,4 +769,4 @@ function marketTest(records, viewsFor, walkParams, PJson, wfC, Cprod, current) {
 }
 
 if (require.main === module) (process.argv[2] === 'fit' ? fitMain() : main()).catch(e => { console.error(e); process.exit(1); });
-module.exports = { lgam, nbLog, normLog, STATS, BAR, BET_EDGE, CALL_FIELDS, pmf, dist, pOver, toBasis, Phi, implied, payout, fairOver, gradeCall, compared, scores, decide, summarize, bootCI, shaOf, writeLedger, sameCall, walk, skMean, gkMean };
+module.exports = { lgam, nbLog, normLog, STATS, BAR, CALL_FIELDS, pmf, dist, pOver, toBasis, Phi, implied, payout, fairOver, gradeCall, compared, scores, decide, passes, summarize, bootCI, betOf, llOf, rng, shaOf, writeLedger, sameCall, walk, skMean, gkMean, starterOf, marketTest, allRecords, gamesWithViews };

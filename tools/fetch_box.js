@@ -10,6 +10,14 @@
    at all; `--refill` read every stored game again. A column ESPN leaves out is left out of the line
    (never written as 0), so a reader can tell a missing stat from none.
 
+   Each side's STARTING goalie carries `st: 1`: the first of its goalies ESPN's plays name making a save
+   (a "saver" on a Shot, the plays taken by their sequence numbers). ESPN's box lists a club's goalies in no set order and has no
+   starter field, so before 15 October 2026 a reader took the goalie who played most, which is the
+   reliever when a starter is pulled before half the game (the props model fits and grades the starter,
+   pulled or not: props.js). A side whose plays name no save (a starter pulled with every shot a goal is
+   named by his reliever's first save, as before) carries no flag, and a reader falls back to the goalie
+   who played most. `--starters` read once again every stored game in which a side used two goalies.
+
     node tools/fetch_box.js               every final game not yet in the files: the history's
                                           last five seasons and this season's (from state.json); and up
                                           to REFILL_PER_RUN lines still in the old shape (no shots) read again
@@ -19,6 +27,10 @@
                                           its score and schedule fields kept; a game that cannot be read
                                           keeps its old line (said, and read again next time). Free: one
                                           request a game, about 25 minutes for five seasons
+    node tools/fetch_box.js --starters [from] [to]   every stored line in which a side used two goalies and
+                                          none of them carries `st` read again for its plays, and the
+                                          starter marked; nothing else in the line changes (871 games over
+                                          six seasons on 15 October 2026, under a minute)
 
    One request per game (ESPN's game summary), four at a time with a pause, free. A game already in
    the file is never asked for again, so the daily run is last night's games only; the one-time
@@ -79,6 +91,20 @@ function rowOf(s, st, cols) {
   for (const [f, kl] of Object.entries(cols)) { const i = colOf(s, kl); if (i < 0) continue; o[f] = TIMES.has(f) ? secs(st[i]) : (+st[i] || 0); }
   return o;
 }
+/* each side's starting goalie: the first of its goalies (by id, from the box) that ESPN's plays name making a save, the
+   plays taken in their sequence order. { club: id }; a side whose plays name no save is left out */
+function startersOf(j, goalies) {
+  const team = new Map(goalies.map(x => [String(x.id), x.team])), first = {};
+  const plays = ((j && Array.isArray(j.plays)) ? j.plays : []).map((p, i) => [p, i]).filter(([p]) => p && typeof p === 'object');
+  const seq = p => { const n = Number(p.sequenceNumber); return Number.isFinite(n) ? n : null; };
+  if (plays.every(([p]) => seq(p) !== null)) plays.sort((a, b) => seq(a[0]) - seq(b[0]) || a[1] - b[1]);
+  for (const [p] of plays) for (const q of Array.isArray(p.participants) ? p.participants : []) {
+    if (!q || q.type !== 'saver' || !q.athlete || q.athlete.id === undefined) continue;
+    const id = String(q.athlete.id), t = team.get(id);
+    if (t && !first[t]) first[t] = id;
+  }
+  return first;
+}
 /* one summary -> the line the file keeps. null when the box is empty (a game ESPN never scored) */
 function boxOf(j, g) {
   const skaters = [], goalies = [];
@@ -97,6 +123,8 @@ function boxOf(j, g) {
     }
   }
   if (!skaters.length || !goalies.length) return null;
+  const st = startersOf(j, goalies);
+  for (const x of goalies) if (st[x.team] === x.id) x.st = 1;
   return Object.assign({}, g, { skaters, goalies });
 }
 /* a line in the old shape: written before shots were kept (no skater carries `s`) */
@@ -169,9 +197,46 @@ async function refill(from, to, limit = Infinity, par = 6) {
   if (asked) log(`refill: ${asked} asked, ${done} rewritten with shots, blocks, hits and power-play time, ${failed} kept as they were`);
   return { asked, done, failed };
 }
+/* a line with a side that used two goalies, none of them marked the starter */
+const starterUnknown = b => [b.home, b.away].some(t => { const gs = b.goalies.filter(x => x.team === t && x.toi > 0); return gs.length > 1 && !gs.some(x => x.st); });
+/* read again, for its plays, every stored line in which a side used two goalies and none is marked the starter; each side's
+   starter marked (`st: 1`) and nothing else in the line changed. Each file written whole once its season is done */
+async function refillStarters(from, to, par = 6) {
+  const files = fs.readdirSync(DATA).filter(f => /^box_\d{4}\.jsonl$/.test(f)).map(f => +f.slice(4, 8)).filter(y => y >= from && y <= to).sort((a, b) => b - a);
+  let asked = 0, marked = 0, none = 0, failed = 0, pulled = 0;
+  for (const season of files) {
+    const file = path.join(DATA, `box_${season}.jsonl`);
+    const lines = fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
+    const todo = lines.map((b, i) => [b, i]).filter(([b]) => starterUnknown(b));
+    if (!todo.length) continue;
+    for (let i = 0; i < todo.length; i += par) {
+      await Promise.all(todo.slice(i, i + par).map(async ([b, k]) => {
+        asked++;
+        try {
+          const st = startersOf(await E.getJSON(SUMMARY + b.id), b.goalies);
+          if (!Object.keys(st).length) { none++; return; }
+          const goalies = b.goalies.map(x => { const o = Object.assign({}, x); delete o.st; if (st[o.team] === o.id) o.st = 1; return o; });
+          for (const t of [b.home, b.away]) { const gs = goalies.filter(x => x.team === t && x.toi > 0); if (gs.length > 1 && gs.some(x => x.st) && gs.sort((x, y) => y.toi - x.toi)[0].st !== 1) pulled++; }
+          lines[k] = Object.assign({}, b, { goalies }); marked++;
+        } catch (e) { failed++; log(`starters ${b.id} ${b.date}: ${e.message}`); }
+      }));
+      await new Promise(r => setTimeout(r, 120));
+    }
+    const tmp = file + '.part';
+    fs.writeFileSync(tmp, lines.map(l => JSON.stringify(l)).join('\n') + '\n'); fs.renameSync(tmp, file);
+    log(`starters ${season}: ${todo.length} games with a side on two goalies read again; ${lines.filter(starterUnknown).length} still unmarked`);
+  }
+  log(`starters: ${asked} asked, ${marked} marked, ${none} whose plays named no save, ${failed} failed; ${pulled} sides whose starter played less than his reliever`);
+  return { asked, marked, none, failed, pulled };
+}
 const REFILL_PER_RUN = 100;                 // the daily run's share of old-shape lines read again (none once --refill has run)
 
 async function main() {
+  if (process.argv[2] === '--starters') {
+    const r = await refillStarters(+process.argv[3] || FROM_SEASON, +process.argv[4] || 9999);
+    if (r.asked && !r.marked && !r.none) throw new Error('ESPN unreachable: no game could be read again');
+    return;
+  }
   if (process.argv[2] === '--refill') {
     const r = await refill(+process.argv[3] || FROM_SEASON, +process.argv[4] || 9999);
     if (r.asked && !r.done) throw new Error('ESPN unreachable: no box score could be read again');
@@ -207,4 +272,4 @@ async function main() {
   log(`box scores: ${asked} asked, ${ok} read, ${empty} empty or failed`);
 }
 if (require.main === module) main().catch(e => { console.error(e); process.exit(1); });
-module.exports = { athleteId, injuriesOf, boxOf, oldShape, SKATER_COLS, GOALIE_COLS };
+module.exports = { athleteId, injuriesOf, boxOf, oldShape, startersOf, starterUnknown, SKATER_COLS, GOALIE_COLS };

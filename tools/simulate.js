@@ -60,7 +60,7 @@ const { spawnSync } = require('child_process');
 const E = require('./espn');
 const Hist = require('./hist');
 const { goals, spreadOf, coverProbs, totalProbs } = require('./elo');
-const { injuriesOf } = require('./fetch_box');
+const { injuriesOf, boxOf } = require('./fetch_box');
 
 const ROOT = path.join(__dirname, '..'), REAL_DATA = path.join(ROOT, 'data');
 const real = JSON.parse(fs.readFileSync(path.join(ROOT, 'state.json'), 'utf8'));
@@ -163,8 +163,16 @@ const SK_COLS = [['blockedShots', 'BS', 'bs'], ['hits', 'HT', 'ht'], ['plusMinus
 const GK_COLS = [['goalsAgainst', 'GA', 'ga'], ['shotsAgainst', 'SA', 'sa'], ['shootoutSaves', 'SOS', null], ['saves', 'SV', 'sv'], ['timeOnIce', 'TOI', 'toi']];
 const shootout = (s, i) => i % 3 === 0 ? 1 + (s.s || 0) : 0;
 /* a box line back into ESPN's game summary, which fetch_box.js reads: every column the line has, in ESPN's order, with
-   its keys beside its labels; `labelsOnly` drops the keys (the parser falls back to the labels) */
-const summaryOf = (b, labelsOnly) => ({ boxscore: { players: [b.home, b.away].map(code => {
+   its keys beside its labels; `labelsOnly` drops the keys (the parser falls back to the labels). Its plays name each side's
+   starter (`st`) making the side's first save and every other goalie a save after it, listed newest first with their
+   sequence numbers, so a parser that took the list's order, or the goalie who played most, would mark the wrong one */
+const playsOf = b => {
+  const out = []; let seq = 1;
+  for (const first of [true, false]) for (const x of b.goalies.filter(x => !!x.st === first && (first || b.goalies.some(y => y.st && y.team === x.team))))
+    out.push({ sequenceNumber: String(seq++), type: { text: 'Shot' }, participants: [{ athlete: { id: '1' }, type: 'shooter' }, { athlete: { id: x.id }, type: 'saver' }] });
+  return out.reverse();
+};
+const summaryOf = (b, labelsOnly) => ({ plays: playsOf(b), boxscore: { players: [b.home, b.away].map(code => {
   const group = (name, list) => {
     const cols = SK_COLS.filter(([, , f]) => !f || f === 'so' || list.some(s => s[f] !== undefined));
     return Object.assign({ name, labels: cols.map(c => c[1]), athletes: list.map((s, i) => ({ athlete: { id: s.id, displayName: s.name, position: { abbreviation: s.pos } },
@@ -307,6 +315,18 @@ function partB() {
     if (h.skaters.some(s => s.s !== undefined)) chk(b && b.skaters.every(s => { const o = h.skaters.find(x => x.id === s.id); return o && s.s === o.s && s.bs === o.bs && s.ht === o.ht && s.pptoi === o.pptoi; }),
       `shots are ESPN's S column (shotsTotal), never SOG, with blocks, hits and power-play time beside them${held.indexOf(h) === 1 ? ', read by label where the summary has no keys' : ''}: ${h.id}`);
     chk(b && b.hs !== undefined && b.hs !== null && b.periods, `a box line carries its game's score: ${h.id}`);
+  }
+  /* the starting goalie from ESPN's plays: a side whose starter was pulled after fifteen minutes, his reliever playing the
+     rest, marks the starter (the first save by the plays' sequence), never the goalie who played most or the list's first */
+  if (held.length) {
+    const h = held[0], club = h.home, [g0] = h.goalies.filter(x => x.team === club);
+    const two = Object.assign({}, h, { goalies: [{ id: '990001', name: 'Relief Goalie', team: club, toi: 2700, sa: 24, ga: 1 }, Object.assign({}, g0, { toi: 900, sa: 8, ga: 4, st: 1 })]
+      .concat(h.goalies.filter(x => x.team !== club)) });
+    const j = summaryOf(two), b = boxOf(j, {});
+    const mark = b ? b.goalies.filter(x => x.team === club).map(x => x.id + (x.st ? '*' : '')) : null;
+    chk(b && JSON.stringify(mark) === JSON.stringify(['990001', g0.id + '*']), `a starter pulled early is the side's starter, read from the plays' first save (${JSON.stringify(mark)})`);
+    const nb = boxOf(Object.assign({}, j, { plays: [] }), {});
+    chk(nb && nb.goalies.every(x => x.st === undefined), 'a summary whose plays name no save marks no starter (the reader then takes the goalie who played most)');
   }
   if (freshOk) {
     const recs = fs.readdirSync(B).filter(f => /^props_\d{4}\.jsonl$/.test(f)).flatMap(f => fs.readFileSync(path.join(B, f), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)));

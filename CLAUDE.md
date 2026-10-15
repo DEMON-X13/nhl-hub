@@ -77,6 +77,7 @@ node tools/props_check.js     # the ledger against the last commit's, the record
 node tools/props.js fit       # only for a deliberate change to the props model: constants, walk-forward and market test -> data/props_model.json (about 15 minutes)
 node tools/props.js --backfill   # once: every final ESPN still serves closing props for (from 16 April 2026) into the record
 node tools/fetch_box.js --refill # once after a change to the box columns: every stored line in the old shape read again (about 6 minutes)
+node tools/fetch_box.js --starters # once: every stored game in which a side used two goalies read again for its plays, the starter marked (under a minute)
 ```
 
 The smoke test runs from the repo root or, as `node smoke.js`, from `tools/`. DailyFaceoff answers
@@ -183,7 +184,8 @@ on a scoreboard it answers from the state, never the real feed, and its section 
 DraftKings' player props and the props window (under The props model) on answers it makes from the state's own
 projections. Its section THE PROPS MODEL (in the state's
 reality) holds the box files' shots (no old-shape line, no `sog`, the skater shots against the goalies' at the
-column level), the record of closing props in its shape, one line a final, the ledger by `props_check.js` against
+column level) and starting goalies (at most one mark a side, on a goalie of that side who played, and the sides that
+used two goalies marked), the record of closing props in its shape, one line a final, the ledger by `props_check.js` against
 the last commit's, and the state's projections: only games still to come, every distribution whole with its tail at
 one its dispersion's own, every projected player in his club's lineup and not out, the goalie the game's own, and
 each game the ledger's open call number for number. `NHL_HTML`
@@ -376,6 +378,16 @@ display only (they would need the owner's call on the one-leg-a-game rule and a 
   failed); the daily run reads up to 100 old-shape lines again should any appear. A side's skater shots equal the other
   side's goalies' shots against on 81% of the 14,184 sides, are one or two more (an empty net) on 16%, and are more
   than three off on 19 (ESPN's own slips), so the smoke holds the column, not each game.
+- **The starting goalie.** ESPN's box lists a club's goalies in no set order and has no starter field, so each side's
+  starter is marked `st: 1` from ESPN's plays: the first of its goalies named making a save (a "saver" on a Shot), the
+  plays taken by their sequence numbers (`startersOf` in `fetch_box.js`, on every game it boxes, from the same request).
+  Before 15 October 2026 the props model took the goalie who played most, which is the reliever whenever a starter is
+  pulled before half the game: 425 of the 899 sides that used two goalies from 2021-22 to 15 October 2026. `node
+  tools/fetch_box.js --starters` read those 871 games again once (none failed, every one marked); a single-goalie side
+  needs no mark. A starter pulled with every shot he faced a goal is named by his reliever's first save (29 sides where
+  the unmarked goalie made no save in less time than the marked one could be such a case, or a late reliever), and a
+  side whose plays name no save is left unmarked and read as the goalie who played most. players.js still counts the
+  goalie who played most as the starter (its own model, unchanged); only props.js reads the mark.
 - **The model.** A skater's rate of each stat per hour on the ice is his decayed history (half-life H games, carried
   part way between seasons), shrunk toward his position's rate (forwards and defencemen apart) by M pseudo-hours; his
   mean is that rate times his expected minutes (his last eight games, as players.js projects them) times a context
@@ -384,14 +396,18 @@ display only (they would need the owner's call on the one-leg-a-game rule and a 
   `sa`, `lh`, `la` for this; the lineup and the goalie are players.js's WHO PLAYS). Each count is negative binomial
   (Poisson where r is null). A goalie's saves are the shots players.js expects against his side (to the power e over
   its average) times his save rate (decayed, shrunk to the league's by M shots) times a share, a normal with a fitted
-  sd rounded to whole saves. The constants are a grid search on the log-likelihood of the finished seasons only
-  (2022-23 to 2025-26, 2021-22 warming up): `node tools/props.js fit` writes them with the report to
-  `data/props_model.json` (source, sha `f87aa3d055d0` as fitted on 15 October 2026); the job reads it and never
-  refits, so nothing is tuned on the season in play. Fitted: goals Poisson (H 100, M 10), assists r 100 (H 100, M 5),
-  points Poisson (H 100, M 2), shots r 30 (H 50, M 2), blocks r 10 (H 50, M 2), every context exponent 0.5; saves H 20
-  (the grid's least), carry 0.5, M 4,000 shots, e 0.5, share 0.974, sd 6.80. A first search ran with a broken log
-  gamma (a cache keyed by the shifted argument) and was thrown away; `test_props.js` now holds every log-likelihood
-  the search uses to sum to one.
+  sd rounded to whole saves. The goalie it is fitted and scored on is each side's STARTER, the box files' mark, pulled or
+  not (the goalie the page projects and the ledger grades), and a goalie's history is his starts; until review on 15
+  October 2026 it was the goalie who played most, which left out every start a goalie was pulled from before half the
+  game and fitted the share and sd on the rest (0.974 and 6.80, now 0.968 and 7.22). The constants are a grid search
+  on the log-likelihood of the finished seasons only (2022-23 to 2025-26, 2021-22 warming up): `node tools/props.js
+  fit` writes them with the report to `data/props_model.json` (source, sha `3830716f296a` as fitted on 15 October
+  2026); the job reads it and never refits, so nothing is tuned on the season in play. Fitted: goals Poisson (H 100,
+  M 10), assists r 100 (H 100, M 5), points Poisson (H 100, M 2), shots r 30 (H 50, M 2), blocks r 10 (H 50, M 2), every
+  context exponent 0.5; saves H 20 (the grid's least), carry 0.5, M 32,000 shots (the grid's most: a goalie's own save
+  rate barely moves his next game's saves from the league's), e 0.5, share 0.968, sd 7.22. A first search ran with a
+  broken log gamma (a cache keyed by the shifted argument) and was thrown away; `test_props.js` now holds every
+  log-likelihood the search uses to sum to one.
 - **Walk-forward** (each season scored by constants searched only on the seasons before it, the context from
   players.js's own walk-forward parameters for that season): mean log-likelihood a player-game, higher is better,
   against a naive own-average (his own goals, shots... a game over all his earlier games, Poisson; a goalie's own
@@ -404,40 +420,45 @@ display only (they would need the owner's call on the one-leg-a-game rule and a 
   | Points | -0.8328 vs -0.8461 | -0.8245 vs -0.8390 | -0.8341 vs -0.8513 |
   | Shots on goal | -1.5795 vs -1.6040 | -1.5452 vs -1.5755 | -1.5358 vs -1.5706 |
   | Blocked shots | -1.1650 vs -1.1830 | -1.1592 vs -1.1770 | -1.1149 vs -1.1344 |
-  | Saves | -3.3503 vs -3.3935 | -3.3132 vs -3.3823 | -3.2989 vs -3.3754 |
+  | Saves | -3.4185 vs -3.4559 | -3.3679 vs -3.4291 | -3.3588 vs -3.4238 |
 
-  About 50,000 skater games and 2,800 starts a season. The means are level for the skaters (goals 0.173 said, 0.171
-  scored in 2025-26), but saves run high, 25.2 said against 24.4 made in 2025-26 and 25.9 against 24.8 the season
-  before: the league's shots have been falling, and the share is fitted on the seasons before.
-- **Against DraftKings' closing prices** (`report.market`): every archived main line whose player played, 12,843 lines
-  in 185 games (the 2026 playoffs scored by the model fitted through 2024-25, 2026-27 so far by the model the job
-  runs), against DraftKings' fair chance with all of the margin on the Over (1 - the Under's implied). **The model
-  loses**: it is a worse probability than DraftKings' own, as the scoping's prototype was.
+  About 50,000 skater games and 2,800 starts a season (every start, a pulled starter's among them). The means are level
+  for the skaters (goals 0.173 said, 0.171 scored in 2025-26), but saves run high, 25.0 said against 24.2 made in
+  2025-26 and 25.6 against 24.6 the season before: the league's shots have been falling, and the share is fitted on the
+  seasons before.
+- **Against DraftKings' closing prices** (`report.market`): every archived main line whose player played, 13,013 lines
+  in 187 games (the 2026 playoffs scored by the model fitted through 2024-25, 2026-27 so far by the model the job
+  runs), against DraftKings' fair chance with all of the margin on the Over (1 - the Under's implied). Every goalie who
+  played is scored, as the ledger grades him: until review on 15 October 2026 only the goalie who played most was, which
+  dropped DraftKings' saves line on every starter pulled early (13 of the 375, every one an Under) and read the Saves row
+  off a sample chosen by the result. **The model loses**: it is a worse probability than DraftKings' own on both log
+  loss and Brier, as the scoping's prototype was, though on 187 games neither interval is wholly above 0 (on shots on
+  goal alone both are).
 
   | Group | Lines (games) | Over hit | Model said | DK fair | Log loss model / DK | 90% interval of the difference | Brier model / DK |
   |---|---|---|---|---|---|---|---|
-  | All | 12,843 (185) | 38.9% | 39.6% | 37.7% | 0.6355 / 0.6329 | +0.0001 to +0.0053 | 0.2228 / 0.2217 |
-  | Points | 4,116 | 40.4% | 41.9% | 38.8% | 0.6425 / 0.6398 | -0.0014 to +0.0066 | 0.2259 / 0.2246 |
-  | Assists | 4,160 | 28.9% | 29.9% | 27.7% | 0.5681 / 0.5687 | -0.0042 to +0.0028 | 0.1916 / 0.1920 |
-  | Shots on goal | 3,434 | 46.6% | 46.4% | 45.7% | 0.6906 / 0.6853 | +0.0012 to +0.0093 | 0.2485 / 0.2461 |
-  | Blocked shots | 775 (150) | 46.8% | 43.0% | 46.4% | 0.6847 / 0.6818 | -0.0063 to +0.0120 | 0.2454 / 0.2444 |
-  | Saves | 358 | 47.2% | 52.5% | 46.8% | 0.7053 / 0.6891 | -0.0003 to +0.0328 | 0.2559 / 0.2480 |
-  | 2026 playoffs | 6,234 (82) | 39.3% | 40.7% | 39.1% | 0.6411 / 0.6390 | -0.0015 to +0.0056 | 0.2253 / 0.2243 |
-  | 2026-27 so far | 6,342 (97) | 38.4% | 38.4% | 36.3% | 0.6286 / 0.6255 | -0.0008 to +0.0071 | 0.2197 / 0.2185 |
+  | All | 13,013 (187) | 38.8% | 39.5% | 37.7% | 0.6349 / 0.6325 | -0.0002 to +0.0049 | 0.2225 / 0.2215 |
+  | Points | 4,174 | 40.3% | 41.9% | 38.8% | 0.6420 / 0.6395 | -0.0017 to +0.0064 | 0.2256 / 0.2245 |
+  | Assists | 4,218 | 28.9% | 29.8% | 27.7% | 0.5676 / 0.5683 | -0.0042 to +0.0026 | 0.1914 / 0.1919 |
+  | Shots on goal | 3,467 | 46.6% | 46.4% | 45.7% | 0.6904 / 0.6853 | +0.0010 to +0.0090 | 0.2484 / 0.2461 |
+  | Blocked shots | 779 (151) | 47.0% | 43.1% | 46.4% | 0.6846 / 0.6818 | -0.0062 to +0.0118 | 0.2453 / 0.2444 |
+  | Saves | 375 | 45.3% | 50.9% | 46.8% | 0.6971 / 0.6870 | -0.0042 to +0.0243 | 0.2519 / 0.2470 |
+  | 2026 playoffs | 6,240 (82) | 39.3% | 40.7% | 39.1% | 0.6412 / 0.6390 | -0.0015 to +0.0056 | 0.2253 / 0.2243 |
+  | 2026-27 so far | 6,506 (99) | 38.2% | 38.3% | 36.3% | 0.6275 / 0.6250 | -0.0014 to +0.0063 | 0.2192 / 0.2183 |
 
   Flat bets of one unit at DraftKings' closing price where the model's chance beats the price's implied chance (margin
-  left in) by the bar, Overs and Unders apart: 3 points, Overs 999 bets -9.5%, Unders 2,387 +4.0%; 5 points, Overs 473
-  -0.5%, Unders 1,516 +6.2%; 8 points, Overs 134 +1.1%, Unders 722 +8.9%; 12 points, Overs 28 +43.9%, Unders 238 +6.7%
-  (at 5 points on the finished season's 88 games alone: Overs -7.7%, Unders +8.7%). That is the scoping's hint again, DraftKings
-  shading its Overs, and not an edge: these are the closing prices the model is a worse probability than. Anytime
-  goalscorer (goals 1+ against DraftKings' Yes price over its measured margin): 6,578 prices, model 0.3922 against
-  0.3915.
+  left in) by the bar, Overs and Unders apart: 3 points, Overs 985 bets -10.1%, Unders 2,431 +4.5%; 5 points, Overs 453
+  +1.9%, Unders 1,548 +7.0%; 8 points, Overs 124 +6.2%, Unders 739 +9.7%; 12 points, Overs 23 +42.7%, Unders 243 +6.8%
+  (at 5 points on the finished season's 88 games alone: Overs -6.6%, Unders +8.3%). That is the scoping's hint again,
+  DraftKings shading its Overs, and not an edge: these are the closing prices the model is a worse probability than.
+  Anytime goalscorer (goals 1+ against DraftKings' Yes price over its measured margin): 6,650 prices, model 0.3926
+  against 0.3919.
 - **DraftKings' fair chance.** On a main line, all of the margin on the Over (fair Over = 1 - the Under's implied
-  chance; the Under's fair chance is its own implied): on the finished seasons' record it scored best, log loss 0.6400
-  against 0.6423 proportional and 0.6415 by the power method (this season's games: 0.6255, 0.6261, the power method
-  0.6248). On a Yes-only price (the k+ ladders, anytime goalscorer), the implied chance over DraftKings' measured margin
-  for its stat (`fair.yes`: points 1.139, assists 1.185, goals 1+ 1.147, goals 2+ or more 1.277, shots 1.143, blocks
-  1.171, saves 1.318), measured on every Yes price recorded at the fit: in sample and the market's, not the model's, and
+  chance; the Under's fair chance is its own implied): on the finished seasons' record it scored best, log loss 0.6401
+  against 0.6424 proportional and 0.6416 by the power method (this season's games: 0.6250, 0.6258, the power method
+  0.6245). On a Yes-only price (the k+ ladders, anytime goalscorer), the implied chance over DraftKings' measured margin
+  for its stat (`fair.yes`: points 1.141, assists 1.1865, goals 1+ 1.147, goals 2+ or more 1.271, shots 1.143, blocks
+  1.169, saves 1.327), measured on every Yes price recorded at the fit: in sample and the market's, not the model's, and
   always shown marked est.
 - **The record** (`data/props_<season>.jsonl`, written by `props.js` only): once a game is final the job reads its
   closing props once (one ESPN request, free; ESPN keeps a finished game's items at their last price before the puck
@@ -458,22 +479,29 @@ display only (they would need the owner's call on the one-leg-a-game rule and a 
   `[athlete, stat, line, Over price, Under price, model chance of the Over, DraftKings' fair chance, the stat in the box]`
   (a player who did not play is void, as DraftKings voids him; one not projected is counted and left out). Constants
   not the registered ones make no new call; a refit during the trial stops the ledger's calls until it is decided.
-- **The bar** (`BAR` in `props.js`, written into the ledger at its first call, 2026-10-15T08:58Z, and held there by
-  `props_check.js`): decided once, when 12,000 graded main lines are in (about 170 games, three to four weeks of the
-  regular season), on the first 12,000 in grading order. PASS only if all three hold: (1) log loss, the model's minus
-  DraftKings' fair chance's, its paired bootstrap 90% interval (10,000 resamples of the games, seed 0) wholly below 0;
-  (2) Brier score, the same; (3) flat bets are up: one unit at DraftKings' closing price on the Over where the model's
-  chance beats the Over price's implied chance by 5 points or more, else on the Under where its chance beats the Under
-  price's by 5 points, more than 0 units over the sample. Otherwise FAIL: the tracking stops (no new calls; frozen ones
-  still graded) and the page never calls the model's chance an edge. Before 12,000 the summary gives the running numbers
-  and how many are in, never a verdict or a word of passing. On the archive above the model would fail legs 1 and 2.
+- **The bar** (`BAR` in `props.js`, written into the ledger at its first call, 2026-10-15T11:46Z with the constants
+  `3830716f296a`, and held there by `props_check.js`): decided once, when 12,000 graded main lines are in (about 170
+  games, three to four weeks of the regular season), on the first 12,000 in grading order. PASS only if all three hold:
+  (1) log loss, the model's minus DraftKings' fair chance's, its paired bootstrap 90% interval (10,000 resamples of the
+  games, seed 0, the 5th to the 95th percentile) wholly below 0; (2) Brier score, the same; (3) flat bets are up: one
+  unit at DraftKings' closing price on the Over where the model's chance beats the Over price's implied chance by 5
+  points or more, else on the Under where its chance beats the Under price's by 5 points, more than 0 units over the
+  sample. Otherwise FAIL: the tracking stops (no new calls; frozen ones still graded) and the page never calls the
+  model's chance an edge. Before 12,000 the summary gives the running numbers and how many are in, never a verdict or a
+  word of passing. On the archive above the model would fail legs 1 and 2. The rule's numbers are in `BAR` beside its
+  words (`lines` 12000, `edge` 0.05, `resamples` 10000, `seed` 0, `ci` [0.05, 0.95], `clip` 1e-6), so the ledger's copy
+  pins them, and `decide()`, `scores()` and `betOf()` read them from the ledger's own bar, never from the code: a change
+  to any of them is a change to the registered bar, which `props_check.js` fails. (It was first registered at 08:58Z
+  with the constants `f87aa3d055d0` and its numbers only in its words; review moved the goalies' fit to the starter and
+  the numbers into the bar, and it was registered again at 11:46Z, before any call was frozen or graded and before the
+  branch was merged.)
 - **The check** (`props_check.js`, run by the smoke against the last commit's ledger, `NHL_PREV_LEDGER` or
   `git show HEAD:data/props_ledger.json`): the bar the registered one and unmoved, the registered constants unmoved,
   every call made before its puck drop and after the bar, no frozen call gone, open again or changed (a call open last
   time may be rewritten before its puck drop only), a call whose puck drop passed before the ledger's run frozen, every
   grade worked again from the call, the record and the box score (and a frozen, final, boxed and recorded game graded),
-  a grade the last commit had never changed, no verdict before 12,000 and the one the calls give after, the summary the
-  calls'. Any failure holds the run back before its commit.
+  a grade the last commit had never changed, no verdict before 12,000 and the one the calls give after by the bar's own
+  registered numbers, the summary the calls'. Any failure holds the run back before its commit.
 - **What the state carries for the page** (`state.props`, `update.js` copying `data/props.json` and keeping only the
   games still to come by its own clock, delays out):
 
@@ -497,8 +525,8 @@ display only (they would need the owner's call on the one-leg-a-game rule and a 
   is the sum of `d` from floor(L) + 1 up, over 10,000 (`pOver` in props.js, to be copied word for word); DraftKings'
   fair chance of a main line's Over is `1 - implied(Under price)` (`fairOver`), of a Yes price `implied(price) /
   fair.yes[stat]` (goals at 2 or more: `g2+`), marked est. A real example (BUF at TOR, 15 October 2026, published
-  08:58Z): William Nylander, TOR RW, `toi` 21.2, `pts: { mu: 1.266, d: [2820, 3570, 2260, 953, 302, 76, 16, 3] }`, so
-  P(1+ points) is 71.8%; Sergei Bobrovsky in goal for TOR, `sv: { mu: 26.125, sd: 6.797835, lo: 0, d: [...] }`.
+  11:46Z): William Nylander, TOR RW, `toi` 21.2, `pts: { mu: 1.266, d: [2820, 3570, 2260, 953, 302, 76, 16, 3] }`, so
+  P(1+ points) is 71.8%; Sergei Bobrovsky in goal for TOR, `sv: { mu: 25.902, sd: 7.223284, lo: 0, d: [...] }`.
   The page shows them in the props view (below) as "projection 1.04 · model 65% · DraftKings 60%" beside each DraftKings
   line, the model labelled on trial.
 - **The props view** (nhl v10, `index.html`, every class `pp-`; the owner's ask, 15 October 2026: DraftKings' props on the
@@ -547,21 +575,29 @@ display only (they would need the owner's call on the one-leg-a-game rule and a 
   opening, on the watch or on the tabs; then a press on a made-up answer built from the state's own projections (every
   projected skater and goalie priced, a pair its ladder says was read backwards, an athlete nobody rates, a club's
   player the model leaves out, junk) read in two pages, beside a 503, a junk body, a body of the wrong shape, a page two
-  that 404s, a game ESPN has under way and the clock passing the first puck drop during the read: one request a game
+  that 404s, a game ESPN has under way, one it has postponed and one cancelled (each with a full answer that would
+  otherwise be kept) and the clock passing the first puck drop during the read: one request a game
   today and tomorrow, GET, no-store, a cache-buster each, a second page only where paged, each game keeping what its
   answer gave, the status line, every row of the window number for number by its own sums, each button's words, the
   failed and none-posted windows, a press that changes no level, leg or number on one with the panel's pool game legs
-  alone, no player in the panel, the builder or Pick your own legs, a second press from the window's own button where
-  the game's read fails keeping the earlier read, the watch at the puck drop, nothing stored, and a reload that is the
-  published page again. REFRESH ODDS holds the props sentence in every status line it words.
-- **Tests.** `node tools/test_props.js` (about 15 seconds): the parse (the first item the Over, checked with the
+  alone, no player in the panel, the builder or Pick your own legs, the postponed and cancelled games not kept, counted
+  as called off in the status line and their windows the projections alone, a second press from the window's own button
+  where the game's read fails keeping the earlier read and a game ESPN postponed since the first press losing its
+  earlier read, the watch at the puck drop, nothing stored, and a reload that is the published page again. REFRESH ODDS holds the props sentence in every status line it words.
+- **Tests.** `node tools/test_props.js` (about a minute): the parse (the first item the Over, checked with the
   ladders on the recorded answer and on made-up pairs, swapped pairs left out, pages joined, a 404 none, a junk body and
   a failed request each asked again, every athlete by his ESPN id), the distributions (whole, ladders never rising,
-  their tails and means their own, every log-likelihood summing to one), and the job's step end to end in a scratch
-  copy (the bar before the first call, calls that are props.json's, frozen at the puck drop, graded by its own sums,
-  props_check.js failing on seventeen broken ledgers, the verdict on made-up ledgers of 12,000 lines, a FAIL stopping
-  new calls, unregistered constants making none). The smoke's THE PROPS MODEL and the simulation (the props step in
-  the job's order, last night's final recorded once, `sources.js` on failed reads) hold the rest.
+  their tails and means their own, every log-likelihood summing to one), the goalies (the marked starter, pulled or
+  not, else the one who played most; the walk handing every goalie who played to its reader with the starter said and
+  building a history from starts alone; the market test scoring a starter pulled early), and the job's step end to end
+  in a scratch copy (the bar and its numbers before the first call, calls that are props.json's, frozen at the puck
+  drop, graded by its own sums, a final ESPN answers 404 written into the record once, never asked again and graded as
+  none, props_check.js failing on twenty broken ledgers, the verdict on made-up ledgers of 12,000 lines with every
+  interval, bet and call worked out again by this file's own bootstrap and the registered numbers, a log-loss interval
+  just above 0 failing where just below passes, a FAIL stopping new calls, unregistered constants making none). The
+  smoke's THE PROPS MODEL (the box files' starter marks among it) and the simulation (the props step in the job's order,
+  last night's final recorded once, the starter read from ESPN's plays by their sequence, `sources.js` on failed reads)
+  hold the rest.
 
 ## The site behaves like a website
 

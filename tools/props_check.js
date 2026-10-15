@@ -16,8 +16,9 @@
        score: every main line of the record on a player the call projects for that stat and who played, the model's
        chance of the Over from the call's mean, DraftKings' fair chance (1 - the Under's implied), the stat in the box;
        or a game final, boxed and recorded with its call frozen is not graded;
-     * a verdict is written before 12,000 lines are in, is missing once they are, does not follow from the first 12,000,
-       or differs from the last commit's;
+     * a verdict is written before 12,000 lines are in, is missing once they are, does not follow from the first 12,000
+       by the bar's own registered numbers (its edge, resamples, seed, percentiles and clip, held to BAR's above), or
+       differs from the last commit's;
      * the summary does not follow from the calls.
 
     node tools/props_check.js [--prev FILE | --no-prev]     ends "props check: 0 failures"
@@ -93,14 +94,14 @@ function check(L, prev, ctx) {
       }
     } else if (c.frozen && rec && box && ctx.finals && ctx.finals.has(gid)) bad.push(`${gid}: final, boxed and its closing props recorded, but not graded`);
   }
-  /* the verdict and the summary */
-  const n = P.compared(L).length;
+  /* the verdict and the summary, by the ledger's own registered bar (held to BAR above), numbers and all */
+  const n = P.compared(L).length, lines = (L.bar && L.bar.lines) || P.BAR.lines;
   if (L.decision) {
-    const want = P.decide(L, L.decision.decided_at);
-    if (J(want) !== J(L.decision)) bad.push(`the verdict does not follow from the calls (the first ${P.BAR.lines} graded lines, in grading order)`);
-  } else if (n >= P.BAR.lines) bad.push(`${P.BAR.lines} lines are in and no verdict was written`);
+    const want = L.bar ? P.decide(L, L.decision.decided_at) : null;
+    if (J(want) !== J(L.decision)) bad.push(`the verdict does not follow from the calls (the first ${lines} graded lines, in grading order)`);
+  } else if (n >= lines) bad.push(`${lines} lines are in and no verdict was written`);
   if (prev && prev.decision && J(prev.decision) !== J(L.decision)) bad.push('the verdict differs from the last commit\'s');
-  if (J(P.summarize(L)) !== J(L.summary)) bad.push('the summary does not follow from the calls');
+  if (!L.bar || J(P.summarize(L)) !== J(L.summary)) bad.push('the summary does not follow from the calls');
   return bad;
 }
 

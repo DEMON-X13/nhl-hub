@@ -57,8 +57,8 @@
    here: `sgp`, data/corr.json's table of how the legs of one game move together and its same-game hold (tools/corr.js
    measured it on the finished seasons; tools/sgp.js is the rule the page copies word for word), and `box`, the box score
    of every final of the last BOX_DAYS days from data/box_<season>.jsonl, each player who was on the ice with what
-   DraftKings settles his props on (a skater's goals, assists, shots on goal and blocked shots, a goalie's saves), so the
-   page can grade a visitor's saved player leg. */
+   DraftKings settles his props on (a skater's goals, assists, shots on goal and blocked shots, a starting goalie's saves; a
+   goalie who came on in relief is listed apart, his saves prop void), so the page can grade a visitor's saved player leg. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const E = require('./espn');
@@ -87,8 +87,14 @@ const implied = am => am === null || am === undefined ? null : (am > 0 ? 100 / (
 const r3 = x => +x.toFixed(3);
 const BOX_DAYS = 14;                                // the finals whose box scores the state carries for grading saved player legs: today and the 14 days before
 /* the box scores the page grades a saved player leg on: every final in this state on the days from TODAY - BOX_DAYS through
-   TODAY that data/box_<season>.jsonl has, each skater who was on the ice ([goals, assists, shots on goal, blocked shots]) and
-   each goalie who was (his saves); a player not listed did not play, and a column ESPN left out is null */
+   TODAY that data/box_<season>.jsonl has, each skater who was on the ice ([goals, assists, shots on goal, blocked shots]) in `s`,
+   each side's STARTING goalie (his saves) in `g`, and the goalies who came on in relief in `r` (only where a side used two). A
+   saves prop stands only on the goalie who starts, pulled or not, and is void on one who comes on in relief: the books' rule
+   for goalie props as secondary sources quote it, DraftKings' among them (its house rules, filed with the Massachusetts Gaming
+   Commission, could not be read from here; the conservative reading), so a reliever's saves are never carried to grade on. The
+   starter is the one the box file marks (`st`, read from ESPN's plays by fetch_box.js), else the one who played most:
+   tools/props.js's starterOf. A player not listed did not play, and a column ESPN left out is null */
+const startersOf = b => [b.home, b.away].map(t => { const gs = (b.goalies || []).filter(x => x && x.team === t && x.id && x.toi > 0); return gs.find(x => x.st) || gs.sort((x, y) => y.toi - x.toi)[0] || null; }).filter(Boolean);
 function boxWindow(rows) {
   const from = addDays(TODAY, -BOX_DAYS), want = new Map(rows.filter(r => r.state === 'final' && r.date >= from && r.date <= TODAY).map(r => [r.id, r]));
   const games = {};
@@ -99,10 +105,13 @@ function boxWindow(rows) {
       let b; try { b = JSON.parse(line); } catch (e) { continue; }
       if (!b || !want.has(String(b.id))) continue;
       const n = v => typeof v === 'number' && isFinite(v) ? v : null;
-      const sk = {}, gk = {};
+      const sk = {}, gk = {}, st = startersOf(b), rel = [];
       for (const x of b.skaters || []) if (x && x.id && x.toi > 0) sk[String(x.id)] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
-      for (const x of b.goalies || []) if (x && x.id && x.toi > 0) gk[String(x.id)] = n(x.sa) === null || n(x.ga) === null ? null : x.sa - x.ga;
-      games[String(b.id)] = { s: sk, g: gk };
+      for (const x of b.goalies || []) if (x && x.id && x.toi > 0) {
+        if (st.includes(x)) gk[String(x.id)] = n(x.sa) === null || n(x.ga) === null ? null : x.sa - x.ga;
+        else rel.push(String(x.id));
+      }
+      games[String(b.id)] = Object.assign({ s: sk, g: gk }, rel.length ? { r: rel.sort() } : {});
     }
   }
   const ids = Object.keys(games).sort((a, b) => { const x = want.get(a), y = want.get(b); return x.start < y.start ? -1 : x.start > y.start ? 1 : a < b ? -1 : 1; });
@@ -529,9 +538,10 @@ async function main() {
      data/corr.json (tools/corr.js wrote it from the finished seasons' box scores; tools/sgp.js is the rule the page copies), and
      what the page needs to grade a saved player leg: the box score of every final of the last BOX_DAYS days, each player who
      played (on the ice at all, as DraftKings and the props ledger count it) with the four counts DraftKings settles skaters on
-     (goals, assists, shots on goal, blocked shots; points are goals plus assists) and each goalie's saves (shots against less
-     goals against). A column ESPN left out is null. The page writes a settled leg's grade into the visitor's saved leg, so a
-     parlay graded while its final is carried stays graded after it leaves the window */
+     (goals, assists, shots on goal, blocked shots; points are goals plus assists), each side's starting goalie's saves (shots
+     against less goals against) and the goalies who came on in relief, whose saves prop is void (boxWindow). A column ESPN left
+     out is null. The page writes a settled leg's grade into the visitor's saved leg, so a parlay graded while its final is
+     carried stays graded after it leaves the window */
   const C = fs.existsSync(path.join(DATA, 'corr.json')) ? JSON.parse(fs.readFileSync(path.join(DATA, 'corr.json'), 'utf8')) : null;
   const sgp = C && C.rho && C.hold ? { rho: C.rho, hold: C.hold, measured: C.measured || null } : null;
   const box = boxWindow(out);

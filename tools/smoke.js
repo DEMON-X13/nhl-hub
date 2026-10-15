@@ -1083,6 +1083,8 @@ async function parlayEdges() {
   if (D && freshOn(D).length >= 2) {
     const M = JSON.parse(STATE), onD = freshOn(D), ob = M.games.find(g => g.id === onD[0].id), nb = M.games.find(g => g.id === onD[1].id);
     ob.line.book = 'ESPN BET'; delete ob.line.dk; nb.line.book = null;
+    /* with the same-game table there (the job's next publish), so it is the other book alone that keeps these games to one leg */
+    const Cg = readJSON(path.join(DATA, 'corr.json')); if (!M.sgp && Cg) M.sgp = { rho: Cg.rho, hold: Cg.hold, measured: Cg.measured || null };
     S = M;
     try {
       const legs = [firstLeg(ob), firstLeg(nb)].filter(Boolean);
@@ -1099,6 +1101,17 @@ async function parlayEdges() {
         chk(txt(dkA) === 'Open DraftKings' && dkA.href === 'https://sportsbook.draftkings.com/leagues/hockey/nhl', `another book: no DraftKings link, its NHL page (${dkA.href})`);
         chk(/priced at ESPN BET, not DraftKings/.test(note) && /priced at the book, not DraftKings/.test(note), `another book: the note names each book (${note.slice(0, 220)})`);
         d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      }
+      /* one leg a game at another book, the same-game table there or not: a second leg of the game, of a kind the same-game rule would take
+         beside the first (its total beside a side bet, a side bet beside its total), takes the first's place, said */
+      const slotK = k => k === 'ou' ? 'ou' : 'side', l0 = legs.find(l => l.game === ob.id), sec = l0 && PBS.KINDS.flatMap(k => PBS.SIDES[k].map(sd => [sd, k])).find(([sd, k]) => slotK(k) !== slotK(l0.kind) && legOn(ob, sd, k));
+      const sb = sec && d.querySelector(`#plLines button[data-leg="${ob.id}|${sec[0]}|${sec[1]}"]`), muO = `${S.teams[ob.away].abbr} @ ${S.teams[ob.home].abbr}`;
+      if (!sb) chk(!sec, `another book: Pick your own legs offers ${ob.id}'s ${sec && sec.join(' ')}`);
+      else {
+        sb.click();
+        const mine = JSON.parse(w.localStorage.getItem('nhl_v1')).legs.filter(l => l.game === ob.id), said = txt(d.getElementById('bMsg')) + ' | ' + txt(d.getElementById('slipMsg'));
+        chk(!!M.sgp && mine.length === 1 && mine[0].kind === sec[1] && mine[0].side === sec[0] && said.includes(`on ${muO}: one leg a game here: its lines are at ESPN BET, and a same-game parlay is priced here on DraftKings' prices alone.`),
+          `another book, with the same-game table there: a second leg of ${ob.id} (${sec.join(' ')}) takes the first's place, one leg a game, said (${mine.map(l => l.side + ' ' + l.kind).join(', ')}; ${said.slice(0, 220)})`);
       }
       chk(!errs.length, 'no runtime error with another book: ' + errs.join(' | '));
     } finally { S = real; }
@@ -2246,13 +2259,19 @@ async function sameGameChecks() {
     const fin = new Map(S.games.filter(g => g.state === 'final' && g.date >= B.from && g.date <= S.today).map(g => [g.id, g]));
     for (const f of fs.readdirSync(DATA).filter(f => /^box_\d{4}\.jsonl$/.test(f) && +f.slice(4, 8) >= E.seasonOf(B.from))) for (const line of fs.readFileSync(path.join(DATA, f), 'utf8').split('\n')) {
       if (!line || !fin.has((/"id":"(\d+)"/.exec(line) || [])[1])) continue; const b = JSON.parse(line);
-      const s = {}, gk = {}, n = v => typeof v === 'number' ? v : null;
+      const s = {}, gk = {}, rel = [], n = v => typeof v === 'number' ? v : null;
       for (const x of b.skaters) if (x.toi > 0) s[x.id] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
-      for (const x of b.goalies) if (x.toi > 0) gk[x.id] = typeof x.sa === 'number' && typeof x.ga === 'number' ? x.sa - x.ga : null;
-      want[b.id] = { s, g: gk };
+      /* a saves prop stands on the side's starting goalie alone: the one the box file marks, else the one who played most; any other
+         goalie who played came on in relief, listed apart (his saves prop void) */
+      for (const club of [b.home, b.away]) {
+        const gs = b.goalies.filter(x => x.team === club && x.toi > 0), most = gs.reduce((a, x) => !a || x.toi > a.toi ? x : a, null), st = gs.find(x => x.st === 1) || most;
+        for (const x of gs) if (x === st) gk[x.id] = typeof x.sa === 'number' && typeof x.ga === 'number' ? x.sa - x.ga : null; else rel.push(x.id);
+      }
+      want[b.id] = Object.assign({ s, g: gk }, rel.length ? { r: rel.sort() } : {});
     }
     for (const id of new Set(Object.keys(want).concat(Object.keys(B.games || {})))) if (canon(want[id] || null) !== canon((B.games || {})[id] || null)) bad.push(id);
-    chk(!bad.length, `the state's box scores are every final of the window the box files have, each skater on the ice with his goals, assists, shots and blocks and each goalie with his saves (${Object.keys(B.games || {}).length} games; ${bad.length} differ: ${bad.slice(0, 4).join(', ')})`);
+    const relief = Object.values(B.games || {}).reduce((a, g) => a + (Array.isArray(g.r) ? g.r.length : 0), 0);
+    chk(!bad.length, `the state's box scores are every final of the window the box files have, each skater on the ice with his goals, assists, shots and blocks, each side's starting goalie with his saves and the goalies who came on in relief apart (${Object.keys(B.games || {}).length} games, ${relief} relief appearances; ${bad.length} differ: ${bad.slice(0, 4).join(', ')})`);
   } else console.log('  this state carries no box scores (a publish before them): a saved player leg waits; grading is held on made-up box scores below');
   /* the page's copy of tools/sgp.js: the file's text between its marks, and its numbers on legs of every kind */
   const src = fs.readFileSync(path.join(__dirname, 'sgp.js'), 'utf8'), body = src.slice(src.indexOf("'use strict';\n") + 14, src.indexOf('module.exports')).replace(/^\n+|\n+$/g, '');
@@ -2351,6 +2370,28 @@ async function builderPlayerLegs(M, G, H, AT) {
   const xg = d.querySelector(`#ppBody button[data-pp-add="${X.id}|g|yes|1"]`), legs1 = canon(store().legs);
   xg.click();
   chk(canon(store().legs) === legs1 && txt($('ppMsg')) === `Not added: ${X.name}'s points and his own goals are nearly one bet (every goal is a point). DraftKings may not take both on one ticket, so this page never puts them together.`.replace(`${X.name}'s`, /s$/.test(X.name) ? `${X.name}'` : `${X.name}'s`), `a player's goals beside his own points are refused, said plainly (${txt($('ppMsg'))})`);
+  /* refused both ways round with assists: W's points beside his own assists, and his assists beside his own points (W another skater
+     of the game with an assists line); neither is stored, each said plainly, and each taken out again by a second tap */
+  const possS = nm => /s$/.test(nm) ? `${nm}'` : `${nm}'s`;
+  const W = pr.awayP.skaters.concat(pr.homeP.skaters).find(p => p.id !== X.id && p.id !== Y.id && mainOf(p.id, 'a') && mainOf(p.id, 'pts'));
+  if (!W) chk(false, `the made-up answer prices a skater's assists beside his points (${G.id})`);
+  else {
+    const wa = mainOf(W.id, 'a'), wp = mainOf(W.id, 'pts'), refA = `Not added: ${possS(W.name)} points and his own assists are nearly one bet (every assist is a point). DraftKings may not take both on one ticket, so this page never puts them together.`;
+    const wB = (st, m) => d.querySelector(`#ppBody button[data-pp-add="${W.id}|${st}|main|over|${m[2]}"]`);
+    tab('a'); wB('a', wa).click();
+    chk(store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id) && l.stat === 'a'), `${W.name}'s assists Over ${wa[2]} goes in beside ${X.name}'s points`);
+    const legsA = canon(store().legs);
+    tab('pts'); wB('pts', wp).click();
+    chk(canon(store().legs) === legsA && txt($('ppMsg')) === refA && wB('pts', wp).getAttribute('aria-pressed') === 'false', `a player's points beside his own assists are refused, said plainly, nothing stored (${txt($('ppMsg'))})`);
+    tab('a'); wB('a', wa).click();
+    tab('pts'); wB('pts', wp).click();
+    const legsP = canon(store().legs);
+    chk(store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id) && l.stat === 'pts') && !store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id) && l.stat === 'a'), `with his assists taken out, ${W.name}'s points go in`);
+    tab('a'); wB('a', wa).click();
+    chk(canon(store().legs) === legsP && txt($('ppMsg')) === refA && wB('a', wa).getAttribute('aria-pressed') === 'false', `a player's assists beside his own points are refused the same way round, said, nothing stored (${txt($('ppMsg'))})`);
+    tab('pts'); wB('pts', wp).click();
+    chk(!store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id)), `and ${W.name}'s points are taken out again`);
+  }
   tab('pts');
   d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|under|${xm[2]}"]`).click();
   chk(store().legs.filter(l => l.kind === 'prop').length === 1 && store().legs.find(l => l.kind === 'prop').side === 'under' && txt($('ppMsg')).startsWith(`${X.name} Under ${xm[2]} points replaced ${X.name} Over ${xm[2]} points on ${mu}: one leg a player a stat.`), `one leg a player a stat: his Under takes his Over's place, said (${txt($('ppMsg'))})`);
@@ -2385,7 +2426,8 @@ async function builderPlayerLegs(M, G, H, AT) {
   /* Y's shots 3+ and Z's saves from the window; then H's moneyline, another game */
   dayOn(G.date); d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
   tab('s'); d.querySelector(`#ppBody button[data-pp-add="${Y.id}|s|yes|3"]`).click();
-  if (Z) { tab('sv'); const zm = mainOf(Z.id, 'sv'); d.querySelector(`#ppBody button[data-pp-add="${Z.id}|sv|main|over|${zm[2]}"]`).click(); }
+  if (Z) { tab('sv'); const zm = mainOf(Z.id, 'sv'); d.querySelector(`#ppBody button[data-pp-add="${Z.id}|sv|main|under|${zm[2]}"]`).click(); }    // an Under: its fair chance its own implied
+  else console.log(`  ${G.id}: no home goalie projected, so no saves Under in the builder; the Under's fair chance is held on the rows that have one`);
   chk(txt($('ppMsg')).endsWith(`Your parlay: ${Z ? 5 : 4} legs.`), `the window counts the parlay's legs (${txt($('ppMsg'))})`);
   $('ppClose').click();
   dayOn(H.date); d.querySelector(`#games .game[data-id="${H.id}"] button[data-leg="${H.id}|home|ml"]`).click();
@@ -2400,6 +2442,7 @@ async function builderPlayerLegs(M, G, H, AT) {
     const f = l.mk === 'yes' ? fairYesS(l.stat, l.k, l.odds) : l.side === 'over' ? 1 - PBS.imp(l.other) : PBS.imp(l.odds), t = r ? txt(r) : '';
     chk(!!r && t.includes(PBS.odds(l.odds)) && t.includes(`DraftKings, as read ${clockOf(Date.parse(readAt))}`) && t.includes(`fair ${PBS.pctW(f)}${l.mk === 'yes' ? ' est.' : ''}`) && t.includes(mp === null ? 'no projection' : `model ${PBS.pctW(mp)}, on trial`), `the player leg ${id}: its price, its read, its fair chance and the props model's, on trial (${t})`);
   }
+  chk(!Z || legs.some(l => l.kind === 'prop' && l.mk === 'main' && l.side === 'under' && l.stat === 'sv'), `an Under main line is among the player legs held here (${Z ? Z.name + "'s saves" : 'none'})`);
   /* the legs as the rule reads them: every leg the page hands tools/sgp.js's rule (its club and the other, its kind, number and side, the
      favourite, the player, his group and stat, its fair chance and price) is this smoke's reading of the stored leg */
   const conv = JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => sgpLeg(L, L.fair)))')), mineC = store().legs.map(l => sgOf(M, l));
@@ -2427,6 +2470,23 @@ async function builderPlayerLegs(M, G, H, AT) {
   chk(!/\bedge\b/i.test(bTxt) && !/model says/i.test(bTxt), `with a player leg nothing in the builder claims an edge or says "model says" (${(/[^.]*\bedge\b[^.]*|[^.]*model says[^.]*/i.exec(bTxt) || [''])[0].slice(0, 120)})`);
   chk(tiers() === tiers0, 'the suggested levels are exactly as they were: team bets, one leg a game, no player and no same-game parlay');
   holdPanel(w, AT, 'with player legs in the builder', true);
+  /* no thin edge beside a player leg: on a made-up copy where H's home moneyline is thin (its edge at or above 0 and under the site's bar),
+     the builder marks it thin edge alone, and beside a player leg it marks it nothing, and nothing in the builder says edge */
+  {
+    const M3 = JSON.parse(JSON.stringify(M)), h3 = M3.games.find(g => g.id === H.id);
+    h3.mlEdge = Object.assign({}, h3.mlEdge, { home: +(M3.edge / 2).toFixed(4) });
+    const hLeg = store().legs.find(l => l.game === H.id && l.kind === 'ml' && l.side === 'home'), pLeg = store().legs.find(l => l.kind === 'prop');
+    const real3 = S; S = M3;
+    try {
+      const rowH = dd => dd.querySelector(`#legs .leg[data-id="${H.id}|home|ml"]`);
+      const e3 = [], w3 = await boot(AT, e3, { state: JSON.stringify(M3), hash: 'parlays', store: JSON.stringify({ legs: [hLeg] }) });
+      const thinAlone = !!rowH(w3.document) && /thin edge/.test(txt(rowH(w3.document)));
+      const e4 = [], w4 = await boot(AT, e4, { state: JSON.stringify(M3), hash: 'parlays', store: JSON.stringify({ legs: [pLeg, hLeg] }) }), r4 = rowH(w4.document), b4 = txt(w4.document.getElementById('builder'));
+      chk(!!hLeg && !!pLeg && thinAlone && !!r4 && !r4.querySelector('.tag.thin') && !/\bedge\b/i.test(b4) && !/model says/i.test(b4),
+        `a thin team leg (edge ${h3.mlEdge.home}) is marked thin edge on its own, and beside a player leg it is marked nothing, no edge said anywhere in the builder (alone: ${rowH(w3.document) ? txt(rowH(w3.document)).slice(0, 120) : 'no row'}; beside: ${r4 ? txt(r4).slice(0, 120) : 'no row'})`);
+      chk(!e3.length && !e4.length, 'no runtime error with a thin team leg beside a player leg: ' + e3.concat(e4).join(' | '));
+    } finally { S = real3; }
+  }
   /* the card: each player leg with its price and read time, to add by hand; the betslip link the team legs' ids alone; est. */
   $('pFinish').click();
   const view = txt($('pcView')), note = txt($('pcNote')), cardLegs = JSON.parse(w.eval('JSON.stringify(PC.legs.map(L => ({ id: L.id, prop: !!L.prop, who: L.who, bet: L.bet, price: L.price, at: L.at || null, kind: L.kind, side: L.side, game: L.game })))'));
@@ -2510,7 +2570,8 @@ async function builderPlayerLegs(M, G, H, AT) {
   holdRequests(w, 'the player legs');
 }
 /* saved parlays' player legs graded from planted box scores, by this smoke's own rule: Over or Under the line (a whole line can push), a
-   Yes k+ at k or more, a player not on the ice void; a final not boxed yet waits, one older than the box scores carried cannot be graded
+   Yes k+ at k or more, a player not on the ice void, a goalie who came on in relief void on his saves (the prop stands on the
+   starter alone, pulled or not); a final not boxed yet waits, one older than the box scores carried cannot be graded
    here; a same-game parlay pays its estimated price, or on the legs left priced again by the rule */
 async function gradingChecks(C) {
   const M = JSON.parse(STATE); M.sgp = { rho: C.rho, hold: C.hold, measured: C.measured || null };
@@ -2519,8 +2580,8 @@ async function gradingChecks(C) {
   if (!F || !F2) { console.log('  fewer than two finals on two days: the grading of player legs is skipped'); return; }
   const real = S; S = M;
   try {
-    const A = '7000001', B = '7000002', Gk = '7000003', D = '7000004';            // A and B skaters of F's home club, Gk the away goalie, D dressed for nobody
-    M.box = { from: F.date, days: 14, games: { [F.id]: { s: { [A]: [2, 1, 4, 1], [B]: [0, 0, 1, 3] }, g: { [Gk]: 30 } } } };
+    const A = '7000001', B = '7000002', Gk = '7000003', D = '7000004', R = '7000005';   // A and B skaters of F's home club, Gk the away starter, R the home club's goalie who came on in relief, D dressed for nobody
+    M.box = { from: F.date, days: 14, games: { [F.id]: { s: { [A]: [2, 1, 4, 1], [B]: [0, 0, 1, 3] }, g: { [Gk]: 30 }, r: [R] } } };
     const pl = (pid, team, grp, stat, mk, side, line, k, odds, other) => ({ game: F.id, kind: 'prop', pid, name: `Player ${pid.slice(-1)}`, team, grp, stat, mk, side, line, k, odds, other, at: new Date(PUB - 86400000).toISOString(), p: 0.5, fair: 0.5, label: `${F.away} @ ${F.home}`, text: '', date: F.date, start: F.start });
     const won = F.hs > F.as ? 'home' : 'away';
     const L = {
@@ -2532,15 +2593,17 @@ async function gradingChecks(C) {
       aSh: pl(A, F.home, 'F', 's', 'main', 'over', 2.5, null, 110, -140),             // 4 shots over 2.5: won (with his points, legs that move together)
       bBs: pl(B, F.home, 'D', 'bs', 'main', 'under', 3.5, null, -160, 125),           // 3 blocks under 3.5: won
       dPts: pl(D, F.home, 'F', 'pts', 'main', 'over', 0.5, null, -140, 110),          // not on the ice: void
+      rSv: pl(R, F.home, 'G', 'sv', 'main', 'over', 5.5, null, -115, -105),           // came on in relief: void, did not start (his saves never graded)
       f3: Object.assign(pl(A, F3 ? F3.home : F.home, 'F', 's', 'main', 'over', 1.5, null, -120, -110), { game: F3 ? F3.id : F.id }),      // F3 not boxed yet: waits
       f2: Object.assign(pl(A, F2.home, 'F', 's', 'main', 'over', 1.5, null, -120, -110), { game: F2.id, date: F2.date }),                 // F2 before the window: past it
       ml: { game: F.id, side: won, kind: 'ml', odds: -130, line: null, p: 0.55, fair: 0.54, label: `${F.away} @ ${F.home}`, text: '', date: F.date, start: F.start },
     };
     const sp = (id, legs, extra) => Object.assign({ id, at: new Date(PUB - 86400000).toISOString(), stake: 10, legs, am: '+500', dec: 6, p: 0.2, imp: 0.17, fair: 0.18 }, extra || {});
-    const saved = [sp('w1', [L.aPts, L.gSv, L.ml], { est: true, dec: 4.4, product: 6.1 }), sp('l1', [L.bS, L.aG2]), sp('p1', [L.aS4, L.bBs]), sp('v1', [L.dPts, L.aG2]), sp('v2', [L.dPts]), sp('v3', [L.aPts, L.aSh, L.dPts], { est: true, dec: 3.9 })]
+    const saved = [sp('w1', [L.aPts, L.gSv, L.ml], { est: true, dec: 4.4, product: 6.1 }), sp('l1', [L.bS, L.aG2]), sp('p1', [L.aS4, L.bBs]), sp('v1', [L.dPts, L.aG2]), sp('v2', [L.dPts]), sp('v3', [L.aPts, L.aSh, L.dPts], { est: true, dec: 3.9 }), sp('r1', [L.rSv, L.gSv]), sp('r2', [L.rSv])]
       .concat(F3 ? [sp('q1', [L.f3])] : []).concat([sp('o1', [L.f2])]);
     /* this smoke's own grading of a planted leg */
     const box = M.box.games[F.id], xOf = l => l.stat === 'sv' ? box.g[l.pid] : box.s[l.pid] && (l.stat === 'pts' ? box.s[l.pid][0] + box.s[l.pid][1] : box.s[l.pid][{ g: 0, a: 1, s: 2, bs: 3 }[l.stat]]);
+    const whyS = l => l.stat === 'sv' && box.r.includes(l.pid) ? 'did not start' : 'did not play';
     const gradeS = l => { if (l.game !== F.id) return l.game === F2.id ? 'unboxed' : 'pending'; if (l.kind !== 'prop') return l.side === won ? 'win' : 'loss'; const x = xOf(l); if (x === undefined) return 'void'; return l.mk === 'yes' ? (x >= l.k ? 'win' : 'loss') : x > l.line ? (l.side === 'over' ? 'win' : 'loss') : x < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push'; };
     const decS = ls => { const by = {}; for (const l of ls) by[l.game] = (by[l.game] || 0) + 1; const prod = ls.reduce((a, l) => a * PBS.decOf(l.odds), 1); if (!Object.values(by).some(n => n > 1)) return prod; return SG.parlay(M.sgp, ls.map(l => sgOf(M, l))).dec; };
     const want = s => { const gl = s.legs.map(gradeS); const st = gl.includes('loss') ? 'loss' : gl.some(x => x === 'unboxed') ? 'gone' : gl.includes('pending') ? 'pending' : gl.every(x => x === 'push' || x === 'void') ? 'push' : 'win';
@@ -2553,9 +2616,9 @@ async function gradingChecks(C) {
     for (const s of saved) {
       const c = cardOfS(s.id), ex = want(s), top = c ? txt(c.querySelector('.top')) : '', lis = c ? [...c.querySelectorAll('.pb-slegs li .tag')].map(txt) : [];
       chk(!!c && top.includes(tagOf[ex.st] + (ex.st === 'win' ? ` · ${PBS.money(ex.pays)}` : '')), `${s.id}: graded ${ex.st}${ex.st === 'win' ? ' paying ' + PBS.money(ex.pays) : ''} (${top})`);
-      chk(lis.length === s.legs.length && s.legs.every((l, i) => { const gl = ex.gl[i], x = l.kind === 'prop' && l.game === F.id ? xOf(l) : undefined; return gl === 'void' ? lis[i] === 'void: did not play' : /^(win|loss|push)$/.test(gl) && l.kind === 'prop' ? lis[i] === `${words[gl]} (${x})` : lis[i] === words[gl]; }), `${s.id}: each leg graded as DraftKings settles it, its count beside it (${lis.join(' | ')})`);
+      chk(lis.length === s.legs.length && s.legs.every((l, i) => { const gl = ex.gl[i], x = l.kind === 'prop' && l.game === F.id ? xOf(l) : undefined; return gl === 'void' ? lis[i] === `void: ${whyS(l)}` : /^(win|loss|push)$/.test(gl) && l.kind === 'prop' ? lis[i] === `${words[gl]} (${x})` : lis[i] === words[gl]; }), `${s.id}: each leg graded as DraftKings settles it, its count beside it (${lis.join(' | ')})`);
       const kept = stS().find(x => x.id === s.id);
-      chk(kept && kept.legs.every((l, i) => l.kind !== 'prop' || !/^(win|loss|push|void)$/.test(ex.gl[i]) ? !l.res : l.res && l.res.grade === ex.gl[i] && (ex.gl[i] === 'void' ? l.res.x === null && l.res.why === 'did not play' : l.res.x === xOf(l))), `${s.id}: each settled player leg's grade is written into the saved leg (${canon(kept && kept.legs.map(l => l.res || null)).slice(0, 200)})`);
+      chk(kept && kept.legs.every((l, i) => l.kind !== 'prop' || !/^(win|loss|push|void)$/.test(ex.gl[i]) ? !l.res : l.res && l.res.grade === ex.gl[i] && (ex.gl[i] === 'void' ? l.res.x === null && l.res.why === whyS(l) : l.res.x === xOf(l))), `${s.id}: each settled player leg's grade is written into the saved leg (${canon(kept && kept.legs.map(l => l.res || null)).slice(0, 200)})`);
     }
     console.log(`  ${saved.length} saved parlays graded on planted box scores of ${F.id} (${saved.map(s2 => s2.id + ' ' + want(s2).st).join(', ')})`);
     /* the next publish carries no box score for F (past the window, or a publish without them): the grades written stand */

@@ -1998,10 +1998,12 @@ $('clearParlay').addEventListener('click', () => {
    browser never opened the page, cannot be graded here. A settled parlay keeps its grade in its own
    entry (graded), so a new season's schedule never ungrades it.
    A player leg is graded as DraftKings settles it, from the box score the job publishes for every final of the last two weeks
-   (S.box: each player who was on the ice, his goals, assists, shots on goal and blocked shots, a goalie's saves; points are goals
-   plus assists): Over or Under its line (a whole line can push), a Yes milestone k+ at k or more; a player not on the ice void, as
-   DraftKings voids him. A final whose box score is not read yet waits; one older than the box scores carried, never graded on this
-   device, cannot be graded here. Its grade, once made, is written into the saved leg (res: {grade, x, at}) and holds from then on.
+   (S.box: each player who was on the ice, his goals, assists, shots on goal and blocked shots, each side's starting goalie's saves;
+   points are goals plus assists): Over or Under its line (a whole line can push), a Yes milestone k+ at k or more; a player not on
+   the ice void, as DraftKings voids him, and a goalie's saves void unless he started (pulled or not), as the books settle a goalie
+   prop: one who came on in relief (S.box's r) is "void: did not start". A final whose box score is not read yet waits; one older
+   than the box scores carried, never graded on this device, cannot be graded here. Its grade, once made, is written into the saved
+   leg (res: {grade, x, at}) and holds from then on.
    A same-game parlay pays its estimated price; with a leg void or pushed it is priced again on the legs left, the same way */
 const GONE_LEG = new Set(['gone', 'unboxed', 'nostat']);
 function gradeLeg(l) {
@@ -2027,7 +2029,11 @@ function gradeProp(l, g) {
   if (!isObj(b)) return typeof B.from === 'string' && g.date < B.from ? 'unboxed' : 'pending';
   const settle = (grade, x, why) => { l.res = Object.assign({ grade, x, at: S.published }, why ? { why } : {}); SAVED_DIRTY = true; return grade; };
   let x;
-  if (l.stat === 'sv') { const v = isObj(b.g) ? b.g[String(l.pid)] : undefined; if (v === undefined) return settle('void', null, 'did not play'); x = v; }
+  if (l.stat === 'sv') {                                     // b.g: each side's starting goalie; b.r: the goalies who came on in relief, whose saves prop is void
+    const v = isObj(b.g) ? b.g[String(l.pid)] : undefined;
+    if (v === undefined) return settle('void', null, Array.isArray(b.r) && b.r.map(String).includes(String(l.pid)) ? 'did not start' : 'did not play');
+    x = v;
+  }
   else {
     const v = isObj(b.s) ? b.s[String(l.pid)] : undefined; if (!Array.isArray(v)) return settle('void', null, 'did not play');
     x = l.stat === 'pts' ? (typeof v[0] === 'number' && typeof v[1] === 'number' ? v[0] + v[1] : null) : v[{ g: 0, a: 1, s: 2, bs: 3 }[l.stat]];

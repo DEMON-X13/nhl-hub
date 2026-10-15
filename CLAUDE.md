@@ -175,12 +175,16 @@ gives the feed's reason, the state is the second pass's, a call that is the play
 margin, the page opened at a puck drop offers no bet on that game and calls the visitor's day Today,
 and a club knocked out of the playoffs has no Cup chance. Its section SAME-GAME PARLAYS AND PLAYER LEGS holds the state's
 `sgp` to data/corr.json and its `box` to the box files, the page's copy of tools/sgp.js to the file's text and numbers,
-and, on a made-up copy carrying the table, the add control, the same-game rule (allowed, replaced, refused), the price
-worked out again from the table and the hold (an exact integral for two legs, two million draws beyond), never above
-the product, est. everywhere, the fair chance, the card, nothing stored but the legs added, a reload, a later read, the
-puck drop, the levels as they were (by brute force before any player leg, with them in the builder, and worked out from nothing
-on a reload that opens with them there, since the open page's levels are cached on the picks and the reads), and saved player
-legs graded on planted box scores. Its section THE PARLAY BUILDER holds the
+and, on a made-up copy carrying the table, the add control, the same-game rule (allowed, replaced, refused: a player's
+points beside his own goals, and beside his own assists both ways round), the price worked out again from the table and
+the hold (an exact integral for two legs, two million draws beyond), never above the product, est. everywhere, the fair
+chance (an Under main line's its own implied chance among the legs), no thin edge on a team leg beside a player leg (a
+thin one planted on a copy, marked on its own and not beside a player leg), the card, nothing stored but the legs added,
+a reload, a later read, the puck drop, the levels as they were (by brute force before any player leg, with them in the
+builder, and worked out from nothing on a reload that opens with them there, since the open page's levels are cached on
+the picks and the reads), and saved player legs graded on planted box scores (a goalie who came on in relief void, "did
+not start"). THE PARLAY BUILDER's game priced at another book is held with the same-game table there: a second leg of
+it, of a kind the rule would otherwise take beside the first, takes the first's place, one leg a game, said. Its section THE PARLAY BUILDER holds the
 builder with rules of its own, sharing nothing with the page but the state: every line's DraftKings ids in
 their shape and on their number, and the ids against the run's saved answers (`NHL_OUT`, or `tools/out`
 for the real state); every level worked out by brute force on the default slate and Both days (the legs
@@ -355,11 +359,17 @@ The owner's call, 15 October 2026: "Player props in the Parlay Builders: player 
   adds that the slip will show DraftKings' own same-game price. The Share text likewise (the title "3-leg parlay +364
   (estimated price)", each player leg's read time, "Estimated price: ...; the legs' prices multiplied would be +496").
 - **Grading.** A saved player leg is graded as DraftKings settles it, from `S.box`: `update.js` carries the box score of
-  every final of the last 14 days (`BOX_DAYS`), each player who was on the ice (`toi` above 0, as the props ledger counts
-  him) with his goals, assists, shots on goal and blocked shots and each goalie's saves (shots against less goals
-  against); points are goals plus assists. Over or Under its line (a whole line pushes), a Yes k+ at k or more, a player
-  not on the ice void ("void: did not play"). A final whose box score is not read yet waits; one older than the window,
-  never graded on this device, "box score no longer carried" (the parlay can't be graded here). The grade is written into
+  every final of the last 14 days (`BOX_DAYS`), each skater who was on the ice (`toi` above 0, as the props ledger counts
+  him) with his goals, assists, shots on goal and blocked shots (`s`), each side's starting goalie with his saves (shots
+  against less goals against; `g`) and the goalies who came on in relief (`r`); points are goals plus assists. Over or
+  Under its line (a whole line pushes), a Yes k+ at k or more, a player not on the ice void ("void: did not play"), and
+  a goalie's saves void unless he started, pulled or not ("void: did not start"): the books' rule for goalie props as
+  secondary sources quote it, DraftKings' among them, whose house rules could not be read from here, so the conservative
+  reading (review, 15 October 2026: a reliever's 9 saves had graded an Over 24.5 lost for good; 13 of the season's first
+  198 club-sides used two goalies). The starter is the box files' mark, else the goalie who played most, props.js's
+  `starterOf`; the props ledger, a registered record, still grades every goalie who played (its own rule, unchanged
+  here). A final whose box score is not read yet waits; one older than the window, never graded on this device, "box
+  score no longer carried" (the parlay can't be graded here). The grade is written into
   the saved leg (`res`) the first time the page makes it, so it holds after the final leaves the window. A same-game
   parlay pays its estimated price, or, with a leg void or pushed, the same rule on the legs left. Chose this over the page
   fetching a box file (6.6 MB a season) or the state carrying a season's (1 MB, 200 KB gzipped): two weeks is about

@@ -218,9 +218,10 @@ read's (out where the line moved or was pulled, said once, never stored). `quote
 one game's legs by `SGP`, tools/sgp.js copied word for word between `/* sgp.js begins */` and `/* sgp.js ends */`, on
 `S.sgp` (the table and the hold, data/corr.json's, copied by update.js): the fair chance from the legs' fair chances,
 the price the hold over the implied chances' joint and never above the product, an estimate (`est`) said everywhere
-it shows. A saved player leg is graded from `S.box` (update.js: every final of the last 14 days, each player on the ice
-and his goals, assists, shots, blocks or saves), its grade written into the leg (`res`). The smoke's SAME-GAME PARLAYS
-AND PLAYER LEGS section holds it all with its own reading of the rule.
+it shows. A saved player leg is graded from `S.box` (update.js's `boxWindow`: every final of the last 14 days, `s` each
+skater on the ice and his goals, assists, shots and blocks, `g` each side's starting goalie and his saves, by props.js's
+`starterOf` rule, `r` the goalies who came on in relief, whose saves prop is void, "did not start"), its grade written
+into the leg (`res`). The smoke's SAME-GAME PARLAYS AND PLAYER LEGS section holds it all with its own reading of the rule.
 
 ## Workflows
 

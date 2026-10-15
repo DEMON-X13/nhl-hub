@@ -173,6 +173,31 @@ function dkOf(o, line) {
   return res;
 }
 
+/* the carry rule: DraftKings' ids for a line read now, beside `prev`, the line it replaces. The answer's own
+   ids whenever it gave an outcome id; an answer with none (no usable link at all: ESPN's DraftKings prices have
+   come through as "Draft Kings", and that shape may carry none; or links naming the event and no outcome) keeps
+   the line before's outcome ids for the same numbers: the moneylines, the puck lines only on the same puck line,
+   the totals only on the same total, beside the event (this answer's, else the one before's; none are carried
+   onto another event), dated by when they were read (dk.at, only ever on carried ids). An answer with some
+   outcome id never carries, and another book's prices, now or before, carry none. `line` is changed in place
+   and returned with how its ids came: 'read', 'carried', 'event' (an event alone, nothing carried) or 'none'.
+   update.js reads every line through it, and so does the page's Refresh odds (ESPN.carryDk in index.html, word
+   for word: the smoke test holds the two equal on a table of cases) */
+function carryDk(line, prev) {
+  if (dkHasIds(line.dk)) return { line, how: 'read' };
+  const q = prev && prev.dk, ev = line.dk && line.dk.event;
+  const none = () => ({ line, how: ev ? 'event' : 'none' });
+  if (!dkHasIds(q) || bookKey(line.book) !== 'draftkings' || bookKey(prev.book) !== 'draftkings') return none();
+  if (ev && q.event && ev !== q.event) return none();
+  const keep = ['homeML', 'awayML'].concat(prev.homeLine === line.homeLine ? ['homePL', 'awayPL'] : [], prev.total === line.total ? ['over', 'under'] : []);
+  const dk = {}; if (ev || typeof q.event === 'string') dk.event = ev || q.event;
+  for (const k of DK_OUTCOMES) if (keep.includes(k) && typeof q[k] === 'string') dk[k] = q[k];
+  if (!dkHasIds(dk)) return none();
+  dk.at = q.at || prev.at;
+  line.dk = dk;
+  return { line, how: 'carried' };
+}
+
 /* DraftKings via ESPN: both moneylines, the puck line (the home side's number, -1.5 when the
    home side is favoured) with its prices, and the total with its prices. null where ESPN carries
    nothing, which is every finished game and most games more than a couple of days out. `dk`, last,
@@ -241,4 +266,4 @@ const normName = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/
 /* a book's name as two runs agree on it: ESPN has said both "DraftKings" and "Draft Kings" */
 const bookKey = s => String(s || '').toLowerCase().replace(/\s+/g, '');
 
-module.exports = { getJSON, getText, scoreboard, gameRow, teamsOf, CLUBS, TEAMS, codeOf, seasonOf, etDate, normName, dkHref, dkOf, dkIdOk, DK_KEYS, DK_OUTCOMES, dkHasIds, bookKey };
+module.exports = { getJSON, getText, scoreboard, gameRow, teamsOf, CLUBS, TEAMS, codeOf, seasonOf, etDate, normName, dkHref, dkOf, dkIdOk, DK_KEYS, DK_OUTCOMES, dkHasIds, bookKey, carryDk };

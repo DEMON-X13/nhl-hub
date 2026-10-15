@@ -165,6 +165,12 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
 .pb-head h2{margin:0}
 .tag.pb-slate{background:var(--ice-soft);color:var(--ice-2)}
 .pb-sub{margin:6px 0 0;color:var(--ink-2);font-size:13px}
+/* Refresh odds (the Games toolbar and the Parlay Builder's panel): DraftKings' lines read from ESPN on a press alone, its
+   status line beside it; a press while a read runs does nothing, and the button says so by its look and aria-disabled */
+.odds-btn,#tab-games .toolbar .btn{min-height:44px}
+.odds-btn[aria-disabled="true"]{opacity:.7;cursor:progress}
+.odds-note{font-size:12.5px;color:var(--ink-2);flex:1 1 220px;min-width:0}
+.pb-odds{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 0}
 .pb-ctl{background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:14px 0 12px}
 .pb-row{display:grid;grid-template-columns:104px minmax(0,1fr);gap:8px 14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .pb-row:last-child{border-bottom:0}
@@ -404,6 +410,8 @@ body.pc-open{overflow:hidden}
     <div id="opening" hidden></div>
     <div class="toolbar">
       <button class="btn ghost" id="refreshScores" title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>
+      <button type="button" class="btn ghost odds-btn" id="refreshOdds" data-odds title="Read DraftKings' lines from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published lines.">Refresh odds</button>
+      <span class="odds-note" id="oddsNote" role="status" aria-live="polite"></span>
       <span class="small muted" id="gamesNote"></span>
     </div>
     <div class="grid" id="games"></div>
@@ -462,6 +470,7 @@ body.pc-open{overflow:hidden}
       <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Suggested parlays</h2><span class="tag pb-slate" id="pbSlate"></span></div>
       <p class="pb-sub">Choose what to build from: every level below uses only the bet types and games ticked here.</p>
       <p class="pb-sub" id="pbRead"></p>
+      <div class="pb-odds"><button type="button" class="btn ghost odds-btn" id="pbRefreshOdds" data-odds title="Read DraftKings' lines from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published lines.">Refresh odds</button><span class="odds-note" id="pbOddsNote" role="status" aria-live="polite"></span></div>
       <div class="pb-ctl">
         <div class="pb-row"><span class="pb-k" id="pbStakeK">Bet amount</span><div class="pb-v"><label class="pb-stake">$<input type="number" id="pbStake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="pbStakeK" autocomplete="off"></label><span class="pb-hint">Every level pays on this amount, and the builder below uses it too.</span></div></div>
         <div class="pb-row"><span class="pb-k">Build from</span><div class="pb-v"><div class="seg pb-seg" id="pbMix" role="group" aria-label="Build from"><button type="button" data-mix="all" aria-pressed="false">All</button><button type="button" data-mix="teams" aria-pressed="false">Teams only</button><button type="button" data-mix="totals" aria-pressed="false">Totals only</button></div></div></div>
@@ -535,7 +544,7 @@ body.pc-open{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v8 · 2026-10-14';
+const APP_BUILD = 'nhl v9 · 2026-10-15';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -616,7 +625,9 @@ function load() {
   return p;
 }
 const DELETED = new Set();     // saved parlays deleted in this tab, never merged back from another's copy
+let NO_SAVE = false;           // true while Refresh odds redraws: the lines it read are this page's alone, never stored
 function save() {
+  if (NO_SAVE) return;
   try {
     const cur = readStore(), have = new Set(P.saved.filter(isObj).map(s => s.id));
     const theirs = Array.isArray(cur.saved) ? cur.saved.filter(s => isObj(s) && s.id && !have.has(s.id) && !DELETED.has(s.id)) : [];
@@ -657,14 +668,21 @@ $('tabs').addEventListener('click', e => { const b = e.target.closest('button');
 window.addEventListener('hashchange', () => { const n = tabName(location.hash.slice(1)); if (n && $('tab-' + n)) showTab(n); });
 
 /* ---------- Games: a day strip from yesterday to ten days out, or the season's first days before it opens ---------- */
-function dayStrip() {
-  const today = etToday();                 // the visitor's day, not the job's: a state published last night is still read on today's strip
-  const counts = {}; for (const g of S.games) counts[g.date] = (counts[g.date] || 0) + 1;
+/* the strip's days: yesterday to ten days out, or the season's first week before it opens, or its last week once it is over */
+function stripDays() {
+  const today = etToday();
   let days = []; for (let d = addDays(today, -1); d <= addDays(today, 10); d = addDays(d, 1)) days.push(d);
   const first = S.games.length ? S.games[0].date : null;
   if (first && first > days[days.length - 1]) { days = []; for (let d = first; d <= addDays(first, 6); d = addDays(d, 1)) days.push(d); }   // the season has not opened: its first week
   const last = S.games.length ? S.games[S.games.length - 1].date : null;
   if (last && last < days[0]) { days = []; for (let d = addDays(last, -6); d <= last; d = addDays(d, 1)) days.push(d); }               // the season is over: its last week
+  return days;
+}
+function dayStrip() {
+  const today = etToday();                 // the visitor's day, not the job's: a state published last night is still read on today's strip
+  const counts = {}; for (const g of S.games) counts[g.date] = (counts[g.date] || 0) + 1;
+  const days = stripDays();
+  const first = S.games.length ? S.games[0].date : null;
   if (!DAY || !days.includes(DAY)) DAY = days.includes(today) && (counts[today] || !counts[addDays(today, 1)]) ? today : (days.find(d => d >= today && counts[d]) || days.find(d => counts[d]) || days[0]);
   $('days').innerHTML = days.map(d => { const dt = new Date(d + 'T12:00:00Z'); return `<button class="day ${d === DAY ? 'on' : ''}" data-day="${d}">
     <div class="dw">${d === today ? 'Today' : dt.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' })}</div>
@@ -916,8 +934,8 @@ const bookKey = s => String(s || '').toLowerCase().replace(/\s+/g, '');
 const isDK = line => !!line && bookKey(line.book) === 'draftkings';
 const bookName = line => isDK(line) ? 'DraftKings' : (line && line.book ? String(line.book) : 'the book');
 const poss = name => /s$/.test(name) ? name + "'" : name + "'s";
-/* fresh: DraftKings listed it at the job's last run */
-const freshLine = g => !!(g && g.line && g.line.at && S && S.published) && Math.floor(Date.parse(g.line.at) / 60000) === Math.floor(Date.parse(S.published) / 60000);
+/* fresh: DraftKings listed it at the job's last run, or ESPN carried it when Refresh odds read it in this browser */
+const freshLine = g => !!(g && g.line && g.line.at && S && S.published) && (g.line.refreshed === true || Math.floor(Date.parse(g.line.at) / 60000) === Math.floor(Date.parse(S.published) / 60000));
 const matchup = g => `${T(g.away).abbr} @ ${T(g.home).abbr}`;
 const strCmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const gameCmp = (a, b) => (Date.parse(a.start) - Date.parse(b.start)) || strCmp(matchup(a), matchup(b));
@@ -988,8 +1006,9 @@ const lockSvg = on => `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y
    one leg a game, pruning only what cannot reach the floor or the best already found, and every number
    is worked in leg order, the builder's, so Add to builder shows exactly what the level did */
 let PB_CUR = null;                          // the panel as last drawn: { sig, sl, pool, levels, why }
-const PB_CACHE = new Map();                 // the default levels by signature (the picks, the slate, the publish)
-let PB_VIEW = { sig: null, t: {} };         // New legs and locks, per level, while the page is open; never saved
+const PB_CACHE = new Map();                 // the default levels by signature (the picks, the slate, the publish, the Refresh odds reads)
+let PB_VIEW = { place: null, ov: 0, t: {} };   // New legs and locks, per level, while the page is open; never saved. Its place is the
+                                            // signature less the reads: a Refresh odds read keeps it, its levels worked again on the new prices (pbCarry)
 /* the lines said when the clock changes the panel under the visitor: the slate moved on (every game of the
    day shown has dropped the puck), or a level rebuilt because one of its own games dropped the puck. Each
    holds while the panel is on the slate it was said on and its day is still today (Eastern), and goes at
@@ -1097,12 +1116,34 @@ function pbWhy(n, sl, pool, ui) {
   return `Only ${m} of the ${pool.tickable.length} games on ${slateText(sl)} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).${nextNote}`;
 }
 /* the picks (the days, the bet types, the games unticked) and the publish; the signature adds the games still to come */
-function pbPicks(sl, ui) { return [sl.dates.join(','), KINDS.map(k => ui.k[k] ? 1 : 0).join(''), ui.off.slice().sort().join(','), S.published].join('|'); }
+const pbChoice = (sl, ui) => [sl.dates.join(','), KINDS.map(k => ui.k[k] ? 1 : 0).join(''), ui.off.slice().sort().join(','), S.published];
+function pbPicks(sl, ui) { return pbChoice(sl, ui).concat(ODDS.v).join('|'); }
 function pbSig(sl, ui) { return pbPicks(sl, ui) + '|' + sl.games.map(g => g.id).join(','); }
+/* the visitor's place on the levels: the signature less the Refresh odds reads, which change prices, not the picks */
+function pbPlace(sl, ui) { return pbChoice(sl, ui).join('|') + '|' + sl.games.map(g => g.id).join(','); }
+/* after a Refresh odds read, each level's New legs and locks hold: a lock stays while its leg still qualifies at the number it
+   was locked on, and the level is worked again on the new prices by its own rule (the legs it has shown left out after New
+   legs; back to the first when none is left, as New legs does), since what it showed was priced before the read. A level
+   left with nothing of the visitor's goes back to the default */
+function pbCarry(pool) {
+  const by = new Map(pool.legs.map(L => [L.id, L]));
+  for (const t of PB_TIERS) {
+    const id = t[0], v = PB_VIEW.t[id]; if (!v) continue;
+    const was = new Map((v.res ? v.res.legs : []).map(L => [L.id, L]));
+    for (const lid of [...v.locks]) { const L = by.get(lid), o = was.get(lid); if (!L || (o && o.num !== L.num)) v.locks.delete(lid); }
+    if (!v.turned && !v.locks.size) { delete PB_VIEW.t[id]; continue; }
+    const locks = [...v.locks].map(lid => by.get(lid)).sort(legCmp);
+    let res = pbSearch(pool.legs, t[2], t[3], locks, v.turned ? v.shown : new Set());
+    if (!res && v.turned) { v.shown = new Set(); v.wrapped = true; res = pbSearch(pool.legs, t[2], t[3], locks, new Set()); }
+    if (!res) { delete PB_VIEW.t[id]; continue; }
+    v.res = res;
+  }
+}
 /* the panel as it stands: the slate, the pool and the four levels (each card's New legs and locks applied) */
 function pbCompute() {
-  const sl = pbSlate(), ui = pbUi(), sig = pbSig(sl, ui), picks = pbPicks(sl, ui), pool = pbPool(sl, ui);
-  if (PB_VIEW.sig !== sig) PB_VIEW = { sig, t: {} };
+  const sl = pbSlate(), ui = pbUi(), sig = pbSig(sl, ui), picks = pbPicks(sl, ui), pool = pbPool(sl, ui), place = pbPlace(sl, ui);
+  if (PB_VIEW.place !== place) PB_VIEW = { place, ov: ODDS.v, t: {} };
+  else if (PB_VIEW.ov !== ODDS.v) { pbCarry(pool); PB_VIEW.ov = ODDS.v; }
   let base = PB_CACHE.get(sig);
   if (!base) {
     base = {};
@@ -1146,7 +1187,7 @@ function pbTierCard(t, res, why, sl) {
   const [id, label, n] = t;
   if (!res) return `<div class="pb-tier none" data-tier="${id}"><div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="tag">${n} legs</span></span></div><p class="pb-empty">${esc(why)}</p></div>`;
   const v = PB_VIEW.t[id], stake = pbStake();
-  const inB = sameLegs(P.legs.map(l => `${l.game}|${l.side}|${l.kind}`), res.legs.map(L => L.id));
+  const inB = sameLegs(builderLegs(false).map(L => L.id), res.legs.map(L => L.id));          // the builder as drawn (a leg a Refresh odds read moved out stays stored, unseen)
   const thin = res.legs.filter(L => L.thin).length;
   const allLocked = v && res.legs.every(L => v.locks.has(L.id));
   const both = sl.dates.length > 1;
@@ -1204,7 +1245,7 @@ function renderPb() {
   $('pbSlate').hidden = !sl.dates.length;
   /* the prices are DraftKings' unless ESPN carried another book for a game, which is then named */
   const other = pool.tickable.filter(g => !isDK(g.line)), others = [...new Set(other.map(g => g.line.book ? String(g.line.book) : 'a book ESPN did not name'))].join(' and ');
-  $('pbRead').textContent = !S.published ? '' : other.length ? `Prices as read at ${hhmm(S.published)}, the job's last run: ${other.length} of the ${pool.tickable.length} games ${other.length > 1 ? 'are' : 'is'} priced at ${others}, not DraftKings.` : `DraftKings' prices as read at ${hhmm(S.published)}, the job's last run.`;
+  $('pbRead').textContent = !S.published ? '' : other.length ? `Prices ${readText(pool.tickable)}: ${other.length} of the ${pool.tickable.length} games ${other.length > 1 ? 'are' : 'is'} priced at ${others}, not DraftKings.` : `DraftKings' prices ${readText(pool.tickable)}.`;
   if (document.activeElement !== $('pbStake')) $('pbStake').value = String(pbStake());
   for (const b of $('pbKinds').querySelectorAll('input[data-k]')) b.checked = !!ui.k[b.dataset.k];
   const mix = ui.k.ml && ui.k.pl && ui.k.ou ? 'all' : ui.k.ml && ui.k.pl && !ui.k.ou ? 'teams' : !ui.k.ml && !ui.k.pl && ui.k.ou ? 'totals' : null;
@@ -1303,8 +1344,8 @@ $('pbBody').addEventListener('click', e => {
   const res = PB_CUR && PB_CUR.levels[id], t = PB_TIERS.find(x => x[0] === id);
   if (pbStale(res)) { const sel = b.dataset.pbFinish ? `[data-pb-finish="${id}"]` : `[data-pb-add="${id}"]`, had = document.activeElement === b; renderParlays(); refocus(sel, had, `[data-pb-finish="${id}"]`); return; }
   if (b.dataset.pbFinish) { openCard(res.legs, `${t[1]} parlay`, b, false); return; }
-  const have = P.legs.length;
-  if (have && !sameLegs(P.legs.map(l => `${l.game}|${l.side}|${l.kind}`), res.legs.map(L => L.id)) && !confirm(`Replace the ${have} leg${have > 1 ? 's' : ''} in the builder with the ${t[1]} ${t[2]}-leg parlay?`)) return;
+  const drawn = builderLegs(false), have = drawn.length;
+  if (have && !sameLegs(drawn.map(L => L.id), res.legs.map(L => L.id)) && !confirm(`Replace the ${have} leg${have > 1 ? 's' : ''} in the builder with the ${t[1]} ${t[2]}-leg parlay?`)) return;
   P.legs = res.legs.map(storeLeg); BMSG = []; save();
   renderParlays();
   scrollToEl($('builder'));
@@ -1333,7 +1374,7 @@ function betBlock(g) {
   const L = g.line;
   const row = (k, label, a, b) => { const x = betBtn(g, a, k) + betBtn(g, b, k); return x ? `<div class="pb-brow"><span class="pb-bk">${esc(label)}</span><div class="pb-bb">${x}</div></div>` : ''; };
   SHOWN.add(g.id);
-  return `<div class="pb-bets">${row('ml', 'Moneyline', 'away', 'home')}${row('pl', 'Puck line', 'away', 'home')}${L.total !== null && L.total !== undefined ? row('ou', `Total ${L.total}`, 'over', 'under') : ''}<p class="pb-key">Tap a bet to add it. Edge: the model's chance less the price's, in points.</p></div>`;
+  return `<div class="pb-bets">${row('ml', 'Moneyline', 'away', 'home')}${row('pl', 'Puck line', 'away', 'home')}${L.total !== null && L.total !== undefined ? row('ou', `Total ${L.total}`, 'over', 'under') : ''}<p class="pb-key">Tap a bet to add it. Edge: the model's chance less the price's, in points.${L.refreshed ? ` <span class="pb-rd">${esc(bookName(L))} as read from ESPN at ${esc(hhmm(L.at))}.</span>` : ''}</p></div>`;
 }
 /* a leg button anywhere on the page adds or removes that bet */
 document.addEventListener('click', e => {
@@ -1360,31 +1401,41 @@ document.addEventListener('click', e => {
    Every stored leg is read again from the state on every draw, by its game, side and kind: a game that
    has started, been called off or left the schedule leaves the builder, as does a line DraftKings did not
    list at the last run or a number it has moved; a price it has moved is updated in place. Each is said
-   in the builder's live line, and the stored legs are rewritten to what is shown */
+   in the builder's live line, and the stored legs are rewritten to what is shown. A leg on a line Refresh
+   odds read in this browser is drawn on that line (a moved price updated, a moved number out) but stored
+   as it was: the lines read are this page's alone, so a reload brings back the builder on the published
+   lines. What the builder says of those is said once (RSAID), since nothing stored moves to end it */
 let BMSG = [];
+const RSAID = new Set();
 const storeLeg = L => ({ game: L.game, side: L.side, kind: L.kind, odds: L.price, line: L.num, p: L.p, fair: L.fair, label: L.mu, text: L.desc, date: L.g.date, start: L.start });
 function builderLegs(say) {
-  const gb = gameById(), out = [], msgs = [];
-  let moved = 0;
+  const gb = gameById(), out = [], msgs = [], kept = [], keptSaid = [];
+  let moved = 0, movedHere = null, movedPub = 0;
+  const tell = (m, rf) => { if (!rf) { msgs.push(m); keptSaid.push(m); } else { if (!say || !RSAID.has(m)) msgs.push(m); if (say) RSAID.add(m); } };
   for (const l of P.legs) {
     const g = gb[l.game], name = g ? matchup(g) : (typeof l.label === 'string' ? l.label : 'A leg');
-    if (!g) { const r = (S.removed || []).find(x => x.id === l.game); msgs.push(`${name} left the builder: ${r && /postponed|cancelled/.test(r.why) ? 'the game was ' + r.why : 'it is no longer on the schedule'}.`); continue; }
-    if (hasStarted(g)) { msgs.push(`${name} left the builder: the puck dropped.`); continue; }
-    if (!freshLine(g)) { msgs.push(`${name} left the builder: its line was not on DraftKings at the last run.`); continue; }
+    if (!g) { const r = (S.removed || []).find(x => x.id === l.game); tell(`${name} left the builder: ${r && /postponed|cancelled/.test(r.why) ? 'the game was ' + r.why : 'it is no longer on the schedule'}.`); continue; }
+    if (hasStarted(g)) { tell(`${name} left the builder: the puck dropped.`); continue; }
+    const rf = !!(g.line && g.line.refreshed), stay = () => { if (rf) kept.push({ o: { start: g.start, mu: matchup(g), kind: l.kind }, s: l }); };
+    if (!freshLine(g)) { tell(`${name} left the builder: its line was not on DraftKings at the last run.`, rf); stay(); continue; }
     const L = legOf(g, l.side, l.kind);
-    if (!L) { msgs.push(`${name} left the builder: DraftKings had no price on it at the last run.`); continue; }
+    if (!L) { tell(`${name} left the builder: DraftKings had no price on it ${rf ? `when ESPN was read at ${hhmm(g.line.at)}` : 'at the last run'}.`, rf); stay(); continue; }
     const had = l.line === null || l.line === undefined || l.line === '' ? null : +l.line;
-    if (l.kind !== 'ml' && had !== null && had !== L.num) { msgs.push(`${descOf(l.kind, l.side, had, g)} left the builder: ${poss(bookName(g.line))} ${l.kind === 'pl' ? 'puck line' : 'total'} is now ${l.kind === 'pl' ? fmtLine(L.num) : L.num} (as read ${hhmm(S.published)}).`); continue; }
-    if (+l.odds !== L.price) moved++;
-    out.push(L);
+    if (l.kind !== 'ml' && had !== null && had !== L.num) { tell(`${descOf(l.kind, l.side, had, g)} left the builder: ${poss(bookName(g.line))} ${l.kind === 'pl' ? 'puck line' : 'total'} is now ${l.kind === 'pl' ? fmtLine(L.num) : L.num} (as read ${hhmm(g.line.at)}).`, rf); stay(); continue; }
+    if (+l.odds !== L.price) { if (rf) { moved++; movedHere = g.line.at; } else movedPub++; }
+    out.push(L); kept.push({ o: L, s: rf ? l : storeLeg(L) });
   }
   out.sort(legCmp);
-  if (moved) msgs.push(`${moved} price${moved > 1 ? 's have' : ' has'} changed since you added ${moved > 1 ? 'them' : 'it'}: the builder shows DraftKings' price at the job's last run.`);
+  const pr = n => `${n} price${n > 1 ? 's have' : ' has'} changed since you added ${n > 1 ? 'them' : 'it'}`;
+  if (movedPub) tell(`${pr(movedPub)}: the builder shows DraftKings' price at the job's last run.`);
+  if (moved) tell(`${pr(moved)}: the builder shows DraftKings' price as read from ESPN at ${hhmm(movedHere)}.`, true);
   if (say) {
-    const next = out.map(storeLeg), changed = JSON.stringify(next) !== JSON.stringify(P.legs);
+    kept.sort((a, b) => legCmp(a.o, b.o));
+    const next = kept.map(e => e.s), changed = JSON.stringify(next) !== JSON.stringify(P.legs);
     /* why, kept in the store too until the builder has been drawn, so a leg taken out on another tab, or
-       before a reload, is still explained when the builder is next opened */
-    if (changed) { P.legs = next; if (msgs.length) P.ui.bmsg = msgs.slice(0, 8); save(); }
+       before a reload, is still explained when the builder is next opened (never what a Refresh odds read
+       changed, which a reload undoes) */
+    if (changed) { P.legs = next; if (keptSaid.length) P.ui.bmsg = keptSaid.slice(0, 8); save(); }
     if (msgs.length) BMSG = msgs;
   }
   out.msgs = msgs;
@@ -1439,8 +1490,9 @@ function renderBuilder(legs) {
   $('parlayTotals').hidden = !q;
   fitTiles();
   const allDK = legs.every(L => isDK(L.g.line)), books = [...new Set(legs.map(L => bookName(L.g.line)))].join(', ');
-  $('bNotes').innerHTML = !q ? '' : allDK ? `The chance is every leg's chance multiplied: one leg a game, and different games are unrelated. The price is DraftKings' parlay price: their prices multiplied.<br>Prices as DraftKings had them at ${esc(hhmm(S.published))}, the job's last run; check the slip.`
-    : `The chance is every leg's chance multiplied: one leg a game, and different games are unrelated. The price is the legs' prices multiplied, as a book pays a parlay of different games.<br>Prices as the books had them at ${esc(hhmm(S.published))}, the job's last run (${esc(books)}); check the slip.`;
+  const asOf = q ? legsRead(legs) : '';
+  $('bNotes').innerHTML = !q ? '' : allDK ? `The chance is every leg's chance multiplied: one leg a game, and different games are unrelated. The price is DraftKings' parlay price: their prices multiplied.<br>Prices as DraftKings had them ${esc(asOf)}; check the slip.`
+    : `The chance is every leg's chance multiplied: one leg a game, and different games are unrelated. The price is the legs' prices multiplied, as a book pays a parlay of different games.<br>Prices as the books had them ${esc(asOf)} (${esc(books)}); check the slip.`;
   $('bHint').hidden = n !== 1;
   $('pFinish').disabled = n < 2; $('pFinish').title = n < 2 ? 'A parlay needs two legs or more' : 'Your parlay as a card: an image to keep, a link to send, the slip on DraftKings';
   const savedNow = n >= 2 && isSaved(legs);
@@ -1465,7 +1517,7 @@ $('saveParlay').addEventListener('click', () => {
   BMSG = ['Saved: see Your saved parlays below.']; save(); rerender();
 });
 $('clearParlay').addEventListener('click', () => {
-  const n = P.legs.length; if (!n) return;
+  const n = builderLegs(false).length; if (!n) return;
   if (n >= 2 && !confirm(`Clear the ${n} legs from the builder?`)) return;
   P.legs = []; BMSG = []; slipQuiet(); save(); rerender();
 });
@@ -1642,17 +1694,20 @@ function noteHtml(c) {
 function canShareFile(name) {
   try { return typeof navigator.canShare === 'function' && typeof navigator.share === 'function' && typeof File === 'function' && !!navigator.canShare({ files: [new File([new Uint8Array([137, 80, 78, 71])], name, { type: 'image/png' })] }); } catch (e) { return false; }
 }
-function openCard(legs, origin, opener, fromBuilder) {
-  const c = PC = cardOf(legs, origin, fromBuilder);
-  PC.opener = opener || null;
+function cardView(c, opener) {
+  PC = c; PC.opener = opener || null;
   $('pcView').innerHTML = cardHtml(c);
   const k = c.plan.open.length;
   $('pcDk').href = c.plan.url; $('pcDk').textContent = k ? 'Open in DraftKings' : 'Open DraftKings';
-  $('pcDk').title = k ? "Opens the legs as DraftKings had them at the job's last read; a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet" : "DraftKings' NHL page, to add the legs by hand";
+  $('pcDk').title = k ? "Opens the legs as DraftKings had them when their lines were last read; a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet" : "DraftKings' NHL page, to add the legs by hand";
   $('pcNote').innerHTML = noteHtml(c);
-  $('pcAgain').hidden = !fromBuilder;
-  $('pcOwn').textContent = fromBuilder ? 'Yours alone: this card is not saved anywhere. Save on this device keeps it in your saved parlays.'
+  $('pcAgain').hidden = !c.fromBuilder;
+  $('pcOwn').textContent = c.fromBuilder ? 'Yours alone: this card is not saved anywhere. Save on this device keeps it in your saved parlays.'
     : 'Yours alone: this card is not saved anywhere. To keep it, Add to builder, then Save on this device: it goes in your saved parlays.';
+}
+function openCard(legs, origin, opener, fromBuilder) {
+  const c = cardOf(legs, origin, fromBuilder);
+  cardView(c, opener);
   const file = canShareFile(c.file);
   $('pcFile').hidden = !file; $('pcDown').className = file ? 'btn ghost' : 'btn ice';
   $('pcMsg').textContent = '';
@@ -1846,6 +1901,292 @@ window.addEventListener('storage', e => { if (e.key !== KEY || !S) return; P = l
 const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 function scrollToEl(el) { if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' }); }
 
+/* ---------- Refresh odds: DraftKings' lines read from ESPN in this browser, on a press and never else ----------
+   The job reads DraftKings' game lines from ESPN's scoreboard only when it runs, so by puck drop a line on the page can
+   be hours old. Refresh odds (the Games toolbar and the Parlay Builder's panel) reads ESPN's scoreboard itself for every
+   day the page shows with a game still to come, and takes each game's odds exactly as the job does (ESPN below is
+   tools/espn.js's oddsOf and dkOf, word for word; the smoke holds the two equal on recorded answers). A game takes the new
+   line only while it is still to come by the visitor's clock (a puck drop during the read leaves it as published), only
+   where the read is newer than the line it replaces, and only where ESPN gave odds: a failed request, a junk answer or a
+   game with no odds keeps its line. The call's parts that stand on the price follow (callOf in tools/update.js: the
+   edges and the sides taken, the puck line's and the total's chances where the number moved, from MODEL below, which is
+   tools/elo.js's goals layer word for word), and DraftKings' ids come with the line (the job's carry rule, carryDk in
+   tools/espn.js, where the answer has none). All of it is in memory: nothing is written to any storage (the builder draws
+   its legs on the new lines but keeps them stored as they were), and a reload brings back the published state. The
+   levels keep their New legs and locks through a read, worked again on the new prices, and a parlay card open during a
+   read follows it. Nothing is fetched for it on load or on a timer. */
+const ESPN = (() => {
+  const num = v => (v === undefined || v === null || v === '' ? null : (isFinite(+v) ? +v : null));
+  const american = s => num(String(s ?? '').replace('+', ''));
+  function dkHref(href) {
+    try {
+      if (typeof href !== 'string' || !href) return null;
+      let u = new URL(href);
+      const pre = u.searchParams.get('preurl');
+      if (pre) u = new URL(pre);
+      if (!/(^|\.)draftkings\.com$/i.test(u.hostname)) return null;
+      const ev = /\/event\/(\d+)/.exec(u.pathname), id = u.searchParams.get('outcomes');
+      return { event: ev ? ev[1] : null, id: id || null };
+    } catch (e) { return null; }
+  }
+  const DK_KEYS = ['event', 'homeML', 'awayML', 'homePL', 'awayPL', 'over', 'under'];
+  function dkIdOk(key, id, line) {
+    if (typeof id !== 'string') return false;
+    const n = (s, d) => (s === 'N' ? -1 : 1) * (+d) / 100;
+    const has = v => v !== null && v !== undefined;
+    let m;
+    switch (key) {
+      case 'event': return /^\d+$/.test(id);
+      case 'homeML': return /^0ML\d+_1$/.test(id);
+      case 'awayML': return /^0ML\d+_3$/.test(id);
+      case 'homePL': return !!(m = /^0HC\d+([NP])(\d+)_1$/.exec(id)) && has(line.homeLine) && n(m[1], m[2]) === line.homeLine;
+      case 'awayPL': return !!(m = /^0HC\d+([NP])(\d+)_3$/.exec(id)) && has(line.homeLine) && n(m[1], m[2]) === -line.homeLine;
+      case 'over': return !!(m = /^0OU\d+O(\d+)_1$/.exec(id)) && has(line.total) && +m[1] / 100 === line.total;
+      case 'under': return !!(m = /^0OU\d+U(\d+)_3$/.exec(id)) && has(line.total) && +m[1] / 100 === line.total;
+    }
+    return false;
+  }
+  const DK_SHAPE = { homeML: /^0ML\d+_1$/, awayML: /^0ML\d+_3$/, homePL: /^0HC\d+[NP]\d+_1$/, awayPL: /^0HC\d+[NP]\d+_3$/, over: /^0OU\d+O\d+_1$/, under: /^0OU\d+U\d+_3$/ };
+  const DK_OUTCOMES = DK_KEYS.slice(1);
+  const dkHasIds = dk => !!dk && DK_OUTCOMES.some(k => typeof dk[k] === 'string');
+  function dkOf(o, line) {
+    const res = { dk: null, links: 0, read: 0, keys: {} };
+    if (!o || typeof o !== 'object') return res;
+    const at = side => side && side.close && side.close.link && side.close.link.href;
+    const hrefs = { homeML: at(o.moneyline?.home), awayML: at(o.moneyline?.away), homePL: at(o.pointSpread?.home), awayPL: at(o.pointSpread?.away), over: at(o.total?.over), under: at(o.total?.under) };
+    const evHref = o.link && o.link.href;
+    res.links = Object.values(hrefs).filter(h => typeof h === 'string' && h).length;
+    const dk = {};
+    const e = dkHref(evHref);
+    if (e && e.event && dkIdOk('event', e.event, line)) dk.event = e.event;
+    for (const k of DK_KEYS.slice(1)) {
+      const x = dkHref(hrefs[k]), r = res.keys[k] = { link: typeof hrefs[k] === 'string' && !!hrefs[k], shape: false, id: false };
+      if (!x) continue;
+      if (!dk.event && x.event) dk.event = x.event;
+      r.shape = !!x.id && DK_SHAPE[k].test(x.id);
+      if (x.id && dkIdOk(k, x.id, line)) { dk[k] = x.id; r.id = true; }
+    }
+    const out = {}; for (const k of DK_KEYS) if (dk[k] !== undefined) out[k] = dk[k];
+    res.read = DK_OUTCOMES.filter(k => out[k] !== undefined).length;
+    if (Object.keys(out).length) res.dk = out;
+    return res;
+  }
+  function oddsOf(comp) {
+    const o = (comp.odds || [])[0];
+    if (!o) return null;
+    const ml = o.moneyline, ps = o.pointSpread, tot = o.total;
+    const out = { book: o.provider?.name || null, total: num(o.overUnder) };
+    out.homeML = ml?.home?.close?.odds !== undefined ? american(ml.home.close.odds) : null;
+    out.awayML = ml?.away?.close?.odds !== undefined ? american(ml.away.close.odds) : null;
+    if (ps?.home?.close?.line !== undefined) out.homeLine = num(String(ps.home.close.line).replace('+', ''));
+    else if (o.spread !== undefined && o.spread !== null) out.homeLine = o.homeTeamOdds?.favorite ? -Math.abs(+o.spread) : Math.abs(+o.spread);
+    else out.homeLine = null;
+    out.homeSpreadOdds = ps?.home?.close?.odds !== undefined ? american(ps.home.close.odds) : null;
+    out.awaySpreadOdds = ps?.away?.close?.odds !== undefined ? american(ps.away.close.odds) : null;
+    out.overOdds = tot?.over?.close?.odds !== undefined ? american(tot.over.close.odds) : null;
+    out.underOdds = tot?.under?.close?.odds !== undefined ? american(tot.under.close.odds) : null;
+    if (out.homeML === null && out.homeLine === null && out.total === null) return null;
+    const { dk } = dkOf(o, out);
+    if (dk) out.dk = dk;
+    return out;
+  }
+  const bookKey = s => String(s || '').toLowerCase().replace(/\s+/g, '');
+  function carryDk(line, prev) {
+    if (dkHasIds(line.dk)) return { line, how: 'read' };
+    const q = prev && prev.dk, ev = line.dk && line.dk.event;
+    const none = () => ({ line, how: ev ? 'event' : 'none' });
+    if (!dkHasIds(q) || bookKey(line.book) !== 'draftkings' || bookKey(prev.book) !== 'draftkings') return none();
+    if (ev && q.event && ev !== q.event) return none();
+    const keep = ['homeML', 'awayML'].concat(prev.homeLine === line.homeLine ? ['homePL', 'awayPL'] : [], prev.total === line.total ? ['over', 'under'] : []);
+    const dk = {}; if (ev || typeof q.event === 'string') dk.event = ev || q.event;
+    for (const k of DK_OUTCOMES) if (keep.includes(k) && typeof q[k] === 'string') dk[k] = q[k];
+    if (!dkHasIds(dk)) return none();
+    dk.at = q.at || prev.at;
+    line.dk = dk;
+    return { line, how: 'carried' };
+  }
+  return { num, american, dkHref, dkIdOk, dkOf, oddsOf, dkHasIds, carryDk, DK_KEYS, DK_OUTCOMES };
+})();
+/* tools/elo.js's goals layer, word for word: each side's goals Poisson, the two means adding to the expected total and
+   differing by the expected margin, a tied game to the side the ratings favour, a share of one-goal games pulled level */
+const MODEL = (() => {
+  const MAXG = 14;
+  const expected = diff => 1 / (1 + Math.pow(10, -diff / 400));
+  function poisson(lambda) {
+    const out = new Array(MAXG + 1); let p = Math.exp(-lambda), sum = 0;
+    for (let k = 0; k <= MAXG; k++) { out[k] = p; sum += p; p *= lambda / (k + 1); }
+    for (let k = 0; k <= MAXG; k++) out[k] /= sum;
+    return out;
+  }
+  const otChance = diff => 0.5 + (expected(diff) - 0.5) * 0.5;
+  function goals(total, mu, diff, pull = 0) {
+    const lh = Math.max(0.3, (total + mu) / 2), la = Math.max(0.3, (total - mu) / 2);
+    const ph = poisson(lh), pa = poisson(la), pOT = otChance(diff);
+    const margin = {}, tot = {}; let tie = 0;
+    const tied = (h, a, p) => { tie += p; margin[1] = (margin[1] || 0) + p * pOT; margin[-1] = (margin[-1] || 0) + p * (1 - pOT); tot[h + a + 1] = (tot[h + a + 1] || 0) + p; };
+    for (let h = 0; h <= MAXG; h++) for (let a = 0; a <= MAXG; a++) {
+      const p = ph[h] * pa[a]; if (!p) continue;
+      if (h === a) tied(h, a, p);
+      else {
+        const q = Math.abs(h - a) === 1 ? p * pull : 0;
+        if (q) tied(Math.min(h, a), Math.min(h, a), q);
+        margin[h - a] = (margin[h - a] || 0) + p - q; tot[h + a] = (tot[h + a] || 0) + p - q;
+      }
+    }
+    return { margin, total: tot, tie, pOT, lh, la };
+  }
+  function coverProbs(G, homeLine) {
+    if (homeLine === null || homeLine === undefined || !isFinite(homeLine)) return null;
+    let cover = 0, push = 0;
+    for (const [k, p] of Object.entries(G.margin)) { const m = +k; if (m + homeLine > 1e-9) cover += p; else if (Math.abs(m + homeLine) < 1e-9) push += p; }
+    return { cover, push, lose: Math.max(0, 1 - cover - push) };
+  }
+  function totalProbs(G, line) {
+    if (line === null || line === undefined || !isFinite(line)) return null;
+    let over = 0, push = 0;
+    for (const [k, p] of Object.entries(G.total)) { const t = +k; if (t > line + 1e-9) over += p; else if (Math.abs(t - line) < 1e-9) push += p; }
+    return { over, push, under: Math.max(0, 1 - over - push) };
+  }
+  return { goals, coverProbs, totalProbs };
+})();
+const ODDS = { busy: false, v: 0, said: null };      // v: the reads that moved what the levels stand on, which the Parlay Builder's cache keys on
+const PRICE_KEYS = ['book', 'homeML', 'awayML', 'homeLine', 'homeSpreadOdds', 'awaySpreadOdds', 'total', 'overOdds', 'underOdds'];
+/* when a set of games' prices were read: the job's run, or Refresh odds here (the oldest of its reads), said once */
+function readText(gs) {
+  const rf = gs.filter(g => g.line && g.line.refreshed), pub = gs.length - rf.length;
+  if (!rf.length) return `as read at ${hhmm(S.published)}, the job's last run`;
+  const t = rf.map(g => g.line.at).sort((a, b) => Date.parse(a) - Date.parse(b))[0];
+  return `as read from ESPN in this browser at ${hhmm(t)}${pub ? ` (${pub} of the ${gs.length} games as the job read ${pub > 1 ? 'them' : 'it'} at ${hhmm(S.published)})` : ''}`;
+}
+/* the builder's legs: as of the oldest read among them */
+function legsRead(legs) {
+  const reads = legs.map(L => L.g.line).sort((a, b) => Date.parse(a.at) - Date.parse(b.at)), old = reads[0];
+  if (!old || !old.refreshed) return `at ${hhmm(S.published)}, the job's last run`;
+  return `at ${hhmm(old.at)}, read from ESPN in this browser`;
+}
+/* the call's parts that stand on the price, as the job's callOf makes them: the moneyline's edges and side; the puck
+   line's and the total's chances (kept where the number holds, from the goals layer where it moved), edges and sides */
+const MARKETS = [[['homeML', 'awayML'], ['mlEdge', 'mlPick']], [['homeLine', 'homeSpreadOdds', 'awaySpreadOdds'], ['cover', 'plEdge', 'plPick']], [['total', 'overOdds', 'underOdds'], ['ou', 'ouEdge', 'ouPick']]];
+function oddsCall(g, line) {
+  const r3 = x => +x.toFixed(3), imp = am => am === null || am === undefined ? null : implied(am), EDGE = S.edge;
+  const was = g.line, cover0 = was && g.cover && was.homeLine === line.homeLine ? g.cover : null, ou0 = was && g.ou && was.total === line.total ? g.ou : null;
+  /* a market whose number and prices hold keeps its parts exactly (the job worked its edges on unrounded chances, which a
+     page working them again from the rounded ones can miss by 0.001) */
+  const held = MARKETS.filter(([pk]) => !!was && pk.every(k => was[k] === line[k])).flatMap(([, ck]) => ck), kept = {};
+  for (const k of held) kept[k] = g[k];
+  for (const k of ['mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick']) delete g[k];
+  g.line = line;
+  let G = null; const goals = () => G || (G = MODEL.goals(g.xt, g.mu, g.diff, (S.model && S.model.pull) || 0));
+  const ih = imp(line.homeML), ia = imp(line.awayML);
+  if (ih !== null && ia !== null) { g.mlEdge = { home: r3(g.pHome - ih), away: r3(1 - g.pHome - ia) }; g.mlPick = g.mlEdge.home >= EDGE ? 'home' : g.mlEdge.away >= EDGE ? 'away' : null; }
+  if (line.homeLine !== null && line.homeLine !== undefined) {
+    const cp = cover0 ? { cover: cover0.home, push: cover0.push, lose: cover0.away } : MODEL.coverProbs(goals(), line.homeLine);
+    g.cover = { home: r3(cp.cover), push: r3(cp.push), away: r3(cp.lose) };
+    const jh = imp(line.homeSpreadOdds), ja = imp(line.awaySpreadOdds);
+    if (jh !== null && ja !== null) { g.plEdge = { home: r3(cp.cover - jh), away: r3(cp.lose - ja) }; g.plPick = g.plEdge.home >= EDGE ? 'home' : g.plEdge.away >= EDGE ? 'away' : null; }
+  }
+  if (line.total !== null && line.total !== undefined) {
+    const tp = ou0 ? { over: ou0.over, push: ou0.push, under: ou0.under } : MODEL.totalProbs(goals(), line.total);
+    g.ou = { over: r3(tp.over), push: r3(tp.push), under: r3(tp.under) };
+    const jo = imp(line.overOdds), ju = imp(line.underOdds);
+    if (jo !== null && ju !== null) { g.ouEdge = { over: r3(tp.over - jo), under: r3(tp.under - ju) }; g.ouPick = g.ouEdge.over >= EDGE ? 'over' : g.ouEdge.under >= EDGE ? 'under' : null; }
+  }
+  for (const k of held) { if (kept[k] === undefined) delete g[k]; else g[k] = kept[k]; }
+}
+/* one day's scoreboard: its events, or null for a failed request or an answer that is not one */
+async function readOddsDay(day) {
+  try {
+    const r = await fetch(`${ESPN_SB}?dates=${day.replace(/-/g, '')}&limit=100&_=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return isObj(j) && Array.isArray(j.events) ? j.events : null;
+  } catch (e) { return null; }
+}
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+function oddsSay(text) { ODDS.said = text; for (const id of ['oddsNote', 'pbOddsNote']) if ($(id)) $(id).textContent = text; }
+function oddsIdle() { if (!ODDS.said && S) oddsSay(`Lines published ${hhmm(S.published)}, the job's last run.`); }
+function oddsBusy(on) { ODDS.busy = on; for (const b of document.querySelectorAll('[data-odds]')) { if (on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); } }
+function oddsText(r) {
+  const when = hhmm(r.at);
+  if (!r.answered) return `ESPN could not be read at ${when}: ${r.lined ? 'every line stands as shown' : 'nothing changed'}.`;
+  const src = r.books.size && [...r.books].every(b => bookKey(b) === 'draftkings') ? "DraftKings' lines" : 'Lines';
+  let t = r.read ? `${src} from ESPN, read ${when}: ${plural(r.read, 'game', 'games')}${r.moved ? `, ${r.moved} moved since the last read` : ''}${r.first ? `, ${r.first} with a first line` : ''}.`
+    : r.noLine || r.unread || r.started || r.postponed || r.cancelled || r.older ? `Lines from ESPN, read ${when}: none taken.` : `Lines from ESPN, read ${when}: no game on the days shown has a line yet.`;
+  const stand = [r.noLine ? `${plural(r.noLine, 'game', 'games')} had no line at ESPN` : '', r.unread ? `${plural(r.unread, 'game', 'games')} could not be read` : ''].filter(Boolean);
+  if (stand.length) t += ` ${stand.join(' and ')}: ${r.noLine + r.unread > 1 ? 'their published lines stand' : 'its published line stands'}.`;
+  if (r.started) t += ` ${plural(r.started, 'game', 'games')} dropped the puck during the read: left as published.`;
+  const off = r.postponed + r.cancelled;
+  if (off) t += ` ${plural(off, 'game is', 'games are')} ${r.postponed && r.cancelled ? 'postponed or cancelled' : r.postponed ? 'postponed' : 'cancelled'} at ESPN: ${off > 1 ? 'their published lines stand' : 'its published line stands'} until the job takes ${off > 1 ? 'them' : 'it'} off.`;
+  if (r.older) t += ` ${plural(r.older, 'game', 'games')} kept ${r.older > 1 ? 'their lines' : 'its line'}: the line shown was read later than this (is this device's clock behind?).`;
+  if (r.silent.length) t += ` ESPN did not answer for ${r.silent.length > 2 ? `${r.silent.length} of the ${r.days} days` : r.silent.map(dayText).join(' or ')}.`;
+  return t;
+}
+/* a parlay card open while ESPN was read: every leg read again on the new lines. Each still offered at its number: the card
+   is drawn again on them (the prices, what it pays, DraftKings' ids and when they were read), said in the card; a leg
+   gone (its number moved, its price or its line gone, its game started): the card is closed, said in the status line */
+function cardAfterRead(at) {
+  if (!PC || $('pcWin').hidden) return '';
+  const gb = gameById(), legs = PC.legs.map(L => { const g = gb[L.game]; if (!g || hasStarted(g) || !freshLine(g)) return null; const N = legOf(g, L.side, L.kind); return N && (L.kind === 'ml' || N.num === L.num) ? N : null; });
+  if (legs.some(x => !x)) { closeCard(); return ' The parlay card was closed: a leg on it moved or came off with this read; Finish again for the new lines.'; }
+  const was = PC.text, opener = PC.opener, a = document.activeElement, inNote = !!a && $('pcNote').contains(a);
+  cardView(cardOf(legs, PC.origin, PC.fromBuilder), opener);
+  if (inNote) $('pcDk').focus();
+  if (PC.text !== was) pcSay(`Updated to DraftKings' lines as read from ESPN at ${hhmm(at)}.`, 8000);
+  return '';
+}
+async function refreshOdds(btn) {
+  if (!S || ODDS.busy) return;                            // a press while a read runs does nothing
+  const shown = new Set(stripDays().filter(d => d >= etToday()));
+  const come = S.games.filter(g => shown.has(g.date) && !hasStarted(g));
+  const days = [...new Set(come.map(g => g.date))].sort();
+  if (!days.length) { oddsSay('No game still to come on the days shown: there are no lines to read.'); return; }
+  oddsBusy(true); oddsSay("Reading DraftKings' lines from ESPN…");
+  let answers;
+  try { answers = await Promise.all(days.map(readOddsDay)); } catch (e) { answers = days.map(() => null); }
+  const at = new Date().toISOString(), byDay = {}; days.forEach((d, i) => { byDay[d] = answers[i]; });
+  const r = { at, read: 0, moved: 0, first: 0, noLine: 0, unread: 0, started: 0, postponed: 0, cancelled: 0, older: 0, books: new Set(), answered: answers.some(Boolean), lined: come.some(g => g.line), days: days.length, silent: days.filter(d => !byDay[d]) };
+  /* what the levels stand on, game by game: a read that changes none of it leaves their cache (and the visitor's place) as it is */
+  const poolOf = g => JSON.stringify([freshLine(g), g.line ? PRICE_KEYS.map(k => g.line[k]) : null, ['mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'].map(k => g[k])]);
+  const pool0 = new Map(come.map(g => [g.id, poolOf(g)]));
+  let broke = false;
+  try {
+  for (const g of come) {
+    const had = !!g.line, evs = byDay[g.date];
+    if (hasStarted(g)) { r.started++; continue; }        // the puck dropped while ESPN was being read: as published
+    const ev = Array.isArray(evs) ? evs.find(e => isObj(e) && String(e.id) === g.id) : null, comp = ev && Array.isArray(ev.competitions) ? ev.competitions[0] : null;
+    if (!isObj(comp)) { if (had) r.unread++; continue; }
+    /* ESPN's word on the game, as the job's gameRow reads it: postponed or cancelled is a game called off (the job takes it
+       off the schedule at its next run), state 'in' or 'post' one under way or over; either way the published line stands */
+    const st = isObj(comp.status) && isObj(comp.status.type) ? comp.status.type : {}, word = `${st.name || ''} ${st.description || ''}`;
+    if (/POSTPONED|CANCEL/i.test(word)) { if (/CANCEL/i.test(word)) r.cancelled++; else r.postponed++; continue; }
+    if (st.state === 'in' || st.state === 'post') { r.started++; continue; }
+    let odds = null; try { odds = ESPN.oddsOf(comp); } catch (e) { odds = null; }
+    if (!odds) { if (had) r.noLine++; continue; }
+    if (had && !(Date.parse(at) > Date.parse(g.line.at))) { r.older++; continue; }
+    const { line } = ESPN.carryDk(Object.assign({}, odds, { at, refreshed: true }), g.line);
+    if (!had) r.first++; else if (PRICE_KEYS.some(k => g.line[k] !== line[k])) r.moved++;
+    oddsCall(g, line);
+    r.read++; r.books.add(line.book || '');
+  }
+  } catch (e) { broke = true; }                            // never left busy: what was taken stands, the rest as shown
+  if (come.some(g => poolOf(g) !== pool0.get(g.id))) ODDS.v++;
+  oddsBusy(false);
+  /* redrawn where the visitor is: the pressed button stays where it was on the screen, the builder draws its legs on the new
+     prices (a leg at a number that moved out of it, said) while they stay stored as they were, the levels keep their New legs
+     and locks, an open parlay card follows the read, and nothing of it is stored */
+  const top = btn && document.contains(btn) && btn.getBoundingClientRect ? btn.getBoundingClientRect().top : null;
+  let card = '';
+  NO_SAVE = true;
+  try {
+    const b = builderLegs(true);                        // a game whose puck dropped during the read leaves the builder too (the clock's, stored later)
+    if (b.msgs.length) slipSay(b.msgs.join(' '), 9000, !b.length);
+    rerender(); card = cardAfterRead(at);
+  } finally { NO_SAVE = false; }
+  if (top !== null && btn.getBoundingClientRect) { const dy = btn.getBoundingClientRect().top - top; if (dy && typeof window.scrollBy === 'function') window.scrollBy(0, dy); }
+  oddsSay((broke ? `ESPN's answer could not be read whole at ${hhmm(at)}: ${r.read ? `${plural(r.read, 'game', 'games')} took the new line, the rest stand as shown` : 'every line stands as shown'}.` : oddsText(r)) + card);
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-odds]'); if (b) refreshOdds(b); });
+
 /* ---------- Record ---------- */
 function renderRecord() {
   const R = S.record; const f = S.model.fitted;
@@ -1879,6 +2220,7 @@ async function boot() {
   $('stamp').innerHTML = `${S.season - 1}-${String(S.season).slice(2)} season${phase === 'postseason' ? ' · the playoffs' : phase === 'over' && S.playoff.champion ? ' · ' + esc(T(S.playoff.champion).short) + ' won the Cup' : ''} · ${S.record.su.w}-${S.record.su.l} SU, ${S.record.pl.w}-${S.record.pl.l} puck line, ${S.record.ou.w}-${S.record.ou.l} totals`;
   $('stamp').insertAdjacentHTML('afterend', `<span class="small muted">published ${esc(dateClock(S.published))} · </span>`);
   pruneLegs();                  // the builder as this state allows it, on whichever tab opens: no leg on a game started, gone or moved
+  oddsIdle();                   // Refresh odds' status line: when the lines shown were published, until a press
   const h = tabName(location.hash.slice(1));
   showTab(h && $('tab-' + h) ? h : (P.ui.tab && $('tab-' + P.ui.tab) ? P.ui.tab : 'games'));
   autoLive();

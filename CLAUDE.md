@@ -46,6 +46,8 @@ These are rebuilt from source on every scheduled run, so an edit to one is lost 
 
 `data/history.json` (pulled once by `tools/history.js`) and `data/model.json` (written by
 `tools/fit.js`) are source: they change only with a deliberate pull or refit, committed with it.
+`tools/fixtures/espn_scoreboard.json` is source too: ESPN's scoreboard as recorded on 15 October 2026,
+trimmed to what the parsers read, which the smoke test holds the page's Refresh odds parse to.
 
 ## The loop
 
@@ -158,7 +160,8 @@ book and one with no book named, and the panel's empty states on made-up copies 
 started, no line, a two-game night, every game alike); only `state.json` and ESPN are read and only
 `nhl_v1` written. Every rule is an invariant of the state it is given, so it passes on any day: the
 games it plants on or clicks are taken from the day the panel shows (the Day control set where it needs a
-day kept), never from the whole schedule. `NHL_HTML`
+day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
+on a scoreboard it answers from the state, never the real feed. `NHL_HTML`
 tries another page in place of `index.html`. The season is the Eastern date's
 (`E.seasonOf`), nowhere else. Between seasons the first run from August closes the old one into
 `data/season_<year>.json` (read beside `history.json` by `tools/hist.js`), so its results stay in
@@ -260,6 +263,47 @@ second bet on a game replaces the first, said in the builder and on the slip bar
 games fold, `day`) and, until the builder is next drawn, `ui.bmsg`; a saved parlay keeps `dec` and `fair`
 and, once settled, `graded`, and a saved leg on a game called off `void`.
 
+### Refresh odds
+
+The job reads DraftKings' game lines only when it runs, so a line on the page can be hours old by puck drop
+(the owner's ask, 15 October 2026: "a refresh odds button that will pull the live lines on demand ... rather
+than like a constant job"). **Refresh odds** (on the Games toolbar and under the Parlay Builder panel's
+heading, 44px, with one `aria-live` status line beside each) reads ESPN's free scoreboard in the browser
+(`?dates=YYYYMMDD&limit=100&_=<now>`, no-store, no custom header, so no preflight: ESPN answers with
+`access-control-allow-origin: *`) for every day the Games strip shows from today on with a game still to
+come, and nothing else: never on load, never on the watch or a timer. Each game's odds are taken by `ESPN`
+in `index.html`, which is `tools/espn.js`'s `oddsOf` and `dkOf` word for word, and DraftKings' ids come with
+the line by `carryDk`, the carry rule, which lives in `tools/espn.js` for the job's `update.js` and the page
+alike (ESPN's fresh ids, or the line before's for the same numbers when the answer has none). The call's
+parts that stand on the price follow by the job's `callOf`: the moneyline's edges and side; the puck line's
+and the total's chances kept where the number holds and worked again where it moved by `MODEL`, which is
+`tools/elo.js`'s goals layer word for word, on the row's own total, margin and gap; their edges and sides. A
+market whose number and both prices hold keeps its parts exactly (the job worked its edges on unrounded
+chances). A game takes the new line only while it is still to come by the visitor's clock and by ESPN's word
+(one whose puck drop passes during the read, that ESPN has under way or over, or that ESPN has postponed or
+cancelled keeps its line: the job takes a game called off away at its next run), only where the read is newer
+than the line it replaces, and only where ESPN gave odds: a failed request, a junk answer, a game left out of
+the answer or with no odds keeps its published line, and the status line counts each ("DraftKings' lines from
+ESPN, read 9:12 PM EDT: 5 games, 2 moved since the last read. 1 game had no line at ESPN: its published line
+stands. 1 game is postponed at ESPN: its published line stands until the job takes it off."). A line read so
+is fresh (`line.refreshed`, in the page's memory alone; the job never writes it, and the smoke fails a state
+that carries it), and the Games cards, the levels, the builder, the card's DraftKings link and the panel's "as
+read" line all follow. The levels' cache keys on the reads that moved what they stand on (`ODDS.v`, unmoved by
+a read that changed nothing), and each level keeps the visitor's place through a read (`pbCarry`): a lock
+holds while its leg still qualifies at its number, New legs keeps the legs it has shown, and the level is
+worked again on the new prices. The builder draws its legs on the new lines (a moved price updated, a moved
+number out, said once with the read's time) but keeps them stored as they were, so nothing a read changed
+reaches `nhl_v1` on a later save. A parlay card open during a read is drawn again on the new prices and ids
+(said in the card), or closed when one of its legs moved or came off (said in the status line). It is all in
+memory: the press writes nothing to any storage (`NO_SAVE` while it redraws), and a reload brings back the
+published state, the builder's legs at their published prices with nothing said changed. A press while a read
+runs does nothing; a second press reads again. The smoke's REFRESH ODDS holds it with rules of its own: the
+page's parse equal to the job's on the recorded answers in `tools/fixtures`, variants of them and the answers
+the run saved; the page's carry rule equal to `tools/espn.js`'s on a table of cases; the page's goals layer
+equal to `tools/elo.js`'s, number for number; games ESPN has under way, postponed and cancelled kept as
+published; the store after a later save and a reload on it; a lock and New legs through a read where nothing
+moved and one where every price moved, by brute force; and a card open through a read.
+
 On a phone (640px or less) the Day and Build from choices share one row equally, the Bet types and the
 game tiles go two a row, and nothing on any tab is wider than the screen (the Record tables scroll inside
 their card; the playoff bracket drops its points, which the odds table shows).
@@ -297,7 +341,8 @@ outrank what the job published:
   made: the parlay builder's legs, the parlays they saved, their stake, their picks on the Parlay
   Builder and the tab they were on, under one key, `nhl_v1`. Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture and
   the record are read from `state.json` on every load. A leg whose game has started leaves the
-  builder: its price is gone.
+  builder: its price is gone. The lines Refresh odds reads from ESPN live in the page's memory alone,
+  never in storage, so a reload is the published state again.
 - **A routine run is silent.** The job publishes up to five times a day; the page's stamp says when,
   and that is all. Only a model change is worth a banner. What the page does say is when a source the
   calls stand on is not the latest (an injury report carried from an earlier run, no injury report,
@@ -306,7 +351,8 @@ outrank what the job published:
   (`nhl vN · YYYY-MM-DD`), so any change to the page bumps it. Without it a stale copy cannot be
   told from a current one.
 - **Data fetches are `cache: 'no-store'`.** `state.json` (with a `?t=` on it too) and ESPN's
-  scoreboard, which the page reads itself on opening for a game under way. The HTML is served by
+  scoreboard, which the page reads itself on opening for a game under way and, for the odds, only on a
+  press of Refresh odds (with a cache-buster too). The HTML is served by
   GitHub Pages with its own ten-minute cache, which a reload clears; nothing else may hold data
   longer than that.
 

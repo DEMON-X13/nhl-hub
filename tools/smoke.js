@@ -2244,6 +2244,22 @@ function sModelP(M, l) {
   if (!D) return null;
   return l.mk === 'yes' ? atLeastS(D, l.k) : l.side === 'over' ? atLeastS(D, Math.floor(+l.line) + 1) : 1 - atLeastS(D, Math.ceil(+l.line));
 }
+/* one box line as the state must carry it for grading, by this smoke's own reading: each skater on the ice and his four counts; per
+   side, a lone goalie is its starter; of two or more, the one the box file marks started only if every other made a save of his own
+   (the mark is the first save ESPN's plays name, so a starter pulled without a save, or a reliever without one, leaves it unsure):
+   then the marked one's saves in g and the rest, relief, in r; else every goalie of that side in u, graded nowhere */
+function boxRuleS(b) {
+  const s = {}, gk = {}, rel = [], uns = [], n = v => typeof v === 'number' ? v : null;
+  for (const x of b.skaters) if (x.toi > 0) s[x.id] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
+  for (const club of [b.home, b.away]) {
+    const gs = b.goalies.filter(x => x.team === club && x.toi > 0);
+    if (!gs.length) continue;
+    const marked = gs.length === 1 ? gs[0] : gs.find(x => x.st === 1);
+    const sure = !!marked && gs.every(x => x === marked || (typeof x.sa === 'number' && typeof x.ga === 'number' && x.sa > x.ga));
+    for (const x of gs) if (!sure) uns.push(x.id); else if (x === marked) gk[x.id] = typeof x.sa === 'number' && typeof x.ga === 'number' ? x.sa - x.ga : null; else rel.push(x.id);
+  }
+  return Object.assign({ s, g: gk }, rel.length ? { r: rel.sort() } : {}, uns.length ? { u: uns.sort() } : {});
+}
 async function sameGameChecks() {
   console.log('SAME-GAME PARLAYS AND PLAYER LEGS');
   const SGPJS = require('./sgp'), C = readJSON(path.join(DATA, 'corr.json'));
@@ -2259,20 +2275,23 @@ async function sameGameChecks() {
     const fin = new Map(S.games.filter(g => g.state === 'final' && g.date >= B.from && g.date <= S.today).map(g => [g.id, g]));
     for (const f of fs.readdirSync(DATA).filter(f => /^box_\d{4}\.jsonl$/.test(f) && +f.slice(4, 8) >= E.seasonOf(B.from))) for (const line of fs.readFileSync(path.join(DATA, f), 'utf8').split('\n')) {
       if (!line || !fin.has((/"id":"(\d+)"/.exec(line) || [])[1])) continue; const b = JSON.parse(line);
-      const s = {}, gk = {}, rel = [], n = v => typeof v === 'number' ? v : null;
-      for (const x of b.skaters) if (x.toi > 0) s[x.id] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
-      /* a saves prop stands on the side's starting goalie alone: the one the box file marks, else the one who played most; any other
-         goalie who played came on in relief, listed apart (his saves prop void) */
-      for (const club of [b.home, b.away]) {
-        const gs = b.goalies.filter(x => x.team === club && x.toi > 0), most = gs.reduce((a, x) => !a || x.toi > a.toi ? x : a, null), st = gs.find(x => x.st === 1) || most;
-        for (const x of gs) if (x === st) gk[x.id] = typeof x.sa === 'number' && typeof x.ga === 'number' ? x.sa - x.ga : null; else rel.push(x.id);
-      }
-      want[b.id] = Object.assign({ s, g: gk }, rel.length ? { r: rel.sort() } : {});
+      want[b.id] = boxRuleS(b);
     }
     for (const id of new Set(Object.keys(want).concat(Object.keys(B.games || {})))) if (canon(want[id] || null) !== canon((B.games || {})[id] || null)) bad.push(id);
-    const relief = Object.values(B.games || {}).reduce((a, g) => a + (Array.isArray(g.r) ? g.r.length : 0), 0);
-    chk(!bad.length, `the state's box scores are every final of the window the box files have, each skater on the ice with his goals, assists, shots and blocks, each side's starting goalie with his saves and the goalies who came on in relief apart (${Object.keys(B.games || {}).length} games, ${relief} relief appearances; ${bad.length} differ: ${bad.slice(0, 4).join(', ')})`);
+    const relief = Object.values(B.games || {}).reduce((a, g) => a + (Array.isArray(g.r) ? g.r.length : 0), 0), unsure = Object.values(B.games || {}).reduce((a, g) => a + (Array.isArray(g.u) ? g.u.length : 0), 0);
+    chk(!bad.length, `the state's box scores are every final of the window the box files have, each skater on the ice with his goals, assists, shots and blocks, each side's starting goalie with his saves, the goalies who came on in relief apart, and apart again the goalies of a side whose starter the box cannot tell (${Object.keys(B.games || {}).length} games, ${relief} relief appearances, ${unsure} goalies of uncertain start; ${bad.length} differ: ${bad.slice(0, 4).join(', ')})`);
   } else console.log('  this state carries no box scores (a publish before them): a saved player leg waits; grading is held on made-up box scores below');
+  /* the rule on a real line: CBJ at VGK, 8 January 2026 (401803043), as data/box_2026.jsonl has it. Carter Hart started for VGK and was
+     pulled at 8:24 with one shot against, a goal (ESPN's plays); Akira Schmid relieved him and made VGK's first save, so the box marks
+     Schmid. Neither's saves can be graded from the box: both in u, neither in g nor r; CBJ's lone goalie is its starter. Given a save
+     of his own, Hart is the reliever the mark says he is, and Schmid's saves stand */
+  {
+    const cv = { id: '401803043', date: '2026-01-08', home: 'VGK', away: 'CBJ', skaters: [], goalies: [{ id: '4894366', name: 'Jet Greaves', team: 'CBJ', toi: 3408, sa: 26, ga: 5, st: 1 },
+      { id: '4587845', name: 'Akira Schmid', team: 'VGK', toi: 3089, sa: 24, ga: 2, st: 1 }, { id: '4064582', name: 'Carter Hart', team: 'VGK', toi: 504, sa: 1, ga: 1 }] };
+    const r1 = boxRuleS(cv), r2 = boxRuleS(Object.assign({}, cv, { goalies: cv.goalies.map(x => x.id === '4064582' ? Object.assign({}, x, { sa: 2, ga: 1 }) : x) }));
+    chk(canon(r1.g) === canon({ 4894366: 21 }) && canon(r1.u) === canon(['4064582', '4587845']) && r1.r === undefined, `a side whose starter the box cannot tell (401803043: Hart pulled without a save, Schmid marked) grades neither goalie's saves (${canon(r1)})`);
+    chk(canon(r2.g) === canon({ 4894366: 21, 4587845: 22 }) && canon(r2.r) === canon(['4064582']) && r2.u === undefined, `a reliever with a save of his own leaves the mark sure: the starter's saves stand, the reliever's void (${canon(r2)})`);
+  }
   /* the page's copy of tools/sgp.js: the file's text between its marks, and its numbers on legs of every kind */
   const src = fs.readFileSync(path.join(__dirname, 'sgp.js'), 'utf8'), body = src.slice(src.indexOf("'use strict';\n") + 14, src.indexOf('module.exports')).replace(/^\n+|\n+$/g, '');
   const m1 = HTML.indexOf('/* sgp.js begins */\n'), m2 = HTML.indexOf('\n/* sgp.js ends */');
@@ -2317,8 +2336,54 @@ async function sameGameChecks() {
     }
     if (!G || !H) { console.log(`  no game to come today or tomorrow with a DraftKings line, a total and projections beside another with a line (${G ? G.id : 'none'}, ${H ? H.id : 'none'}): the builder's player legs are not held on this state`); return; }
     await builderPlayerLegs(M, G, H, AT);
+    await gameLegsMax(M, G, AT);
   } finally { S = real; }
   await gradingChecks(C);
+}
+/* the most legs of one game: tools/sgp.js prices up to its MAX_GAME_LEGS (its lattice's roots) and the page's GAME_LEGS_MAX is that
+   number. A store holding 23 legs of G opens with the first 21; with 21 in, a 22nd (a player's price or a team bet) is refused, said,
+   nothing stored; one taken out makes room again. The price shown is the rule's estimate on all 21, never the product */
+async function gameLegsMax(M, G, AT) {
+  const SGPJS = require('./sgp'), MAX = SGPJS.MAX_GAME_LEGS, A = propsAnswer(G), parsed = E.propsOf(A.items), pr = M.props.games[G.id];
+  const mainOf = (pid, st) => parsed.main.find(r => r[0] === String(pid) && r[1] === st);
+  const cand = [];
+  for (const [side, club] of [['awayP', G.away], ['homeP', G.home]]) for (const x of pr[side].skaters) for (const st of ['s', 'bs']) { const m = mainOf(x.id, st); if (m) cand.push({ x, club, st, m }); }
+  if (cand.length < MAX + 3) { console.log(`  ${G.id}: ${cand.length} shots and blocks lines in the made-up answer, too few to hold the most legs of one game`); return; }
+  const at0 = new Date(AT - 3600000).toISOString();
+  const legOf = c => ({ game: G.id, kind: 'prop', pid: String(c.x.id), name: c.x.name, team: c.club, grp: c.x.pos === 'D' ? 'D' : 'F', stat: c.st, mk: 'main', side: 'over', line: c.m[2], k: null, odds: c.m[3], other: c.m[4], at: at0 });
+  const errs = [], sb = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; };
+  const props = url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); };
+  const w = await boot(AT, errs, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: JSON.stringify({ legs: cand.slice(0, MAX + 2).map(legOf), ui: { tab: 'parlays' } }) }), d = w.document, $ = id => d.getElementById(id);
+  chk(w.eval('GAME_LEGS_MAX') === MAX, `the page's most legs of one game is tools/sgp.js's (${w.eval('GAME_LEGS_MAX')} vs ${MAX})`);
+  const ofG = () => JSON.parse(w.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)}).map(l => l.pid + '|' + l.stat))`));
+  const first = cand.slice(0, MAX).map(c => c.x.id + '|' + c.st);
+  chk(canon(ofG()) === canon(first), `a store holding ${MAX + 2} legs of one game opens with the first ${MAX} (${ofG().length})`);
+  const q = JSON.parse(w.eval('JSON.stringify(quote(builderLegs(false)))')), e = SGPJS.parlay(M.sgp, cand.slice(0, MAX).map(c => ({ game: G.id, team: c.club, pid: String(c.x.id), grp: c.x.pos === 'D' ? 'D' : 'F', stat: c.st, side: 'over', p: 1 - PBS.imp(c.m[4]), dec: PBS.decOf(c.m[3]) })));
+  chk(!e.refused && q.est && Math.abs(q.dec - e.dec) < 1e-9 && q.dec < q.product && typeof q.fair === 'number', `${MAX} legs of one game are priced by the rule, an estimate under the legs' prices multiplied, with a fair chance (${q.dec} vs ${q.product}, fair ${q.fair})`);
+  /* a press, the window, and the 22nd */
+  d.querySelector('#tabs button[data-tab="games"]').click();
+  const day = d.querySelector(`#days .day[data-day="${G.date}"]`); if (day) day.click();
+  d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+  $('ppRefreshOdds').click(); await oddsDone(w); await wait(20);
+  chk(canon(ofG()) === canon(first), `the press re-reads the ${MAX} legs at their lines and keeps them (${ofG().length})`);
+  const tab = st => { d.querySelector(`#ppStats button[data-pp-tab="${st}"]`).click(); };
+  const btn = c => { tab(c.st); return d.querySelector(`#ppBody button[data-pp-add="${c.x.id}|${c.st}|main|over|${c.m[2]}"]`); };
+  const nth = cand[MAX], ref = `Not added: your parlay has ${MAX} legs of ${S.teams[G.away].abbr} @ ${S.teams[G.home].abbr} already, the most of one game this page can price.`;
+  const b22 = btn(nth); if (b22) b22.click();
+  chk(!!b22 && canon(ofG()) === canon(first) && txt($('ppMsg')) === ref && btn(nth).getAttribute('aria-pressed') === 'false', `a ${MAX + 1}st leg of one game is refused, said plainly, nothing added (${txt($('ppMsg'))})`);
+  btn(cand[0]).click();
+  chk(ofG().length === MAX - 1, `one taken out leaves ${MAX - 1} (${ofG().length})`);
+  btn(nth).click();
+  chk(ofG().length === MAX && ofG().includes(nth.x.id + '|' + nth.st), `and makes room for the ${MAX + 1}st (${ofG().length})`);
+  $('ppClose').click();
+  /* a team bet past the most: refused on the slip bar, nothing stored */
+  const legsNow = canon(JSON.parse(w.localStorage.getItem('nhl_v1')).legs);
+  const ml = d.querySelector(`#games .game[data-id="${G.id}"] button[data-leg="${G.id}|home|ml"]`);
+  if (ml) {
+    ml.click();
+    chk(canon(JSON.parse(w.localStorage.getItem('nhl_v1')).legs) === legsNow && ofG().length === MAX && txt($('slipMsg')) === ref, `a team bet past the most legs of one game is refused on the slip bar, nothing stored (${txt($('slipMsg'))})`);
+  }
+  chk(!errs.length, 'no runtime error at the most legs of one game: ' + errs.join(' | '));
 }
 async function builderPlayerLegs(M, G, H, AT) {
   const T = M.sgp, A = propsAnswer(G), parsed = E.propsOf(A.items), pr = M.props.games[G.id];
@@ -2395,6 +2460,7 @@ async function builderPlayerLegs(M, G, H, AT) {
   tab('pts');
   d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|under|${xm[2]}"]`).click();
   chk(store().legs.filter(l => l.kind === 'prop').length === 1 && store().legs.find(l => l.kind === 'prop').side === 'under' && txt($('ppMsg')).startsWith(`${X.name} Under ${xm[2]} points replaced ${X.name} Over ${xm[2]} points on ${mu}: one leg a player a stat.`), `one leg a player a stat: his Under takes his Over's place, said (${txt($('ppMsg'))})`);
+  chk(txt($('slipMsg')) === `${X.name} Under ${xm[2]} points replaced ${X.name} Over ${xm[2]} points on ${mu}: one leg a player a stat.`, `and said on the slip bar, as a side bet's replacement is (${txt($('slipMsg'))})`);
   d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|under|${xm[2]}"]`).click();
   chk(!store().legs.some(l => l.kind === 'prop') && txt($('ppMsg')).startsWith(`Taken out of your parlay: ${X.name} Under ${xm[2]} points.`), `a second tap takes it out (${txt($('ppMsg'))})`);
   xb().click();
@@ -2580,8 +2646,8 @@ async function gradingChecks(C) {
   if (!F || !F2) { console.log('  fewer than two finals on two days: the grading of player legs is skipped'); return; }
   const real = S; S = M;
   try {
-    const A = '7000001', B = '7000002', Gk = '7000003', D = '7000004', R = '7000005';   // A and B skaters of F's home club, Gk the away starter, R the home club's goalie who came on in relief, D dressed for nobody
-    M.box = { from: F.date, days: 14, games: { [F.id]: { s: { [A]: [2, 1, 4, 1], [B]: [0, 0, 1, 3] }, g: { [Gk]: 30 }, r: [R] } } };
+    const A = '7000001', B = '7000002', Gk = '7000003', D = '7000004', R = '7000005', U = '7000006', U2 = '7000007';   // A and B skaters of F's home club, Gk the away starter, R the home club's goalie who came on in relief, D dressed for nobody, U and U2 two goalies of a side whose starter the box cannot tell
+    M.box = { from: F.date, days: 14, games: { [F.id]: { s: { [A]: [2, 1, 4, 1], [B]: [0, 0, 1, 3] }, g: { [Gk]: 30 }, r: [R], u: [U, U2] } } };
     const pl = (pid, team, grp, stat, mk, side, line, k, odds, other) => ({ game: F.id, kind: 'prop', pid, name: `Player ${pid.slice(-1)}`, team, grp, stat, mk, side, line, k, odds, other, at: new Date(PUB - 86400000).toISOString(), p: 0.5, fair: 0.5, label: `${F.away} @ ${F.home}`, text: '', date: F.date, start: F.start });
     const won = F.hs > F.as ? 'home' : 'away';
     const L = {
@@ -2594,23 +2660,25 @@ async function gradingChecks(C) {
       bBs: pl(B, F.home, 'D', 'bs', 'main', 'under', 3.5, null, -160, 125),           // 3 blocks under 3.5: won
       dPts: pl(D, F.home, 'F', 'pts', 'main', 'over', 0.5, null, -140, 110),          // not on the ice: void
       rSv: pl(R, F.home, 'G', 'sv', 'main', 'over', 5.5, null, -115, -105),           // came on in relief: void, did not start (his saves never graded)
+      uSv: pl(U, F.away, 'G', 'sv', 'main', 'under', 24.5, null, -115, -105),         // who started is not certain: graded nowhere (401803043's case)
+      u2Sv: pl(U2, F.away, 'G', 'sv', 'main', 'over', 21.5, null, -110, -110),        // the other goalie of that side: the same
       f3: Object.assign(pl(A, F3 ? F3.home : F.home, 'F', 's', 'main', 'over', 1.5, null, -120, -110), { game: F3 ? F3.id : F.id }),      // F3 not boxed yet: waits
       f2: Object.assign(pl(A, F2.home, 'F', 's', 'main', 'over', 1.5, null, -120, -110), { game: F2.id, date: F2.date }),                 // F2 before the window: past it
       ml: { game: F.id, side: won, kind: 'ml', odds: -130, line: null, p: 0.55, fair: 0.54, label: `${F.away} @ ${F.home}`, text: '', date: F.date, start: F.start },
     };
     const sp = (id, legs, extra) => Object.assign({ id, at: new Date(PUB - 86400000).toISOString(), stake: 10, legs, am: '+500', dec: 6, p: 0.2, imp: 0.17, fair: 0.18 }, extra || {});
-    const saved = [sp('w1', [L.aPts, L.gSv, L.ml], { est: true, dec: 4.4, product: 6.1 }), sp('l1', [L.bS, L.aG2]), sp('p1', [L.aS4, L.bBs]), sp('v1', [L.dPts, L.aG2]), sp('v2', [L.dPts]), sp('v3', [L.aPts, L.aSh, L.dPts], { est: true, dec: 3.9 }), sp('r1', [L.rSv, L.gSv]), sp('r2', [L.rSv])]
+    const saved = [sp('w1', [L.aPts, L.gSv, L.ml], { est: true, dec: 4.4, product: 6.1 }), sp('l1', [L.bS, L.aG2]), sp('p1', [L.aS4, L.bBs]), sp('v1', [L.dPts, L.aG2]), sp('v2', [L.dPts]), sp('v3', [L.aPts, L.aSh, L.dPts], { est: true, dec: 3.9 }), sp('r1', [L.rSv, L.gSv]), sp('r2', [L.rSv]), sp('u1', [L.uSv]), sp('u2', [L.u2Sv, L.bS]), sp('u3', [L.uSv, L.aPts])]
       .concat(F3 ? [sp('q1', [L.f3])] : []).concat([sp('o1', [L.f2])]);
     /* this smoke's own grading of a planted leg */
     const box = M.box.games[F.id], xOf = l => l.stat === 'sv' ? box.g[l.pid] : box.s[l.pid] && (l.stat === 'pts' ? box.s[l.pid][0] + box.s[l.pid][1] : box.s[l.pid][{ g: 0, a: 1, s: 2, bs: 3 }[l.stat]]);
     const whyS = l => l.stat === 'sv' && box.r.includes(l.pid) ? 'did not start' : 'did not play';
-    const gradeS = l => { if (l.game !== F.id) return l.game === F2.id ? 'unboxed' : 'pending'; if (l.kind !== 'prop') return l.side === won ? 'win' : 'loss'; const x = xOf(l); if (x === undefined) return 'void'; return l.mk === 'yes' ? (x >= l.k ? 'win' : 'loss') : x > l.line ? (l.side === 'over' ? 'win' : 'loss') : x < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push'; };
+    const gradeS = l => { if (l.game !== F.id) return l.game === F2.id ? 'unboxed' : 'pending'; if (l.kind !== 'prop') return l.side === won ? 'win' : 'loss'; if (l.stat === 'sv' && box.u.includes(l.pid)) return 'unsure'; const x = xOf(l); if (x === undefined) return 'void'; return l.mk === 'yes' ? (x >= l.k ? 'win' : 'loss') : x > l.line ? (l.side === 'over' ? 'win' : 'loss') : x < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push'; };
     const decS = ls => { const by = {}; for (const l of ls) by[l.game] = (by[l.game] || 0) + 1; const prod = ls.reduce((a, l) => a * PBS.decOf(l.odds), 1); if (!Object.values(by).some(n => n > 1)) return prod; return SG.parlay(M.sgp, ls.map(l => sgOf(M, l))).dec; };
-    const want = s => { const gl = s.legs.map(gradeS); const st = gl.includes('loss') ? 'loss' : gl.some(x => x === 'unboxed') ? 'gone' : gl.includes('pending') ? 'pending' : gl.every(x => x === 'push' || x === 'void') ? 'push' : 'win';
+    const want = s => { const gl = s.legs.map(gradeS); const st = gl.includes('loss') ? 'loss' : gl.some(x => x === 'unboxed' || x === 'unsure') ? 'gone' : gl.includes('pending') ? 'pending' : gl.every(x => x === 'push' || x === 'void') ? 'push' : 'win';
       const wonL = s.legs.filter((l, i) => gl[i] === 'win'); return { st, gl, pays: st === 'win' ? PBS.cents(s.stake * (s.est && wonL.length === s.legs.length ? s.dec : decS(wonL))) : null }; };
     const errs = [], w = await boot(PUB + 60000, errs, { state: JSON.stringify(M), store: JSON.stringify({ saved, ui: { tab: 'parlays' } }), hash: 'parlays' }), d = w.document;
     const cardOfS = id => [...d.querySelectorAll('#savedList .saved')].find(x => x.querySelector(`[data-del="${id}"]`));
-    const words = { win: 'won', loss: 'lost', push: 'push', pending: 'pending', void: 'void', unboxed: 'box score no longer carried' };
+    const words = { win: 'won', loss: 'lost', push: 'push', pending: 'pending', void: 'void', unboxed: 'box score no longer carried', unsure: 'who started is not certain' };
     const tagOf = { win: 'won', loss: 'lost', push: 'push: stake back', pending: 'pending', gone: "can't be graded here" };
     const stS = () => JSON.parse(w.localStorage.getItem('nhl_v1')).saved;
     for (const s of saved) {

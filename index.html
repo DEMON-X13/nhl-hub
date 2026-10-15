@@ -669,8 +669,10 @@ function stakeRead(v) {
    Refresh odds press): DraftKings' line on one player and stat as read, its price, its read time (at), the player's club and group
    (F a forward, D a defenceman, G the goalie, whose stat is saves alone), a main line's Over or Under at its number or a Yes
    milestone k+ (side over, line k - 0.5). The same-game rule (placeLeg below): one side bet a game (the moneyline or the puck line,
-   either club), one total, one leg a player a stat, and never a player's points beside his own goals or assists. Where two legs
-   share a slot the last wins; of a nested pair the first stays */
+   either club), one total, one leg a player a stat, never a player's points beside his own goals or assists, and at most
+   GAME_LEGS_MAX legs of one game (tools/sgp.js's MAX_GAME_LEGS, the most its lattice prices; the smoke holds the two equal). Where
+   two legs share a slot the last wins; of a nested pair the first stays; past the most of one game, the first stay */
+const GAME_LEGS_MAX = 21;
 const PROP_STATS = ['pts', 'g', 'a', 's', 'bs', 'sv'];
 const isProp = l => !!l && l.kind === 'prop';
 const slotOf = l => isProp(l) ? `${l.game}|p|${l.pid}|${l.stat}` : l.kind === 'ou' ? `${l.game}|tot` : `${l.game}|side`;
@@ -693,7 +695,8 @@ function cleanLegs(a) {
   for (const l of a) { if (!legShapeOk(l)) continue; const s = slotOf(l); by.delete(s); by.set(s, l); }
   const out = [];
   for (const l of by.values()) if (!out.some(o => nestedPair(o, l))) out.push(l);
-  return out;
+  const per = {};
+  return out.filter(l => (per[l.game] = (per[l.game] || 0) + 1) <= GAME_LEGS_MAX);
 }
 /* the panel's picks: the three bet types (ticked unless stored unticked), the games unticked, the games fold, the day */
 function cleanPb(u) {
@@ -1189,6 +1192,7 @@ function psd(R) {
    to miss first, LATTICE points and their antithetics) */
 const LATTICE = 4096;
 const RICHTMYER = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71].map(Math.sqrt);
+const MAX_GAME_LEGS = RICHTMYER.length + 1;     // the most legs of one game joint() works out: one root a leg after the first
 function joint(ps, R) {
   const n = ps.length;
   if (!n) return 1;
@@ -1273,7 +1277,8 @@ const decOf = am => am > 0 ? 1 + am / 100 : 1 + 100 / -am;
 /* a parlay's fair chance and DraftKings' price: legs of different games multiplied, legs of one game joined by the
    copula (their fair chances for the fair chance, their implied chances for the price, cut by the hold and never
    above the product). `est` is true when any game carries two legs or more: the price is then this file's estimate,
-   not DraftKings' own. Returns null with `refused` when the rule refuses a pair. */
+   not DraftKings' own. Returns `refused` (no price) when the rule refuses a pair, and, with `max`, when a game has more legs
+   than MAX_GAME_LEGS or its joint chance cannot be worked out: never the plain product passed off as the estimate. */
 function parlay(T, legs, hold = T.hold.sgp) {
   const byGame = new Map();
   for (const l of legs) { if (!byGame.has(l.game)) byGame.set(l.game, []); byGame.get(l.game).push(l); }
@@ -1283,10 +1288,12 @@ function parlay(T, legs, hold = T.hold.sgp) {
     const mult = ls.reduce((a, l) => a * l.dec, 1);
     const fp = ls.map(l => l.p), ip = ls.map(l => 1 / l.dec);
     if (ls.length === 1) { fair = fair === null || fp[0] === null || fp[0] === undefined ? null : fair * fp[0]; dec *= mult; games.push({ game, legs: 1, dec: mult, fair: fp[0] === undefined ? null : fp[0] }); continue; }
+    if (ls.length > MAX_GAME_LEGS) return { refused: { game, legs: ls, max: MAX_GAME_LEGS } };
     const M = corrMatrix(T, ls);
     if (!M.R) return { refused: { game, legs: M.refused.map(i => ls[i]) } };
     const P = psd(M.R); lam = Math.max(lam, P.lam);
-    const fj = fp.some(p => p === null || p === undefined) ? null : joint(fp, P.R), ij = joint(ip, P.R);
+    const noFair = fp.some(p => p === null || p === undefined), fj = noFair ? null : joint(fp, P.R), ij = joint(ip, P.R);
+    if (!(typeof ij === 'number' && isFinite(ij)) || (!noFair && !(typeof fj === 'number' && isFinite(fj)))) return { refused: { game, legs: ls, max: MAX_GAME_LEGS } };
     const d = ij > 0 ? Math.min(mult, hold / ij) : mult;
     fair = fair === null || fj === null ? null : fair * fj; dec *= d; est = true;
     games.push({ game, legs: ls.length, dec: d, product: mult, fair: fj, implied: ij, lam: P.lam });
@@ -1294,7 +1301,7 @@ function parlay(T, legs, hold = T.hold.sgp) {
   return { fair, dec, est, lam, games };
 }
 /* sgp.js ends */
-  return { Phi, phi, invNorm, bvnu, both, cholesky, psd, joint, LATTICE, latent, keyOf, rhoLat, rho, corrMatrix, parlay, implied, decOf, PD_TOL };
+  return { Phi, phi, invNorm, bvnu, both, cholesky, psd, joint, LATTICE, MAX_GAME_LEGS, latent, keyOf, rhoLat, rho, corrMatrix, parlay, implied, decOf, PD_TOL };
 })();
 /* the same-game table and hold the job published (S.sgp, data/corr.json's), or null: then one leg a game, as before */
 const sgpT = () => S && isObj(S.sgp) && isObj(S.sgp.rho) && isObj(S.sgp.hold) && +S.sgp.hold.sgp > 0 && +S.sgp.hold.sgp <= 1 ? S.sgp : null;
@@ -1324,7 +1331,7 @@ function quote(legs) {
   if (!sg) for (const L of legs) { p = p === null || L.p === null ? null : p * L.p; d *= L.dec; f = f === null || L.fair === null ? null : f * L.fair; }
   else {
     const r = SGP.parlay(T, legs.map(L => sgpLeg(L, L.fair)));
-    if (r.refused) { d = product; f = null; p = null; }                 // never held: placeLeg refuses every pair the rule does
+    if (r.refused) { d = product; f = null; p = null; }                 // never held: placeLeg refuses every pair the rule does, and a game's legs past GAME_LEGS_MAX
     else {
       f = r.fair; d = r.dec; est = r.est; lam = r.lam;
       p = legs.every(L => L.p !== null && L.p !== undefined) ? SGP.parlay(T, legs.map(L => sgpLeg(L, L.p))).fair : null;
@@ -1396,8 +1403,9 @@ const descStored = (l, g) => isProp(l) ? `${l.name || `ESPN athlete ${l.pid}`} $
 const sgWhyNot = g => !sgpT() ? 'this publish carries no same-game table' : g && g.line && !isDK(g.line) ? `its lines are at ${bookName(g.line)}, and a same-game parlay is priced here on DraftKings' prices alone` : '';
 /* a leg into the builder by the same-game rule: one side bet a game (the moneyline or the puck line, either club), one total, one leg
    a player a stat (a second takes the first's place, said); a player's points beside his own goals or assists refused (said); one leg
-   a game where sgWhyNot says why. What DraftKings takes on one ticket is DraftKings' to say: where this page is unsure (the points with
-   his own goals or assists) it refuses. Returns { msg } (what was replaced, or '') or { refused } */
+   a game where sgWhyNot says why; and no more than GAME_LEGS_MAX legs of one game, the most the same-game rule prices (refused, said).
+   What DraftKings takes on one ticket is DraftKings' to say: where this page is unsure (the points with his own goals or assists) it
+   refuses. Returns { msg } (what was replaced, or '') or { refused } */
 function placeLeg(nl, g) {
   const mine = P.legs.filter(l => l.game === nl.game), why = sgWhyNot(g);
   let gone, rule;
@@ -1410,6 +1418,8 @@ function placeLeg(nl, g) {
     }
     gone = mine.filter(l => slotOf(l) === slotOf(nl) && legIdOf(l) !== legIdOf(nl));
     rule = isProp(nl) ? 'one leg a player a stat' : nl.kind === 'ou' ? 'one total a game' : 'one side bet a game (the moneyline or the puck line)';
+    if (mine.filter(l => !gone.includes(l) && legIdOf(l) !== legIdOf(nl)).length + 1 > GAME_LEGS_MAX)
+      return { refused: `Not added: your parlay has ${GAME_LEGS_MAX} legs of ${matchup(g)} already, the most of one game this page can price.` };
   }
   P.legs = P.legs.filter(l => !gone.includes(l) && legIdOf(l) !== legIdOf(nl)).concat([nl]);
   return { msg: gone.length ? `${descStored(nl, g)} replaced ${gone.map(l => descStored(l, g)).join(' and ')} on ${matchup(g)}: ${rule}.` : '' };
@@ -1812,7 +1822,8 @@ document.addEventListener('click', e => {
   else {
     if (!g || hasStarted(g) || !freshLine(g)) { rerender(); return; }        // a page left open past puck drop, or a line gone: no bet
     const L = cur; if (!L) return;
-    const { msg } = placeLeg(storeLeg(L), g);          // by the same-game rule: a second side bet or total on a game takes the first's place
+    const { msg, refused } = placeLeg(storeLeg(L), g);   // by the same-game rule: a second side bet or total on a game takes the first's place
+    if (refused) { BMSG = [refused]; slipSay(refused); rerender(); return; }   // past the most legs of one game: nothing changes
     BMSG = []; builderLegs(true);                       // in the builder's order, every other leg read again
     if (msg) { BMSG.unshift(msg); slipSay(msg); }
   }
@@ -2001,11 +2012,13 @@ $('clearParlay').addEventListener('click', () => {
    (S.box: each player who was on the ice, his goals, assists, shots on goal and blocked shots, each side's starting goalie's saves;
    points are goals plus assists): Over or Under its line (a whole line can push), a Yes milestone k+ at k or more; a player not on
    the ice void, as DraftKings voids him, and a goalie's saves void unless he started (pulled or not), as the books settle a goalie
-   prop: one who came on in relief (S.box's r) is "void: did not start". A final whose box score is not read yet waits; one older
-   than the box scores carried, never graded on this device, cannot be graded here. Its grade, once made, is written into the saved
-   leg (res: {grade, x, at}) and holds from then on.
+   prop: one who came on in relief (S.box's r) is "void: did not start". The goalies of a side whose starter the box score cannot
+   tell (S.box's u: a side that used two goalies, one of them without a save, so the first save ESPN's plays name may be the
+   reliever's) have no saves graded: "who started is not certain", and the parlay cannot be graded here. A final whose box score
+   is not read yet waits; one older than the box scores carried, never graded on this device, cannot be graded here. Its grade,
+   once made, is written into the saved leg (res: {grade, x, at}) and holds from then on.
    A same-game parlay pays its estimated price; with a leg void or pushed it is priced again on the legs left, the same way */
-const GONE_LEG = new Set(['gone', 'unboxed', 'nostat']);
+const GONE_LEG = new Set(['gone', 'unboxed', 'nostat', 'unsure']);
 function gradeLeg(l) {
   if (isObj(l.void)) return 'void';
   if (isProp(l) && isObj(l.res) && /^(win|loss|push|void)$/.test(l.res.grade)) return l.res.grade;
@@ -2029,8 +2042,9 @@ function gradeProp(l, g) {
   if (!isObj(b)) return typeof B.from === 'string' && g.date < B.from ? 'unboxed' : 'pending';
   const settle = (grade, x, why) => { l.res = Object.assign({ grade, x, at: S.published }, why ? { why } : {}); SAVED_DIRTY = true; return grade; };
   let x;
-  if (l.stat === 'sv') {                                     // b.g: each side's starting goalie; b.r: the goalies who came on in relief, whose saves prop is void
-    const v = isObj(b.g) ? b.g[String(l.pid)] : undefined;
+  if (l.stat === 'sv') {                                     // b.g: each side's starting goalie; b.r: the goalies who came on in relief, whose saves prop is void;
+    const v = isObj(b.g) ? b.g[String(l.pid)] : undefined;  // b.u: the goalies of a side whose starter the box cannot tell, graded nowhere
+    if (v === undefined && Array.isArray(b.u) && b.u.map(String).includes(String(l.pid))) return 'unsure';
     if (v === undefined) return settle('void', null, Array.isArray(b.r) && b.r.map(String).includes(String(l.pid)) ? 'did not start' : 'did not play');
     x = v;
   }
@@ -2085,7 +2099,7 @@ function renderSaved() {
     const p = sp.p === null || sp.p === undefined ? NaN : +sp.p, imp = +sp.imp || 1 / d, fair = sp.fair === null || sp.fair === undefined ? null : +sp.fair;
     const legs = sp.legs.map((l, i) => {
       const g = gameById()[l.game], gl = gr.legs[i], res = isProp(l) && isObj(l.res) ? l.res : null;
-      const word = gl === 'void' && !isObj(l.void) && res && res.why ? `void: ${res.why}` : { win: 'won', loss: 'lost', push: 'push', pending: 'pending', void: 'void: called off', gone: 'not on the schedule', unboxed: 'box score no longer carried', nostat: 'not in the box score' }[gl] || gl;
+      const word = gl === 'void' && !isObj(l.void) && res && res.why ? `void: ${res.why}` : { win: 'won', loss: 'lost', push: 'push', pending: 'pending', void: 'void: called off', gone: 'not on the schedule', unboxed: 'box score no longer carried', nostat: 'not in the box score', unsure: 'who started is not certain' }[gl] || gl;
       const shown = res && typeof res.x === 'number' && /^(win|loss|push)$/.test(gl) ? `${word} (${res.x})` : word;
       const day = l.start ? new Date(l.start).toLocaleDateString('en-US', Object.assign({ weekday: 'short', month: 'short', day: 'numeric' }, ETZ)).replace(',', '') : l.date ? dayText(l.date).replace(',', '') : '';
       const desc = isProp(l) ? descStored(l, g) : g ? descOf(l.kind, l.side, l.line === null || l.line === undefined ? null : +l.line, g) : String(l.text || '');
@@ -3032,7 +3046,7 @@ function ppAdd(key) {
     const r = placeLeg(st, g);
     if (r.refused) { $('ppMsg').textContent = r.refused; return; }
     BMSG = []; builderLegs(true);
-    if (r.msg) BMSG.unshift(r.msg);
+    if (r.msg) { BMSG.unshift(r.msg); slipSay(r.msg); }
     said = `${r.msg ? r.msg + ' ' : ''}Added to your parlay: ${L.desc}, ${fmtOdds(L.price)}, DraftKings as read ${hhmm(L.at)}.`;
   }
   save(); rerender(); renderProps();

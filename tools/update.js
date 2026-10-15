@@ -56,9 +56,11 @@
    For the Parlay Builder's same-game legs and player legs the state carries two more things, copied, never worked out
    here: `sgp`, data/corr.json's table of how the legs of one game move together and its same-game hold (tools/corr.js
    measured it on the finished seasons; tools/sgp.js is the rule the page copies word for word), and `box`, the box score
-   of every final of the last BOX_DAYS days from data/box_<season>.jsonl, each player who was on the ice with what
-   DraftKings settles his props on (a skater's goals, assists, shots on goal and blocked shots, a starting goalie's saves; a
-   goalie who came on in relief is listed apart, his saves prop void), so the page can grade a visitor's saved player leg. */
+   of every final from BOX_DAYS days before today through today from data/box_<season>.jsonl, each player who was on the
+   ice with what DraftKings settles his props on (a skater's goals, assists, shots on goal and blocked shots, a starting
+   goalie's saves; a goalie who came on in relief is listed apart, his saves prop void; the goalies of a side whose starter
+   the box score cannot tell are listed apart again, their saves graded nowhere), so the page can grade a visitor's saved
+   player leg. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const E = require('./espn');
@@ -92,9 +94,23 @@ const BOX_DAYS = 14;                                // the finals whose box scor
    saves prop stands only on the goalie who starts, pulled or not, and is void on one who comes on in relief: the books' rule
    for goalie props as secondary sources quote it, DraftKings' among them (its house rules, filed with the Massachusetts Gaming
    Commission, could not be read from here; the conservative reading), so a reliever's saves are never carried to grade on. The
-   starter is the one the box file marks (`st`, read from ESPN's plays by fetch_box.js), else the one who played most:
-   tools/props.js's starterOf. A player not listed did not play, and a column ESPN left out is null */
-const startersOf = b => [b.home, b.away].map(t => { const gs = (b.goalies || []).filter(x => x && x.team === t && x.id && x.toi > 0); return gs.find(x => x.st) || gs.sort((x, y) => y.toi - x.toi)[0] || null; }).filter(Boolean);
+   starter is the one the box file marks (`st`: the first of the side's goalies ESPN's plays name making a save, read by
+   fetch_box.js), and the mark is certain only where every other goalie of the side made a save of his own: a starter pulled
+   with every shot he faced a goal (or before facing one) made none, so the first save is his reliever's and the mark falls on
+   the reliever (CBJ at VGK, 8 January 2026, 401803043: Carter Hart started and was pulled at 8:24 with one shot against, a
+   goal; Akira Schmid, who relieved him, carries the mark), and a late reliever who faced a shot or two without a save looks the
+   same in the box. So a side that used two goalies, any of them unmarked and without a save (or none marked), is a side whose
+   starter the box cannot tell: all its goalies go in `u`, in neither `g` nor `r`, and the page grades no saves prop on them
+   (it cannot be graded here). A side with one goalie is certain. A player not listed did not play, and a column ESPN left
+   out is null */
+const savesOf = x => typeof x.sa === 'number' && isFinite(x.sa) && typeof x.ga === 'number' && isFinite(x.ga) ? x.sa - x.ga : null;
+/* each side's goalies who played: { st: the starter, rel: the others } where the box tells, else { unsure: every one of them } */
+const sidesOf = b => [b.home, b.away].map(t => {
+  const gs = (b.goalies || []).filter(x => x && x.team === t && x.id && x.toi > 0);
+  if (gs.length < 2) return gs.length ? { st: gs[0], rel: [] } : null;
+  const st = gs.find(x => x.st), rel = gs.filter(x => x !== st);
+  return st && rel.every(x => savesOf(x) > 0) ? { st, rel } : { unsure: gs };
+}).filter(Boolean);
 function boxWindow(rows) {
   const from = addDays(TODAY, -BOX_DAYS), want = new Map(rows.filter(r => r.state === 'final' && r.date >= from && r.date <= TODAY).map(r => [r.id, r]));
   const games = {};
@@ -105,13 +121,14 @@ function boxWindow(rows) {
       let b; try { b = JSON.parse(line); } catch (e) { continue; }
       if (!b || !want.has(String(b.id))) continue;
       const n = v => typeof v === 'number' && isFinite(v) ? v : null;
-      const sk = {}, gk = {}, st = startersOf(b), rel = [];
+      const sk = {}, gk = {}, rel = [], uns = [];
       for (const x of b.skaters || []) if (x && x.id && x.toi > 0) sk[String(x.id)] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
-      for (const x of b.goalies || []) if (x && x.id && x.toi > 0) {
-        if (st.includes(x)) gk[String(x.id)] = n(x.sa) === null || n(x.ga) === null ? null : x.sa - x.ga;
-        else rel.push(String(x.id));
+      for (const side of sidesOf(b)) {
+        if (side.unsure) { uns.push(...side.unsure.map(x => String(x.id))); continue; }
+        gk[String(side.st.id)] = savesOf(side.st);
+        rel.push(...side.rel.map(x => String(x.id)));
       }
-      games[String(b.id)] = Object.assign({ s: sk, g: gk }, rel.length ? { r: rel.sort() } : {});
+      games[String(b.id)] = Object.assign({ s: sk, g: gk }, rel.length ? { r: rel.sort() } : {}, uns.length ? { u: uns.sort() } : {});
     }
   }
   const ids = Object.keys(games).sort((a, b) => { const x = want.get(a), y = want.get(b); return x.start < y.start ? -1 : x.start > y.start ? 1 : a < b ? -1 : 1; });
@@ -536,10 +553,11 @@ async function main() {
   const props = PR ? Object.assign({}, PR, { games: Object.fromEntries(Object.entries(PR.games || {}).filter(([id, g]) => toComeNow(out.find(x => x.id === id)) && Date.parse(g.start) > Date.parse(NOW))) }) : null;
   /* the Parlay Builder's same-game legs: the table of how legs of one game move together and the same-game hold, copied from
      data/corr.json (tools/corr.js wrote it from the finished seasons' box scores; tools/sgp.js is the rule the page copies), and
-     what the page needs to grade a saved player leg: the box score of every final of the last BOX_DAYS days, each player who
+     what the page needs to grade a saved player leg: the box score of every final from BOX_DAYS days ago through today, each player who
      played (on the ice at all, as DraftKings and the props ledger count it) with the four counts DraftKings settles skaters on
      (goals, assists, shots on goal, blocked shots; points are goals plus assists), each side's starting goalie's saves (shots
-     against less goals against) and the goalies who came on in relief, whose saves prop is void (boxWindow). A column ESPN left
+     against less goals against), the goalies who came on in relief, whose saves prop is void, and apart the goalies of a side whose
+     starter the box cannot tell, whose saves are graded nowhere (boxWindow). A column ESPN left
      out is null. The page writes a settled leg's grade into the visitor's saved leg, so a parlay graded while its final is
      carried stays graded after it leaves the window */
   const C = fs.existsSync(path.join(DATA, 'corr.json')) ? JSON.parse(fs.readFileSync(path.join(DATA, 'corr.json'), 'utf8')) : null;

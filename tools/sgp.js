@@ -37,7 +37,10 @@
    joint chance is Genz's BVND (exact to about 1e-15); three legs or more are Genz's separation of variables on a
    fixed Richtmyer lattice (LATTICE points, each with its antithetic), so every machine gets the same number, to
    about 1e-4. A correlation matrix that is not positive definite (the table's pairs are measured one at a time) is
-   shrunk toward independence by the least lambda that makes it so (psd()), and the lambda is reported. */
+   shrunk toward independence by the least lambda that makes it so (psd()), and the lambda is reported. The lattice
+   has one Richtmyer root a leg after the first, so one game's legs are priced up to MAX_GAME_LEGS (21) and no further:
+   past that, or wherever a joint chance cannot be worked out, parlay() refuses the game (`refused` with `max`) rather
+   than pay it at the legs' prices multiplied, and the builder never puts more than that many legs of one game together. */
 'use strict';
 
 const TWOPI = 2 * Math.PI;
@@ -141,6 +144,7 @@ function psd(R) {
    to miss first, LATTICE points and their antithetics) */
 const LATTICE = 4096;
 const RICHTMYER = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71].map(Math.sqrt);
+const MAX_GAME_LEGS = RICHTMYER.length + 1;     // the most legs of one game joint() works out: one root a leg after the first
 function joint(ps, R) {
   const n = ps.length;
   if (!n) return 1;
@@ -225,7 +229,8 @@ const decOf = am => am > 0 ? 1 + am / 100 : 1 + 100 / -am;
 /* a parlay's fair chance and DraftKings' price: legs of different games multiplied, legs of one game joined by the
    copula (their fair chances for the fair chance, their implied chances for the price, cut by the hold and never
    above the product). `est` is true when any game carries two legs or more: the price is then this file's estimate,
-   not DraftKings' own. Returns null with `refused` when the rule refuses a pair. */
+   not DraftKings' own. Returns `refused` (no price) when the rule refuses a pair, and, with `max`, when a game has more legs
+   than MAX_GAME_LEGS or its joint chance cannot be worked out: never the plain product passed off as the estimate. */
 function parlay(T, legs, hold = T.hold.sgp) {
   const byGame = new Map();
   for (const l of legs) { if (!byGame.has(l.game)) byGame.set(l.game, []); byGame.get(l.game).push(l); }
@@ -235,10 +240,12 @@ function parlay(T, legs, hold = T.hold.sgp) {
     const mult = ls.reduce((a, l) => a * l.dec, 1);
     const fp = ls.map(l => l.p), ip = ls.map(l => 1 / l.dec);
     if (ls.length === 1) { fair = fair === null || fp[0] === null || fp[0] === undefined ? null : fair * fp[0]; dec *= mult; games.push({ game, legs: 1, dec: mult, fair: fp[0] === undefined ? null : fp[0] }); continue; }
+    if (ls.length > MAX_GAME_LEGS) return { refused: { game, legs: ls, max: MAX_GAME_LEGS } };
     const M = corrMatrix(T, ls);
     if (!M.R) return { refused: { game, legs: M.refused.map(i => ls[i]) } };
     const P = psd(M.R); lam = Math.max(lam, P.lam);
-    const fj = fp.some(p => p === null || p === undefined) ? null : joint(fp, P.R), ij = joint(ip, P.R);
+    const noFair = fp.some(p => p === null || p === undefined), fj = noFair ? null : joint(fp, P.R), ij = joint(ip, P.R);
+    if (!(typeof ij === 'number' && isFinite(ij)) || (!noFair && !(typeof fj === 'number' && isFinite(fj)))) return { refused: { game, legs: ls, max: MAX_GAME_LEGS } };
     const d = ij > 0 ? Math.min(mult, hold / ij) : mult;
     fair = fair === null || fj === null ? null : fair * fj; dec *= d; est = true;
     games.push({ game, legs: ls.length, dec: d, product: mult, fair: fj, implied: ij, lam: P.lam });
@@ -246,4 +253,4 @@ function parlay(T, legs, hold = T.hold.sgp) {
   return { fair, dec, est, lam, games };
 }
 
-module.exports = { Phi, phi, invNorm, bvnu, both, cholesky, psd, joint, LATTICE, latent, keyOf, rhoLat, rho, corrMatrix, parlay, implied, decOf, PD_TOL };
+module.exports = { Phi, phi, invNorm, bvnu, both, cholesky, psd, joint, LATTICE, MAX_GAME_LEGS, latent, keyOf, rhoLat, rho, corrMatrix, parlay, implied, decOf, PD_TOL };

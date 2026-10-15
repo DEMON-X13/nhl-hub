@@ -233,10 +233,16 @@ function partB() {
      with its box score; the job reads the scores first, so it is boxed and rated in this same run */
   const fresh = real.games.filter(g => g.state === 'live').pop() || real.games.find(g => g.state === 'pre' && g.date === TODAY);
   const freshOk = !!(fresh && lastOf(fresh.home) && lastOf(fresh.away));
+  /* its home side in goal as CBJ at VGK went on 8 January 2026 (401803043, the box file's numbers): the starter pulled at 8:24 with one
+     shot against, a goal, and his reliever making the side's first save, so ESPN's plays mark the reliever; the box cannot tell who
+     started, and the state grades neither goalie's saves */
+  const PULLED = '990011';
   if (freshOk) {
     const hb = lastOf(fresh.home), ab = lastOf(fresh.away);
+    const hg = hb.goalies.filter(x => x.team === fresh.home).sort((x, y) => y.toi - x.toi)[0];
+    const homeG = [Object.assign({}, hg, { toi: 3089, sa: 24, ga: 2, st: 1 }), { id: PULLED, name: 'Pulled Starter', team: fresh.home, toi: 504, sa: 1, ga: 1 }];
     fs.writeFileSync(path.join(FX, `summary_${fresh.id}.json`), JSON.stringify(summaryOf({ home: fresh.home, away: fresh.away,
-      skaters: hb.skaters.filter(s => s.team === fresh.home).concat(ab.skaters.filter(s => s.team === fresh.away)), goalies: hb.goalies.filter(x => x.team === fresh.home).concat(ab.goalies.filter(x => x.team === fresh.away)) })));
+      skaters: hb.skaters.filter(s => s.team === fresh.home).concat(ab.skaters.filter(s => s.team === fresh.away)), goalies: homeG.concat(ab.goalies.filter(x => x.team === fresh.away)) })));
     /* its closing props at ESPN, in the feed's shape: a points line on each side's two busiest skaters, the Over first */
     const ref = id => ({ $ref: `http://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/seasons/${SEASON}/athletes/${id}?lang=en&region=us` });
     const it = (type, id, price, total) => ({ type: { id: '1', name: type }, athlete: ref(id), odds: { american: { value: price }, total: { value: String(total) } } });
@@ -304,6 +310,10 @@ function partB() {
     chk(boxedNow, `last night's final (${fresh.away}@${fresh.home}, ${fresh.date}), still under way in the published state, is boxed in the same run`);
     const pj = readJSON(path.join(B, 'players.json'));
     chk(pj.teams[fresh.home].lastBox === fresh.date && pj.asOf >= fresh.date, `and the lineups are rated through it (${fresh.home} last box ${pj.teams[fresh.home].lastBox}, ratings as of ${pj.asOf})`);
+    const fb = (readJSON(STB).box || { games: {} }).games[String(fresh.id)], hg = (fs.readFileSync(boxFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).find(b => b.id === String(fresh.id)) || { goalies: [] }).goalies.filter(x => x.team === fresh.home);
+    const marked = hg.filter(x => x.st).map(x => x.id), both = hg.map(x => x.id).sort();
+    chk(!!fb && marked.length === 1 && marked[0] !== PULLED && both.includes(PULLED) && JSON.stringify(fb.u) === JSON.stringify(both) && both.every(id => !(id in fb.g) && !(fb.r || []).includes(id)),
+      `a starter pulled before his first save (401803043's numbers on ${fresh.home}): the plays mark his reliever, and the state grades neither goalie's saves, both in u (${fb ? JSON.stringify({ g: fb.g, r: fb.r, u: fb.u }) : 'no box'}, marked ${marked})`);
   }
   const again = fs.existsSync(boxFile) ? fs.readFileSync(boxFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
   /* each player's fields, key order aside; `sog` was the old files' misread shootout column, never kept since */

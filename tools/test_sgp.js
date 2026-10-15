@@ -2,7 +2,7 @@
    integral, the lattice's joint chance against BVND and a long Monte Carlo, the shrink to positive definite), its
    reading of legs (an Under, a +1.5, the other club's win, the refusals, symmetry), data/corr.json against the keys
    sgp.js can ask for, and the price rule (games multiplied, one game's legs joined, the hold, never above the
-   product). About five seconds.
+   product; 21 legs of one game priced, a 22nd refused). About ten seconds.
 
     node tools/test_sgp.js        must end "0 failures" */
 'use strict';
@@ -98,6 +98,19 @@ const d = am => S.decOf(am), L = (leg, p, am) => Object.assign({}, leg, { p, dec
   ok(x.games.length === 2 && x.games[0].legs === 3 && x.est, 'three legs of one game and one of another');
   near(x.fair, S.joint([0.6, 0.35, 0.5], S.corrMatrix(T, [A1, B2, C3]).R) * 0.3, 1e-12, 'its fair chance: the game\'s joint times the other leg'); }
 { const x = S.parlay(T, [L(A1, null, -170), L(mlT, 0.55, -135)]); ok(x.fair === null && x.dec > 1, 'a leg with no fair chance: the parlay has none, the price stands'); }
+/* the most legs of one game: the lattice has a root a leg after the first, so 21 legs are priced (and the lattice holds against a
+   Monte Carlo there) and a 22nd is refused, never paid at the legs' prices multiplied (which once jumped the price 534 times over) */
+{ ok(S.MAX_GAME_LEGS === 21, `the most legs of one game is 21 (${S.MAX_GAME_LEGS})`);
+  const many = n => Array.from({ length: n }, (_, i) => L(sk(String(100 + i), i % 2 ? 'BUF' : 'TOR', i % 3 ? 'F' : 'D', i % 4 < 2 ? 'pts' : 's', i % 5 ? 'over' : 'under'), 0.84 + (i % 5) * 0.025, -400 - (i % 4) * 50));
+  const at = many(21), x = S.parlay(T, at), prod = at.reduce((a, l) => a * l.dec, 1);
+  ok(!x.refused && x.est && x.dec > 1 && x.dec <= prod && typeof x.fair === 'number' && x.fair > 0, `21 legs of one game: priced, an estimate, never above the product, with a fair chance (${x.dec && x.dec.toFixed(2)} vs ${prod.toFixed(2)}, fair ${x.fair})`);
+  const M = S.corrMatrix(T, at), P = S.psd(M.R), ps = at.map(l => l.p), jl = S.joint(ps, P.R), mm = mc(ps, P.R, 300000), se = Math.sqrt(mm * (1 - mm) / 300000);
+  ok(Math.abs(jl - mm) < 4 * se + 1e-5, `21 legs: the lattice ${jl} against 300,000 draws ${mm} (se ${se})`);
+  const past = many(22), y = S.parlay(T, past);
+  ok(!!y.refused && y.refused.max === 21 && y.refused.legs.length === 22 && y.dec === undefined, `22 legs of one game: refused, no price (${JSON.stringify(y.refused && { max: y.refused.max, legs: y.refused.legs.length })})`);
+  ok(S.joint(past.map(l => l.p), S.psd(S.corrMatrix(T, past).R).R) === null, 'the joint chance of 22 legs is not worked out (null), and parlay() reads that as a refusal');
+  const mixed = S.parlay(T, many(21).concat(many(5).map(l => Object.assign({}, l, { game: 'G2' }))));
+  ok(!mixed.refused && mixed.games.length === 2, 'the most is a game\'s: 21 legs of one game beside 5 of another are priced'); }
 
 console.log(`test_sgp: ${n} checks, ${fails} failures`);
 process.exit(fails ? 1 : 0);

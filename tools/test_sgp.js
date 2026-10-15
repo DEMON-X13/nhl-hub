@@ -2,7 +2,7 @@
    integral, the lattice's joint chance against BVND and a long Monte Carlo, the shrink to positive definite), its
    reading of legs (an Under, a +1.5, the other club's win, the refusals, symmetry), data/corr.json against the keys
    sgp.js can ask for, and the price rule (games multiplied, one game's legs joined, the hold, never above the
-   product; 21 legs of one game priced, a 22nd refused). About ten seconds.
+   product; 21 legs of one game priced, a 22nd refused). About five seconds.
 
     node tools/test_sgp.js        must end "0 failures" */
 'use strict';

@@ -671,7 +671,7 @@ function stakeRead(v) {
    milestone k+ (side over, line k - 0.5). The same-game rule (placeLeg below): one side bet a game (the moneyline or the puck line,
    either club), one total, one leg a player a stat, never a player's points beside his own goals or assists, and at most
    GAME_LEGS_MAX legs of one game (tools/sgp.js's MAX_GAME_LEGS, the most its lattice prices; the smoke holds the two equal). Where
-   two legs share a slot the last wins; of a nested pair the first stays; past the most of one game, the first stay */
+   two legs share a slot the last wins; of a nested pair the first stays; of more than the most of one game, the first that many stay */
 const GAME_LEGS_MAX = 21;
 const PROP_STATS = ['pts', 'g', 'a', 's', 'bs', 'sv'];
 const isProp = l => !!l && l.kind === 'prop';

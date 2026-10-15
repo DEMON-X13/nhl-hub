@@ -2133,15 +2133,16 @@ async function playerPropsChecks() {
 /* ================= SAME-GAME PARLAYS AND PLAYER LEGS =================
    The builder's player legs (a DraftKings price from the props window, after a press) and its same-game legs, held with rules of their
    own: the state's same-game table and hold are data/corr.json's, and its box scores the box files' (each final of the window, each
-   player on the ice); the page's copy of tools/sgp.js is the file's word for word and gives its numbers; on a made-up copy of the state
+   player on the ice, a side whose starter the box cannot tell apart), both required of any state but the last published one
+   unchanged; the page's copy of tools/sgp.js is the file's word for word and gives its numbers; on a made-up copy of the state
    carrying the table (as the job's next publish does), a press, and every DraftKings price in the window a 44px button that puts that
    leg in the builder at its price, dated by its read; the same-game rule (a second side bet or total replaces the first, one leg a player
-   a stat, a player's points beside his own goals refused, each said); the price of a game's legs worked out here again from the table and
+   a stat, a player's points beside his own goals refused, at most 21 legs of one game, each said); the price of a game's legs worked out here again from the table and
    the hold (an exact bivariate normal for two legs, a Monte Carlo of two million draws beyond), never above the legs' prices multiplied,
    est. wherever it shows; DraftKings' fair chance first, the props model's chance on trial and never an edge; the card, its note, image
    and Share text (a player leg to add by hand); nothing of the read stored but the legs added; a reload at their read prices, dated; a
    later read re-pricing, moving and pulling them (said once, nothing stored); the puck drop; the levels as they were; and saved parlays'
-   player legs graded from planted box scores (won, lost, a push, void, waiting, past the window), the grades kept */
+   player legs graded from planted box scores (won, lost, a push, void, waiting, past the window, a start not certain), the grades kept */
 const SG = (() => {
   /* the standard normal, written here again by another road: erf's series near 0, erfc's continued fraction beyond */
   function erfc(x) {
@@ -2248,6 +2249,7 @@ function sModelP(M, l) {
    side, a lone goalie is its starter; of two or more, the one the box file marks started only if every other made a save of his own
    (the mark is the first save ESPN's plays name, so a starter pulled without a save, or a reliever without one, leaves it unsure):
    then the marked one's saves in g and the rest, relief, in r; else every goalie of that side in u, graded nowhere */
+const isObjS = x => !!x && typeof x === 'object' && !Array.isArray(x);
 function boxRuleS(b) {
   const s = {}, gk = {}, rel = [], uns = [], n = v => typeof v === 'number' ? v : null;
   for (const x of b.skaters) if (x.toi > 0) s[x.id] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
@@ -2265,10 +2267,16 @@ async function sameGameChecks() {
   const SGPJS = require('./sgp'), C = readJSON(path.join(DATA, 'corr.json'));
   chk(!!C && !!C.rho && !!C.hold && C.hold.sgp > 0 && C.hold.sgp <= 1, 'data/corr.json holds the same-game table and hold');
   if (!C) return;
-  /* the state against its sources: the table and hold are corr.json's; the box scores are the box files', every final of the window */
-  if (S.sgp) chk(canon(S.sgp.rho) === canon(C.rho) && canon(S.sgp.hold) === canon(C.hold), `the state's same-game table and hold are data/corr.json's (${Object.keys(S.sgp.rho || {}).length} pairs, hold ${S.sgp.hold && S.sgp.hold.sgp})`);
-  else console.log('  this state carries no same-game table (a publish before it): the page takes one leg a game; the rule is held on a made-up copy below');
-  if (S.box) {
+  /* the state against its sources: the table and hold are corr.json's; the box scores are the box files', every final of the window.
+     The job writes both on every run once data/corr.json is in the repo, so the state under test must carry them: a job that stopped
+     would leave the page one leg a game and every saved player leg pending for good. Only the last published state itself, unchanged
+     (a run that found nothing new, or a checkout before the first run that carried them), may be without */
+  const asPublished = !!PREV && JSON.stringify(PREV) === JSON.stringify(S);
+  if (S.sgp || !asPublished) chk(isObjS(S.sgp) && canon(S.sgp.rho) === canon(C.rho) && canon(S.sgp.hold) === canon(C.hold), `the state carries the same-game table and hold, data/corr.json's (${S.sgp ? Object.keys(S.sgp.rho || {}).length + ' pairs, hold ' + (S.sgp.hold && S.sgp.hold.sgp) : 'none: the job wrote no sgp'})`);
+  else console.log('  this state is the last published one and carries no same-game table (a publish before it): the page takes one leg a game; the rule is held on a made-up copy below');
+  if (!S.box && !asPublished) chk(false, 'the state carries the box scores of the window (none: the job wrote no box, so a saved player leg would wait for good)');
+  if (S.box && !(isObjS(S.box) && isObjS(S.box.games))) chk(false, `the state's box scores are { from, days, games } (${canon(S.box).slice(0, 80)})`);
+  if (isObjS(S.box) && isObjS(S.box.games)) {
     const B = S.box, want = {}, bad = [];
     const from = (() => { const x = new Date(S.today + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - (+B.days || 0)); return x.toISOString().slice(0, 10); })();
     chk(B.from === from && B.days === 14, `the box scores carried are the finals from ${from}, the 14 days before ${S.today} (${B.from}, ${B.days})`);
@@ -2280,7 +2288,7 @@ async function sameGameChecks() {
     for (const id of new Set(Object.keys(want).concat(Object.keys(B.games || {})))) if (canon(want[id] || null) !== canon((B.games || {})[id] || null)) bad.push(id);
     const relief = Object.values(B.games || {}).reduce((a, g) => a + (Array.isArray(g.r) ? g.r.length : 0), 0), unsure = Object.values(B.games || {}).reduce((a, g) => a + (Array.isArray(g.u) ? g.u.length : 0), 0);
     chk(!bad.length, `the state's box scores are every final of the window the box files have, each skater on the ice with his goals, assists, shots and blocks, each side's starting goalie with his saves, the goalies who came on in relief apart, and apart again the goalies of a side whose starter the box cannot tell (${Object.keys(B.games || {}).length} games, ${relief} relief appearances, ${unsure} goalies of uncertain start; ${bad.length} differ: ${bad.slice(0, 4).join(', ')})`);
-  } else console.log('  this state carries no box scores (a publish before them): a saved player leg waits; grading is held on made-up box scores below');
+  } else if (!S.box) console.log('  this state is the last published one and carries no box scores (a publish before them): a saved player leg waits; grading is held on made-up box scores below');
   /* the rule on a real line: CBJ at VGK, 8 January 2026 (401803043), as data/box_2026.jsonl has it. Carter Hart started for VGK and was
      pulled at 8:24 with one shot against, a goal (ESPN's plays); Akira Schmid relieved him and made VGK's first save, so the box marks
      Schmid. Neither's saves can be graded from the box: both in u, neither in g nor r; CBJ's lone goalie is its starter. Given a save
@@ -2355,11 +2363,15 @@ async function gameLegsMax(M, G, AT) {
   const props = url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); };
   const w = await boot(AT, errs, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: JSON.stringify({ legs: cand.slice(0, MAX + 2).map(legOf), ui: { tab: 'parlays' } }) }), d = w.document, $ = id => d.getElementById(id);
   chk(w.eval('GAME_LEGS_MAX') === MAX, `the page's most legs of one game is tools/sgp.js's (${w.eval('GAME_LEGS_MAX')} vs ${MAX})`);
-  const ofG = () => JSON.parse(w.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)}).map(l => l.pid + '|' + l.stat))`));
-  const first = cand.slice(0, MAX).map(c => c.x.id + '|' + c.st);
+  const ofG = () => JSON.parse(w.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)}).map(l => l.pid + '|' + l.stat))`)).sort();     // as a set: the builder keeps its own order
+  const first = cand.slice(0, MAX).map(c => c.x.id + '|' + c.st).sort();
   chk(canon(ofG()) === canon(first), `a store holding ${MAX + 2} legs of one game opens with the first ${MAX} (${ofG().length})`);
-  const q = JSON.parse(w.eval('JSON.stringify(quote(builderLegs(false)))')), e = SGPJS.parlay(M.sgp, cand.slice(0, MAX).map(c => ({ game: G.id, team: c.club, pid: String(c.x.id), grp: c.x.pos === 'D' ? 'D' : 'F', stat: c.st, side: 'over', p: 1 - PBS.imp(c.m[4]), dec: PBS.decOf(c.m[3]) })));
-  chk(!e.refused && q.est && Math.abs(q.dec - e.dec) < 1e-9 && q.dec < q.product && typeof q.fair === 'number', `${MAX} legs of one game are priced by the rule, an estimate under the legs' prices multiplied, with a fair chance (${q.dec} vs ${q.product}, fair ${q.fair})`);
+  /* the legs the page hands the rule, in its order, are this smoke's reading of the stored legs; tools/sgp.js prices them as the page shows */
+  const conv = JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => sgpLeg(L, L.fair)))')), q = JSON.parse(w.eval('JSON.stringify(quote(builderLegs(false)))'));
+  const mine = cand.slice(0, MAX).map(c => ({ game: G.id, team: c.club, pid: String(c.x.id), grp: c.x.pos === 'D' ? 'D' : 'F', stat: c.st, side: 'over', p: 1 - PBS.imp(c.m[4]), dec: PBS.decOf(c.m[3]) }));
+  const key = l => l.pid + '|' + l.stat, convOk = conv.length === MAX && conv.every(c => { const m = mine.find(x => key(x) === key(c)); return m && Object.keys(m).every(k => k === 'p' || k === 'dec' ? Math.abs(c[k] - m[k]) < 1e-12 : canon(c[k]) === canon(m[k])); });
+  const e = SGPJS.parlay(M.sgp, conv), prod = mine.reduce((a, l) => a * l.dec, 1);
+  chk(convOk && !e.refused && q.est && Math.abs(q.dec - e.dec) < 1e-9 && Math.abs(q.fair - e.fair) < 1e-12 && Math.abs(q.product - prod) < 1e-6 * prod && q.dec < q.product, `${MAX} legs of one game are priced by the rule, an estimate under the legs' prices multiplied, with a fair chance (${q.dec} vs ${q.product}, fair ${q.fair})`);
   /* a press, the window, and the 22nd */
   d.querySelector('#tabs button[data-tab="games"]').click();
   const day = d.querySelector(`#days .day[data-day="${G.date}"]`); if (day) day.click();
@@ -2370,11 +2382,11 @@ async function gameLegsMax(M, G, AT) {
   const btn = c => { tab(c.st); return d.querySelector(`#ppBody button[data-pp-add="${c.x.id}|${c.st}|main|over|${c.m[2]}"]`); };
   const nth = cand[MAX], ref = `Not added: your parlay has ${MAX} legs of ${S.teams[G.away].abbr} @ ${S.teams[G.home].abbr} already, the most of one game this page can price.`;
   const b22 = btn(nth); if (b22) b22.click();
-  chk(!!b22 && canon(ofG()) === canon(first) && txt($('ppMsg')) === ref && btn(nth).getAttribute('aria-pressed') === 'false', `a ${MAX + 1}st leg of one game is refused, said plainly, nothing added (${txt($('ppMsg'))})`);
+  chk(!!b22 && canon(ofG()) === canon(first) && txt($('ppMsg')) === ref && btn(nth).getAttribute('aria-pressed') === 'false', `one more leg of a game holding ${MAX} is refused, said plainly, nothing added (${txt($('ppMsg'))})`);
   btn(cand[0]).click();
   chk(ofG().length === MAX - 1, `one taken out leaves ${MAX - 1} (${ofG().length})`);
   btn(nth).click();
-  chk(ofG().length === MAX && ofG().includes(nth.x.id + '|' + nth.st), `and makes room for the ${MAX + 1}st (${ofG().length})`);
+  chk(ofG().length === MAX && ofG().includes(nth.x.id + '|' + nth.st), `and makes room for the one refused (${ofG().length})`);
   $('ppClose').click();
   /* a team bet past the most: refused on the slip bar, nothing stored */
   const legsNow = canon(JSON.parse(w.localStorage.getItem('nhl_v1')).legs);
@@ -2637,8 +2649,9 @@ async function builderPlayerLegs(M, G, H, AT) {
 }
 /* saved parlays' player legs graded from planted box scores, by this smoke's own rule: Over or Under the line (a whole line can push), a
    Yes k+ at k or more, a player not on the ice void, a goalie who came on in relief void on his saves (the prop stands on the
-   starter alone, pulled or not); a final not boxed yet waits, one older than the box scores carried cannot be graded
-   here; a same-game parlay pays its estimated price, or on the legs left priced again by the rule */
+   starter alone, pulled or not), a goalie of a side whose starter the box cannot tell graded nowhere ("who started is not
+   certain", the parlay not graded here unless another leg lost); a final not boxed yet waits, one older than the box scores
+   carried cannot be graded here; a same-game parlay pays its estimated price, or on the legs left priced again by the rule */
 async function gradingChecks(C) {
   const M = JSON.parse(STATE); M.sgp = { rho: C.rho, hold: C.hold, measured: C.measured || null };
   const fins = M.games.filter(g => g.state === 'final' && g.hs !== null && g.hs !== g.as).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1);

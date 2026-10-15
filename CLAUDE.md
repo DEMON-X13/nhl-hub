@@ -127,14 +127,16 @@ listed in `removed` with the feed's reason.
 window it must land in at the 2.7 to 8.7 hours late GitHub started this job's runs in `nfl-hub` (the
 night's finals and the morning lines; before 7pm Eastern; the last read before 7pm at the usual
 lateness; before 10pm; the night's finals), and once on a push to `tools/` (`tools/*.js`,
-`tools/package*.json`), the page or the workflow, so a change is proved on the real feeds and the state
-is the new job's at once. (The lateness was measured over 15 runs in October 2026, before the move;
+`tools/package*.json`), the page, `data/corr.json` (a table measured again goes into the state at once) or
+the workflow, so a change is proved on the real feeds and the state is the new job's at once. (The lateness was measured over 15 runs in October 2026, before the move;
 this repo's own is not measured yet.) The simulation first: `tools/simulate.js` plays the whole job
 offline on fixtures in the feeds' own shapes. Today's real state, box scores and injury report go through the job in its order (the steps read from
 `update.yml`, so a step moved there is a step moved in the simulation) with planted cases (an injured
 top goalie, a skater out by name only, a goalie on another club's report, DailyFaceoff confirming a
 backup with its date written as midnight GMT, naming a debut and an unconfirmed goalie dated by a GMT
-stamp, a stale entry, the first night of a back to back postponed), then the refusals (a scoreboard
+stamp, a stale entry, the first night of a back to back postponed, last night's final boxed with its home starter
+pulled before his first save as 401803043's was, so the plays mark his reliever and the state grades neither goalie's
+saves), then the refusals (a scoreboard
 day unanswered, the injury report silent or empty, DailyFaceoff silent, in a new shape, or naming games
 that match nothing on the schedule); the first evening after a change (games under way and not boxed,
 the published calls an older job's, the night after a back to back to call) and rows an older job
@@ -175,15 +177,18 @@ gives the feed's reason, the state is the second pass's, a call that is the play
 margin, the page opened at a puck drop offers no bet on that game and calls the visitor's day Today,
 and a club knocked out of the playoffs has no Cup chance. Its section SAME-GAME PARLAYS AND PLAYER LEGS holds the state's
 `sgp` to data/corr.json and its `box` to the box files, the page's copy of tools/sgp.js to the file's text and numbers,
-and, on a made-up copy carrying the table, the add control, the same-game rule (allowed, replaced, refused: a player's
-points beside his own goals, and beside his own assists both ways round), the price worked out again from the table and
+and requires both of every state but the last published one unchanged (a job that stopped writing them would leave
+the page one leg a game and saved player legs pending for good), the box rule on 401803043's real goalie line (a side
+whose starter the box cannot tell, both goalies in `u`), and, on a made-up copy carrying the table, the add control, the
+same-game rule (allowed, replaced, refused: a player's points beside his own goals, and beside his own assists both ways
+round; a 22nd leg of one game, a player's or a team bet, and a store of 23 opening with 21), the price worked out again from the table and
 the hold (an exact integral for two legs, two million draws beyond), never above the product, est. everywhere, the fair
 chance (an Under main line's its own implied chance among the legs), no thin edge on a team leg beside a player leg (a
 thin one planted on a copy, marked on its own and not beside a player leg), the card, nothing stored but the legs added,
 a reload, a later read, the puck drop, the levels as they were (by brute force before any player leg, with them in the
 builder, and worked out from nothing on a reload that opens with them there, since the open page's levels are cached on
 the picks and the reads), and saved player legs graded on planted box scores (a goalie who came on in relief void, "did
-not start"). THE PARLAY BUILDER's game priced at another book is held with the same-game table there: a second leg of
+not start"; one of a side whose starter the box cannot tell "who started is not certain", the parlay not graded here). THE PARLAY BUILDER's game priced at another book is held with the same-game table there: a second leg of
 it, of a kind the rule would otherwise take beside the first, takes the first's place, one leg a game, said. Its section THE PARLAY BUILDER holds the
 builder with rules of its own, sharing nothing with the page but the state: every line's DraftKings ids in
 their shape and on their number, and the ids against the run's saved answers (`NHL_OUT`, or `tools/out`
@@ -223,10 +228,12 @@ DraftKings' player lines from the props window; one Eastern day as the slate. **
 game, team bets alone**, exactly as before. **The builder takes more than one leg of a game**: one side bet a game (the
 moneyline or the puck line, either club), its total, and player legs, one a player a stat (two stats of one player
 allowed). A second side bet on a game replaces the first, as the other side of the total does and a player's second
-line in the same stat does, each said in the builder and on the slip bar; a player's points beside his own goals or
-assists are refused, said ("nearly one bet": every goal or assist is a point; DraftKings may not take both on one
-ticket, and where this page is unsure what DraftKings allows it refuses). A game priced at another book, or a publish
-with no same-game table, takes one leg a game, as before. Legs of different games multiply (their chances, and
+line in the same stat does, each said in the builder and on the slip bar (a player's in the props window too); a player's
+points beside his own goals or assists are refused, said ("nearly one bet": every goal or assist is a point; DraftKings
+may not take both on one ticket, and where this page is unsure what DraftKings allows it refuses); and a game takes at
+most 21 legs (`GAME_LEGS_MAX`, tools/sgp.js's `MAX_GAME_LEGS`: the most its lattice prices; a 22nd is refused, said, and
+a store holding more opens with the first 21). A game priced at another book, or a publish with no same-game table,
+takes one leg a game, as before. Legs of different games multiply (their chances, and
 DraftKings' prices, as it pays a parlay of different games); legs of one game are a same-game parlay, priced by the
 rule under Same-game parlays and player legs below, an estimate, and said so wherever its price shows.
 
@@ -359,24 +366,36 @@ The owner's call, 15 October 2026: "Player props in the Parlay Builders: player 
   adds that the slip will show DraftKings' own same-game price. The Share text likewise (the title "3-leg parlay +364
   (estimated price)", each player leg's read time, "Estimated price: ...; the legs' prices multiplied would be +496").
 - **Grading.** A saved player leg is graded as DraftKings settles it, from `S.box`: `update.js` carries the box score of
-  every final of the last 14 days (`BOX_DAYS`), each skater who was on the ice (`toi` above 0, as the props ledger counts
-  him) with his goals, assists, shots on goal and blocked shots (`s`), each side's starting goalie with his saves (shots
-  against less goals against; `g`) and the goalies who came on in relief (`r`); points are goals plus assists. Over or
+  every final from 14 days before today through today (`BOX_DAYS`), each skater who was on the ice (`toi` above 0, as the
+  props ledger counts him) with his goals, assists, shots on goal and blocked shots (`s`), each side's starting goalie with
+  his saves (shots against less goals against; `g`), the goalies who came on in relief (`r`) and, apart, the goalies of a
+  side whose starter the box cannot tell (`u`, below); points are goals plus assists. Over or
   Under its line (a whole line pushes), a Yes k+ at k or more, a player not on the ice void ("void: did not play"), and
   a goalie's saves void unless he started, pulled or not ("void: did not start"): the books' rule for goalie props as
   secondary sources quote it, DraftKings' among them, whose house rules could not be read from here, so the conservative
   reading (review, 15 October 2026: a reliever's 9 saves had graded an Over 24.5 lost for good; 13 of the season's first
-  198 club-sides used two goalies). The starter is the box files' mark, else the goalie who played most, props.js's
-  `starterOf`; the props ledger, a registered record, still grades every goalie who played (its own rule, unchanged
-  here). A final whose box score is not read yet waits; one older than the window, never graded on this device, "box
+  198 club-sides used two goalies). The starter is the box files' mark (`st`: the first of the side's goalies ESPN's plays
+  name making a save), and the mark is trusted only where every other goalie of the side made a save of his own: a starter
+  pulled with every shot he faced a goal (or before facing one) made none, so the first save, and the mark, is his
+  reliever's (CBJ at VGK, 8 January 2026: Carter Hart started and was pulled at 8:24 with one shot against, a goal, and
+  Akira Schmid carries the mark; review found two more such sides in 2025-26), and a late reliever with no save looks the
+  same in the box. A side that used two goalies with any unmarked one saveless (or none marked) puts all its goalies in
+  `u`, in neither `g` nor `r`: a saves leg on one of them says "who started is not certain" and the parlay can't be graded
+  here, never graded on the reliever's saves (4 to 7 sides a season of the box files' 2,800 since 2021-22, of the 150 to
+  210 that used two goalies). The props ledger, a
+  registered record, still grades every goalie who played (its own rule, unchanged here). A final whose box score is not
+  read yet waits; one older than the window, never graded on this device, "box
   score no longer carried" (the parlay can't be graded here). The grade is written into
   the saved leg (`res`) the first time the page makes it, so it holds after the final leaves the window. A same-game
   parlay pays its estimated price, or, with a leg void or pushed, the same rule on the legs left. Chose this over the page
-  fetching a box file (6.6 MB a season) or the state carrying a season's (1 MB, 200 KB gzipped): two weeks is about
-  200 KB, 35 KB gzipped, mid-season.
+  fetching a box file (6.6 MB a season) or the state carrying a season's (1 MB, 200 KB gzipped): the window is under
+  100 KB, about 20 KB gzipped, at its busiest (15 days of finals, about 120 games, mid-season).
 - **What DraftKings allows** on one same-game ticket is DraftKings' to say, and no recorded rule of theirs for hockey is
-  read here: this page refuses only what it is sure cannot be priced as two bets (one side bet a game, one total, one
-  leg a player a stat, a player's points with his own goals or assists), and the slip shows DraftKings' own verdict.
+  read here. The rule (tools/sgp.js) cannot price two legs on one latent, so the builder replaces rather than stacks them:
+  a second side bet (the moneyline or the puck line, either club), the other side of the total, a player's second line in
+  the same stat. It refuses outright only a player's points beside his own goals or assists, which the rule could price
+  (0.93 and 0.95, nested) but DraftKings may not take on one ticket, and more than 21 legs of one game, which the rule
+  cannot price; the slip shows DraftKings' own verdict.
 
 The table (data/corr.json, `node tools/corr.js`; its header says how): the tetrachoric correlation of two legs of one
 game at the lines DraftKings posts (goals, assists and points at 0.5; shots, blocks, saves and the total at the half
@@ -398,7 +417,7 @@ of real lines the copula's log loss beat the product's in all 12 groups (2026 pl
 expected 81, the product 63). **The hold is untested on hockey**: no DraftKings same-game price for the NHL has been
 recorded anywhere this hub can read (ESPN's feed carries none), so it is the NFL site's `SGP_HOLD`, 0.896, fitted there
 to two real DraftKings tickets (Detroit at Buffalo, 17 September 2026), applied as it applies it and stored as `tested:
-false`; on real tickets it makes the price about 12% shorter than the product for two legs, 18-21% for three and 23-36%
+false`; on real tickets it makes the price about 12% shorter than the product for two legs, 17-22% for three and 23-36%
 for four, and the cap at the product binds on 0-5% of tickets.
 
 ### Refresh odds
@@ -435,7 +454,8 @@ number out, said once with the read's time) but keeps them stored as they were, 
 reaches `nhl_v1` on a later save. A parlay card open during a read is drawn again on the new prices and ids
 (said in the card), or closed when one of its legs moved or came off (said in the status line). It is all in
 memory: the press writes nothing to any storage (`NO_SAVE` while it redraws), and a reload brings back the
-published state, the builder's legs at their published prices with nothing said changed. A press while a read
+published state, the builder's team legs at their published prices with nothing said changed and its player legs at the
+prices they were added at, dated by their reads. A press while a read
 runs does nothing; a second press reads again. The smoke's REFRESH ODDS holds it with rules of its own: the
 page's parse equal to the job's on the recorded answers in `tools/fixtures`, variants of them and the answers
 the run saved; the page's carry rule equal to `tools/espn.js`'s on a table of cases; the page's goals layer
@@ -673,8 +693,10 @@ model's; the levels never take a prop.
   read it), at DraftKings' price as read; the suggested levels never use a prop."), with the ledger's running numbers quietly (graded lines of 12,000, the model's log loss and Brier beside
   DraftKings', never a verdict or a word of passing before the bar is decided). Nothing in the window, on a Player
   props button or anywhere else on a prop says "model says" or "edge", and nothing the props read touches moves a line,
-  a level, the builder or the levels' cache (`ODDS.v`). **In memory only** (`PROPS`, `PP`, `PP_STAT`): nothing is stored
-  but the legs a visitor adds (under The Parlay Builder), a reload is the published page with the projections alone, and nothing asks ESPN for props but a press. The watch
+  a level or the levels' cache (`ODDS.v`); it redraws only a player leg the visitor added, at the read's price or out where
+  DraftKings moved or pulled its line, said once and never stored (`propNow`). **In memory only** (`PROPS`, `PP`,
+  `PP_STAT`): nothing is stored but the legs a visitor adds (under The Parlay Builder), a reload is the published page with
+  the projections alone and those legs at the prices they were added at, and nothing asks ESPN for props but a press. The watch
   (every half minute and on coming back into view) draws the window again once its game's puck drops, saying so, and
   the card's button goes.
 - **The page's tests.** The smoke's PLAYER PROPS, with rules of its own and never the real feed: the page's parse equal

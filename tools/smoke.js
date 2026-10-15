@@ -737,12 +737,15 @@ async function parlayBuilder() {
       chk(!$('pFinish').disabled, 'Finish parlay is on with two legs or more');
       /* the card from the builder: every leg and the price; Escape, the Tab order, outside click, Start over */
       await cardChecks(w, sl2, 'Your parlay');
-      /* a second bet on one game replaces the first, said */
-      const g0 = sl2[0].g, alt = ['ml', 'pl', 'ou'].flatMap(k => PBS.SIDES[k].map(s => [s, k])).find(([s, k]) => `${g0.id}|${s}|${k}` !== sl2[0].id && sLeg(g0, s, k));
+      /* a second bet in the same slot of a game (a second side bet, the other side of the total) replaces the first, said, with the
+         rule's own words; with no same-game table in the state, one leg a game, said so */
+      const g0 = sl2[0].g, slotK = k => k === 'ou' ? 'tot' : 'side', k0 = sl2[0].kind;
+      const alt = ['ml', 'pl', 'ou'].flatMap(k => PBS.SIDES[k].map(s => [s, k])).find(([s, k]) => `${g0.id}|${s}|${k}` !== sl2[0].id && slotK(k) === slotK(k0) && sLeg(g0, s, k));
       if (alt) {
         const ab = d.querySelector(`#plLines button[data-leg="${g0.id}|${alt[0]}|${alt[1]}"]`); ab.click();
-        chk(store().legs.filter(l => l.game === g0.id).length === 1 && store().legs.some(l => l.game === g0.id && l.side === alt[0] && l.kind === alt[1]), 'a second bet on a game replaces the first');
-        chk(/replaced .* on .*: one leg a game\./.test(txt($('bMsg'))) && /one leg a game/.test(txt($('slipMsg'))), `the replace is said in the builder and the slip bar (${txt($('bMsg'))})`);
+        const rule = !S.sgp ? 'one leg a game here: this publish carries no same-game table.' : slotK(k0) === 'tot' ? 'one total a game.' : 'one side bet a game (the moneyline or the puck line).';
+        chk(store().legs.filter(l => l.game === g0.id).length === 1 && store().legs.some(l => l.game === g0.id && l.side === alt[0] && l.kind === alt[1]), 'a second bet in the same slot of a game replaces the first');
+        chk(txt($('bMsg')).includes(` on ${S.teams[g0.away].abbr} @ ${S.teams[g0.home].abbr}: ${rule}`) && /replaced/.test(txt($('bMsg'))) && txt($('slipMsg')).includes(rule), `the replace is said in the builder and the slip bar, with the rule (${txt($('bMsg'))})`);
       }
       const n0 = d.querySelectorAll('#legs .leg').length;
       d.querySelector('#legs .leg button.x').click();
@@ -1872,7 +1875,7 @@ function ppHold(w, g, parsed, tag) {
 /* the trial note and the ledger's running numbers, by this smoke's own wording; never "model says", "edge" or a verdict before the bar */
 function ppTrialChecks(w, tag) {
   const d = w.document, win = txt(d.getElementById('ppWin')), tr = txt(d.getElementById('ppTrial'));
-  chk(/props model on trial/.test(txt(d.getElementById('ppGame'))) && tr.startsWith("The props model is on trial. Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. Player props are display only: they cannot go in the Parlay Builder."), `${tag}: the window says the props model is on trial and suggests nothing (${tr.slice(0, 120)})`);
+  chk(/props model on trial/.test(txt(d.getElementById('ppGame'))) && tr.startsWith("The props model is on trial. Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once Refresh odds has read it), at DraftKings' price as read; the suggested levels never use a prop."), `${tag}: the window says the props model is on trial and suggests nothing (${tr.slice(0, 120)})`);
   const Lg = S.props.ledger, of = (+Lg.of || 0).toLocaleString('en-US'), f4 = v => (+v).toFixed(4);
   const nums = Lg.model && Lg.market ? ` Log loss: model ${f4(Lg.model.logloss)}, DraftKings ${f4(Lg.market.logloss)}; Brier: model ${f4(Lg.model.brier)}, DraftKings ${f4(Lg.market.brier)} (lower is better).` : '';
   const want = Lg.decision === 'PASS' || Lg.decision === 'FAIL' ? `Its shadow ledger was decided at ${of} graded lines: ${Lg.decision}.${nums}`
@@ -1880,7 +1883,9 @@ function ppTrialChecks(w, tag) {
   chk(tr.endsWith(want), `${tag}: the ledger's running numbers, quietly ("${want}": ${tr.slice(-160)})`);
   chk(Lg.decision || !/\bpass/i.test(tr), `${tag}: no word of passing before the bar is decided`);
   chk(!/model says|\bedge/i.test(win) && ![...d.querySelectorAll('.pp-open')].some(b => /model says|\bedge/i.test(txt(b))), `${tag}: neither the window nor a Player props button says "model says" or "edge" on a prop`);
-  chk(!d.querySelector('#ppWin button[data-leg], #ppWin [data-pb-add], #ppWin [data-pc-finish]'), `${tag}: nothing in the window adds a prop to a parlay`);
+  chk(!d.querySelector('#ppWin button[data-leg], #ppWin [data-pb-add], #ppWin [data-pc-finish]'), `${tag}: nothing in the window puts a level or a game's bet in a parlay`);
+  const rd = w.eval('PP && PROPS.games[PP.gid] ? PROPS.games[PP.gid].status : null');
+  if (rd !== 200) chk(!d.querySelector('#ppWin [data-pp-add]'), `${tag}: with no DraftKings price read, no price in the window can be added (${d.querySelectorAll('#ppWin [data-pp-add]').length})`);
 }
 async function playerPropsChecks() {
   console.log('PLAYER PROPS');
@@ -2112,6 +2117,456 @@ async function playerPropsChecks() {
   console.log(`  the press read props for ${ask.length} games (${ask.map(g => g.id).join(', ')}): ${G.id} in two pages (${parsedG.main.length} main lines, ${parsedG.yes.length} milestones), ${H ? H.id : 'none'} failed, ${N ? N.id : 'none'} a junk body, ${K ? K.id : 'none'} the wrong shape, ${P2 ? P2.id : 'none'} a page two 404, ${I ? I.id : 'none'} under way at ESPN, ${ask.filter(g => sStarted(g, T2)).length} dropping the puck during the read`);
 }
 
+/* ================= SAME-GAME PARLAYS AND PLAYER LEGS =================
+   The builder's player legs (a DraftKings price from the props window, after a press) and its same-game legs, held with rules of their
+   own: the state's same-game table and hold are data/corr.json's, and its box scores the box files' (each final of the window, each
+   player on the ice); the page's copy of tools/sgp.js is the file's word for word and gives its numbers; on a made-up copy of the state
+   carrying the table (as the job's next publish does), a press, and every DraftKings price in the window a 44px button that puts that
+   leg in the builder at its price, dated by its read; the same-game rule (a second side bet or total replaces the first, one leg a player
+   a stat, a player's points beside his own goals refused, each said); the price of a game's legs worked out here again from the table and
+   the hold (an exact bivariate normal for two legs, a Monte Carlo of two million draws beyond), never above the legs' prices multiplied,
+   est. wherever it shows; DraftKings' fair chance first, the props model's chance on trial and never an edge; the card, its note, image
+   and Share text (a player leg to add by hand); nothing of the read stored but the legs added; a reload at their read prices, dated; a
+   later read re-pricing, moving and pulling them (said once, nothing stored); the puck drop; the levels as they were; and saved parlays'
+   player legs graded from planted box scores (won, lost, a push, void, waiting, past the window), the grades kept */
+const SG = (() => {
+  /* the standard normal, written here again by another road: erf's series near 0, erfc's continued fraction beyond */
+  function erfc(x) {
+    if (x < 0) return 2 - erfc(-x);
+    if (x < 3) { let s = 0, t = x; for (let n = 0; n < 200; n++) { const term = t / (2 * n + 1); s += term; if (Math.abs(term) < 1e-17) break; t *= -x * x / (n + 1); } return 1 - 2 / Math.sqrt(Math.PI) * s; }
+    let t = x; for (let n = 80; n >= 1; n--) t = x + (n / 2) / t;
+    return Math.exp(-x * x) / (Math.sqrt(Math.PI) * t);
+  }
+  const Phi = x => 0.5 * erfc(-x / Math.SQRT2), phi = x => Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI);
+  const q = p => { let lo = -40, hi = 40; for (let i = 0; i < 200; i++) { const m = (lo + hi) / 2; if (Phi(m) < p) lo = m; else hi = m; } return (lo + hi) / 2; };
+  /* P(Z1 <= a, Z2 <= b) with correlation r: phi(x) Phi((b - r x) / sqrt(1 - r^2)) summed by Simpson's rule up to a */
+  function bvn(a, b, r) {
+    const lo = -12, hi = Math.min(a, 12); if (!(hi > lo)) return 0;
+    const N = 6000, h = (hi - lo) / N, sd = Math.sqrt(1 - r * r); let sum = 0;
+    for (let i = 0; i <= N; i++) { const x = lo + i * h, wt = i === 0 || i === N ? 1 : i % 2 ? 4 : 2; sum += wt * phi(x) * Phi((b - r * x) / sd); }
+    return sum * h / 3;
+  }
+  const chol = (R, tol) => { const n = R.length, L = R.map(r => r.map(() => 0)); for (let i = 0; i < n; i++) for (let j = 0; j <= i; j++) { let v = R[i][j]; for (let k = 0; k < j; k++) v -= L[i][k] * L[j][k]; if (i === j) { if (!(v > tol)) return null; L[i][i] = Math.sqrt(v); } else L[i][j] = v / L[j][j]; } return L; };
+  /* positive definite in use: shrunk toward independence by the least lambda, to 1e-4 by halving, that leaves every pivot above 1e-6 */
+  function pd(R) { const at = l => R.map((r, i) => r.map((v, j) => i === j ? 1 : v * (1 - l))); if (chol(R, 1e-6)) return R; let lo = 0, hi = 1; for (let i = 0; i < 14; i++) { const m = (lo + hi) / 2; if (chol(at(m), 1e-6)) hi = m; else lo = m; } return at(hi); }
+  function mulberry(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  /* the chance every leg lands: one leg its chance, two the integral, more a Monte Carlo of N draws (with its standard error) */
+  function joint(ps, R, N = 2000000) {
+    if (ps.length === 1) return { p: ps[0], se: 0 };
+    if (ps.length === 2) return { p: bvn(q(ps[0]), q(ps[1]), R[0][1]), se: 0 };
+    const L = chol(R, 0), h = ps.map(q), rnd = mulberry(20261015); let hit = 0;
+    for (let s = 0; s < N; s++) {
+      const z = []; for (let i = 0; i < ps.length; i += 2) { const u = rnd() || 1e-12, v = rnd(), m = Math.sqrt(-2 * Math.log(u)); z.push(m * Math.cos(2 * Math.PI * v), m * Math.sin(2 * Math.PI * v)); }
+      let all = true; for (let i = 0; i < ps.length && all; i++) { let x = 0; for (let k = 0; k <= i; k++) x += L[i][k] * z[k]; if (x > h[i]) all = false; }
+      if (all) hit++;
+    }
+    const p = hit / N; return { p, se: Math.sqrt(p * (1 - p) / N) };
+  }
+  /* a leg's latent, read here again from tools/sgp.js's header: a player's stat (its group and stat), a club's win, the -1.5 side's cover
+     (a +1.5 is that side failing), the total going over; the end it lands at (an Under, a +1.5) is -1 */
+  const lat = l => l.kind === 'ml' ? { t: 'ml', team: l.team, fav: !!l.fav, dir: 1 }
+    : l.kind === 'pl' ? (l.line < 0 ? { t: 'pl', team: l.team, fav: !!l.fav, dir: 1 } : { t: 'pl', team: l.opp, fav: !l.fav, dir: -1 })
+    : l.kind === 'tot' ? { t: 'tot', dir: l.side === 'under' ? -1 : 1 }
+    : { t: 'p', team: l.team, pid: String(l.pid), k: `${l.grp}:${l.stat}`, dir: l.side === 'under' ? -1 : 1 };
+  const key = (rel, a, b) => a <= b ? `${rel}|${a}|${b}` : `${rel}|${b}|${a}`;
+  /* two legs of one game: the table's correlation, signed by the ends they land at; undefined where the rule refuses the pair */
+  function rho(T, x, y) {
+    const a = lat(x), b = lat(y), v = k => (typeof T.rho[k] === 'number' ? T.rho[k] : 0);
+    let r;
+    if (a.t === 'p' && b.t === 'p') {
+      if (a.pid === b.pid) { if (a.k === b.k || !(key('self', a.k, b.k) in T.rho)) return undefined; r = v(key('self', a.k, b.k)); }
+      else r = v(key(a.team === b.team ? 'team' : 'opp', a.k, b.k));
+    } else if (a.t === 'p' || b.t === 'p') {
+      const p = a.t === 'p' ? a : b, o = a.t === 'p' ? b : a;
+      r = o.t === 'ml' ? v(key('team', p.k, 'ml')) * (p.team === o.team ? 1 : -1) : o.t === 'pl' ? v(key(p.team === o.team ? 'team' : 'opp', p.k, 'pl')) : v(key('game', p.k, 'tot'));
+    } else {
+      const s = [a.t, b.t].sort().join('|');
+      if (s === 'ml|tot') { const m = a.t === 'ml' ? a : b; r = v('fav|ml|tot') * (m.fav ? 1 : -1); }
+      else if (s === 'pl|tot') { const m = a.t === 'pl' ? a : b; r = v((m.fav ? 'fav' : 'dog') + '|pl|tot'); }
+      else return undefined;
+    }
+    return r * a.dir * b.dir;
+  }
+  /* a parlay by the rule: games multiplied; a game's legs joined on their fair chances (the fair chance) and their implied chances (the
+     price: the hold over the joint, never above the legs' prices multiplied); se and seI the Monte Carlo's standard errors where it ran */
+  function parlay(T, legs) {
+    const by = new Map(); for (const l of legs) { if (!by.has(l.game)) by.set(l.game, []); by.get(l.game).push(l); }
+    let fair = 1, dec = 1, product = 1, est = false, se = 0, seI = 0;
+    for (const ls of by.values()) {
+      const mult = ls.reduce((a, l) => a * l.dec, 1); product *= mult;
+      if (ls.length === 1) { fair = fair === null || ls[0].p === null ? null : fair * ls[0].p; dec *= mult; continue; }
+      const R = ls.map((x, i) => ls.map((y, j) => i === j ? 1 : rho(T, x, y)));
+      if (R.some(r => r.some(v => v === undefined))) return { refused: true };
+      const Rp = pd(R), fj = ls.some(l => l.p === null) ? null : joint(ls.map(l => l.p), Rp), ij = joint(ls.map(l => 1 / l.dec), Rp);
+      fair = fair === null || fj === null ? null : fair * fj.p; se = Math.max(se, fj ? fj.se : 0); seI = Math.max(seI, ij.se);
+      dec *= Math.min(mult, T.hold.sgp / ij.p); est = true;
+    }
+    return { fair, dec, product, est, se, seI };
+  }
+  return { Phi, q, bvn, joint, rho, parlay, pd };
+})();
+const etClockS = iso => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET';
+/* the favourite, by this smoke's reading of the rule: the club whose moneyline implies more (level, the home club), else the club laying -1.5 */
+function sFav(g, side) {
+  const L = g.line || {}, ih = PBS.ok(L.homeML) ? PBS.imp(L.homeML) : null, ia = PBS.ok(L.awayML) ? PBS.imp(L.awayML) : null;
+  const homeFav = ih !== null && ia !== null ? ih >= ia : L.homeLine !== null && L.homeLine !== undefined ? L.homeLine < 0 : true;
+  return side === 'home' ? homeFav : !homeFav;
+}
+/* a stored builder leg as the rule reads it, here: p its DraftKings fair chance (or `chance`, a function of the leg), dec its price */
+function sgOf(M, l, chance) {
+  const g = M.games.find(x => x.id === l.game), dc = PBS.decOf(+l.odds);
+  if (l.kind === 'prop') {
+    const f = l.mk === 'yes' ? fairYesS(l.stat, l.k, +l.odds) : l.side === 'over' ? 1 - PBS.imp(+l.other) : PBS.imp(+l.odds);
+    return { game: l.game, team: l.team, pid: String(l.pid), grp: l.grp, stat: l.stat, side: l.side, p: chance ? chance(l) : f, dec: dc };
+  }
+  const L = sLeg(g, l.side, l.kind), p = chance ? chance(l) : L.fair;
+  if (l.kind === 'ou') return { game: l.game, kind: 'tot', side: l.side, p, dec: dc };
+  return { game: l.game, team: g[l.side], opp: g[l.side === 'home' ? 'away' : 'home'], kind: l.kind, line: L.num, fav: sFav(g, l.side), p, dec: dc };
+}
+/* the props model's chance of a stored player leg, from the state's distribution, worked here again (null where it has none) */
+function sModelP(M, l) {
+  const pr = M.props && M.props.games[l.game]; if (!pr) return null;
+  let D = null;
+  for (const s of ['awayP', 'homeP']) { const Q = pr[s]; if (l.stat === 'sv') { if (Q.goalie && String(Q.goalie.id) === String(l.pid)) D = Q.goalie.sv; } else for (const x of Q.skaters) if (String(x.id) === String(l.pid) && x[l.stat]) D = x[l.stat]; }
+  if (!D) return null;
+  return l.mk === 'yes' ? atLeastS(D, l.k) : l.side === 'over' ? atLeastS(D, Math.floor(+l.line) + 1) : 1 - atLeastS(D, Math.ceil(+l.line));
+}
+async function sameGameChecks() {
+  console.log('SAME-GAME PARLAYS AND PLAYER LEGS');
+  const SGPJS = require('./sgp'), C = readJSON(path.join(DATA, 'corr.json'));
+  chk(!!C && !!C.rho && !!C.hold && C.hold.sgp > 0 && C.hold.sgp <= 1, 'data/corr.json holds the same-game table and hold');
+  if (!C) return;
+  /* the state against its sources: the table and hold are corr.json's; the box scores are the box files', every final of the window */
+  if (S.sgp) chk(canon(S.sgp.rho) === canon(C.rho) && canon(S.sgp.hold) === canon(C.hold), `the state's same-game table and hold are data/corr.json's (${Object.keys(S.sgp.rho || {}).length} pairs, hold ${S.sgp.hold && S.sgp.hold.sgp})`);
+  else console.log('  this state carries no same-game table (a publish before it): the page takes one leg a game; the rule is held on a made-up copy below');
+  if (S.box) {
+    const B = S.box, want = {}, bad = [];
+    const from = (() => { const x = new Date(S.today + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - (+B.days || 0)); return x.toISOString().slice(0, 10); })();
+    chk(B.from === from && B.days === 14, `the box scores carried are the finals from ${from}, the 14 days before ${S.today} (${B.from}, ${B.days})`);
+    const fin = new Map(S.games.filter(g => g.state === 'final' && g.date >= B.from && g.date <= S.today).map(g => [g.id, g]));
+    for (const f of fs.readdirSync(DATA).filter(f => /^box_\d{4}\.jsonl$/.test(f) && +f.slice(4, 8) >= E.seasonOf(B.from))) for (const line of fs.readFileSync(path.join(DATA, f), 'utf8').split('\n')) {
+      if (!line || !fin.has((/"id":"(\d+)"/.exec(line) || [])[1])) continue; const b = JSON.parse(line);
+      const s = {}, gk = {}, n = v => typeof v === 'number' ? v : null;
+      for (const x of b.skaters) if (x.toi > 0) s[x.id] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
+      for (const x of b.goalies) if (x.toi > 0) gk[x.id] = typeof x.sa === 'number' && typeof x.ga === 'number' ? x.sa - x.ga : null;
+      want[b.id] = { s, g: gk };
+    }
+    for (const id of new Set(Object.keys(want).concat(Object.keys(B.games || {})))) if (canon(want[id] || null) !== canon((B.games || {})[id] || null)) bad.push(id);
+    chk(!bad.length, `the state's box scores are every final of the window the box files have, each skater on the ice with his goals, assists, shots and blocks and each goalie with his saves (${Object.keys(B.games || {}).length} games; ${bad.length} differ: ${bad.slice(0, 4).join(', ')})`);
+  } else console.log('  this state carries no box scores (a publish before them): a saved player leg waits; grading is held on made-up box scores below');
+  /* the page's copy of tools/sgp.js: the file's text between its marks, and its numbers on legs of every kind */
+  const src = fs.readFileSync(path.join(__dirname, 'sgp.js'), 'utf8'), body = src.slice(src.indexOf("'use strict';\n") + 14, src.indexOf('module.exports')).replace(/^\n+|\n+$/g, '');
+  const m1 = HTML.indexOf('/* sgp.js begins */\n'), m2 = HTML.indexOf('\n/* sgp.js ends */');
+  chk(m1 > 0 && m2 > m1 && HTML.slice(m1 + 20, m2).replace(/^\n+|\n+$/g, '') === body, `the page's same-game rule is tools/sgp.js word for word (${m1 > 0 && m2 > m1 ? HTML.slice(m1 + 20, m2).length : 'no marks'} vs ${body.length} characters)`);
+  /* a made-up copy of the state carrying the table (the job's next publish), so the rule is held on any day */
+  const M = JSON.parse(STATE); if (!M.sgp) M.sgp = { rho: C.rho, hold: C.hold, measured: C.measured || null };
+  const T = M.sgp, AT = PUB + 60000;
+  const real = S; S = M;
+  try {
+    const ask = sPropsAsk(AT), cand = ask.filter(g => M.props && M.props.games[g.id] && sFresh(g) && isDKBook(g.line) && g.line.total !== null && g.line.total !== undefined && PBS.ok(g.line.homeML) && PBS.ok(g.line.awayML) && PBS.ok(g.line.overOdds) && PBS.ok(g.line.underOdds) && g.ou && sLeg(g, 'away', 'pl'));
+    const G = cand.sort((a, b) => Date.parse(a.start) - Date.parse(b.start) || (a.id < b.id ? -1 : 1))[0];
+    const H = G && S.games.filter(g => g.id !== G.id && g.date === G.date && !sStarted(g, AT) && sFresh(g) && isDKBook(g.line) && sLeg(g, 'home', 'ml')).sort((a, b) => Date.parse(b.start) - Date.parse(a.start) || (a.id < b.id ? -1 : 1))[0];
+    /* parity on numbers: the page's SGP.parlay and rho against tools/sgp.js's on legs of G of every kind, random sets of two to seven */
+    if (G) {
+      const pr = M.props.games[G.id], pool = [];
+      for (const [side, club, opp] of [['awayP', G.away, G.home], ['homeP', G.home, G.away]]) {
+        for (const x of pr[side].skaters.slice(0, 6)) for (const st of ['pts', 'g', 'a', 's', 'bs']) for (const sd of ['over', 'under']) pool.push({ game: G.id, team: club, pid: x.id, grp: x.pos === 'D' ? 'D' : 'F', stat: st, side: sd });
+        if (pr[side].goalie) for (const sd of ['over', 'under']) pool.push({ game: G.id, team: club, pid: pr[side].goalie.id, grp: 'G', stat: 'sv', side: sd });
+        for (const k of ['ml', 'pl']) pool.push({ game: G.id, team: club, opp, kind: k, line: k === 'pl' ? (club === G.home ? G.line.homeLine : -G.line.homeLine) : 0, fav: sFav(G, club === G.home ? 'home' : 'away') });
+      }
+      for (const sd of ['over', 'under']) pool.push({ game: G.id, kind: 'tot', side: sd });
+      let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      const sets = [];
+      for (let i = 0; i < 160; i++) { const n = 2 + Math.floor(rnd() * 6), ls = []; for (let k = 0; k < n; k++) { const l = Object.assign({}, pool[Math.floor(rnd() * pool.length)]); l.p = 0.15 + rnd() * 0.7; l.dec = 1.2 + rnd() * 4; ls.push(l); } if (i % 5 === 0) ls.push(Object.assign({}, ls[0], { game: 'other', p: 0.5, dec: 1.91 })); sets.push(ls); }
+      const eP = [], wP = await boot(AT, eP, { state: JSON.stringify(M), hash: 'games' });
+      const pageR = JSON.parse(wP.eval(`JSON.stringify(${JSON.stringify(sets)}.map(ls => SGP.parlay(S.sgp, ls)))`)), jobR = sets.map(ls => SGPJS.parlay(T, ls));
+      const differ = sets.filter((ls, i) => canon(pageR[i]) !== canon(jobR[i])).length;
+      chk(!differ, `the page's same-game price is tools/sgp.js's on ${sets.length} random sets of legs of one game (${jobR.filter(r => r.refused).length} refused, ${jobR.filter(r => r.lam > 0).length} shrunk to positive definite; ${differ} differ)`);
+      /* and the rule itself, worked out here again: the page's correlation of every pair of the pool against this smoke's reading of the table */
+      const pairs = []; for (let i = 0; i < pool.length; i += 3) for (let j = i + 1; j < pool.length; j += 7) pairs.push([pool[i], pool[j]]);
+      const pr2 = JSON.parse(wP.eval(`JSON.stringify(${JSON.stringify(pairs)}.map(([a, b]) => SGP.rho(S.sgp, a, b)))`));
+      const wrong = pairs.filter(([a, b], i) => { const r = SG.rho(T, a, b); return r === undefined ? pr2[i] !== null : pr2[i] === null || Math.abs(pr2[i] - r) > 1e-15; });
+      chk(!wrong.length, `every pair's correlation is the table's by the rule written again here (${pairs.length} pairs, ${pr2.filter(x => x === null).length} refused; ${wrong.length} wrong, e.g. ${canon(wrong[0] || null).slice(0, 160)})`);
+      /* never above the product: two legs that move against each other (a player's points and the other club's win) priced at the product,
+         two that move together under it, by the page and by the rule written here */
+      const X0 = pool.find(l => l.stat === 'pts' && l.side === 'over' && l.team === G.away), oppMl = pool.find(l => l.kind === 'ml' && l.team === G.home), ownMl = pool.find(l => l.kind === 'ml' && l.team === G.away);
+      const two = [[Object.assign({}, X0, { p: 0.6, dec: 1.6 }), Object.assign({}, oppMl, { p: 0.5, dec: 1.9 })], [Object.assign({}, X0, { p: 0.6, dec: 1.6 }), Object.assign({}, ownMl, { p: 0.5, dec: 1.9 })]];
+      const pg2 = JSON.parse(wP.eval(`JSON.stringify(${JSON.stringify(two)}.map(ls => SGP.parlay(S.sgp, ls)))`)), sg2 = two.map(ls => SG.parlay(T, ls));
+      chk(Math.abs(pg2[0].dec - 1.6 * 1.9) < 1e-12 && Math.abs(sg2[0].dec - 1.6 * 1.9) < 1e-12 && pg2[0].fair < 0.3 && Math.abs(pg2[0].fair - sg2[0].fair) < 1e-8, `legs moving against each other are priced at the legs' prices multiplied, never above (${pg2[0].dec} vs ${(1.6 * 1.9).toFixed(4)}; fair ${pg2[0].fair})`);
+      chk(pg2[1].dec < 1.6 * 1.9 && Math.abs(pg2[1].dec - sg2[1].dec) < 1e-6 && Math.abs(pg2[1].fair - sg2[1].fair) < 1e-8, `legs moving together: the hold over their joint implied chance, worked out here (${pg2[1].dec} vs ${sg2[1].dec})`);
+      chk(!eP.length, 'no runtime error on the made-up state: ' + eP.join(' | '));
+    }
+    if (!G || !H) { console.log(`  no game to come today or tomorrow with a DraftKings line, a total and projections beside another with a line (${G ? G.id : 'none'}, ${H ? H.id : 'none'}): the builder's player legs are not held on this state`); return; }
+    await builderPlayerLegs(M, G, H, AT);
+  } finally { S = real; }
+  await gradingChecks(C);
+}
+async function builderPlayerLegs(M, G, H, AT) {
+  const T = M.sgp, A = propsAnswer(G), parsed = E.propsOf(A.items), pr = M.props.games[G.id];
+  const errs = [], sb = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; };
+  let propsNow = url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); };
+  const w = await boot(AT, errs, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: url => propsNow(url) }), d = w.document, $ = id => d.getElementById(id);
+  const store = () => JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), mu = `${S.teams[G.away].abbr} @ ${S.teams[G.home].abbr}`;
+  const tiers = () => canon([...d.querySelectorAll('.pb-tier')].map(t => [t.dataset.tier, [...t.querySelectorAll('.pb-tl')].map(x => x.dataset.id), txt(t.querySelector('.pb-nums')), txt(t.querySelector('.pb-rule'))]));
+  const tiers0 = tiers();
+  holdPanel(w, AT, 'before any player leg', true);          // what the levels are held to below: the rules' own, by brute force
+  /* before a press: no price in a window can be added */
+  const dayOn = dd => { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); };
+  d.querySelector('#tabs button[data-tab="games"]').click(); dayOn(G.date);
+  d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+  chk(!d.querySelector('#ppBody [data-pp-add]'), 'before a press the props window offers nothing to add');
+  $('ppRefreshOdds').click(); await oddsDone(w); await wait(20);
+  const readAt = w.eval(`PROPS.games[${JSON.stringify(G.id)}].at`), writes0 = w.__writes.length;
+  chk(!!readAt && w.eval(`PROPS.games[${JSON.stringify(G.id)}].status`) === 200, `the press read DraftKings' props on ${G.id}`);
+  /* the players: X an away forward with a points line, Y a home skater with a shots 3+ price, Z the home goalie with a saves line */
+  const mainOf = (pid, st) => parsed.main.find(r => r[0] === String(pid) && r[1] === st), yesOf = (pid, st, k) => parsed.yes.find(r => r[0] === String(pid) && r[1] === st && r[2] === k);
+  const X = pr.awayP.skaters.find(p => p.pos !== 'D' && mainOf(p.id, 'pts') && yesOf(p.id, 'g', 1)), Y = pr.homeP.skaters.find(p => yesOf(p.id, 's', 3) && (!mainOf(p.id, 's') || mainOf(p.id, 's')[2] !== 2.5) && p.id !== (X && X.id)), Z = pr.homeP.goalie && mainOf(pr.homeP.goalie.id, 'sv') ? pr.homeP.goalie : null;
+  if (!X || !Y) { chk(false, `the made-up answer prices an away forward's points and a home skater's shots 3+ (${X && X.id}, ${Y && Y.id})`); return; }
+  /* every DraftKings price a 44px button the keyboard reaches; none for an athlete matched to neither club */
+  const tab = st => { d.querySelector(`#ppStats button[data-pp-tab="${st}"]`).click(); };
+  let nBtn = 0; const badB = [];
+  for (const st of PP_STATS_S) {
+    tab(st);
+    for (const r of d.querySelectorAll('#ppBody .pp-row')) {
+      const id = r.dataset.ppRow, sec = r.closest('section.pp-team'), club = sec && sec.dataset.ppTeam, btns = [...r.querySelectorAll('[data-pp-add]')];
+      const priced = [...r.querySelectorAll('.pp-main > *, .pp-k')].length;
+      const should = !!club && [G.home, G.away].includes(club) && !r.closest('details.pp-more');
+      if (should ? btns.length !== priced : btns.length) badB.push(`${st} ${id}: ${btns.length} buttons of ${priced} prices under ${club || 'neither club'}`);
+      for (const b of btns) { nBtn++; if (b.tagName !== 'BUTTON' || b.type !== 'button' || b.disabled || b.tabIndex < 0 || w.getComputedStyle(b).minHeight !== '44px' || b.getAttribute('aria-pressed') !== 'false') badB.push(`${st} ${id}: ${b.dataset.ppAdd} not a 44px button the keyboard reaches, unpressed`); }
+    }
+  }
+  chk(nBtn > 50 && !badB.length, `after the press every DraftKings price of a player of the game's clubs is a 44px button the keyboard reaches, and an athlete matched to neither club has none (${nBtn} buttons; ${badB.slice(0, 3).join(' | ')})`);
+  /* the add: X's points Over, into the builder at DraftKings' price as read, dated by the read; the button pressed; said in the window */
+  const xm = mainOf(X.id, 'pts');
+  tab('pts');
+  const xb = () => d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|over|${xm[2]}"]`);
+  xb().focus(); xb().click();
+  const want1 = { game: G.id, kind: 'prop', pid: String(X.id), team: G.away, grp: 'F', stat: 'pts', mk: 'main', side: 'over', line: xm[2], k: null, odds: xm[3], other: xm[4], at: readAt };
+  const s1 = (store().legs || []).find(l => l.kind === 'prop');
+  chk(!!s1 && Object.keys(want1).every(k => canon(s1[k]) === canon(want1[k])) && s1.name === X.name, `a tap puts the leg in the builder at DraftKings' price as read, its line, side, player, game and read time (${canon(s1 || null).slice(0, 260)})`);
+  chk(xb() && xb().getAttribute('aria-pressed') === 'true' && d.activeElement === xb(), 'the price is pressed, the keyboard\'s focus kept on it');
+  chk(txt($('ppMsg')) === `Added to your parlay: ${X.name} Over ${xm[2]} points, ${PBS.odds(xm[3])}, DraftKings as read ${clockOf(Date.parse(readAt))}. Your parlay: 1 leg.`, `the window says what it added (${txt($('ppMsg'))})`);
+  /* refused: X's goals beside his points; replaced: X's points Under in his Over's place */
+  tab('g');
+  const xg = d.querySelector(`#ppBody button[data-pp-add="${X.id}|g|yes|1"]`), legs1 = canon(store().legs);
+  xg.click();
+  chk(canon(store().legs) === legs1 && txt($('ppMsg')) === `Not added: ${X.name}'s points and his own goals are nearly one bet (every goal is a point). DraftKings may not take both on one ticket, so this page never puts them together.`.replace(`${X.name}'s`, /s$/.test(X.name) ? `${X.name}'` : `${X.name}'s`), `a player's goals beside his own points are refused, said plainly (${txt($('ppMsg'))})`);
+  tab('pts');
+  d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|under|${xm[2]}"]`).click();
+  chk(store().legs.filter(l => l.kind === 'prop').length === 1 && store().legs.find(l => l.kind === 'prop').side === 'under' && txt($('ppMsg')).startsWith(`${X.name} Under ${xm[2]} points replaced ${X.name} Over ${xm[2]} points on ${mu}: one leg a player a stat.`), `one leg a player a stat: his Under takes his Over's place, said (${txt($('ppMsg'))})`);
+  d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|under|${xm[2]}"]`).click();
+  chk(!store().legs.some(l => l.kind === 'prop') && txt($('ppMsg')).startsWith(`Taken out of your parlay: ${X.name} Under ${xm[2]} points.`), `a second tap takes it out (${txt($('ppMsg'))})`);
+  xb().click();
+  $('ppClose').click();
+  /* the bet buttons by the same-game rule: the home moneyline joins X (a same-game pair moving against each other: priced at the product) */
+  d.querySelector('#tabs button[data-tab="games"]').click(); dayOn(G.date);
+  const gb = (side, kind) => d.querySelector(`#games .game[data-id="${G.id}"] button[data-leg="${G.id}|${side}|${kind}"]`);
+  gb('home', 'ml').click();
+  const bq = () => JSON.parse(w.eval('JSON.stringify(quote(builderLegs(false)))'));
+  const sgNow = chance => SG.parlay(T, store().legs.map(l => sgOf(M, l, chance)));
+  let q = bq(), e = sgNow();
+  chk(store().legs.length === 2 && q.est && Math.abs(q.fair - e.fair) < 1e-8 && Math.abs(q.dec - e.dec) < 1e-6 && q.dec <= q.product + 1e-12 && e.fair < store().legs.map(l => sgOf(M, l).p).reduce((a, b) => a * b, 1),
+    `legs of one game that move against each other (an away forward's points and the home club's win): the fair chance under the product of the fair chances, worked out here (${q.fair} vs ${e.fair}), the price ${e.dec >= e.product - 1e-12 ? 'capped at' : 'under'} the legs' prices multiplied (${q.dec} vs ${q.product})`);
+  /* a second side bet replaces the first, said: the away moneyline, X's own club's win, in the home moneyline's place */
+  gb('away', 'ml').click();
+  chk(store().legs.length === 2 && store().legs.some(l => l.kind === 'ml' && l.side === 'away') && txt($('slipMsg')).includes(`on ${mu}: one side bet a game (the moneyline or the puck line).`), `a second side bet takes the first's place, said (${txt($('slipMsg'))})`);
+  /* two legs that move together: the price the hold over the joint of their implied chances, worked out here by an exact integral */
+  q = bq(); e = sgNow();
+  chk(q.est && Math.abs(q.fair - e.fair) < 1e-8 && Math.abs(q.dec - e.dec) < 1e-6 && q.dec < q.product - 1e-9 && Math.abs(q.product - e.product) < 1e-9,
+    `two legs of one game that move together: the fair chance ${e.fair.toFixed(5)} and the price ${e.dec.toFixed(4)} (the hold ${T.hold.sgp} over the joint of the implied chances) worked out here, under the product ${e.product.toFixed(4)} (page ${q.fair}, ${q.dec})`);
+  const pm = sgNow(l => l.kind === 'prop' ? sModelP(M, l) : sLeg(M.games.find(x => x.id === l.game), l.side, l.kind).p);
+  chk(pm.fair !== null ? Math.abs(q.p - pm.fair) < 1e-8 : q.p === null, `the model's chance beside it is the same copula on the legs' model chances (${q.p} vs ${pm.fair})`);
+  /* the total joins them; then the other side of the total replaces it, said; the puck line replaces the moneyline */
+  gb('over', 'ou').click();
+  chk(store().legs.length === 3, 'the total joins a side bet and a player leg of the same game');
+  gb('under', 'ou').click();
+  chk(store().legs.length === 3 && store().legs.some(l => l.kind === 'ou' && l.side === 'under') && txt($('slipMsg')).includes(`on ${mu}: one total a game.`), `the other side of the total takes its place, said (${txt($('slipMsg'))})`);
+  gb('over', 'ou').click();
+  /* Y's shots 3+ and Z's saves from the window; then H's moneyline, another game */
+  dayOn(G.date); d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+  tab('s'); d.querySelector(`#ppBody button[data-pp-add="${Y.id}|s|yes|3"]`).click();
+  if (Z) { tab('sv'); const zm = mainOf(Z.id, 'sv'); d.querySelector(`#ppBody button[data-pp-add="${Z.id}|sv|main|over|${zm[2]}"]`).click(); }
+  chk(txt($('ppMsg')).endsWith(`Your parlay: ${Z ? 5 : 4} legs.`), `the window counts the parlay's legs (${txt($('ppMsg'))})`);
+  $('ppClose').click();
+  dayOn(H.date); d.querySelector(`#games .game[data-id="${H.id}"] button[data-leg="${H.id}|home|ml"]`).click();
+  d.querySelector('#tabs button[data-tab="parlays"]').click();
+  /* the builder: a row a leg, "same game" on G's legs alone, each player leg's read time, fair chance and the props model's, on trial */
+  const legs = store().legs, n = legs.length, rows = [...d.querySelectorAll('#legs .leg')];
+  chk(rows.length === n && n === (Z ? 6 : 5), `the builder draws the ${n} legs (${rows.length})`);
+  const sgRows = rows.filter(r => r.querySelector('.tag.sg')).map(r => r.dataset.id.split('|')[0]);
+  chk(sgRows.length === n - 1 && sgRows.every(id => id === G.id), `"same game" on the legs of ${G.id} and no other (${sgRows.join(', ')})`);
+  for (const l of legs.filter(l => l.kind === 'prop')) {
+    const id = `${l.game}|p|${l.pid}|${l.stat}|${l.mk === 'yes' ? 'k' + l.k : l.side + l.line}`, r = rows.find(x => x.dataset.id === id), mp = sModelP(M, l);
+    const f = l.mk === 'yes' ? fairYesS(l.stat, l.k, l.odds) : l.side === 'over' ? 1 - PBS.imp(l.other) : PBS.imp(l.odds), t = r ? txt(r) : '';
+    chk(!!r && t.includes(PBS.odds(l.odds)) && t.includes(`DraftKings, as read ${clockOf(Date.parse(readAt))}`) && t.includes(`fair ${PBS.pctW(f)}${l.mk === 'yes' ? ' est.' : ''}`) && t.includes(mp === null ? 'no projection' : `model ${PBS.pctW(mp)}, on trial`), `the player leg ${id}: its price, its read, its fair chance and the props model's, on trial (${t})`);
+  }
+  /* the legs as the rule reads them: every leg the page hands tools/sgp.js's rule (its club and the other, its kind, number and side, the
+     favourite, the player, his group and stat, its fair chance and price) is this smoke's reading of the stored leg */
+  const conv = JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => sgpLeg(L, L.fair)))')), mineC = store().legs.map(l => sgOf(M, l));
+  const badC = conv.map((c, i) => { const m = mineC[i] || {}, ks = [...new Set(Object.keys(c).concat(Object.keys(m)))]; return ks.every(k => k === 'p' ? Math.abs(c.p - m.p) < 1e-12 : canon(c[k]) === canon(m[k])) ? null : `${canon(c)} vs ${canon(m)}`; }).filter(Boolean);
+  chk(conv.length === mineC.length && !badC.length, `every leg reaches the same-game rule as it should: its clubs, kind, number, side, the favourite, the player's group and stat, its fair chance and price (${badC.slice(0, 2).join(' | ')})`);
+  /* the price: G's legs joined (a Monte Carlo here), H multiplied; never above the product; est. wherever it shows */
+  q = bq(); e = { product: store().legs.reduce((a, l) => a * PBS.decOf(+l.odds), 1) };
+  const pgG = JSON.parse(w.eval(`JSON.stringify(SGP.parlay(S.sgp, builderLegs(false).map(L => sgpLeg(L, L.fair))).games)`)).find(x => x.game === G.id);
+  const lsG = store().legs.filter(l => l.game === G.id).map(l => sgOf(M, l)), Rg = SG.pd(lsG.map((x, i) => lsG.map((y, j) => i === j ? 1 : SG.rho(M.sgp, x, y))));
+  const jF = SG.joint(lsG.map(l => l.p), Rg), jI = SG.joint(lsG.map(l => 1 / l.dec), Rg), tolF = 4.5 * jF.se + 2e-4, tolI = 4.5 * jI.se + 2e-4;
+  const hL = store().legs.find(l => l.game === H.id), hS = sgOf(M, hL);
+  chk(!!pgG && Math.abs(pgG.fair - jF.p) <= tolF && Math.abs(pgG.implied - jI.p) <= tolI && Math.abs(pgG.dec - Math.min(pgG.product, T.hold.sgp / pgG.implied)) < 1e-12,
+    `${lsG.length} legs of one game: their joint fair chance ${pgG && pgG.fair.toFixed(5)} and joint implied chance ${pgG && pgG.implied.toFixed(5)} are the rule's by two million draws here (${jF.p.toFixed(5)}, ${jI.p.toFixed(5)}, ± ${tolF.toFixed(5)}), the price the hold over the implied, never above the product`);
+  chk(Math.abs(q.dec - pgG.dec * hS.dec) < 1e-9 && Math.abs(q.fair - pgG.fair * hS.p) < 1e-12 && Math.abs(q.product - e.product) < 1e-9 && q.dec <= q.product + 1e-12, `and the other game's leg multiplies it, the price and the fair chance (${q.dec} = ${pgG.dec} × ${hS.dec}; product ${q.product})`);
+  console.log(`  the builder on ${G.id} (${mu}) and ${H.id}: ${[...d.querySelectorAll('#legs .leg')].map(r => txt(r.querySelector('.pb-ll b')) + ' ' + txt(r.querySelector('.pb-ll span')) + ' ' + txt(r.querySelector('.pb-lr b'))).join('; ')}`);
+  console.log(`  priced ${PBS.toAm(q.dec)} est. (the legs multiplied ${PBS.toAm(q.product)}), fair chance ${PBS.pct1(q.fair)}, the model's ${q.p === null ? 'none' : PBS.pct1(q.p)}; ${G.id}'s ${lsG.length} legs joined ${pgG.fair.toFixed(4)} fair, ${pgG.implied.toFixed(4)} implied (two million draws here: ${jF.p.toFixed(4)}, ${jI.p.toFixed(4)})`);
+  const bt = [...d.querySelectorAll('#parlayTotals .stat')].map(txt), notes = txt($('bNotes'));
+  const why = "DraftKings prices same-game parlays its own way: this is an estimate from the legs' prices and how they move together";
+  chk(bt[0].startsWith(PBS.pct1(q.fair)) && bt[0].includes(`Fair chance all ${n} land, est.`) && (q.p === null ? bt[0].includes('no model chance on every leg') : bt[0].includes(`model ${PBS.pct1(q.p)}, props model on trial`)), `the summary leads with DraftKings' fair chance of the parlay, est., the model's beside it on trial (${bt[0]})`);
+  chk(bt[1].startsWith(`${PBS.toAm(q.dec)} est.`) && bt[1].includes('DraftKings price, estimated') && bt[1].includes(`the legs multiplied ${PBS.toAm(q.product)}`), `the price tile says est., and the plain product beside it (${bt[1]})`);
+  chk(bt[2].startsWith(PBS.money(PBS.cents(20 * q.dec))) && /profit, est\./.test(bt[2]) && bt[3].includes('on the fair chance, est.'), `what it pays and the confidence, est. (${bt[2]} | ${bt[3]})`);
+  chk(notes.includes(why) && notes.includes(`never more than the legs' prices multiplied (${PBS.toAm(q.product)})`) && notes.includes('on trial and suggests nothing'), `the builder's notes give the one-line why (${notes.slice(0, 260)})`);
+  chk(txt($('slipText')).includes(`${PBS.toAm(q.dec)} est.`) || $('slip').hidden, `the slip bar marks the price est. (${txt($('slipText'))})`);
+  const bTxt = txt($('builder'));
+  chk(!/\bedge\b/i.test(bTxt) && !/model says/i.test(bTxt), `with a player leg nothing in the builder claims an edge or says "model says" (${(/[^.]*\bedge\b[^.]*|[^.]*model says[^.]*/i.exec(bTxt) || [''])[0].slice(0, 120)})`);
+  chk(tiers() === tiers0, 'the suggested levels are exactly as they were: team bets, one leg a game, no player and no same-game parlay');
+  holdPanel(w, AT, 'with player legs in the builder', true);
+  /* the card: each player leg with its price and read time, to add by hand; the betslip link the team legs' ids alone; est. */
+  $('pFinish').click();
+  const view = txt($('pcView')), note = txt($('pcNote')), cardLegs = JSON.parse(w.eval('JSON.stringify(PC.legs.map(L => ({ id: L.id, prop: !!L.prop, who: L.who, bet: L.bet, price: L.price, at: L.at || null, kind: L.kind, side: L.side, game: L.game })))'));
+  chk(!$('pcWin').hidden && cardLegs.length === n, 'Finish parlay opens the card on every leg');
+  chk(cardLegs.filter(L => L.prop).every(L => view.includes(L.who) && view.includes(L.bet) && view.includes(PBS.odds(L.price)) && view.includes(`DraftKings, read ${etClockS(L.at)}`)) && txt(d.querySelector('.pc-price')).endsWith('est.') && view.includes(why), `the card lists each player leg with its price and read time, its price est. with the why (${view.slice(0, 200)})`);
+  chk(cardLegs.map((L, i) => [L, i + 1]).filter(([L]) => L.prop).every(([L, k]) => note.includes(`Leg ${k}, ${L.who} ${L.bet}: DraftKings' player lines carry no betslip id in ESPN's feed: add this leg by hand.`)), `the note lists every player leg to add by hand (${note.slice(0, 300)})`);
+  const key = L => L.kind === 'ou' ? L.side : L.side + (L.kind === 'ml' ? 'ML' : 'PL');
+  const ids = cardLegs.filter(L => !L.prop).map(L => { const g = S.games.find(x => x.id === L.game), dk = g.line.dk || {}, id = dk[key(L)]; return typeof id === 'string' && dkNamesLine(key(L), id, g.line) ? id : null; }).filter(Boolean);
+  chk($('pcDk').href === (ids.length ? 'https://sportsbook.draftkings.com/?outcomes=' + ids.map(encodeURIComponent).join('+') : 'https://sportsbook.draftkings.com/leagues/hockey/nhl'), `the betslip link opens the legs with ids, the team legs alone (${$('pcDk').href})`);
+  chk(note.includes("The price here is an estimate: DraftKings prices same-game parlays its own way: this is an estimate from the legs' prices and how they move together, so the slip will show DraftKings' own same-game price."), 'the note says the slip shows DraftKings\' own same-game price');
+  const shared = [];
+  Object.defineProperty(w.navigator, 'share', { value: async x => { shared.push(x); }, configurable: true });
+  Object.defineProperty(w.navigator, 'canShare', { value: () => true, configurable: true });
+  $('pcLink').click(); await wait(20);
+  const sent = shared[0] || { text: '' }, lines = sent.text.split('\n');
+  chk(sent.title === `${n}-leg parlay ${PBS.toAm(q.dec)} (estimated price)` && cardLegs.every((L, i) => lines[i] === `${i + 1}. ${L.who}: ${L.bet} (${PBS.odds(L.price)}${L.prop ? `, DraftKings as read ${etClockS(L.at)}` : ''})`)
+    && lines.includes(`Stake ${PBS.money(20)} · Pays ${PBS.money(PBS.cents(20 * q.dec))} (est.)`) && lines.includes(`Estimated price: ${why}; the legs' prices multiplied would be ${PBS.toAm(q.product)}.`)
+    && cardLegs.map((L, i) => [L, i + 1]).filter(([L]) => L.prop).every(([L, k]) => lines.includes(`${k}. ${L.who} ${L.bet} (DraftKings' player lines carry no betslip id in ESPN's feed)`)) && !/model says|\bedge\b/i.test(sent.text),
+    `the Share text: the title est., every leg with its price (a player leg's read time), the pays est., the why, each player leg to add by hand, no edge (${JSON.stringify(sent.text).slice(0, 500)})`);
+  const rec = [];
+  w.HTMLCanvasElement.prototype.getContext = function () { const self = this; return new Proxy({}, { get(t, k) { if (k === 'canvas') return self; if (k === 'measureText') return s2 => ({ width: String(s2).length * 7 }); if (k in t) return t[k]; return (...a) => { rec.push([k, a]); }; }, set(t, k, v) { t[k] = v; return true; } }); };
+  w.HTMLCanvasElement.prototype.toBlob = function (cb) { cb(new w.Blob(['png'], { type: 'image/png' })); };
+  w.URL.createObjectURL = () => 'blob:card'; w.URL.revokeObjectURL = () => {};
+  const click0 = w.HTMLAnchorElement.prototype.click; w.HTMLAnchorElement.prototype.click = function () {};
+  $('pcDown').click(); await wait(50); w.HTMLAnchorElement.prototype.click = click0;
+  const drawn = rec.filter(r => r[0] === 'fillText').map(r => String(r[1][0])).join(' | ');
+  chk(drawn.includes('est.') && drawn.includes('an estimate of DraftKings\' same-game price') && cardLegs.filter(L => L.prop).every(L => drawn.includes(L.who) && drawn.includes(`read ${etClockS(L.at)}`)), `the image marks the price est. and dates each player leg (${drawn.slice(0, 200)})`);
+  d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  /* saved: the estimate kept with the legs */
+  $('saveParlay').click();
+  const sv = (store().saved || [])[0] || {};
+  chk(sv.est === true && Math.abs(sv.dec - q.dec) < 1e-12 && Math.abs(sv.product - q.product) < 1e-12 && sv.legs.length === n && /est\./.test(txt(d.querySelector('#savedList .saved .top'))), `a saved same-game parlay keeps its estimated price and says est. (${txt(d.querySelector('#savedList .saved .top'))})`);
+  /* nothing of the read stored: nhl_v1 alone written, and in it the legs added (no read, no line, no price the visitor did not add) */
+  const st = store(), allowed = ['game', 'kind', 'pid', 'name', 'team', 'grp', 'stat', 'mk', 'side', 'line', 'k', 'odds', 'other', 'at', 'p', 'fair', 'label', 'text', 'date', 'start'];
+  chk([...new Set(w.__writes)].every(k => k === 'nhl_v1') && !/"main":\[|"yes":\[|PROPS|propBets|"items"/.test(JSON.stringify(st)) && st.legs.filter(l => l.kind === 'prop').every(l => Object.keys(l).every(k => allowed.includes(k))), `nothing from the props read is stored but the legs added (${Object.keys(st).join(', ')}; ${st.legs.filter(l => l.kind === 'prop').length} player legs)`);
+  const stored = w.localStorage.getItem('nhl_v1');
+  /* a reload: the legs at their read prices, dated by the read, the price as before */
+  {
+    const eR = [], wR = await boot(AT + 60000, eR, { state: JSON.stringify(M), hash: 'parlays', store: stored }), dR = wR.document;
+    const qR = JSON.parse(wR.eval('JSON.stringify(quote(builderLegs(false)))'));
+    const rr = [...dR.querySelectorAll('#legs .leg')].filter(r => r.dataset.id.includes('|p|'));
+    chk(rr.length === st.legs.filter(l => l.kind === 'prop').length && rr.every(r => txt(r).includes(`DraftKings, as read ${clockOf(Date.parse(readAt))}`)) && Math.abs(qR.dec - q.dec) < 1e-12 && Math.abs(qR.fair - q.fair) < 1e-12 && !wR.eval('Object.keys(PROPS.games).length'),
+      `a reload keeps the player legs at their read prices, dated by the read, with nothing read (${rr.length} rows; ${qR.dec} vs ${q.dec})`);
+    /* the levels worked out from nothing on a page that opens with player legs in the builder (the open page's levels are cached on
+       the picks, the slate and the reads, so only a fresh page computes them with the player legs there): every level by brute
+       force, team bets alone, one leg a game, and exactly the levels the page drew before any player leg */
+    const tiersR = canon([...dR.querySelectorAll('.pb-tier')].map(t => [t.dataset.tier, [...t.querySelectorAll('.pb-tl')].map(x => x.dataset.id), txt(t.querySelector('.pb-nums')), txt(t.querySelector('.pb-rule'))]));
+    chk(tiersR === tiers0 && ![...dR.querySelectorAll('.pb-tier .pb-tl')].some(x => x.dataset.id.includes('|p|')), `a reload with player legs in the builder works out the same levels from nothing: team bets, one leg a game, no player leg (${tiersR === tiers0 ? 'the same' : tiersR.slice(0, 160)})`);
+    holdPanel(wR, AT + 60000, 'a reload with player legs in the builder', true);
+    chk(!eR.length, 'no runtime error on the reload: ' + eR.join(' | '));
+  }
+  /* a later press: Y's 3+ re-priced, X's points line moved, Z's saves line pulled; each said once, nothing stored */
+  const A2 = JSON.parse(JSON.stringify(A.items)), T2 = AT + 2 * 60000;
+  for (const it of A2) {
+    if (!it || !it.athlete) continue;
+    const id = (/\/athletes\/(\d+)/.exec(it.athlete.$ref) || [])[1], ty = it.type && it.type.name;
+    if (id === String(Y.id) && ty === 'Shots on Goal Milestones' && it.current && it.current.target && it.current.target.value === 3) it.odds.american.value = '+410';
+    if (id === String(X.id) && ty === 'Total Points') { it.odds.total.value = String(xm[2] + 1); if (it.current && it.current.target) it.current.target.value = xm[2] + 1; }
+    if (id === String(X.id) && ty === 'Points Milestones' && it.current && it.current.target && it.current.target.value === xm[2] + 1.5) it.odds.american.value = (xm[3] > 0 ? '+' : '') + xm[3];      // its ladder agrees with the moved line's Over
+  }
+  const A3 = Z ? A2.filter(it => !(it && it.athlete && it.type && it.type.name === 'Total Saves' && it.athlete.$ref.includes(`/athletes/${Z.id}?`))) : A2;
+  propsNow = url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A3)) }) } : PROPS_404(url); };
+  w.__setClock(T2);
+  const wr2 = w.__writes.length;
+  $('pbRefreshOdds').click(); await oddsDone(w); await wait(20);
+  const at2 = w.eval(`PROPS.games[${JSON.stringify(G.id)}].at`), bm = txt($('bMsg')), ids2 = [...d.querySelectorAll('#legs .leg')].map(r => r.dataset.id);
+  const yRow = d.querySelector(`#legs .leg[data-id="${G.id}|p|${Y.id}|s|k3"]`);
+  chk(!!yRow && txt(yRow).includes('+410') && txt(yRow).includes(`DraftKings, as read ${clockOf(Date.parse(at2))}`) && bm.includes(`1 player price has changed since you added it: the builder shows DraftKings' price as read from ESPN at ${clockOf(Date.parse(at2))}.`), `a later read draws a re-priced player leg at its new price, dated, and says so (${yRow && txt(yRow)} | ${bm.slice(0, 200)})`);
+  chk(!ids2.some(id => id.startsWith(`${G.id}|p|${X.id}|pts|`)) && bm.includes(`${X.name} Over ${xm[2]} points left the builder: DraftKings' points line on ${X.name} is now ${xm[2] + 1} (as read ${clockOf(Date.parse(at2))}).`), `a player leg whose line DraftKings has moved leaves the builder, said (${bm.slice(0, 300)})`);
+  if (Z) chk(!ids2.some(id => id.startsWith(`${G.id}|p|${Z.id}|sv|`)) && bm.includes(`left the builder: DraftKings had no saves line on ${Z.name} when ESPN was read at ${clockOf(Date.parse(at2))}.`), `a player leg whose line DraftKings has pulled leaves the builder, said (${bm.slice(0, 300)})`);
+  chk(w.__writes.length === wr2 && w.localStorage.getItem('nhl_v1') === stored, `the later read stores nothing: the legs stay as added (${w.__writes.length - wr2} writes)`);
+  d.querySelector('#tabs button[data-tab="games"]').click(); d.querySelector('#tabs button[data-tab="parlays"]').click();
+  chk(!txt($('bMsg')).includes('player price has changed') || txt($('bMsg')) === bm, 'what a read changed is said once, not at every draw');
+  chk(JSON.stringify(store().legs) === JSON.stringify(JSON.parse(stored).legs), 'a save after the read (the tabs) keeps the legs as they were added');
+  /* the puck drop: every leg of G leaves the builder, said once */
+  w.__setClock(Date.parse(G.start) + 60000); d.dispatchEvent(new w.Event('visibilitychange'));
+  const left = store().legs;
+  const hLeft = Date.parse(H.start) > Date.parse(G.start) + 60000 ? 1 : 0;
+  chk(!left.some(l => l.game === G.id) && left.length === hLeft && (txt($('bMsg')).match(new RegExp(`${mu.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} left the builder: the puck dropped\\.`, 'g')) || []).length === 1, `at the puck drop every leg of ${G.id}, the player legs with them, leaves the builder, said once (${txt($('bMsg')).slice(0, 160)})`);
+  chk(!errs.length, 'no runtime error through the player legs: ' + errs.join(' | '));
+  holdRequests(w, 'the player legs');
+}
+/* saved parlays' player legs graded from planted box scores, by this smoke's own rule: Over or Under the line (a whole line can push), a
+   Yes k+ at k or more, a player not on the ice void; a final not boxed yet waits, one older than the box scores carried cannot be graded
+   here; a same-game parlay pays its estimated price, or on the legs left priced again by the rule */
+async function gradingChecks(C) {
+  const M = JSON.parse(STATE); M.sgp = { rho: C.rho, hold: C.hold, measured: C.measured || null };
+  const fins = M.games.filter(g => g.state === 'final' && g.hs !== null && g.hs !== g.as).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1);
+  const F = fins[fins.length - 1], F2 = fins.find(g => g.date < (F || {}).date), F3 = fins.find(g => g !== F && g.date === (F || {}).date);
+  if (!F || !F2) { console.log('  fewer than two finals on two days: the grading of player legs is skipped'); return; }
+  const real = S; S = M;
+  try {
+    const A = '7000001', B = '7000002', Gk = '7000003', D = '7000004';            // A and B skaters of F's home club, Gk the away goalie, D dressed for nobody
+    M.box = { from: F.date, days: 14, games: { [F.id]: { s: { [A]: [2, 1, 4, 1], [B]: [0, 0, 1, 3] }, g: { [Gk]: 30 } } } };
+    const pl = (pid, team, grp, stat, mk, side, line, k, odds, other) => ({ game: F.id, kind: 'prop', pid, name: `Player ${pid.slice(-1)}`, team, grp, stat, mk, side, line, k, odds, other, at: new Date(PUB - 86400000).toISOString(), p: 0.5, fair: 0.5, label: `${F.away} @ ${F.home}`, text: '', date: F.date, start: F.start });
+    const won = F.hs > F.as ? 'home' : 'away';
+    const L = {
+      aPts: pl(A, F.home, 'F', 'pts', 'main', 'over', 2.5, null, 150, -190),          // 3 points: won
+      gSv: pl(Gk, F.away, 'G', 'sv', 'main', 'over', 25.5, null, -115, -105),         // 30 saves: won
+      bS: pl(B, F.home, 'D', 's', 'main', 'over', 1.5, null, 120, -150),              // 1 shot: lost
+      aG2: pl(A, F.home, 'F', 'g', 'yes', 'over', 1.5, 2, 650, null),                 // 2 goals, 2+: won
+      aS4: pl(A, F.home, 'F', 's', 'main', 'over', 4, null, 105, -135),               // 4 shots on a whole line: a push
+      aSh: pl(A, F.home, 'F', 's', 'main', 'over', 2.5, null, 110, -140),             // 4 shots over 2.5: won (with his points, legs that move together)
+      bBs: pl(B, F.home, 'D', 'bs', 'main', 'under', 3.5, null, -160, 125),           // 3 blocks under 3.5: won
+      dPts: pl(D, F.home, 'F', 'pts', 'main', 'over', 0.5, null, -140, 110),          // not on the ice: void
+      f3: Object.assign(pl(A, F3 ? F3.home : F.home, 'F', 's', 'main', 'over', 1.5, null, -120, -110), { game: F3 ? F3.id : F.id }),      // F3 not boxed yet: waits
+      f2: Object.assign(pl(A, F2.home, 'F', 's', 'main', 'over', 1.5, null, -120, -110), { game: F2.id, date: F2.date }),                 // F2 before the window: past it
+      ml: { game: F.id, side: won, kind: 'ml', odds: -130, line: null, p: 0.55, fair: 0.54, label: `${F.away} @ ${F.home}`, text: '', date: F.date, start: F.start },
+    };
+    const sp = (id, legs, extra) => Object.assign({ id, at: new Date(PUB - 86400000).toISOString(), stake: 10, legs, am: '+500', dec: 6, p: 0.2, imp: 0.17, fair: 0.18 }, extra || {});
+    const saved = [sp('w1', [L.aPts, L.gSv, L.ml], { est: true, dec: 4.4, product: 6.1 }), sp('l1', [L.bS, L.aG2]), sp('p1', [L.aS4, L.bBs]), sp('v1', [L.dPts, L.aG2]), sp('v2', [L.dPts]), sp('v3', [L.aPts, L.aSh, L.dPts], { est: true, dec: 3.9 })]
+      .concat(F3 ? [sp('q1', [L.f3])] : []).concat([sp('o1', [L.f2])]);
+    /* this smoke's own grading of a planted leg */
+    const box = M.box.games[F.id], xOf = l => l.stat === 'sv' ? box.g[l.pid] : box.s[l.pid] && (l.stat === 'pts' ? box.s[l.pid][0] + box.s[l.pid][1] : box.s[l.pid][{ g: 0, a: 1, s: 2, bs: 3 }[l.stat]]);
+    const gradeS = l => { if (l.game !== F.id) return l.game === F2.id ? 'unboxed' : 'pending'; if (l.kind !== 'prop') return l.side === won ? 'win' : 'loss'; const x = xOf(l); if (x === undefined) return 'void'; return l.mk === 'yes' ? (x >= l.k ? 'win' : 'loss') : x > l.line ? (l.side === 'over' ? 'win' : 'loss') : x < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push'; };
+    const decS = ls => { const by = {}; for (const l of ls) by[l.game] = (by[l.game] || 0) + 1; const prod = ls.reduce((a, l) => a * PBS.decOf(l.odds), 1); if (!Object.values(by).some(n => n > 1)) return prod; return SG.parlay(M.sgp, ls.map(l => sgOf(M, l))).dec; };
+    const want = s => { const gl = s.legs.map(gradeS); const st = gl.includes('loss') ? 'loss' : gl.some(x => x === 'unboxed') ? 'gone' : gl.includes('pending') ? 'pending' : gl.every(x => x === 'push' || x === 'void') ? 'push' : 'win';
+      const wonL = s.legs.filter((l, i) => gl[i] === 'win'); return { st, gl, pays: st === 'win' ? PBS.cents(s.stake * (s.est && wonL.length === s.legs.length ? s.dec : decS(wonL))) : null }; };
+    const errs = [], w = await boot(PUB + 60000, errs, { state: JSON.stringify(M), store: JSON.stringify({ saved, ui: { tab: 'parlays' } }), hash: 'parlays' }), d = w.document;
+    const cardOfS = id => [...d.querySelectorAll('#savedList .saved')].find(x => x.querySelector(`[data-del="${id}"]`));
+    const words = { win: 'won', loss: 'lost', push: 'push', pending: 'pending', void: 'void', unboxed: 'box score no longer carried' };
+    const tagOf = { win: 'won', loss: 'lost', push: 'push: stake back', pending: 'pending', gone: "can't be graded here" };
+    const stS = () => JSON.parse(w.localStorage.getItem('nhl_v1')).saved;
+    for (const s of saved) {
+      const c = cardOfS(s.id), ex = want(s), top = c ? txt(c.querySelector('.top')) : '', lis = c ? [...c.querySelectorAll('.pb-slegs li .tag')].map(txt) : [];
+      chk(!!c && top.includes(tagOf[ex.st] + (ex.st === 'win' ? ` · ${PBS.money(ex.pays)}` : '')), `${s.id}: graded ${ex.st}${ex.st === 'win' ? ' paying ' + PBS.money(ex.pays) : ''} (${top})`);
+      chk(lis.length === s.legs.length && s.legs.every((l, i) => { const gl = ex.gl[i], x = l.kind === 'prop' && l.game === F.id ? xOf(l) : undefined; return gl === 'void' ? lis[i] === 'void: did not play' : /^(win|loss|push)$/.test(gl) && l.kind === 'prop' ? lis[i] === `${words[gl]} (${x})` : lis[i] === words[gl]; }), `${s.id}: each leg graded as DraftKings settles it, its count beside it (${lis.join(' | ')})`);
+      const kept = stS().find(x => x.id === s.id);
+      chk(kept && kept.legs.every((l, i) => l.kind !== 'prop' || !/^(win|loss|push|void)$/.test(ex.gl[i]) ? !l.res : l.res && l.res.grade === ex.gl[i] && (ex.gl[i] === 'void' ? l.res.x === null && l.res.why === 'did not play' : l.res.x === xOf(l))), `${s.id}: each settled player leg's grade is written into the saved leg (${canon(kept && kept.legs.map(l => l.res || null)).slice(0, 200)})`);
+    }
+    console.log(`  ${saved.length} saved parlays graded on planted box scores of ${F.id} (${saved.map(s2 => s2.id + ' ' + want(s2).st).join(', ')})`);
+    /* the next publish carries no box score for F (past the window, or a publish without them): the grades written stand */
+    const M2 = JSON.parse(JSON.stringify(M)); M2.box = { from: F.date, days: 14, games: {} };
+    const e2 = [], w2 = await boot(PUB + 60000, e2, { state: JSON.stringify(M2), store: w.localStorage.getItem('nhl_v1'), hash: 'parlays' }), d2 = w2.document;
+    const keptOk = saved.filter(s => want(s).st !== 'pending' && want(s).st !== 'gone').every(s => { const c = [...d2.querySelectorAll('#savedList .saved')].find(x => x.querySelector(`[data-del="${s.id}"]`)); return c && txt(c.querySelector('.top')).includes(tagOf[want(s).st]); });
+    chk(keptOk, 'a settled grade holds on a publish no longer carrying its box score');
+    chk(!errs.length && !e2.length, 'no runtime error grading player legs: ' + errs.concat(e2).join(' | '));
+  } finally { S = real; }
+}
+
 async function main() {
   const errors = [];
   reality();
@@ -2173,15 +2628,16 @@ async function main() {
   chk(!!$('sourceNote') && $('sourceNote').hidden === !(staleInj || noStarters), `the note on stale sources is shown exactly when one is stale (injury report ${staleInj}, DailyFaceoff ${noStarters})`);
   if (staleInj) chk(/Injury report from/.test(txt($('sourceNote'))), 'a stale injury report is named with its time');
   if (noStarters) chk(/No announced goalies/.test(txt($('sourceNote'))), 'DailyFaceoff not read is said');
-  /* a leg can be added from a game that has a line and is still to come; a second leg on the same game replaces it */
+  /* a leg can be added from a game that has a line and is still to come; a second leg in the same slot of the same game (a second side
+     bet, or the other side of the total) replaces it, and with no same-game table in the state any second leg of the game does */
   const btn = d.querySelector('#games button[data-leg]');
   if (btn) {
     btn.click();
     chk(w.localStorage.getItem('nhl_v1') && JSON.parse(w.localStorage.getItem('nhl_v1')).legs.length === 1, 'clicking a line adds a leg to the browser store');
     chk(txt($('legCount')) === '1', 'the tab bar counts the leg');
-    const same = btn.dataset.leg.split('|')[0];
-    const other = [...d.querySelectorAll('#games button[data-leg]')].find(b => b.dataset.leg.split('|')[0] === same && b !== btn && !b.classList.contains('on'));
-    if (other) { other.click(); chk(JSON.parse(w.localStorage.getItem('nhl_v1')).legs.length === 1, 'a second leg on the same game replaces the first'); }
+    const same = btn.dataset.leg.split('|')[0], slot = b => b.dataset.leg.split('|')[2] === 'ou' ? 'tot' : 'side';
+    const other = [...d.querySelectorAll('#games button[data-leg]')].find(b => b.dataset.leg.split('|')[0] === same && b !== btn && !b.classList.contains('on') && slot(b) === slot(btn));
+    if (other) { other.click(); chk(JSON.parse(w.localStorage.getItem('nhl_v1')).legs.length === 1, 'a second leg in the same slot of the same game replaces the first'); }
   }
 
   /* Standings: four divisions of eight, every club once, the sixteen in the field marked */
@@ -2324,6 +2780,8 @@ async function main() {
   await parlayEdges();
   await refreshOddsChecks();
   await playerPropsChecks();
+  /* a page that breaks this section's steps (a button missing, a leg not where it should be) fails it, never ends the smoke unheard */
+  try { await sameGameChecks(); } catch (e) { chk(false, `SAME-GAME PARLAYS AND PLAYER LEGS stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
 
   /* written synchronously: process.exit (the page's timers would keep Node up) must not cut a piped log short */
   const shown = process.env.NHL_SMOKE_ALL ? fails : fails.slice(0, 60);

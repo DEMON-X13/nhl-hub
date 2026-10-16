@@ -1405,24 +1405,35 @@ const sgWhyNot = g => !sgpT() ? 'this publish carries no same-game table' : g &&
    a player a stat (a second takes the first's place, said); a player's points beside his own goals or assists refused (said); one leg
    a game where sgWhyNot says why; and no more than GAME_LEGS_MAX legs of one game, the most the same-game rule prices (refused, said).
    What DraftKings takes on one ticket is DraftKings' to say: where this page is unsure (the points with his own goals or assists) it
-   refuses. Returns { msg } (what was replaced, or '') or { refused } */
+   refuses. A stored leg of the game the builder no longer draws (a Refresh odds read moved or pulled its line: it stays stored as it
+   was, so a reload brings it back on the published prices) is not in the parlay, so it counts toward neither the nested rule nor the
+   most of one game; where the new leg would stand beside it on a reload (nested with it, or past GAME_LEGS_MAX stored) it is taken
+   out for good, said, so the store never holds more of a game than the rule prices. Returns { msg } (what was replaced or taken
+   out, or '') or { refused } */
 function placeLeg(nl, g) {
   const mine = P.legs.filter(l => l.game === nl.game), why = sgWhyNot(g);
-  let gone, rule;
+  let gone, rule, drop = [];
   if (why) { gone = mine.filter(l => legIdOf(l) !== legIdOf(nl)); rule = `one leg a game here: ${why}`; }
   else {
-    const n = mine.find(l => nestedPair(l, nl));
+    const drawn = new Set(builderLegs(false).filter(L => L.game === nl.game).map(L => L.id));
+    const hidden = mine.filter(l => !drawn.has(legIdOf(l)));
+    const n = mine.find(l => nestedPair(l, nl) && !hidden.includes(l));
     if (n) {
       const pts = nl.stat === 'pts' ? nl : n, other = nl.stat === 'pts' ? n : nl, what = other.stat === 'g' ? 'goals' : 'assists';
       return { refused: `Not added: ${poss(pts.name || 'his')} points and his own ${what} are nearly one bet (every ${what === 'goals' ? 'goal' : 'assist'} is a point). DraftKings may not take both on one ticket, so this page never puts them together.` };
     }
     gone = mine.filter(l => slotOf(l) === slotOf(nl) && legIdOf(l) !== legIdOf(nl));
     rule = isProp(nl) ? 'one leg a player a stat' : nl.kind === 'ou' ? 'one total a game' : 'one side bet a game (the moneyline or the puck line)';
-    if (mine.filter(l => !gone.includes(l) && legIdOf(l) !== legIdOf(nl)).length + 1 > GAME_LEGS_MAX)
+    const stay = mine.filter(l => !gone.includes(l) && legIdOf(l) !== legIdOf(nl));
+    if (stay.filter(l => !hidden.includes(l)).length + 1 > GAME_LEGS_MAX)
       return { refused: `Not added: your parlay has ${GAME_LEGS_MAX} legs of ${matchup(g)} already, the most of one game this page can price.` };
+    drop = stay.filter(l => hidden.includes(l) && (nestedPair(l, nl) || stay.length + 1 > GAME_LEGS_MAX));
   }
-  P.legs = P.legs.filter(l => !gone.includes(l) && legIdOf(l) !== legIdOf(nl)).concat([nl]);
-  return { msg: gone.length ? `${descStored(nl, g)} replaced ${gone.map(l => descStored(l, g)).join(' and ')} on ${matchup(g)}: ${rule}.` : '' };
+  P.legs = P.legs.filter(l => !gone.includes(l) && !drop.includes(l) && legIdOf(l) !== legIdOf(nl)).concat([nl]);
+  const msgs = [];
+  if (gone.length) msgs.push(`${descStored(nl, g)} replaced ${gone.map(l => descStored(l, g)).join(' and ')} on ${matchup(g)}: ${rule}.`);
+  if (drop.length) msgs.push(`${andList(drop.map(l => descStored(l, g)))} had left the builder and ${drop.length > 1 ? 'are' : 'is'} now taken out of it for good, so ${drop.length > 1 ? 'they' : 'it'} cannot come back beside ${descStored(nl, g)} on a reload.`);
+  return { msg: msgs.join(' ') };
 }
 const pbStake = () => stakeRead(P.stake) || 20;
 const confOf = c => c >= 0.7 ? 'High' : c >= 0.45 ? 'Medium' : 'Low';
@@ -1818,14 +1829,14 @@ document.addEventListener('click', e => {
   const cur = g && legOf(g, side, kind);
   /* the same bet at the same number is taken out; one stored at a number DraftKings has moved since is replaced */
   const i = P.legs.findIndex(l => !isProp(l) && l.game === gid && l.side === side && l.kind === kind && (!cur || sameNum(l, cur)));
-  if (i >= 0) { P.legs.splice(i, 1); BMSG = []; }
+  if (i >= 0) { P.legs.splice(i, 1); BMSG = []; slipQuiet(); }      // a refusal or a replacement said before no longer stands
   else {
     if (!g || hasStarted(g) || !freshLine(g)) { rerender(); return; }        // a page left open past puck drop, or a line gone: no bet
     const L = cur; if (!L) return;
     const { msg, refused } = placeLeg(storeLeg(L), g);   // by the same-game rule: a second side bet or total on a game takes the first's place
     if (refused) { BMSG = [refused]; slipSay(refused); rerender(); return; }   // past the most legs of one game: nothing changes
     BMSG = []; builderLegs(true);                       // in the builder's order, every other leg read again
-    if (msg) { BMSG.unshift(msg); slipSay(msg); }
+    if (msg) { BMSG.unshift(msg); slipSay(msg); } else slipQuiet();
   }
   save(); rerender();
 });
@@ -1981,7 +1992,7 @@ function renderBuilder(legs) {
 $('legs').addEventListener('click', e => {
   const b = e.target.closest('button.x'); if (!b) return;
   const legs = builderLegs(true), L = legs[+b.dataset.i]; if (!L) return;
-  P.legs = P.legs.filter(l => legIdOf(l) !== L.id); BMSG = []; save(); rerender();
+  P.legs = P.legs.filter(l => legIdOf(l) !== L.id); BMSG = []; slipQuiet(); save(); rerender();
   const nx = document.querySelector('#legs button.x') || $('bTitle'); if (nx && nx.focus) nx.focus();
 });
 function setStake(v) { P.stake = v; save(); renderBuilder(builderLegs(false)); pbPays(); updateSlip(); if (document.activeElement !== $('pbStake')) $('pbStake').value = String(pbStake()); }
@@ -3041,12 +3052,12 @@ function ppAdd(key) {
   if (!propShapeOk(nl)) return;
   const L = propDrawn(g, nl, nl.odds, nl.other, nl.at), st = storeLeg(L);
   let said;
-  if (P.legs.some(l => legIdOf(l) === L.id)) { P.legs = P.legs.filter(l => legIdOf(l) !== L.id); BMSG = []; said = `Taken out of your parlay: ${L.desc}.`; }
+  if (P.legs.some(l => legIdOf(l) === L.id)) { P.legs = P.legs.filter(l => legIdOf(l) !== L.id); BMSG = []; slipQuiet(); said = `Taken out of your parlay: ${L.desc}.`; }
   else {
     const r = placeLeg(st, g);
     if (r.refused) { $('ppMsg').textContent = r.refused; return; }
     BMSG = []; builderLegs(true);
-    if (r.msg) { BMSG.unshift(r.msg); slipSay(r.msg); }
+    if (r.msg) { BMSG.unshift(r.msg); slipSay(r.msg); } else slipQuiet();
     said = `${r.msg ? r.msg + ' ' : ''}Added to your parlay: ${L.desc}, ${fmtOdds(L.price)}, DraftKings as read ${hhmm(L.at)}.`;
   }
   save(); rerender(); renderProps();

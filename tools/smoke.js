@@ -2344,19 +2344,23 @@ async function sameGameChecks() {
     }
     if (!G || !H) { console.log(`  no game to come today or tomorrow with a DraftKings line, a total and projections beside another with a line (${G ? G.id : 'none'}, ${H ? H.id : 'none'}): the builder's player legs are not held on this state`); return; }
     await builderPlayerLegs(M, G, H, AT);
-    await gameLegsMax(M, G, AT);
+    await gameLegsMax(M, G, H, AT);
   } finally { S = real; }
   await gradingChecks(C);
 }
 /* the most legs of one game: tools/sgp.js prices up to its MAX_GAME_LEGS (its lattice's roots) and the page's GAME_LEGS_MAX is that
    number. A store holding 23 legs of G opens with the first 21; with 21 in, a 22nd (a player's price or a team bet) is refused, said,
-   nothing stored; one taken out makes room again. The price shown is the rule's estimate on all 21, never the product */
-async function gameLegsMax(M, G, AT) {
+   nothing stored; one taken out makes room again. The price shown is the rule's estimate on all 21, never the product. A stored leg a
+   later read has taken out of the builder (its line moved) is not in the parlay: it counts toward neither the most of one game nor the
+   nested rule, and a leg added beside it on a reload takes it out of the store for good, said, so a reload brings back no more than 21 */
+async function gameLegsMax(M, G, H, AT) {
   const SGPJS = require('./sgp'), MAX = SGPJS.MAX_GAME_LEGS, A = propsAnswer(G), parsed = E.propsOf(A.items), pr = M.props.games[G.id];
   const mainOf = (pid, st) => parsed.main.find(r => r[0] === String(pid) && r[1] === st);
+  /* the candidates: every shots and blocks line, then every points line (no two nested: no goals or assists among them), so any game
+     the made-up answer prices gives more than enough, however many defencemen a club dresses */
   const cand = [];
-  for (const [side, club] of [['awayP', G.away], ['homeP', G.home]]) for (const x of pr[side].skaters) for (const st of ['s', 'bs']) { const m = mainOf(x.id, st); if (m) cand.push({ x, club, st, m }); }
-  if (cand.length < MAX + 3) { console.log(`  ${G.id}: ${cand.length} shots and blocks lines in the made-up answer, too few to hold the most legs of one game`); return; }
+  for (const sts of [['s', 'bs'], ['pts']]) for (const [side, club] of [['awayP', G.away], ['homeP', G.home]]) for (const x of pr[side].skaters) for (const st of sts) { const m = mainOf(x.id, st); if (m) cand.push({ x, club, st, m }); }
+  if (cand.length < MAX + 3) { console.log(`  ${G.id}: ${cand.length} shots, blocks and points lines in the made-up answer, too few to hold the most legs of one game (${MAX + 3} wanted)`); return; }
   const at0 = new Date(AT - 3600000).toISOString();
   const legOf = c => ({ game: G.id, kind: 'prop', pid: String(c.x.id), name: c.x.name, team: c.club, grp: c.x.pos === 'D' ? 'D' : 'F', stat: c.st, mk: 'main', side: 'over', line: c.m[2], k: null, odds: c.m[3], other: c.m[4], at: at0 });
   const errs = [], sb = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; };
@@ -2394,8 +2398,82 @@ async function gameLegsMax(M, G, AT) {
   if (ml) {
     ml.click();
     chk(canon(JSON.parse(w.localStorage.getItem('nhl_v1')).legs) === legsNow && ofG().length === MAX && txt($('slipMsg')) === ref, `a team bet past the most legs of one game is refused on the slip bar, nothing stored (${txt($('slipMsg'))})`);
+    /* the refusal stands only until the parlay changes: a leg taken out (in the props window, or a bet tapped off) or one added after
+       without a word of its own leaves the slip bar saying nothing of it */
+    const leg = k => d.querySelector(`#games .game[data-id="${G.id}"] button[data-leg="${G.id}|${k}"]`);
+    d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+    btn(cand[1]).click(); $('ppClose').click();
+    chk(ofG().length === MAX - 1 && txt($('slipMsg')) === '', `a leg taken out in the props window ends the refusal on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
+    leg('home|ml').click();
+    chk(ofG().length === MAX && txt($('slipMsg')) === '', `the team bet then goes in, the slip bar saying nothing of the refusal (${ofG().length}; "${txt($('slipMsg'))}")`);
+    if (leg('over|ou')) {
+      leg('over|ou').click();
+      chk(ofG().length === MAX && txt($('slipMsg')) === ref, `the total past the most is refused on the slip bar (${txt($('slipMsg'))})`);
+      const hb = () => d.querySelector(`#games .game[data-id="${H.id}"] button[data-leg="${H.id}|home|ml"]`);
+      if (hb()) {
+        hb().click();
+        chk(JSON.parse(w.eval(`JSON.stringify(P.legs.some(l => l.game === ${JSON.stringify(H.id)}))`)) && txt($('slipMsg')) === '', `a bet on another game, added without a word of its own, ends the refusal on the slip bar ("${txt($('slipMsg'))}")`);
+        leg('over|ou').click();
+        chk(ofG().length === MAX && txt($('slipMsg')) === ref, `the total past the most is refused again (${txt($('slipMsg'))})`);
+      } else chk(false, `${H.id}'s home moneyline is on the Games tab beside ${G.id}`);
+      leg('home|ml').click();
+      chk(ofG().length === MAX - 1 && txt($('slipMsg')) === '', `a bet tapped off ends the refusal on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
+      leg('over|ou').click();
+      chk(ofG().length === MAX && txt($('slipMsg')) === '', `and the total then goes in, the slip bar saying nothing of the refusal (${ofG().length}; "${txt($('slipMsg'))}")`);
+      leg('home|ml').click();
+      chk(ofG().length === MAX && txt($('slipMsg')) === ref, `the team bet past the most is refused once more (${txt($('slipMsg'))})`);
+      const x = d.querySelector(`#legs .leg[data-id^="${G.id}|"] button.x`); if (x) x.click();
+      chk(!!x && ofG().length === MAX - 1 && txt($('slipMsg')) === '', `a leg taken out with its × in the builder ends the refusal on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
+    }
   }
   chk(!errs.length, 'no runtime error at the most legs of one game: ' + errs.join(' | '));
+  await hiddenLegs(M, G, AT, { cand, nth, legOf, sb, props, parsed, mainOf, MAX, at0 });
+}
+/* a stored leg a read has taken out of the builder (its line moved or pulled) is not in the parlay: the most of one game and the
+   nested rule count only the legs drawn; a leg added beside it takes it out of the store for good, said, so a reload opens on what
+   the parlay showed, never on more than the most of one game or on a nested pair */
+async function hiddenLegs(M, G, AT, o) {
+  const { cand, nth, legOf, sb, props, parsed, mainOf, MAX, at0 } = o, pr = M.props.games[G.id];
+  const answer = A => url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); };
+  const ofG = (w, f) => JSON.parse(w.eval(`JSON.stringify(${f === 'drawn' ? 'builderLegs(false)' : 'P.legs'}.filter(l => l.game === ${JSON.stringify(G.id)}).map(l => l.pid + '|' + l.stat + '|' + l.line))`)).sort();
+  const inStore = w => (JSON.parse(w.localStorage.getItem('nhl_v1') || '{}').legs || []).filter(l => l.game === G.id).map(l => l.pid + '|' + l.stat + '|' + l.line).sort();
+  const lid = c => `${c.x.id}|${c.st}|${c.m[2]}`;
+  const press = async w => {
+    const d = w.document; d.querySelector('#tabs button[data-tab="games"]').click();
+    const day = d.querySelector(`#days .day[data-day="${G.date}"]`); if (day) day.click();
+    d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+    d.getElementById('ppRefreshOdds').click(); await oddsDone(w); await wait(20);
+  };
+  const tap = (w, key, st) => { const d = w.document; d.querySelector(`#ppStats button[data-pp-tab="${st}"]`).click(); const b = d.querySelector(`#ppBody button[data-pp-add="${key}"]`); if (b) b.click(); return !!b; };
+  /* the most of one game: 21 stored, the press moves one of their lines (so 20 drawn), and one more is added */
+  const mv = cand[1], refM = PROP_REF(mv.x.id), nm = { s: 'Total Shots on Goal', bs: 'Total Blocked Shots', pts: 'Total Points' }[mv.st], A2 = propsAnswer(G), L2 = mv.m[2] + 1;
+  let movedN = 0;
+  for (const it of A2.items) if (it && it.athlete && it.athlete.$ref === refM && it.type.name === nm && /^[+-]\d+$/.test(it.odds.american.value)) { it.odds.total = { value: String(L2) }; it.current = { target: { value: L2, displayValue: String(L2) } }; movedN++; }
+  const errs = [], w = await boot(AT, errs, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: answer(A2), store: JSON.stringify({ legs: cand.slice(0, MAX).map(legOf), ui: { tab: 'parlays' } }) });
+  await press(w);
+  chk(movedN === 2 && ofG(w).length === MAX && ofG(w, 'drawn').length === MAX - 1 && !ofG(w, 'drawn').includes(lid(mv)), `a press that moves the line of one of ${MAX} stored legs of a game takes it out of the builder and keeps it stored (${movedN} items moved; ${ofG(w).length} stored, ${ofG(w, 'drawn').length} drawn)`);
+  const tapped = tap(w, `${nth.x.id}|${nth.st}|main|over|${nth.m[2]}`, nth.st), msg = txt(w.document.getElementById('ppMsg'));
+  const want = cand.slice(0, MAX).filter(c => c !== mv).concat([nth]).map(lid).sort();
+  const said = `${mv.x.name} Over ${mv.m[2]} ${({ s: 'shots on goal', bs: 'blocked shots', pts: 'points' })[mv.st]} had left the builder and is now taken out of it for good, so it cannot come back beside ${nth.x.name} Over ${nth.m[2]} ${({ s: 'shots on goal', bs: 'blocked shots', pts: 'points' })[nth.st]} on a reload.`;
+  chk(tapped && canon(ofG(w)) === canon(want) && canon(ofG(w, 'drawn')) === canon(want) && canon(inStore(w)) === canon(want), `with one of them out of the builder, one more leg of the game goes in: ${MAX} in the parlay, the same ${MAX} stored, the moved one out of the store (${ofG(w).length} stored, ${ofG(w, 'drawn').length} drawn, ${inStore(w).length} in nhl_v1)`);
+  chk(msg.startsWith(said) && msg.endsWith(`Your parlay: ${MAX} legs.`), `the window says the moved leg is taken out for good and why (${msg.slice(0, 300)})`);
+  const errs2 = [], w2 = await boot(AT, errs2, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w.localStorage.getItem('nhl_v1') });
+  chk(canon(ofG(w2)) === canon(want) && canon(ofG(w2, 'drawn')) === canon(want), `a reload opens on the ${MAX} the parlay showed, the moved leg not back (${ofG(w2).length} stored, ${ofG(w2, 'drawn').length} drawn)`);
+  /* the nested rule: a player's points Over stored, the press finds no points line on him (pulled), and his anytime goal goes in */
+  const NP = pr.awayP.skaters.concat(pr.homeP.skaters).find(p => mainOf(p.id, 'pts') && parsed.yes.some(r => r[0] === String(p.id) && r[1] === 'g' && r[2] === 1));
+  if (!NP) { chk(false, `the made-up answer prices a skater's points beside his anytime goal (${G.id})`); return; }
+  const npm = mainOf(NP.id, 'pts'), refN = PROP_REF(NP.id), A3 = propsAnswer(G);
+  A3.items = A3.items.filter(it => !(it && it.athlete && it.athlete.$ref === refN && it.type.name === 'Total Points'));
+  const ptsLeg = { game: G.id, kind: 'prop', pid: String(NP.id), name: NP.name, team: pr.awayP.skaters.includes(NP) ? G.away : G.home, grp: NP.pos === 'D' ? 'D' : 'F', stat: 'pts', mk: 'main', side: 'over', line: npm[2], k: null, odds: npm[3], other: npm[4], at: at0 };
+  const errs3 = [], w3 = await boot(AT, errs3, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: answer(A3), store: JSON.stringify({ legs: [ptsLeg], ui: { tab: 'parlays' } }) });
+  await press(w3);
+  chk(ofG(w3).length === 1 && ofG(w3, 'drawn').length === 0, `a press that finds no points line on ${NP.name} takes his points Over out of the builder and keeps it stored (${ofG(w3).length} stored, ${ofG(w3, 'drawn').length} drawn)`);
+  const tapG = tap(w3, `${NP.id}|g|yes|1`, 'g'), msg3 = txt(w3.document.getElementById('ppMsg')), goal = [`${NP.id}|g|0.5`];
+  chk(tapG && canon(ofG(w3)) === canon(goal) && canon(ofG(w3, 'drawn')) === canon(goal) && canon(inStore(w3)) === canon(goal) && msg3.startsWith(`${NP.name} Over ${npm[2]} points had left the builder and is now taken out of it for good, so it cannot come back beside ${NP.name} Anytime goal on a reload.`), `his anytime goal goes in beside the points Over the read took out, which leaves the store for good, said (${canon(ofG(w3))}; ${msg3.slice(0, 240)})`);
+  const errs4 = [], w4 = await boot(AT, errs4, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w3.localStorage.getItem('nhl_v1') });
+  chk(canon(ofG(w4)) === canon(goal) && canon(ofG(w4, 'drawn')) === canon(goal), `a reload opens on his anytime goal alone, never beside his points (${canon(ofG(w4))})`);
+  const all = errs.concat(errs2, errs3, errs4);
+  chk(!all.length, 'no runtime error with legs a read took out of the builder: ' + all.join(' | '));
 }
 async function builderPlayerLegs(M, G, H, AT) {
   const T = M.sgp, A = propsAnswer(G), parsed = E.propsOf(A.items), pr = M.props.games[G.id];

@@ -214,7 +214,9 @@ Refresh odds press each DraftKings price in the props window is a button (`.pp-a
 `nhl_v1` at DraftKings' price as read with the read's time; `placeLeg` is the builder's same-game rule for every add
 (one side bet a game, one total, one leg a player a stat, each a replacement, said in the builder and on the slip bar; a
 player's points beside his own goals or assists refused; at most `GAME_LEGS_MAX`, 21, legs of one game, tools/sgp.js's
-`MAX_GAME_LEGS`, a 22nd refused and a store of more opening with the first 21; one leg a game on another book's game or
+`MAX_GAME_LEGS`, a 22nd refused and a store of more opening with the first 21; both rules count only the legs
+`builderLegs` draws, and a stored leg a read took out leaves the store, said, where the new leg would stand beside it on a
+reload, nested or past 21; one leg a game on another book's game or
 with no table); `propNow` draws a stored player leg at its price or at a later
 read's (out where the line moved or was pulled, said once, never stored). `quote` multiplies different games and joins
 one game's legs by `SGP`, tools/sgp.js copied word for word between `/* sgp.js begins */` and `/* sgp.js ends */`, on

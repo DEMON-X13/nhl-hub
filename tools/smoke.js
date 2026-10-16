@@ -1017,6 +1017,23 @@ async function parlayEdges() {
     chk(!errs.length, 'no runtime error at the puck drop: ' + errs.join(' | '));
     holdRequests(w, 'the puck-drop boot');
   } else console.log('  fewer than two fresh games to come: the puck-drop checks of the builder skipped');
+  /* a × pressed after a puck drop and before the watch's next look takes out the leg its row names, never the one now at its place:
+     three legs, the first on the next game to drop the puck; the clock passes that puck drop with no look, and the second row's × is
+     pressed. The started game's leg leaves at its puck drop, said; the third stays */
+  {
+    const A = fresh[0], tA = A ? Date.parse(A.start) : 0, two = A ? fresh.filter(g => Date.parse(g.start) > tA + 60000).slice(0, 2) : [];
+    const legs = A ? [firstLeg(A)].concat(two.map(firstLeg)).filter(Boolean) : [];
+    if (legs.length === 3) {
+      const errs = [], w = await boot(Math.max(PUB, tA - 60000), errs, { store: JSON.stringify({ legs, ui: { tab: 'parlays' } }), hash: 'parlays' }), d = w.document;
+      const rows = () => [...d.querySelectorAll('#legs .leg')].map(x => x.dataset.id), r0 = rows();
+      w.__setClock(tA + 6000);
+      const x1 = d.querySelectorAll('#legs .leg button.x')[1], lab = x1 ? x1.getAttribute('aria-label') : '';
+      if (x1) x1.click();
+      const left = (JSON.parse(w.localStorage.getItem('nhl_v1')).legs || []).map(l => `${l.game}|${l.side}|${l.kind}`);
+      chk(r0.length === 3 && r0[0].startsWith(A.id + '|') && !!x1 && canon(left) === canon([r0[2]]) && canon(rows()) === canon([r0[2]]) && /left the builder: the puck dropped\./.test(txt(d.getElementById('bMsg'))), `a × pressed after ${A.id}'s puck drop, before the watch looks, takes out the leg it names ("${lab}"), the started game's leg leaving, said, and the third kept (rows ${r0.join(', ')}; stored after ${left.join(', ')})`);
+      chk(!errs.length, 'no runtime error on a × pressed past a puck drop: ' + errs.join(' | '));
+    } else console.log('  no three fresh games with two after the next puck drop: the × past a puck drop not held');
+  }
   /* the slate moving on: a page open past the last puck drop of the day shown says the panel moved, and the line goes once
      that day is over (Eastern), the watch redrawing the panel for it alone */
   {
@@ -2422,11 +2439,15 @@ async function gameLegsMax(M, G, H, AT) {
       chk(ofG().length === MAX && txt($('slipMsg')) === '', `and the total then goes in, the slip bar saying nothing of the refusal (${ofG().length}; "${txt($('slipMsg'))}")`);
       leg('home|ml').click();
       chk(ofG().length === MAX && txt($('slipMsg')) === ref, `the team bet past the most is refused once more (${txt($('slipMsg'))})`);
-      const x = d.querySelector(`#legs .leg[data-id^="${G.id}|"] button.x`); if (x) x.click();
-      chk(!!x && ofG().length === MAX - 1 && txt($('slipMsg')) === '', `a leg taken out with its × in the builder ends the refusal on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
+      const ous = () => JSON.parse(w.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)} && l.kind === 'ou').map(l => l.side))`));
+      /* the × is pressed where a visitor sees it: on the Parlay Builder tab, the builder drawn as it stands (the Games tab leaves it as it
+         was last drawn), on the total's row; then back to the Games tab on G's day */
+      d.querySelector('#tabs button[data-tab="parlays"]').click();
+      const refT = txt($('slipMsg')), x = d.querySelector(`#legs .leg[data-id="${G.id}|over|ou"] button.x`); if (x) x.click();
+      chk(refT === ref && !!x && ofG().length === MAX - 1 && !ous().length && txt($('slipMsg')) === '', `the total taken out with its × in the builder ends the refusal on the slip bar (${ofG().length}; "${refT}" then "${txt($('slipMsg'))}")`);
+      d.querySelector('#tabs button[data-tab="games"]').click(); const dG = d.querySelector(`#days .day[data-day="${G.date}"]`); if (dG) dG.click();
       /* a replacement said on the slip bar goes the same way: at a player's price added in the props window without a word of its own,
          and at a level's Add to builder */
-      const ous = () => JSON.parse(w.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)} && l.kind === 'ou').map(l => l.side))`));
       const pin = () => new Set(ofG()), pp = () => d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
       pp(); const outC = cand.find(c => pin().has(c.x.id + '|' + c.st)); if (outC) btn(outC).click(); $('ppClose').click();
       if (!ous().includes('over')) { if (ous().includes('under')) leg('under|ou').click(); leg('over|ou').click(); }
@@ -2622,6 +2643,28 @@ async function hiddenLegs(M, G, AT, o) {
     const lines = JSON.parse(wM.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)} && l.kind === 'ou').map(l => l.side + l.line))`)), sayM = `Over ${T0 + 1} replaced Over ${T0} on ${mu}: one total a game.`;
     const slM = txt(wM.document.getElementById('slipMsg')); wM.document.querySelector('#tabs button[data-tab="parlays"]').click();
     chk(lines.join() === `over${T0 + 1}` && canon(ofG(wM, 'drawn')) === canon(['home|ml', 'over|ou'].sort()) && slM === sayM && txt(wM.document.getElementById('bMsg')).startsWith(sayM), `the Over at ${T0 + 1} replaces the stored Over ${T0}, said on the slip bar and in the builder (${lines}; "${slM}"; "${txt(wM.document.getElementById('bMsg')).slice(0, 200)}")`);
+    /* a level holding the same Over at the number the read moved it to is another bet: it does not keep the stored Over T0, so Add to
+       builder asks before it goes, with the moneyline drawn beside it and with the Over alone stored (none drawn), and No keeps the store
+       as it was. The Over at T0+1 is planted in one level of a copy of the panel's levels (PB_CUR; the levels' cache untouched), the
+       rest of that level its own legs, so it holds whatever the read leaves the levels */
+    for (const [legs, n] of [[[ml, ov], 1], [[ov], 0]]) {
+      const wX = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbM, props, store: JSON.stringify({ legs, ui: { tab: 'parlays' } }) });
+      await press(wX); wX.document.getElementById('ppClose').click();
+      const dX = wX.document, open = () => dX.querySelector('#pbBody button[data-pb-add]:not([disabled])'); dX.querySelector('#tabs button[data-tab="parlays"]').click();
+      const pd = dX.querySelector(`#pbDay button[data-day="${G.date}"]`); if (!open() && pd) pd.click();
+      const id = wX.eval(`(() => { const id = Object.keys(PB_CUR.levels).find(k => { const r = PB_CUR.levels[k]; return r && r.legs && r.legs.length >= 2 && document.querySelector('#pbBody button[data-pb-add="' + k + '"]:not([disabled])'); }); if (!id) return null;
+        const g = gameById()[${JSON.stringify(G.id)}], L = legOf(g, 'over', 'ou'), r = PB_CUR.levels[id], rest = r.legs.filter(x => x.game !== g.id).slice(0, r.legs.length - 1);
+        if (!L || L.num !== ${T0 + 1}) return null;
+        PB_CUR = Object.assign({}, PB_CUR, { levels: Object.assign({}, PB_CUR.levels, { [id]: Object.assign({}, r, { legs: rest.concat([L]).sort(legCmp) }) }) });
+        return id; })()`);
+      if (!id) { console.log(`  no level to plant the Over at ${T0 + 1} on: Add to builder beside a stored leg at a moved number not held`); break; }
+      const t = JSON.parse(wX.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(id)}))`)), what = `${t[1]} ${t[2]}-leg parlay`;
+      const s0 = wX.localStorage.getItem('nhl_v1'), a0 = wX.__asked.length; wX.__confirm = false;
+      dX.querySelector(`#pbBody button[data-pb-add="${id}"]`).click();
+      const asked = wX.__asked.slice(a0).join(' | '); wX.__confirm = true;
+      const want = n ? `Replace the 1 leg in the builder, and the 1 leg kept on this device that it leaves out of the parlay, with the ${what}?` : `Replace the 1 leg kept on this device that the builder leaves out of the parlay with the ${what}?`;
+      chk(asked === want && wX.localStorage.getItem('nhl_v1') === s0 && canon(inStore(wX)) === canon(legs.map(l => l.side + '|' + l.kind).sort()), `a level holding the Over at ${T0 + 1} does not keep the stored Over ${T0}: with ${n} leg${n === 1 ? '' : 's'} drawn, Add to builder asks before it goes, and No keeps the store (${asked || 'not asked'})`);
+    }
   }
   /* a level's Add to builder and Clear all ask before any stored leg goes, those the builder leaves out among them: five player legs
      stored, a press finds no props posted on the game (ESPN's 404), none drawn */

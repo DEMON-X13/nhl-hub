@@ -190,7 +190,8 @@ a tap on a stored leg left out putting it in (a player's in the props window; th
 not pressed there or in Pick your own legs while left out), the leg drawn taken out bringing the next one in, said in the
 window, the builder and on the slip bar, the read's slip line dropping what it said of a leg now drawn, and a reload on the
 published line opening on them all; the same total at a number a read moved replacing the stored one, said; a level's Add to
-builder and Clear all asking first with only legs left out stored and beside one drawn, No keeping them; a refusal or a
+builder and Clear all asking first with only legs left out stored and beside one drawn, No keeping them, and Add to builder asking
+where a level holds that total only at the number the read moved it to, with the moneyline drawn beside it and alone; a refusal or a
 replacement on the slip bar gone at the next leg taken out or added, a player's price in the props window and a level's Add to builder among them, and what it
 says of a read standing through an add with no word of its own and back when a replacement said over it goes), the price worked out again from the table and
 the hold (an exact integral for two legs, two million draws beyond), never above the product, est. everywhere, the fair
@@ -206,8 +207,8 @@ their shape and on their number, and the ids against the run's saved answers (`N
 for the real state); every level worked out by brute force on the default slate and Both days (the legs
 and their order, the rule line, the chance, fair chance, price and pays), the controls, the Bet amount,
 Add to builder, the builder's repricing, the card (its link, note, Share text, image, Escape, Tab order),
-the store an older page wrote and a junk one, a puck drop and the watch (a level finishing at once when
-another game has started, the Games tab redrawn once and not again when a builder leg leaves, a leg at a
+the store an older page wrote and a junk one, a puck drop and the watch (a × pressed after a puck drop, before the watch looks, taking out the leg its row names; a level
+finishing at once when another game has started, the Games tab redrawn once and not again when a builder leg leaves, a leg at a
 moved number never shown as in the parlay), a stale line, a whole-number total, a game priced at another
 book and one with no book named, and the panel's empty states on made-up copies (no games, every game
 started, no line, a two-game night, every game alike); only `state.json` and ESPN are read and only
@@ -258,8 +259,10 @@ first, or the one the visitor last put in) and keeps the rest stored: a leg adde
 which stays stored like the rest (said), every leg held to the published line's rule as above, and the leg drawn taken out
 puts the next stored one in its place (said). A bet or a price is shown as in the parlay (pressed, on the Games cards, in Pick
 your own legs and in the props window) only where the builder draws it; a tap on one stored and left out puts it in, never takes
-it out. A level's Add to builder asks first wherever a leg kept on this device would go, and Clear all wherever two or more
-would or any the builder leaves out of the parlay; each says how many, those left out apart. Legs of different games multiply (their chances, and
+it out. A level's Add to builder asks first wherever a leg kept on this device would go (a stored leg the level holds only at a
+number a read has moved it to among them: that is another bet), and Clear all wherever two or more would or any the builder
+leaves out of the parlay; each says how many, those left out apart. A row's × in the builder takes out the leg the row names, never
+the one now at its place (a puck drop since the builder was drawn takes a row out above it). Legs of different games multiply (their chances, and
 DraftKings' prices, as it pays a parlay of different games); legs of one game are a same-game parlay, priced by the
 rule under Same-game parlays and player legs below, an estimate, and said so wherever its price shows.
 

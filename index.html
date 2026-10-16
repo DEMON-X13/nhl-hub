@@ -1828,8 +1828,10 @@ $('pbBody').addEventListener('click', e => {
   if (b.dataset.pbFinish) { openCard(res.legs, `${t[1]} parlay`, b, false); return; }
   /* asked before any leg kept on this device would go: the builder's, and those it leaves out of the parlay (a read moved or pulled
      their lines, or keeps their game to one leg), which a reload could bring back */
-  const drawn = builderLegs(false), have = drawn.length, held = heldOut(drawn), lv = new Set(res.legs.map(L => L.id));
-  const lose = held.filter(l => !lv.has(legIdOf(l))).length, what = `${t[1]} ${t[2]}-leg parlay`;
+  /* a leg left out is kept only where the level holds that very bet at its number: the same side at a number a read has moved it to
+     is another bet, and the stored one goes (sameBet) */
+  const drawn = builderLegs(false), have = drawn.length, held = heldOut(drawn), lv = res.legs.map(storeLeg);
+  const lose = held.filter(l => !lv.some(nl => sameBet(l, nl))).length, what = `${t[1]} ${t[2]}-leg parlay`;
   const ask = !lose ? `Replace the ${legsN(have)} in the builder with the ${what}?` : !have ? `Replace the ${legsN(lose)} kept on this device that the builder leaves out of the parlay with the ${what}?`
     : `Replace the ${legsN(have)} in the builder, and the ${legsN(lose)} kept on this device that it leaves out of the parlay, with the ${what}?`;
   if (((have && !sameLegs(drawn.map(L => L.id), res.legs.map(L => L.id))) || lose) && !confirm(ask)) return;
@@ -1952,9 +1954,9 @@ function builderLegs(say) {
 /* a builder row. A leg of a game with more than one leg in the builder wears "same game"; a player leg says when DraftKings' price was
    read, its fair chance (est. on a Yes price) and the props model's chance, on trial. With a player leg in the builder no leg is
    called an edge, thin or not: nothing is claimed for a parlay the props model has a part in */
-function legRow(L, i, sgGames, withProps) {
+function legRow(L, sgGames, withProps) {
   const sg = sgGames && sgGames.has(L.game) ? `<span class="tag sg" title="Priced with the other legs of its game as a same-game parlay: an estimate">same game</span>` : '';
-  const x = `<button type="button" class="x" data-i="${i}" aria-label="Remove ${esc(legName(L))}" title="Remove">×</button>`;
+  const x = `<button type="button" class="x" aria-label="Remove ${esc(legName(L))}" title="Remove">×</button>`;
   if (L.prop) return `<div class="leg" data-id="${esc(L.id)}"><div class="pb-ll"><b>${esc(L.who)}</b><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(dayClock(L.start))}</span></span><span class="m pb-at">DraftKings, as read ${esc(hhmm(L.at))}</span>${sg}</div>
     <div class="pb-lr"><b>${fmtOdds(L.price)}</b><span class="pb-fm"><span>${L.fair === null ? 'no fair chance' : `fair ${whole(L.fair)}${L.fairEst ? ' est.' : ''}`}</span><span class="sep"> · </span><span>${L.p === null ? 'no projection' : `model ${whole(L.p)}, on trial`}</span></span></div>
     ${x}</div>`;
@@ -1996,7 +1998,7 @@ function renderBuilder(legs) {
   const sgGames = new Set(Object.keys(per).filter(id => per[id] > 1)), withProps = legs.some(L => L.prop);
   $('bHead').textContent = n ? `${n}-leg parlay` : '';
   $('bMsg').innerHTML = BMSG.map(esc).join('<br>');
-  $('legs').innerHTML = n ? legs.map((L, i) => legRow(L, i, sgGames, withProps)).join('') : `<div class="empty">No legs yet. Add a level's legs above, tap a bet in Pick your own legs or on the Games tab, or add a DraftKings player line from a game's Player props once Refresh odds has read it. A game takes one side bet (the moneyline or the puck line), one total and one leg a player a stat; legs of one game are priced as a same-game parlay, an estimate.</div>`;
+  $('legs').innerHTML = n ? legs.map(L => legRow(L, sgGames, withProps)).join('') : `<div class="empty">No legs yet. Add a level's legs above, tap a bet in Pick your own legs or on the Games tab, or add a DraftKings player line from a game's Player props once Refresh odds has read it. A game takes one side bet (the moneyline or the puck line), one total and one leg a player a stat; legs of one game are priced as a same-game parlay, an estimate.</div>`;
   if (document.activeElement !== $('stake')) $('stake').value = String(pbStake());
   for (const c of document.querySelectorAll('#chips [data-chip]')) c.classList.toggle('on', +c.dataset.chip === pbStake());
   const all = n === 1 ? 'it lands' : `all ${n} land`;
@@ -2035,10 +2037,13 @@ function renderBuilder(legs) {
   $('saveParlay').title = n < 2 ? 'A parlay needs two legs or more' : savedNow ? 'This parlay is in Your saved parlays below' : 'Keep it in Your saved parlays, on this device only';
   $('clearParlay').disabled = !n;
 }
+/* a row's × takes out the leg its row names (data-id), never the one now at its place: a puck drop since the last draw (the watch
+   looks every half minute) takes a row out above it. A leg no longer drawn is not taken out: the builder is only drawn again */
 $('legs').addEventListener('click', e => {
-  const b = e.target.closest('button.x'); if (!b) return;
-  const legs = builderLegs(true), L = legs[+b.dataset.i]; if (!L) return;
-  takeOut(L.game, l => legIdOf(l) !== L.id); save(); rerender();
+  const b = e.target.closest('button.x'), r = b && b.closest('.leg'); if (!r) return;
+  const id = r.dataset.id, L = builderLegs(false).find(B => B.id === id);
+  if (L) { takeOut(L.game, l => legIdOf(l) !== id); save(); }
+  rerender();
   const nx = document.querySelector('#legs button.x') || $('bTitle'); if (nx && nx.focus) nx.focus();
 });
 function setStake(v) { P.stake = v; save(); renderBuilder(builderLegs(false)); pbPays(); updateSlip(); if (document.activeElement !== $('pbStake')) $('pbStake').value = String(pbStake()); }

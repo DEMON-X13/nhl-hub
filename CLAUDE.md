@@ -182,8 +182,13 @@ the page one leg a game and saved player legs pending for good), the box rule on
 whose starter the box cannot tell, both goalies in `u`), and, on a made-up copy carrying the table, the add control, the
 same-game rule (allowed, replaced, refused: a player's points beside his own goals, and beside his own assists both ways
 round; a 22nd leg of one game, a player's or a team bet, and a store of 23 opening with 21; a leg a read took out counting
-toward neither rule, leaving the store for good, said, when a leg goes in beside it, and a reload opening on what the
-parlay showed; a refusal on the slip bar gone at the next leg taken out or added), the price worked out again from the table and
+toward neither rule, leaving the store for good, said, when a leg goes in beside it nested or past 21, and then only as many
+as bring it back to 21, the last stored (three of 21 out and one added leave two stored, a 404 on the game's props and the
+moneyline added leave 20), and staying stored, nothing said, below 21, a reload opening on what the parlay showed; a read
+alone naming another book for the game, or none, a leg added replacing only the one drawn, a tap on a stored leg left out
+putting it in, a reload on the published line opening on them all; a refusal or a replacement on the slip bar gone at the
+next leg taken out or added, a player's price in the props window and a level's Add to builder among them, and what it
+says of a read standing through an add with no word of its own and back when a replacement said over it goes), the price worked out again from the table and
 the hold (an exact integral for two legs, two million draws beyond), never above the product, est. everywhere, the fair
 chance (an Under main line's its own implied chance among the legs), no thin edge on a team leg beside a player leg (a
 thin one planted on a copy, marked on its own and not beside a player leg), the card, nothing stored but the legs added,
@@ -236,10 +241,16 @@ may not take both on one ticket, and where this page is unsure what DraftKings a
 most 21 legs (`GAME_LEGS_MAX`, tools/sgp.js's `MAX_GAME_LEGS`: the most its lattice prices; a 22nd is refused, said, and
 a store holding more opens with the first 21). Both rules count only the legs the builder draws: a stored leg a Refresh odds
 read has taken out (its line moved or pulled, stored as it was so a reload brings it back) is not in the parlay and has no row
-to remove it, so it never refuses a leg; where the new leg would stand beside it on a reload (nested with it, or past 21 of
-the game stored) it leaves the store for good, said. A refusal or a replacement said on the slip bar goes at the visitor's
-next change to the builder. A game priced at another book, or a publish with no same-game table,
-takes one leg a game, as before. Legs of different games multiply (their chances, and
+to remove it, so it never refuses a leg, and it stays stored unless a reload would put it beside the new leg against the
+published line's rule: in the new leg's slot (replaced, said), nested with it, or past 21 of the game stored, and past 21 only
+as many leave as bring the store back to 21, the last stored first (taken out for good, said by name and game). A refusal or a
+replacement said on the slip bar goes at the visitor's next change to the builder (a leg added or taken out anywhere, a
+level's Add to builder, Clear all); what the slip bar says of legs a read or the clock took out is said once and runs its own
+nine seconds, a refusal or a replacement said over it hiding it only while that stands. A game priced at another book, or a
+publish with no same-game table, takes one leg a game, as before; where only a Refresh odds read puts a game's lines at
+another book (or names none), the builder draws one of its legs (its first, or the one the visitor last put in) and keeps the
+rest stored, a leg added takes the place of the one drawn alone, the others held to the published line's rule as above, and a
+tap on a stored leg the builder leaves out puts it in, never takes it out. Legs of different games multiply (their chances, and
 DraftKings' prices, as it pays a parlay of different games); legs of one game are a same-game parlay, priced by the
 rule under Same-game parlays and player legs below, an estimate, and said so wherever its price shows.
 

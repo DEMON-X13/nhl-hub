@@ -2424,20 +2424,47 @@ async function gameLegsMax(M, G, H, AT) {
       chk(ofG().length === MAX && txt($('slipMsg')) === ref, `the team bet past the most is refused once more (${txt($('slipMsg'))})`);
       const x = d.querySelector(`#legs .leg[data-id^="${G.id}|"] button.x`); if (x) x.click();
       chk(!!x && ofG().length === MAX - 1 && txt($('slipMsg')) === '', `a leg taken out with its × in the builder ends the refusal on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
+      /* a replacement said on the slip bar goes the same way: at a player's price added in the props window without a word of its own,
+         and at a level's Add to builder */
+      const ous = () => JSON.parse(w.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)} && l.kind === 'ou').map(l => l.side))`));
+      const pin = () => new Set(ofG()), pp = () => d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+      pp(); const outC = cand.find(c => pin().has(c.x.id + '|' + c.st)); if (outC) btn(outC).click(); $('ppClose').click();
+      if (!ous().includes('over')) { if (ous().includes('under')) leg('under|ou').click(); leg('over|ou').click(); }
+      leg('under|ou').click();
+      const rep = txt($('slipMsg'));
+      chk(!!outC && ofG().length === MAX - 1 && ous().join() === 'under' && /^Under [\d.]+ replaced Over [\d.]+ on .*: one total a game\.$/.test(rep), `the Under in place of the Over is said on the slip bar (${ofG().length}; ${rep})`);
+      pp(); const inC = cand.find(c => !pin().has(c.x.id + '|' + c.st)), nb = inC && btn(inC); if (nb) nb.click(); $('ppClose').click();
+      chk(!!nb && pin().has(inC.x.id + '|' + inC.st) && ofG().length === MAX && txt($('slipMsg')) === '', `a player's price added in the props window, without a word of its own, ends the replacement on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
+      leg('over|ou').click();
+      chk(ous().join() === 'over' && ofG().length === MAX && /^Over [\d.]+ replaced Under [\d.]+ on /.test(txt($('slipMsg'))), `the Over back in place of the Under at the most is said on the slip bar (${txt($('slipMsg'))})`);
+      d.querySelector('#tabs button[data-tab="parlays"]').click();
+      const lvB = () => d.querySelector('#pbBody button[data-pb-add]:not([disabled])'), pd = d.querySelector(`#pbDay button[data-day="${G.date}"]`);
+      if (!lvB() && pd) pd.click();                // the panel on G's day, which has G and H lined, where its own day has no level
+      const lv = lvB(); if (lv) lv.click();
+      if (!lv) console.log(`  no level to add on the panel's slate (${G.date}): a level's Add to builder ending a replacement on the slip bar is not held on this state`);
+      else chk(JSON.parse(w.eval('JSON.stringify(PB_CUR.levels[' + JSON.stringify(lv.dataset.pbAdd) + '].legs.map(L => L.id))')).join() === JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => L.id))')).join() && txt($('slipMsg')) === '', `a level's Add to builder ends the replacement on the slip bar (${lv.dataset.pbAdd}; "${txt($('slipMsg'))}")`);
     }
   }
   chk(!errs.length, 'no runtime error at the most legs of one game: ' + errs.join(' | '));
   await hiddenLegs(M, G, AT, { cand, nth, legOf, sb, props, parsed, mainOf, MAX, at0 });
 }
-/* a stored leg a read has taken out of the builder (its line moved or pulled) is not in the parlay: the most of one game and the
-   nested rule count only the legs drawn; a leg added beside it takes it out of the store for good, said, so a reload opens on what
-   the parlay showed, never on more than the most of one game or on a nested pair */
+/* a stored leg a read has taken out of the builder (its line moved or pulled, or the game's lines read at another book) is not in the
+   parlay: the most of one game and the nested rule count only the legs drawn. A leg added beside it takes it out of the store for good,
+   said, only where a reload would put the two together against the published line's rule: nested, or past the most of one game, and
+   then only as many as bring the store back to the most, the last stored first. Every other stays stored and comes back on a reload,
+   and what the slip bar says of the legs a read took out is not cut short by the next change to the builder */
 async function hiddenLegs(M, G, AT, o) {
   const { cand, nth, legOf, sb, props, parsed, mainOf, MAX, at0 } = o, pr = M.props.games[G.id];
   const answer = A => url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); };
-  const ofG = (w, f) => JSON.parse(w.eval(`JSON.stringify(${f === 'drawn' ? 'builderLegs(false)' : 'P.legs'}.filter(l => l.game === ${JSON.stringify(G.id)}).map(l => l.pid + '|' + l.stat + '|' + l.line))`)).sort();
-  const inStore = w => (JSON.parse(w.localStorage.getItem('nhl_v1') || '{}').legs || []).filter(l => l.game === G.id).map(l => l.pid + '|' + l.stat + '|' + l.line).sort();
-  const lid = c => `${c.x.id}|${c.st}|${c.m[2]}`;
+  const kOf = `l => l.kind === 'prop' ? l.pid + '|' + l.stat + '|' + l.line : l.side + '|' + l.kind`;
+  const order = w => JSON.parse(w.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)}).map(${kOf}))`));
+  const ofG = (w, f) => JSON.parse(w.eval(`JSON.stringify(${f === 'drawn' ? 'builderLegs(false)' : 'P.legs'}.filter(l => l.game === ${JSON.stringify(G.id)}).map(${kOf}))`)).sort();
+  const inStore = w => (JSON.parse(w.localStorage.getItem('nhl_v1') || '{}').legs || []).filter(l => l.game === G.id).map(l => l.kind === 'prop' ? l.pid + '|' + l.stat + '|' + l.line : l.side + '|' + l.kind).sort();
+  const lid = c => `${c.x.id}|${c.st}|${c.m[2]}`, SN = { s: 'shots on goal', bs: 'blocked shots', pts: 'points' }, NM = { s: 'Total Shots on Goal', bs: 'Total Blocked Shots', pts: 'Total Points' };
+  const desc = (c, side) => `${c.x.name} ${side === 'under' ? 'Under' : 'Over'} ${c.m[2]} ${SN[c.st]}`, keyOf = (c, side) => `${c.x.id}|${c.st}|main|${side || 'over'}|${c.m[2]}`;
+  const mu = `${S.teams[G.away].abbr} @ ${S.teams[G.home].abbr}`;
+  /* a candidate's main line moved a goal (or a shot) up in a made-up answer: its Over and Under items, so a press takes it out */
+  const moveIn = (A, c) => { let n = 0; for (const it of A.items) if (it && it.athlete && it.athlete.$ref === PROP_REF(c.x.id) && it.type.name === NM[c.st] && /^[+-]\d+$/.test(it.odds.american.value)) { const L = c.m[2] + 1; it.odds.total = { value: String(L) }; it.current = { target: { value: L, displayValue: String(L) } }; n++; } return n; };
   const press = async w => {
     const d = w.document; d.querySelector('#tabs button[data-tab="games"]').click();
     const day = d.querySelector(`#days .day[data-day="${G.date}"]`); if (day) day.click();
@@ -2454,7 +2481,7 @@ async function hiddenLegs(M, G, AT, o) {
   chk(movedN === 2 && ofG(w).length === MAX && ofG(w, 'drawn').length === MAX - 1 && !ofG(w, 'drawn').includes(lid(mv)), `a press that moves the line of one of ${MAX} stored legs of a game takes it out of the builder and keeps it stored (${movedN} items moved; ${ofG(w).length} stored, ${ofG(w, 'drawn').length} drawn)`);
   const tapped = tap(w, `${nth.x.id}|${nth.st}|main|over|${nth.m[2]}`, nth.st), msg = txt(w.document.getElementById('ppMsg'));
   const want = cand.slice(0, MAX).filter(c => c !== mv).concat([nth]).map(lid).sort();
-  const said = `${mv.x.name} Over ${mv.m[2]} ${({ s: 'shots on goal', bs: 'blocked shots', pts: 'points' })[mv.st]} had left the builder and is now taken out of it for good, so it cannot come back beside ${nth.x.name} Over ${nth.m[2]} ${({ s: 'shots on goal', bs: 'blocked shots', pts: 'points' })[nth.st]} on a reload.`;
+  const said = `On ${mu}, ${desc(mv)} had left the builder and is now taken out of it for good, so it cannot come back beside ${desc(nth)} on a reload.`;
   chk(tapped && canon(ofG(w)) === canon(want) && canon(ofG(w, 'drawn')) === canon(want) && canon(inStore(w)) === canon(want), `with one of them out of the builder, one more leg of the game goes in: ${MAX} in the parlay, the same ${MAX} stored, the moved one out of the store (${ofG(w).length} stored, ${ofG(w, 'drawn').length} drawn, ${inStore(w).length} in nhl_v1)`);
   chk(msg.startsWith(said) && msg.endsWith(`Your parlay: ${MAX} legs.`), `the window says the moved leg is taken out for good and why (${msg.slice(0, 300)})`);
   const errs2 = [], w2 = await boot(AT, errs2, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w.localStorage.getItem('nhl_v1') });
@@ -2469,10 +2496,87 @@ async function hiddenLegs(M, G, AT, o) {
   await press(w3);
   chk(ofG(w3).length === 1 && ofG(w3, 'drawn').length === 0, `a press that finds no points line on ${NP.name} takes his points Over out of the builder and keeps it stored (${ofG(w3).length} stored, ${ofG(w3, 'drawn').length} drawn)`);
   const tapG = tap(w3, `${NP.id}|g|yes|1`, 'g'), msg3 = txt(w3.document.getElementById('ppMsg')), goal = [`${NP.id}|g|0.5`];
-  chk(tapG && canon(ofG(w3)) === canon(goal) && canon(ofG(w3, 'drawn')) === canon(goal) && canon(inStore(w3)) === canon(goal) && msg3.startsWith(`${NP.name} Over ${npm[2]} points had left the builder and is now taken out of it for good, so it cannot come back beside ${NP.name} Anytime goal on a reload.`), `his anytime goal goes in beside the points Over the read took out, which leaves the store for good, said (${canon(ofG(w3))}; ${msg3.slice(0, 240)})`);
+  chk(tapG && canon(ofG(w3)) === canon(goal) && canon(ofG(w3, 'drawn')) === canon(goal) && canon(inStore(w3)) === canon(goal) && msg3.startsWith(`On ${mu}, ${NP.name} Over ${npm[2]} points had left the builder and is now taken out of it for good, so it cannot come back beside ${NP.name} Anytime goal on a reload.`), `his anytime goal goes in beside the points Over the read took out, which leaves the store for good, said (${canon(ofG(w3))}; ${msg3.slice(0, 240)})`);
   const errs4 = [], w4 = await boot(AT, errs4, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w3.localStorage.getItem('nhl_v1') });
   chk(canon(ofG(w4)) === canon(goal) && canon(ofG(w4, 'drawn')) === canon(goal), `a reload opens on his anytime goal alone, never beside his points (${canon(ofG(w4))})`);
-  const all = errs.concat(errs2, errs3, errs4);
+  /* several out at the most: 21 stored, the press moves three of their lines (18 drawn), one more goes in. Only one leaves the store,
+     the last stored of the three, said by name; the other two stay stored and come back on a reload */
+  const mv3 = [cand[2], cand[5], cand[9]], A5 = propsAnswer(G), m5 = mv3.map(c => moveIn(A5, c)), hid5 = mv3.map(lid);
+  const errs5 = [], w5 = await boot(AT, errs5, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: answer(A5), store: JSON.stringify({ legs: cand.slice(0, MAX).map(legOf), ui: { tab: 'parlays' } }) });
+  await press(w5);
+  chk(m5.every(n => n === 2) && ofG(w5).length === MAX && ofG(w5, 'drawn').length === MAX - 3 && hid5.every(x => !ofG(w5, 'drawn').includes(x)), `a press that moves three of ${MAX} stored legs' lines takes the three out of the builder and keeps them stored (${m5}; ${ofG(w5).length} stored, ${ofG(w5, 'drawn').length} drawn)`);
+  const ord5 = order(w5), last5 = mv3.slice().sort((a, b) => ord5.indexOf(lid(b)) - ord5.indexOf(lid(a)))[0];
+  const tap5 = tap(w5, keyOf(nth), nth.st), msg5 = txt(w5.document.getElementById('ppMsg'));
+  const want5 = cand.slice(0, MAX).filter(c => c !== last5).concat([nth]).map(lid).sort(), drawn5 = want5.filter(x => !hid5.includes(x));
+  chk(tap5 && ord5.includes(lid(last5)) && canon(ofG(w5)) === canon(want5) && canon(inStore(w5)) === canon(want5) && canon(ofG(w5, 'drawn')) === canon(drawn5), `with three of them out of the builder, one more goes in and only the last stored of the three leaves the store: ${MAX} stored, the other two kept (${ofG(w5).length} stored, ${ofG(w5, 'drawn').length} drawn, ${inStore(w5).length} in nhl_v1)`);
+  chk(msg5.startsWith(`On ${mu}, ${desc(last5)} had left the builder and is now taken out of it for good, so it cannot come back beside ${desc(nth)} on a reload. Added to your parlay:`), `the window names the one taken out for good, and no other (${msg5.slice(0, 300)})`);
+  const errs6 = [], w6 = await boot(AT, errs6, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w5.localStorage.getItem('nhl_v1') });
+  chk(canon(ofG(w6)) === canon(want5) && canon(ofG(w6, 'drawn')) === canon(want5), `a reload opens on ${MAX}, the two the read took out and kept back in the parlay (${ofG(w6).length} stored, ${ofG(w6, 'drawn').length} drawn)`);
+  /* every one out: 21 stored, the press finds no props posted on the game (ESPN's 404), and the home moneyline goes in from the Games
+     card: one player leg, the last stored, leaves the store, said on the slip bar; the other 20 stay and come back on a reload */
+  const errs7 = [], w7 = await boot(AT, errs7, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: PROPS_404, store: JSON.stringify({ legs: cand.slice(0, MAX).map(legOf), ui: { tab: 'parlays' } }) });
+  await press(w7);
+  chk(ofG(w7).length === MAX && ofG(w7, 'drawn').length === 0, `a press that finds no props posted on the game takes all ${MAX} out of the builder and keeps them stored (${ofG(w7).length} stored, ${ofG(w7, 'drawn').length} drawn)`);
+  const ord7 = order(w7), last7 = cand.slice(0, MAX).sort((a, b) => ord7.indexOf(lid(b)) - ord7.indexOf(lid(a)))[0];
+  w7.document.getElementById('ppClose').click();
+  const ml7 = w7.document.querySelector(`#games .game[data-id="${G.id}"] button[data-leg="${G.id}|home|ml"]`); if (ml7) ml7.click();
+  const want7 = cand.slice(0, MAX).filter(c => c !== last7).map(lid).concat(['home|ml']).sort(), slip7 = txt(w7.document.getElementById('slipMsg'));
+  chk(!!ml7 && canon(ofG(w7)) === canon(want7) && canon(inStore(w7)) === canon(want7) && canon(ofG(w7, 'drawn')) === canon(['home|ml']), `the home moneyline goes in beside them: one player leg, the last stored, leaves the store, the other ${MAX - 1} kept (${ofG(w7).length} stored, ${ofG(w7, 'drawn').length} drawn, ${inStore(w7).length} in nhl_v1)`);
+  chk(slip7 === `On ${mu}, ${desc(last7)} had left the builder and is now taken out of it for good, so it cannot come back beside ${S.teams[G.home].short} to win on a reload.`, `the slip bar names that one leg alone (${slip7.slice(0, 300)})`);
+  const errs8 = [], w8 = await boot(AT, errs8, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w7.localStorage.getItem('nhl_v1') });
+  chk(canon(ofG(w8)) === canon(want7) && canon(ofG(w8, 'drawn')) === canon(want7), `a reload opens on the moneyline and the ${MAX - 1} player legs (${ofG(w8).length} stored, ${ofG(w8, 'drawn').length} drawn)`);
+  /* below the most: a player's points Over the press took out (no points line on him) stays stored when the game's total and another
+     player's line go in beside it, nothing said of it, and comes back on a reload. What the slip bar says of the read stands through an
+     add without a word of its own, and comes back when a replacement said over it goes */
+  const other = cand.find(c => String(c.x.id) !== String(NP.id));
+  const errs9 = [], w9 = await boot(AT, errs9, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: answer(A3), store: JSON.stringify({ legs: [ptsLeg], ui: { tab: 'parlays' } }) });
+  await press(w9);
+  const d9 = w9.document, slip9 = () => txt(d9.getElementById('slipMsg')), readSaid = slip9(), t9 = Date.now(), ptsK = `${NP.id}|pts|${npm[2]}`;
+  d9.getElementById('ppClose').click();
+  const tot = side => d9.querySelector(`#games .game[data-id="${G.id}"] button[data-leg="${G.id}|${side}|ou"]`);
+  chk(readSaid.startsWith(`${NP.name} Over ${npm[2]} points left the builder: DraftKings had no points line on ${NP.name}`), `the slip bar says the read took his points Over out (${readSaid.slice(0, 200)})`);
+  if (tot('over')) tot('over').click();
+  chk(!!tot('over') && canon(ofG(w9)) === canon([ptsK, 'over|ou'].sort()) && canon(inStore(w9)) === canon([ptsK, 'over|ou'].sort()) && canon(ofG(w9, 'drawn')) === canon(['over|ou']), `the game's total goes in beside the points Over the read took out, which stays stored (${canon(ofG(w9))}; ${canon(inStore(w9))})`);
+  const live = Date.now() - t9 < 8000;           // the read's line runs nine seconds
+  if (live) chk(slip9() === readSaid, `an add without a word of its own leaves what the slip bar says of the read ("${slip9().slice(0, 160)}")`);
+  tot('under').click();
+  const rep9 = slip9();
+  chk(/^Under [\d.]+ replaced Over [\d.]+ on .*: one total a game\.$/.test(rep9) && !/taken out/.test(rep9), `the Under in place of the Over is said on the slip bar, nothing of the points Over (${rep9})`);
+  tot('under').click();
+  if (live && Date.now() - t9 < 8000) chk(slip9() === readSaid, `the Under tapped off ends the replacement and the read's line comes back ("${slip9().slice(0, 160)}")`);
+  else console.log('  the read\'s line ran out before it could be held (a slow run): not checked');
+  d9.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+  const tapO = tap(w9, keyOf(other), other.st), msg9 = txt(d9.getElementById('ppMsg')), want9 = [ptsK, lid(other)].sort();
+  chk(tapO && canon(ofG(w9)) === canon(want9) && canon(inStore(w9)) === canon(want9) && !/taken out|replaced/.test(msg9), `another player's line goes in beside it too, the points Over still stored, nothing said of it (${canon(ofG(w9))}; ${msg9.slice(0, 200)})`);
+  const errs10 = [], w10 = await boot(AT, errs10, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w9.localStorage.getItem('nhl_v1') });
+  chk(canon(ofG(w10)) === canon(want9) && canon(ofG(w10, 'drawn')) === canon(want9), `a reload brings the points Over back beside the other line (${canon(ofG(w10, 'drawn'))})`);
+  /* a read alone that names another book for the game (or none): the game draws one leg, the rest stay stored; a leg added takes the
+     place of the one drawn alone, every other kept to the published line's rule (one in its slot replaced, said), and a reload on the
+     published DraftKings line opens on them all */
+  const errsB = [];
+  for (const book of ['ESPN BET', null]) {
+    const sbB = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, g.id === G.id ? espnOdds(g.line, null, book) : null)) }) }; };
+    const four = cand.slice(0, 4), wB = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbB, props, store: JSON.stringify({ legs: four.map(legOf), ui: { tab: 'parlays' } }) });
+    await press(wB);
+    const bk = book || 'the book', drawnB = ofG(wB, 'drawn'), shownB = four.find(c => drawnB.includes(lid(c))), restB = four.filter(c => c !== shownB);
+    chk(JSON.parse(wB.eval(`JSON.stringify(gameById()[${JSON.stringify(G.id)}].line.book)`)) === book && drawnB.length === 1 && !!shownB && ofG(wB).length === 4, `a read naming ${bk} for the game draws one of its 4 stored legs and keeps the rest stored (${drawnB}; ${ofG(wB).length} stored)`);
+    const c5 = cand[4], tB = tap(wB, keyOf(c5), c5.st), msgB = txt(wB.document.getElementById('ppMsg')), wantB = restB.concat([c5]).map(lid).sort();
+    const why = `one leg a game here: its lines are at ${bk}, and a same-game parlay is priced here on DraftKings' prices alone.`;
+    chk(tB && canon(ofG(wB)) === canon(wantB) && canon(inStore(wB)) === canon(wantB) && canon(ofG(wB, 'drawn')) === canon([lid(c5)]), `${bk}: a leg added takes the place of the one drawn alone, the other 3 kept stored (${ofG(wB).length} stored, ${inStore(wB).length} in nhl_v1)`);
+    chk(msgB.startsWith(`${desc(c5)} replaced ${desc(shownB)} on ${mu}: ${why} Added to your parlay:`), `${bk}: the window says which leg it replaced, and no other (${msgB.slice(0, 260)})`);
+    /* a stored leg the read left out, its button not pressed: a tap puts it in again in place of the one drawn, never takes it out */
+    const r1 = restB[1], bP = () => { const dd = wB.document; dd.querySelector(`#ppStats button[data-pp-tab="${r1.st}"]`).click(); const z = dd.querySelector(`#ppBody button[data-pp-add="${keyOf(r1)}"]`); return z && z.getAttribute('aria-pressed'); };
+    const was = bP(), tR = tap(wB, keyOf(r1), r1.st), msgR = txt(wB.document.getElementById('ppMsg')), wantR = restB.map(lid).sort();
+    chk(was === 'false' && tR && canon(ofG(wB)) === canon(wantR) && canon(inStore(wB)) === canon(wantR) && canon(ofG(wB, 'drawn')) === canon([lid(r1)]) && bP() === 'true' && msgR.startsWith(`${desc(r1)} replaced ${desc(c5)} on ${mu}: ${why} Added to your parlay:`), `${bk}: a tap on a stored leg the builder leaves out puts it in place of the one drawn, the rest kept (${was}; ${canon(ofG(wB, 'drawn'))}; ${msgR.slice(0, 200)})`);
+    /* the Under of a leg the read left out: in its slot, so it goes too, said under the published rule */
+    const h = restB[0], tU = tap(wB, keyOf(h, 'under'), h.st), msgU = txt(wB.document.getElementById('ppMsg'));
+    const hU = `${h.x.id}|${h.st}|${h.m[2]}`, wantU = restB.slice(2).map(lid).concat([hU]).sort();
+    chk(tU && canon(ofG(wB)) === canon(wantU) && canon(inStore(wB)) === canon(wantU) && canon(ofG(wB, 'drawn')) === canon([hU]) && JSON.parse(wB.eval(`JSON.stringify(P.legs.find(l => l.pid === ${JSON.stringify(String(h.x.id))} && l.stat === ${JSON.stringify(h.st)}).side)`)) === 'under', `${bk}: the Under of a stored leg the read left out replaces the leg drawn and that stored Over, the other kept (${canon(ofG(wB))})`);
+    chk(msgU.startsWith(`${desc(h, 'under')} replaced ${desc(r1)} on ${mu}: ${why} ${desc(h, 'under')} replaced ${desc(h)} on ${mu}: one leg a player a stat. Added to your parlay:`), `${bk}: the window says both, each with its rule (${msgU.slice(0, 320)})`);
+    const wR = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbB, props, store: wB.localStorage.getItem('nhl_v1') });
+    chk(canon(ofG(wR)) === canon(wantU) && canon(ofG(wR, 'drawn')) === canon(wantU), `${bk}: a reload on the published DraftKings line opens on both (${ofG(wR, 'drawn').length} drawn)`);
+  }
+  const all = errs.concat(errs2, errs3, errs4, errs5, errs6, errs7, errs8, errs9, errs10, errsB);
   chk(!all.length, 'no runtime error with legs a read took out of the builder: ' + all.join(' | '));
 }
 async function builderPlayerLegs(M, G, H, AT) {

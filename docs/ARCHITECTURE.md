@@ -215,10 +215,13 @@ Refresh odds press each DraftKings price in the props window is a button (`.pp-a
 (one side bet a game, one total, one leg a player a stat, each a replacement, said in the builder and on the slip bar; a
 player's points beside his own goals or assists refused; at most `GAME_LEGS_MAX`, 21, legs of one game, tools/sgp.js's
 `MAX_GAME_LEGS`, a 22nd refused and a store of more opening with the first 21; both rules count only the legs
-`builderLegs` draws, and a stored leg a read took out leaves the store, said, where the new leg would stand beside it on a
-reload, nested or past 21; one leg a game on another book's game or
-with no table); `propNow` draws a stored player leg at its price or at a later
-read's (out where the line moved or was pulled, said once, never stored). `quote` multiplies different games and joins
+`builderLegs` draws, and a stored leg a read took out leaves the store, said, only where the new leg would stand beside it on
+a reload by the published line's rule (`sgWhyNotPub`, `PUB_LINE`): in its slot, nested, or past 21, and past 21 only as many as
+bring the store back to 21, the last stored first; one leg a game on another book's game or with no table, and where a read
+alone puts a game at another book the new leg takes the place of the one drawn alone (`SG_ONE`, the one the builder then
+draws), the rest held to the published rule). `slipSay`'s rule lines (placeLeg's refusals, replacements and legs taken out)
+go at the next change to the builder (`slipQuiet`), a read's or the clock's line running its own seconds. `propNow` draws a
+stored player leg at its price or at a later read's (out where the line moved or was pulled, said once, never stored). `quote` multiplies different games and joins
 one game's legs by `SGP`, tools/sgp.js copied word for word between `/* sgp.js begins */` and `/* sgp.js ends */`, on
 `S.sgp` (the table and the hold, data/corr.json's, copied by update.js): the fair chance from the legs' fair chances,
 the price the hold over the implied chances' joint and never above the product, an estimate (`est`) said everywhere

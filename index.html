@@ -1416,41 +1416,62 @@ const SG_ONE = new Map();
    toward neither the nested rule nor the most of one game, and gives way to the new leg only where the published line's rule says it
    would stand beside it on a reload: in its slot (replaced, said), nested with it, or past GAME_LEGS_MAX stored, and then only as many
    as bring the store back to GAME_LEGS_MAX, the last stored first (taken out for good, said). A game whose read alone names another
-   book (or none) takes the new leg in place of the one the builder draws; one whose published line does too, in place of every other
-   leg of the game, as before. Returns { msg } (what was replaced or taken out, or '') or { refused } */
+   book (or none) draws the new leg alone (SG_ONE), in place of the one it drew, which stays stored under the same published rule
+   (said; replaced where it is in the new leg's slot or nested with it); one whose published line does too takes the new leg in place
+   of every other leg of the game, as before. The same bet stored at a number a read has moved since is in its slot, replaced, said.
+   Returns { msg } (what was replaced or taken out, or '') or { refused } */
+const sameBet = (l, nl) => legIdOf(l) === legIdOf(nl) && (isProp(l) || l.kind === 'ml' || l.line === null || l.line === undefined || l.line === '' || +l.line === +nl.line);
 function placeLeg(nl, g) {
-  const others = P.legs.filter(l => l.game === nl.game && legIdOf(l) !== legIdOf(nl)), why = sgWhyNot(g), whyPub = sgWhyNotPub(g);
+  const others = P.legs.filter(l => l.game === nl.game && !sameBet(l, nl)), why = sgWhyNot(g), whyPub = sgWhyNotPub(g);
   const slotRule = isProp(nl) ? 'one leg a player a stat' : nl.kind === 'ou' ? 'one total a game' : 'one side bet a game (the moneyline or the puck line)';
   const gone = [];          // [legs, why] a group: the legs the new one replaces
-  let drop = [];
+  let drop = [], was = [];
   if (why && whyPub) gone.push([others, `one leg a game here: ${why}`]);
   else {
-    const drawn = new Set(builderLegs(false).filter(L => L.game === nl.game).map(L => L.id)), shown = l => drawn.has(legIdOf(l));
-    if (why) {              // the read's book alone: the leg the builder draws gives way; the rest are held to the published rule below
-      gone.push([others.filter(shown), `one leg a game here: ${why}`]);
-      gone.push([others.filter(l => !shown(l) && slotOf(l) === slotOf(nl)), slotRule]);
-      SG_ONE.set(nl.game, legIdOf(nl));
-    } else {
-      const n = others.find(l => shown(l) && nestedPair(l, nl));
-      if (n) {
-        const pts = nl.stat === 'pts' ? nl : n, other = nl.stat === 'pts' ? n : nl, what = other.stat === 'g' ? 'goals' : 'assists';
-        return { refused: `Not added: ${poss(pts.name || 'his')} points and his own ${what} are nearly one bet (every ${what === 'goals' ? 'goal' : 'assist'} is a point). DraftKings may not take both on one ticket, so this page never puts them together.` };
-      }
-      gone.push([others.filter(l => slotOf(l) === slotOf(nl)), slotRule]);
-      if (others.filter(l => shown(l) && slotOf(l) !== slotOf(nl)).length + 1 > GAME_LEGS_MAX)
-        return { refused: `Not added: your parlay has ${GAME_LEGS_MAX} legs of ${matchup(g)} already, the most of one game this page can price.` };
+    /* the rules count the legs the builder draws. A game a read alone keeps to one leg (why) draws the new leg alone, so none of its
+       others is in the parlay: the one it drew (was) stays stored as every leg a read left out does, unless the published rule says not */
+    const drawn = new Set(builderLegs(false).filter(L => L.game === nl.game).map(L => L.id)), shown = l => !why && drawn.has(legIdOf(l));
+    const n = others.find(l => shown(l) && nestedPair(l, nl));
+    if (n) {
+      const pts = nl.stat === 'pts' ? nl : n, other = nl.stat === 'pts' ? n : nl, what = other.stat === 'g' ? 'goals' : 'assists';
+      return { refused: `Not added: ${poss(pts.name || 'his')} points and his own ${what} are nearly one bet (every ${what === 'goals' ? 'goal' : 'assist'} is a point). DraftKings may not take both on one ticket, so this page never puts them together.` };
     }
-    const out = new Set(gone.flatMap(x => x[0])), stay = others.filter(l => !out.has(l)), hid = stay.filter(l => !shown(l));
+    gone.push([others.filter(l => slotOf(l) === slotOf(nl)), slotRule]);
+    if (others.filter(l => shown(l) && slotOf(l) !== slotOf(nl)).length + 1 > GAME_LEGS_MAX)
+      return { refused: `Not added: your parlay has ${GAME_LEGS_MAX} legs of ${matchup(g)} already, the most of one game this page can price.` };
+    if (why) {
+      was = others.filter(l => drawn.has(legIdOf(l)) && slotOf(l) !== slotOf(nl));
+      gone.unshift([was.filter(l => nestedPair(l, nl)), `one leg a game here: ${why}`]);       // nested with the new leg: never beside it on a reload
+      was = was.filter(l => !nestedPair(l, nl));
+      SG_ONE.set(nl.game, legIdOf(nl));
+    }
+    const out = new Set(gone.flatMap(x => x[0])), stay = others.filter(l => !out.has(l)), hid = stay.filter(l => !shown(l) && !was.includes(l));
     const nest = hid.filter(l => nestedPair(l, nl)), rest = hid.filter(l => !nest.includes(l));
     const extra = Math.max(0, stay.length - nest.length + 1 - GAME_LEGS_MAX);
     drop = nest.concat(rest.slice(rest.length - Math.min(extra, rest.length)));
   }
   const out = new Set(gone.flatMap(x => x[0]).concat(drop));
   P.legs = P.legs.filter(l => !out.has(l) && !(l.game === nl.game && legIdOf(l) === legIdOf(nl))).concat([nl]);
-  const msgs = gone.filter(x => x[0].length).map(([ls, r]) => `${descStored(nl, g)} replaced ${ls.map(l => descStored(l, g)).join(' and ')} on ${matchup(g)}: ${r}.`);
+  const msgs = (was.length ? [`On ${matchup(g)}, ${descStored(nl, g)} is in the parlay in place of ${andList(was.map(l => descStored(l, g)))}: one leg a game here, ${why}.`] : [])
+    .concat(gone.filter(x => x[0].length).map(([ls, r]) => `${descStored(nl, g)} replaced ${ls.map(l => descStored(l, g)).join(' and ')} on ${matchup(g)}: ${r}.`));
   if (drop.length) msgs.push(`On ${matchup(g)}, ${andList(drop.map(l => descStored(l, g)))} had left the builder and ${drop.length > 1 ? 'are' : 'is'} now taken out of it for good, so ${drop.length > 1 ? 'they' : 'it'} cannot come back beside ${descStored(nl, g)} on a reload.`);
   return { msg: msgs.join(' ') };
 }
+/* stored legs of a game taken out by the visitor (a × in the builder, a pressed bet or price tapped again: keep says which stay). Where
+   the game keeps to one leg (sgWhyNot) another of its stored legs is drawn in their place, said in the builder and on the slip bar as
+   the rule's line; else the rule's line said before goes (slipQuiet). Returns what was said, or '' */
+function takeOut(gid, keep) {
+  const before = builderLegs(false).filter(L => L.game === gid), had = new Set(before.map(L => L.id));
+  P.legs = P.legs.filter(keep); BMSG = [];
+  const left = new Set(P.legs.map(legIdOf)), out = before.filter(L => !left.has(L.id)), now = builderLegs(false).filter(L => L.game === gid && !had.has(L.id));
+  const msg = now.length && out.length ? `On ${now[0].mu}, ${andList(now.map(L => L.desc))} ${now.length > 1 ? 'are' : 'is'} in the parlay in place of ${andList(out.map(L => L.desc))}: one leg a game here, ${sgWhyNot(now[0].g)}.` : '';
+  if (msg) { BMSG = [msg]; slipSay(msg, 0, false, true); } else slipQuiet();
+  return msg;
+}
+/* the stored legs the builder keeps and leaves out of the parlay (drawn: builderLegs' answer, its kept the store it would write), and
+   their words beside the builder's own */
+const heldOut = drawn => { const ids = new Set(drawn.map(L => L.id)); return drawn.kept.filter(l => !ids.has(legIdOf(l))); };
+const legsN = n => `${n} leg${n > 1 ? 's' : ''}`;
 const pbStake = () => stakeRead(P.stake) || 20;
 const confOf = c => c >= 0.7 ? 'High' : c >= 0.45 ? 'Medium' : 'Low';
 const lockSvg = on => `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0${on ? 'v2' : ''}" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
@@ -1805,8 +1826,13 @@ $('pbBody').addEventListener('click', e => {
   const res = PB_CUR && PB_CUR.levels[id], t = PB_TIERS.find(x => x[0] === id);
   if (pbStale(res)) { const sel = b.dataset.pbFinish ? `[data-pb-finish="${id}"]` : `[data-pb-add="${id}"]`, had = document.activeElement === b; renderParlays(); refocus(sel, had, `[data-pb-finish="${id}"]`); return; }
   if (b.dataset.pbFinish) { openCard(res.legs, `${t[1]} parlay`, b, false); return; }
-  const drawn = builderLegs(false), have = drawn.length;
-  if (have && !sameLegs(drawn.map(L => L.id), res.legs.map(L => L.id)) && !confirm(`Replace the ${have} leg${have > 1 ? 's' : ''} in the builder with the ${t[1]} ${t[2]}-leg parlay?`)) return;
+  /* asked before any leg kept on this device would go: the builder's, and those it leaves out of the parlay (a read moved or pulled
+     their lines, or keeps their game to one leg), which a reload could bring back */
+  const drawn = builderLegs(false), have = drawn.length, held = heldOut(drawn), lv = new Set(res.legs.map(L => L.id));
+  const lose = held.filter(l => !lv.has(legIdOf(l))).length, what = `${t[1]} ${t[2]}-leg parlay`;
+  const ask = !lose ? `Replace the ${legsN(have)} in the builder with the ${what}?` : !have ? `Replace the ${legsN(lose)} kept on this device that the builder leaves out of the parlay with the ${what}?`
+    : `Replace the ${legsN(have)} in the builder, and the ${legsN(lose)} kept on this device that it leaves out of the parlay, with the ${what}?`;
+  if (((have && !sameLegs(drawn.map(L => L.id), res.legs.map(L => L.id))) || lose) && !confirm(ask)) return;
   P.legs = res.legs.map(storeLeg); BMSG = []; slipQuiet(); save();      // a refusal or a replacement said before no longer stands
   renderParlays();
   scrollToEl($('builder'));
@@ -1820,11 +1846,11 @@ $('pbBody').addEventListener('click', e => {
    a second side bet on a game replaces the first, as a second total does, said aloud; a total beside a
    side bet, or beside the game's player legs, joins them */
 let SHOWN = new Set();          // the games drawn as still to come, which the watch looks at
-/* a stored leg at this leg's number (a moneyline has none; an older store's leg without one is taken at the line shown) */
-const sameNum = (l, L) => L.kind === 'ml' || l.line === null || l.line === undefined || l.line === '' || +l.line === L.num;
-function betBtn(g, side, kind) {
+/* pressed where the builder draws the bet (inB: the ids of the game's legs drawn), never where it is only stored: a leg at a number
+   moved since, or one a game kept to one leg leaves out, is not in the parlay, and a tap puts it in */
+function betBtn(g, side, kind, inB) {
   const L = legOf(g, side, kind); if (!L) return '';
-  const on = P.legs.some(l => !isProp(l) && l.game === g.id && l.side === side && l.kind === kind && sameNum(l, L));
+  const on = inB.has(L.id);
   const call = L.pick === side, far = legFarOff(L);
   const lab = kind === 'ou' ? (side === 'over' ? 'Over' : 'Under') : kind === 'ml' ? T(g[side]).abbr : `${T(g[side]).abbr} ${fmtLine(L.num)}`;
   const tag = call && far ? `<span class="pb-bt far">model's call · far off the market: left out of the levels · model ${whole(L.p)} · market ${whole(L.fair)}</span>`
@@ -1834,18 +1860,18 @@ function betBtn(g, side, kind) {
 }
 function betBlock(g) {
   const L = g.line;
-  const row = (k, label, a, b) => { const x = betBtn(g, a, k) + betBtn(g, b, k); return x ? `<div class="pb-brow"><span class="pb-bk">${esc(label)}</span><div class="pb-bb">${x}</div></div>` : ''; };
+  const inB = new Set(builderLegs(false).filter(B => B.game === g.id).map(B => B.id));
+  const row = (k, label, a, b) => { const x = betBtn(g, a, k, inB) + betBtn(g, b, k, inB); return x ? `<div class="pb-brow"><span class="pb-bk">${esc(label)}</span><div class="pb-bb">${x}</div></div>` : ''; };
   SHOWN.add(g.id);
   return `<div class="pb-bets">${row('ml', 'Moneyline', 'away', 'home')}${row('pl', 'Puck line', 'away', 'home')}${L.total !== null && L.total !== undefined ? row('ou', `Total ${L.total}`, 'over', 'under') : ''}<p class="pb-key">Tap a bet to add it. Edge: the model's chance less the price's, in points.${L.refreshed ? ` <span class="pb-rd">${esc(bookName(L))} as read from ESPN at ${esc(hhmm(L.at))}.</span>` : ''}</p></div>`;
 }
-/* a leg button anywhere on the page adds or removes that bet */
+/* a leg button anywhere on the page adds or removes that bet: taken out where the builder draws it (its button pressed); else put in by
+   the same-game rule, a stored leg at a number moved since replaced and one the builder leaves out (a game kept to one leg) put in */
 document.addEventListener('click', e => {
   const b = e.target.closest('button[data-leg]'); if (!b || !S) return;
-  const [gid, side, kind] = b.dataset.leg.split('|'); const g = gameById()[gid];
+  const [gid, side, kind] = b.dataset.leg.split('|'), id = `${gid}|${side}|${kind}`; const g = gameById()[gid];
   const cur = g && legOf(g, side, kind);
-  /* the same bet at the same number is taken out; one stored at a number DraftKings has moved since is replaced */
-  const i = P.legs.findIndex(l => !isProp(l) && l.game === gid && l.side === side && l.kind === kind && (!cur || sameNum(l, cur)));
-  if (i >= 0) { P.legs.splice(i, 1); BMSG = []; slipQuiet(); }      // a refusal or a replacement said before no longer stands
+  if (builderLegs(false).some(B => B.id === id)) takeOut(gid, l => legIdOf(l) !== id);   // a refusal or a replacement said before no longer stands
   else {
     if (!g || hasStarted(g) || !freshLine(g)) { rerender(); return; }        // a page left open past puck drop, or a line gone: no bet
     const L = cur; if (!L) return;
@@ -1871,6 +1897,7 @@ document.addEventListener('click', e => {
    or, where only a read keeps it to one, the leg the visitor last put in (SG_ONE) */
 let BMSG = [];
 const RSAID = new Set();
+const leftOutMsg = L => `${L.desc} is left out of the parlay on ${L.mu}: one leg a game here, ${sgWhyNot(L.g)}.`;
 const storeLeg = L => L.prop
   ? { game: L.game, kind: 'prop', pid: L.pid, name: L.name, team: L.team, grp: L.grp, stat: L.stat, mk: L.mk, side: L.side, line: L.line, k: L.k, odds: L.price, other: L.other, at: L.at, p: L.p, fair: L.fair, label: L.mu, text: L.desc, date: L.g.date, start: L.start }
   : { game: L.game, side: L.side, kind: L.kind, odds: L.price, line: L.num, p: L.p, fair: L.fair, label: L.mu, text: L.desc, date: L.g.date, start: L.start };
@@ -1904,7 +1931,7 @@ function builderLegs(say) {
   for (const L of out) { if (!sgWhyNot(L.g)) continue; if (!one[L.game] || L.id === SG_ONE.get(L.game)) one[L.game] = L; }
   for (let i = out.length - 1; i >= 0; i--) {
     const L = out[i], k = one[L.game]; if (!k || k === L) continue;
-    tell(`${L.desc} is left out of the parlay on ${L.mu}: one leg a game here, ${sgWhyNot(L.g)}.`, true); out.splice(i, 1);
+    tell(leftOutMsg(L), true); out.splice(i, 1);
   }
   const pr = n => `${n} price${n > 1 ? 's have' : ' has'} changed since you added ${n > 1 ? 'them' : 'it'}`;
   if (movedPub) tell(`${pr(movedPub)}: the builder shows DraftKings' price at the job's last run.`);
@@ -1919,7 +1946,7 @@ function builderLegs(say) {
     if (changed) { P.legs = next; if (keptSaid.length) P.ui.bmsg = keptSaid.slice(0, 8); save(); }
     if (msgs.length) BMSG = msgs;
   }
-  out.msgs = msgs;
+  out.msgs = msgs; out.kept = kept.map(e => e.s);
   return out;
 }
 /* a builder row. A leg of a game with more than one leg in the builder wears "same game"; a player leg says when DraftKings' price was
@@ -2011,7 +2038,7 @@ function renderBuilder(legs) {
 $('legs').addEventListener('click', e => {
   const b = e.target.closest('button.x'); if (!b) return;
   const legs = builderLegs(true), L = legs[+b.dataset.i]; if (!L) return;
-  P.legs = P.legs.filter(l => legIdOf(l) !== L.id); BMSG = []; slipQuiet(); save(); rerender();
+  takeOut(L.game, l => legIdOf(l) !== L.id); save(); rerender();
   const nx = document.querySelector('#legs button.x') || $('bTitle'); if (nx && nx.focus) nx.focus();
 });
 function setStake(v) { P.stake = v; save(); renderBuilder(builderLegs(false)); pbPays(); updateSlip(); if (document.activeElement !== $('pbStake')) $('pbStake').value = String(pbStake()); }
@@ -2026,8 +2053,8 @@ $('saveParlay').addEventListener('click', () => {
   BMSG = ['Saved: see Your saved parlays below.']; save(); rerender();
 });
 $('clearParlay').addEventListener('click', () => {
-  const n = builderLegs(false).length; if (!n) return;
-  if (n >= 2 && !confirm(`Clear the ${n} legs from the builder?`)) return;
+  const drawn = builderLegs(false), n = drawn.length, h = heldOut(drawn).length; if (!n) return;
+  if ((n >= 2 || h) && !confirm(`Clear the ${legsN(n)} from the builder${h ? `, and the ${legsN(h)} kept on this device that it leaves out of the parlay` : ''}?`)) return;
   P.legs = []; BMSG = []; slipQuiet(true); save(); rerender();
 });
 
@@ -2153,17 +2180,24 @@ $('savedList').addEventListener('click', e => {
 /* ---------- the slip bar (#slip): the builder at a glance on every other tab ---------- */
 /* shown with legs on any other tab (and on this one while the builder is out of view); with none, only
    while it says why the last ones left, so a builder emptied by the clock is never emptied in silence */
-/* two kinds of line: one the builder's own rule said (rule: a refusal, a replacement, a leg taken out for good, on placeLeg's paths),
+/* two kinds of line: one the builder's own rule said (rule: a refusal, a replacement, a leg taken out for good, on placeLeg's paths, or
+   a stored leg drawn in place of one the visitor took out, takeOut's),
    which stands until the visitor's next change to the builder (slipQuiet) or its seconds; and any other (the legs a Refresh odds read
    or the clock took out), said once and left to run its own seconds, never cut short by a change to the builder: a rule line said over
-   it only hides it while the rule line stands. Clear all and Start over end both (slipQuiet(true)) */
+   it only hides it while the rule line stands, and a leg it says is left out of the parlay (a game kept to one leg) drops out of it
+   once the builder draws that leg. Clear all and Start over end both (slipQuiet(true)) */
 let BUILDER_OUT = false, SLIP_SAY = false, SLIP_RULE = null, SLIP_BASE = null;
 function slipShow() {
+  if (SLIP_BASE && S) {
+    const drawn = builderLegs(false), parts = SLIP_BASE.parts.filter(m => !drawn.some(L => m === leftOutMsg(L)));
+    if (parts.length < SLIP_BASE.parts.length) { SLIP_BASE.parts = parts; SLIP_BASE.msg = parts.join(' '); if (!parts.length) { clearTimeout(SLIP_BASE.t); SLIP_BASE = null; } }
+  }
   const cur = SLIP_RULE || SLIP_BASE;
   $('slipMsg').textContent = cur ? cur.msg : ''; SLIP_SAY = !!(cur && cur.empty);
 }
 function slipSay(msg, ms, empty, rule) {
-  const x = { msg, empty: !!(msg && empty) };
+  const parts = Array.isArray(msg) ? msg : [msg], x = { parts, msg: parts.join(' ') };
+  x.empty = !!(x.msg && empty);
   x.t = setTimeout(() => { if (SLIP_RULE === x) SLIP_RULE = null; else if (SLIP_BASE === x) SLIP_BASE = null; else return; slipShow(); updateSlip(); }, ms || 4000);
   if (SLIP_RULE) clearTimeout(SLIP_RULE.t);
   if (rule) SLIP_RULE = x; else { if (SLIP_BASE) clearTimeout(SLIP_BASE.t); SLIP_RULE = null; SLIP_BASE = x; }
@@ -2478,7 +2512,7 @@ function pruneLegs() {
   if (!S || !P.legs.length) return false;
   const before = JSON.stringify(P.legs), r = builderLegs(true);
   const changed = JSON.stringify(P.legs) !== before;
-  if (changed && r.msgs.length) slipSay(r.msgs.join(' '), 9000, !r.length);
+  if (changed && r.msgs.length) slipSay(r.msgs, 9000, !r.length);
   return changed;
 }
 setInterval(pbWatch, 30000);
@@ -2774,7 +2808,7 @@ async function refreshOdds(btn) {
   NO_SAVE = true;
   try {
     const b = builderLegs(true);                        // a game whose puck dropped during the read leaves the builder too (the clock's, stored later)
-    if (b.msgs.length) slipSay(b.msgs.join(' '), 9000, !b.length);
+    if (b.msgs.length) slipSay(b.msgs, 9000, !b.length);
     rerender(); card = cardAfterRead(at);
     if (PP && !$('ppWin').hidden) renderProps();
   } finally { NO_SAVE = false; }
@@ -3087,7 +3121,7 @@ function ppAdd(key) {
   const L = propDrawn(g, nl, nl.odds, nl.other, nl.at), st = storeLeg(L);
   let said;
   /* taken out where the builder draws it (its button pressed); one stored and not drawn (a game a read keeps to one leg) is put in again */
-  if (builderLegs(false).some(B => B.id === L.id)) { P.legs = P.legs.filter(l => legIdOf(l) !== L.id); BMSG = []; slipQuiet(); said = `Taken out of your parlay: ${L.desc}.`; }
+  if (builderLegs(false).some(B => B.id === L.id)) { const m = takeOut(g.id, l => legIdOf(l) !== L.id); said = `Taken out of your parlay: ${L.desc}.${m ? ' ' + m : ''}`; }
   else {
     const r = placeLeg(st, g);
     if (r.refused) { $('ppMsg').textContent = r.refused; return; }

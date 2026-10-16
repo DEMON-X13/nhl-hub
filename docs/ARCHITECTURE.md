@@ -217,10 +217,15 @@ player's points beside his own goals or assists refused; at most `GAME_LEGS_MAX`
 `MAX_GAME_LEGS`, a 22nd refused and a store of more opening with the first 21; both rules count only the legs
 `builderLegs` draws, and a stored leg a read took out leaves the store, said, only where the new leg would stand beside it on
 a reload by the published line's rule (`sgWhyNotPub`, `PUB_LINE`): in its slot, nested, or past 21, and past 21 only as many as
-bring the store back to 21, the last stored first; one leg a game on another book's game or with no table, and where a read
-alone puts a game at another book the new leg takes the place of the one drawn alone (`SG_ONE`, the one the builder then
-draws), the rest held to the published rule). `slipSay`'s rule lines (placeLeg's refusals, replacements and legs taken out)
-go at the next change to the builder (`slipQuiet`), a read's or the clock's line running its own seconds. `propNow` draws a
+bring the store back to 21, the last stored first, and the same bet stored at a number a read moved is in its slot (`sameBet`);
+one leg a game on another book's game or with no table, and where a read alone puts a game at another book the new leg is
+drawn alone (`SG_ONE`) in place of the one drawn, which stays stored like the rest, every leg held to the published rule). A
+bet button and a props window price are pressed only where `builderLegs` draws the leg, and a tap on one stored and not drawn
+puts it in; `takeOut` takes a leg out (a ×, a pressed bet or price) and says which stored leg a game kept to one leg draws in
+its place. `slipSay`'s rule lines (placeLeg's refusals and replacements, legs taken out for good, `takeOut`'s leg drawn in
+place) go at the next change to the builder (`slipQuiet`), a read's or the clock's line running its own seconds and dropping
+what it said of a leg left out once the builder draws it. A level's Add to builder asks first wherever a stored leg would go,
+and Clear all wherever two or more would or any the builder leaves out (`heldOut`, from `builderLegs`' `kept`). `propNow` draws a
 stored player leg at its price or at a later read's (out where the line moved or was pulled, said once, never stored). `quote` multiplies different games and joins
 one game's legs by `SGP`, tools/sgp.js copied word for word between `/* sgp.js begins */` and `/* sgp.js ends */`, on
 `S.sgp` (the table and the hold, data/corr.json's, copied by update.js): the fair chance from the legs' fair chances,

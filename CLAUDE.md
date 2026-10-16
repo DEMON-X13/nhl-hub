@@ -185,9 +185,13 @@ round; a 22nd leg of one game, a player's or a team bet, and a store of 23 openi
 toward neither rule, leaving the store for good, said, when a leg goes in beside it nested or past 21, and then only as many
 as bring it back to 21, the last stored (three of 21 out and one added leave two stored, a 404 on the game's props and the
 moneyline added leave 20), and staying stored, nothing said, below 21, a reload opening on what the parlay showed; a read
-alone naming another book for the game, or none, a leg added replacing only the one drawn, a tap on a stored leg left out
-putting it in, a reload on the published line opening on them all; a refusal or a replacement on the slip bar gone at the
-next leg taken out or added, a player's price in the props window and a level's Add to builder among them, and what it
+alone naming another book for the game, or none, a leg added drawn alone in place of the one drawn and every leg kept stored,
+a tap on a stored leg left out putting it in (a player's in the props window; the Over beside the moneyline on the Games card,
+not pressed there or in Pick your own legs while left out), the leg drawn taken out bringing the next one in, said in the
+window, the builder and on the slip bar, the read's slip line dropping what it said of a leg now drawn, and a reload on the
+published line opening on them all; the same total at a number a read moved replacing the stored one, said; a level's Add to
+builder and Clear all asking first with only legs left out stored and beside one drawn, No keeping them; a refusal or a
+replacement on the slip bar gone at the next leg taken out or added, a player's price in the props window and a level's Add to builder among them, and what it
 says of a read standing through an add with no word of its own and back when a replacement said over it goes), the price worked out again from the table and
 the hold (an exact integral for two legs, two million draws beyond), never above the product, est. everywhere, the fair
 chance (an Under main line's its own implied chance among the legs), no thin edge on a team leg beside a player leg (a
@@ -243,14 +247,19 @@ a store holding more opens with the first 21). Both rules count only the legs th
 read has taken out (its line moved or pulled, stored as it was so a reload brings it back) is not in the parlay and has no row
 to remove it, so it never refuses a leg, and it stays stored unless a reload would put it beside the new leg against the
 published line's rule: in the new leg's slot (replaced, said), nested with it, or past 21 of the game stored, and past 21 only
-as many leave as bring the store back to 21, the last stored first (taken out for good, said by name and game). A refusal or a
-replacement said on the slip bar goes at the visitor's next change to the builder (a leg added or taken out anywhere, a
-level's Add to builder, Clear all); what the slip bar says of legs a read or the clock took out is said once and runs its own
-nine seconds, a refusal or a replacement said over it hiding it only while that stands. A game priced at another book, or a
-publish with no same-game table, takes one leg a game, as before; where only a Refresh odds read puts a game's lines at
-another book (or names none), the builder draws one of its legs (its first, or the one the visitor last put in) and keeps the
-rest stored, a leg added takes the place of the one drawn alone, the others held to the published line's rule as above, and a
-tap on a stored leg the builder leaves out puts it in, never takes it out. Legs of different games multiply (their chances, and
+as many leave as bring the store back to 21, the last stored first (taken out for good, said by name and game); the same bet
+stored at a number a read has moved since is in the new leg's slot (replaced, said). A refusal or a replacement said on the
+slip bar goes at the visitor's next change to the builder (a leg added or taken out anywhere, a level's Add to builder, Clear
+all); what the slip bar says of legs a read or the clock took out is said once and runs its own nine seconds, a refusal or a
+replacement said over it hiding it only while that stands, and a leg it says is left out of the parlay drops out of it once the
+builder draws that leg. A game priced at another book, or a publish with no same-game table, takes one leg a game, as before;
+where only a Refresh odds read puts a game's lines at another book (or names none), the builder draws one of its legs (its
+first, or the one the visitor last put in) and keeps the rest stored: a leg added is drawn alone in place of the one drawn,
+which stays stored like the rest (said), every leg held to the published line's rule as above, and the leg drawn taken out
+puts the next stored one in its place (said). A bet or a price is shown as in the parlay (pressed, on the Games cards, in Pick
+your own legs and in the props window) only where the builder draws it; a tap on one stored and left out puts it in, never takes
+it out. A level's Add to builder asks first wherever a leg kept on this device would go, and Clear all wherever two or more
+would or any the builder leaves out of the parlay; each says how many, those left out apart. Legs of different games multiply (their chances, and
 DraftKings' prices, as it pays a parlay of different games); legs of one game are a same-game parlay, priced by the
 rule under Same-game parlays and player legs below, an estimate, and said so wherever its price shows.
 
@@ -279,7 +288,8 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   branch and bound over every parlay of the size, pruning only what cannot reach the floor or the best found;
   the 28-game worst Both days takes under 10 ms at 4x CPU throttle), chances and prices worked in leg order
   (puck drop, the matchup, the kind), ties within 1e-12 to the lower sorted leg ids. A level's card leads
-  with the fair chance, the model's beside it; Add to builder (asks before replacing other legs), Finish, a
+  with the fair chance, the model's beside it; Add to builder (asks before replacing other legs, those kept on this device
+  that the builder leaves out among them), Finish, a
   lock on each leg and New legs (the level's rule on the legs it has not shown, the locks kept; Reset), kept
   outside `P` (`PB_VIEW`). Empty levels say why, worked out from the picks (tick more games, more bet types,
   or Both days, only where it would help), and under two lined games the panel says so in one line.

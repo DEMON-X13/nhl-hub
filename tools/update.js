@@ -51,7 +51,16 @@
    chance left and the bracket carries each series' score. The field is the sixteen of that first
    round: a club the table's tie-breakers left out that ESPN has in a series is in for certain, and
    the club it displaced is out. `phase` says preseason, regular, postseason or over (the Cup
-   awarded), offseason with no games at all. */
+   awarded), offseason with no games at all.
+
+   For the Parlay Builder's same-game legs and player legs the state carries two more things, copied, never worked out
+   here: `sgp`, data/corr.json's table of how the legs of one game move together and its same-game hold (tools/corr.js
+   measured it on the finished seasons; tools/sgp.js is the rule the page copies word for word), and `box`, the box score
+   of every final from BOX_DAYS days before today through today from data/box_<season>.jsonl, each player who was on the
+   ice with what DraftKings settles his props on (a skater's goals, assists, shots on goal and blocked shots, a starting
+   goalie's saves; a goalie who came on in relief is listed apart, his saves prop void; the goalies of a side whose starter
+   the box score cannot tell are listed apart again, their saves graded nowhere), so the page can grade a visitor's saved
+   player leg. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const E = require('./espn');
@@ -78,6 +87,53 @@ const log = m => console.log(new Date().toISOString().slice(11, 19), m);
 const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const implied = am => am === null || am === undefined ? null : (am > 0 ? 100 / (am + 100) : -am / (-am + 100));
 const r3 = x => +x.toFixed(3);
+const BOX_DAYS = 14;                                // the finals whose box scores the state carries for grading saved player legs: today and the 14 days before
+/* the box scores the page grades a saved player leg on: every final in this state on the days from TODAY - BOX_DAYS through
+   TODAY that data/box_<season>.jsonl has, each skater who was on the ice ([goals, assists, shots on goal, blocked shots]) in `s`,
+   each side's STARTING goalie (his saves) in `g`, and the goalies who came on in relief in `r` (only where a side used two). A
+   saves prop stands only on the goalie who starts, pulled or not, and is void on one who comes on in relief: the books' rule
+   for goalie props as secondary sources quote it, DraftKings' among them (its house rules, filed with the Massachusetts Gaming
+   Commission, could not be read from here; the conservative reading), so a reliever's saves are never carried to grade on. The
+   starter is the one the box file marks (`st`: the first of the side's goalies ESPN's plays name making a save, read by
+   fetch_box.js), and the mark is certain only where every other goalie of the side made a save of his own: a starter pulled
+   with every shot he faced a goal (or before facing one) made none, so the first save is his reliever's and the mark falls on
+   the reliever (CBJ at VGK, 8 January 2026, 401803043: Carter Hart started and was pulled at 8:24 with one shot against, a
+   goal; Akira Schmid, who relieved him, carries the mark), and a late reliever who faced a shot or two without a save looks the
+   same in the box. So a side that used two goalies, any of them unmarked and without a save (or none marked), is a side whose
+   starter the box cannot tell: all its goalies go in `u`, in neither `g` nor `r`, and the page grades no saves prop on them
+   (it cannot be graded here). A side with one goalie is certain. A player not listed did not play, and a column ESPN left
+   out is null */
+const savesOf = x => typeof x.sa === 'number' && isFinite(x.sa) && typeof x.ga === 'number' && isFinite(x.ga) ? x.sa - x.ga : null;
+/* each side's goalies who played: { st: the starter, rel: the others } where the box tells, else { unsure: every one of them } */
+const sidesOf = b => [b.home, b.away].map(t => {
+  const gs = (b.goalies || []).filter(x => x && x.team === t && x.id && x.toi > 0);
+  if (gs.length < 2) return gs.length ? { st: gs[0], rel: [] } : null;
+  const st = gs.find(x => x.st), rel = gs.filter(x => x !== st);
+  return st && rel.every(x => savesOf(x) > 0) ? { st, rel } : { unsure: gs };
+}).filter(Boolean);
+function boxWindow(rows) {
+  const from = addDays(TODAY, -BOX_DAYS), want = new Map(rows.filter(r => r.state === 'final' && r.date >= from && r.date <= TODAY).map(r => [r.id, r]));
+  const games = {};
+  for (const s of [E.seasonOf(from), SEASON].filter((s, i, a) => a.indexOf(s) === i)) {
+    const f = path.join(DATA, `box_${s}.jsonl`); if (!fs.existsSync(f)) continue;
+    for (const line of fs.readFileSync(f, 'utf8').split('\n')) {
+      if (!line) continue;
+      let b; try { b = JSON.parse(line); } catch (e) { continue; }
+      if (!b || !want.has(String(b.id))) continue;
+      const n = v => typeof v === 'number' && isFinite(v) ? v : null;
+      const sk = {}, gk = {}, rel = [], uns = [];
+      for (const x of b.skaters || []) if (x && x.id && x.toi > 0) sk[String(x.id)] = [n(x.g), n(x.a), n(x.s), n(x.bs)];
+      for (const side of sidesOf(b)) {
+        if (side.unsure) { uns.push(...side.unsure.map(x => String(x.id))); continue; }
+        gk[String(side.st.id)] = savesOf(side.st);
+        rel.push(...side.rel.map(x => String(x.id)));
+      }
+      games[String(b.id)] = Object.assign({ s: sk, g: gk }, rel.length ? { r: rel.sort() } : {}, uns.length ? { u: uns.sort() } : {});
+    }
+  }
+  const ids = Object.keys(games).sort((a, b) => { const x = want.get(a), y = want.get(b); return x.start < y.start ? -1 : x.start > y.start ? 1 : a < b ? -1 : 1; });
+  return { from, days: BOX_DAYS, games: Object.fromEntries(ids.map(id => [id, games[id]])) };
+}
 
 /* ---------- the season, from ESPN ---------- */
 async function pullSeason(prev) {
@@ -495,12 +551,24 @@ async function main() {
   const PR = fs.existsSync(path.join(DATA, 'props.json')) ? JSON.parse(fs.readFileSync(path.join(DATA, 'props.json'), 'utf8')) : null;
   const toComeNow = r => r && r.state === 'pre' && Date.parse(r.start) > Date.parse(NOW) && !(r.before && Date.parse(r.before) <= Date.parse(NOW) && Date.parse(r.start) - Date.parse(r.before) < DELAY);
   const props = PR ? Object.assign({}, PR, { games: Object.fromEntries(Object.entries(PR.games || {}).filter(([id, g]) => toComeNow(out.find(x => x.id === id)) && Date.parse(g.start) > Date.parse(NOW))) }) : null;
+  /* the Parlay Builder's same-game legs: the table of how legs of one game move together and the same-game hold, copied from
+     data/corr.json (tools/corr.js wrote it from the finished seasons' box scores; tools/sgp.js is the rule the page copies), and
+     what the page needs to grade a saved player leg: the box score of every final from BOX_DAYS days ago through today, each player who
+     played (on the ice at all, as DraftKings and the props ledger count it) with the four counts DraftKings settles skaters on
+     (goals, assists, shots on goal, blocked shots; points are goals plus assists), each side's starting goalie's saves (shots
+     against less goals against), the goalies who came on in relief, whose saves prop is void, and apart the goalies of a side whose
+     starter the box cannot tell, whose saves are graded nowhere (boxWindow). A column ESPN left
+     out is null. The page writes a settled leg's grade into the visitor's saved leg, so a parlay graded while its final is
+     carried stays graded after it leaves the window */
+  const C = fs.existsSync(path.join(DATA, 'corr.json')) ? JSON.parse(fs.readFileSync(path.join(DATA, 'corr.json'), 'utf8')) : null;
+  const sgp = C && C.rho && C.hold ? { rho: C.rho, hold: C.hold, measured: C.measured || null } : null;
+  const box = boxWindow(out);
   /* `removed`: the games taken off the schedule since the last published state, each with the feed's
      reason, so the smoke test can hold every started call of that state to this one; `kept`: games a
      partial answer left out, kept as they were; `pass`: only on the first pass's state, never published */
   /* published at the run's own clock, the one every call was made and frozen by, so a puck drop while the run reads
      the feed is not a call "made after puck drop" to the smoke test */
-  const state = Object.assign({ published: new Date(Date.parse(NOW)).toISOString(), season: SEASON, today: TODAY, phase: playoff.phase, model, teams, games: out, record, playoff, edge: EDGE, players, props },
+  const state = Object.assign({ published: new Date(Date.parse(NOW)).toISOString(), season: SEASON, today: TODAY, phase: playoff.phase, model, teams, games: out, record, playoff, edge: EDGE, players, props, sgp, box },
     removedNow.length ? { removed: removedNow } : {}, kept.length ? { kept } : {}, SCORES ? { pass: 'scores' } : {});
   const before = prev ? JSON.stringify(Object.assign({}, prev, { published: null, today: null })) : null;
   const after = JSON.stringify(Object.assign({}, state, { published: null, today: null }));

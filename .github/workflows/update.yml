@@ -18,9 +18,10 @@ on:
   workflow_dispatch:
   push:
     # a change to the job or the page runs it once, so the change is proved on the real feeds at once and the
-    # state the page reads is the new job's from the first minute, not the next scheduled slot hours later
+    # state the page reads is the new job's from the first minute, not the next scheduled slot hours later; so does
+    # a same-game table measured again (data/corr.json), which the state carries and the smoke holds it to
     branches: [main]
-    paths: ["tools/*.js", "tools/package*.json", "index.html", ".github/workflows/update.yml"]
+    paths: ["tools/*.js", "tools/package*.json", "index.html", "data/corr.json", ".github/workflows/update.yml"]
 
 permissions:
   contents: write

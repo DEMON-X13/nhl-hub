@@ -10,7 +10,8 @@
 <style>
 :root{
   /* the NBA Hub's palette (DEMON-X13/nba-hub, app/nba_hub.html), its graphite and inks exactly, and its accents
-     where the two share a role; the NHL keeps ice blue as its own accent where the NBA has orange */
+     where the two share a role; the NHL keeps ice blue as its own accent where the NBA has orange (--hot), and gold
+     where the NBA uses ice for a meaning of its own (a push, a void, a warning) */
   --bg:#2A3043; --bg-2:#30374B; --panel:#363D52; --panel-2:#3D455B; --panel-3:#475068;
   --ink:#F6F7FB; --ink-2:#CDD2DF; --muted:#A0A7BB; --line:#4A5269; --line-2:#59627B;
   --ice:#5FD4FF; --ice-2:#8EE3FF; --ice-soft:rgba(95,212,255,.14);
@@ -19,11 +20,11 @@
   --gold:#FFD166; --gold-soft:rgba(255,209,102,.14);
   /* the NHL's own text tokens: the NBA's --muted holds 4.5:1 only on --bg and --bg-2 (the builder's legs), so
      quiet text on a panel (--panel, --panel-2) is --muted-ink, one shade lighter than the NBA's (4.58 on --panel-2
-     even where a rink line, 2% white, crosses it); quiet text straight on the page (the header's stamp, the
-     games count, the Standings note) is --ink-2, since the fixed glow and rink lines lift the backdrop under the
-     top of the window to #42515E on a phone, where --muted gives 3.40; a tint over the page (the chosen day, a
-     source note) sits on --bg-2, not on the glow; rose text is --rose-ink (--rose stays for stripes, borders and
-     large figures); the dark text on a bright button is the NBA's #1E2230, never var(--bg) */
+     even where a rink line, 2% white, crosses it); on --panel-3 (a chip, the Parlay Builder's controls) it is --ink-2;
+     text straight on the page (a tab's intro, a heading's small print, the header's stamp) is --ink-2, since the
+     fixed glow and rink lines lift the backdrop under the top of the window to #42515E on a phone, where --muted
+     gives 3.40; rose text is --rose-ink (--rose stays for stripes, borders, fills and large figures); the dark
+     text on a bright fill is the NBA's #1E2230, never var(--bg) */
   --muted-ink:#B3B9CB; --rose-ink:#FFA2B8;
   --display:"Unbounded",ui-sans-serif,system-ui,sans-serif;
   --body:"Manrope",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -38,217 +39,355 @@ a{color:var(--ice)}
 [hidden]{display:none!important}
 /* rink lines */
 .rink{position:fixed;inset:0;pointer-events:none;opacity:.06;background-image:linear-gradient(rgba(255,255,255,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.35) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(800px 500px at 50% 0%,#000 20%,transparent 75%);-webkit-mask-image:radial-gradient(800px 500px at 50% 0%,#000 20%,transparent 75%)}
-header{padding:24px 20px 0;max-width:1240px;margin:0 auto;position:relative}
+/* ---------- header and nav: the NBA's ---------- */
+header{padding:26px 22px 0;max-width:1240px;margin:0 auto;position:relative}
 .brand{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.wordmark{font-family:var(--display);font-weight:900;font-size:clamp(30px,5.5vw,48px);letter-spacing:-.02em;line-height:.95;margin:0;text-transform:uppercase}
+.wordmark{font-family:var(--display);font-weight:900;font-size:clamp(30px,6vw,54px);letter-spacing:-.02em;line-height:.95;margin:0;text-transform:uppercase}
 .wordmark em{font-style:normal;color:var(--ice)}
 .wordmark .puck{display:inline-block;width:.5em;height:.22em;border-radius:50%;background:#0F1118;border:2px solid var(--ice);box-shadow:0 0 18px rgba(95,212,255,.5);margin-left:.14em;vertical-align:.12em}
-.tagline{color:var(--ink-2);font-size:13px;margin:8px 0 0;max-width:560px}
+.tagline{color:var(--ink-2);font-size:13px;margin:8px 0 0;max-width:520px}
 .stamp{font-size:12px;color:var(--ink-2);text-align:right;line-height:1.5}
 .stamp b{color:var(--ink-2);font-weight:600;display:block}
-nav{display:flex;gap:6px;margin:20px 0 0;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.stamp .muted{color:var(--ink-2)}
+@media(max-width:640px){.stamp{text-align:left;width:100%}}
+nav{display:flex;gap:6px;margin:22px 0 0;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
-nav button{flex:none;background:var(--panel);border:1px solid var(--line);color:var(--ink-2);padding:9px 15px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.02em;cursor:pointer;transition:all .18s var(--ease)}
-nav button:hover{color:var(--ink);border-color:var(--line-2)}
+nav button{flex:none;display:inline-flex;align-items:center;background:var(--panel);border:1px solid var(--line);color:var(--ink-2);padding:10px 16px;min-height:44px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.02em;cursor:pointer;transition:all .18s var(--ease)}
+nav button:hover{color:var(--ink);border-color:var(--line-2);transform:translateY(-1px)}
 nav button.on{background:var(--ink);color:#1E2230;border-color:var(--ink)}
-nav button .n{display:inline-block;margin-left:7px;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--ice);color:#1E2230;font-weight:800}
-main{max-width:1240px;margin:0 auto;padding:16px 20px 90px}
+nav .n{display:inline-block;margin-left:7px;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--ice);color:#1E2230;font-weight:800;line-height:1.45}
+main{max-width:1240px;margin:0 auto;padding:18px 22px 90px;position:relative}   /* positioned: the rink lines stay under the panels, never across their text */
+@media(max-width:640px){main{padding-left:12px;padding-right:12px}}              /* the NBA's phone gutter: a card 366px wide at 390 */
 section[hidden]{display:none}
-h2{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0 0 12px}
-h2 small{font-family:var(--body);font-weight:500;color:var(--muted-ink);font-size:13px;margin-left:10px;letter-spacing:0}
-h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-ink);margin:16px 0 8px}
-.muted{color:var(--muted)} .card .muted,.game .muted,.empty .muted{color:var(--muted-ink)} .stamp .muted,main>section>.muted,main>section>.toolbar>.muted{color:var(--ink-2)} .small{font-size:12px} .num{font-variant-numeric:tabular-nums}
+h2{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 14px}
+h2 small{font-family:var(--body);font-weight:500;color:var(--ink-2);font-size:13px;margin-left:10px;letter-spacing:0}
+@media(max-width:640px){h2 small{display:block;margin:4px 0 0}}             /* a phone: the small print under its heading, never broken beside it */
+h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin:16px 0 8px}
+.muted{color:var(--muted-ink)} .small{font-size:12px} .num{font-variant-numeric:tabular-nums}
 .ice{color:var(--ice)} .lime{color:var(--lime)}
-.card{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-2);border-radius:10px;padding:7px 10px;color:var(--ink)}
-::placeholder{color:var(--ink-2);opacity:1}
-.btn{background:var(--panel-3);border:1px solid var(--line-2);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12.5px;transition:all .15s var(--ease);white-space:nowrap}
-.btn:hover{border-color:var(--ink-2)}
+.intro{font-size:13px;color:var(--ink-2);max-width:900px;margin:0 0 14px}
+.intro .muted,.bar .muted{color:var(--ink-2)}
+/* a panel (the NBA's .panel): the Parlay Builder's sections */
+.card{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:16px}
+@media(max-width:640px){.card{padding:16px}}
+/* ---------- buttons, tags, chips, notes: the NBA's, ice where it has orange ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;background:var(--panel-3);border:1px solid var(--line-2);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12.5px;transition:all .15s var(--ease);white-space:nowrap;text-decoration:none}
+.btn:hover{border-color:var(--ink-2);transform:translateY(-1px)}
 .btn.ice{background:var(--ice);border-color:var(--ice);color:#1E2230}
+.btn.ice:hover{background:var(--ice-2);border-color:var(--ice-2)}
 .btn.ghost{background:transparent;color:var(--ink-2)}
-.btn.tiny{padding:4px 8px;font-size:11.5px;border-radius:8px}
-.btn.on{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
-.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
-.seg button{border:0;background:var(--panel);padding:7px 11px;font-weight:700;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+.btn.ghost:hover{color:var(--ink)}
+.btn[disabled],.btn:disabled{transform:none}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-2);border-radius:999px;background:var(--panel);max-width:100%}
+.seg button{border:0;background:transparent;color:var(--ink-2);font-weight:700;font-size:12.5px;padding:6px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;min-height:44px}
+.seg button:not(.on):hover{color:var(--ink);background:var(--panel-3)}
 .seg button.on{background:var(--ink);color:#1E2230}
-/* day strip */
+.tag{display:inline-block;font:800 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
+.tag.ice,.tag.replay,.tag.sg{background:var(--ice-soft);color:var(--ice-2)}
+.tag.lime,.tag.win{background:var(--lime-soft);color:var(--lime)}
+.tag.rose,.tag.loss{background:var(--rose-soft);color:var(--rose-ink)}
+.tag.gold,.tag.push,.tag.thin{background:var(--gold-soft);color:var(--gold)}
+.tag.void,.tag.gone{background:var(--panel-3);color:var(--ink-2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.chip{background:var(--panel-3);border:1px solid var(--line);border-radius:10px;padding:6px 9px;font-size:12px;color:var(--ink-2);display:inline-flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline;max-width:100%}
+.chip b{color:var(--ink);font-family:var(--display);font-size:13px;font-weight:700;white-space:nowrap}   /* a chip wraps between its parts (the puck line's two sides at 360), never inside one */
+.chip>span{white-space:nowrap}
+.chip .muted{color:var(--ink-2)}
+/* the model's call before its result: lit lime as the NBA's edge chip, its words in --ink (the NBA's --ink-2 is 4.43 there) */
+.chip.edge{border-color:rgba(205,255,79,.5);background:var(--lime-soft);color:var(--ink)}
+.chip.edge b{color:var(--lime)}
+/* a call's grade: a solid pill, dark text on it (on a soft chip a soft pill falls under 4.5:1) */
+.res{align-self:center;font:800 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:999px;color:#1E2230;background:var(--ink-2)}
+.res.win{background:var(--lime)} .res.loss{background:var(--rose)} .res.push{background:var(--gold)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ice);border-radius:12px;padding:12px 16px;margin:0 0 16px;color:var(--ink-2);font-size:13px;line-height:1.5}
+.note b{color:var(--ink)}
+.note.warn{border-left-color:var(--gold)}
+.note p{margin:0 0 6px} .note p:last-child{margin:0}
+.empty{background:var(--panel);border:1px dashed var(--line-2);border-radius:var(--r);padding:34px 24px;text-align:center;color:var(--ink-2)}
+.empty b{display:block;font-family:var(--display);font-size:24px;color:var(--ink);margin-bottom:6px}
+.countdown{font-family:var(--display);font-size:clamp(40px,9vw,88px);font-weight:900;color:var(--ice);line-height:1;letter-spacing:-.03em;margin:8px 0 4px}
+/* ---------- teams: no images, a colour each (TEAM_COLORS in the script): the badge and the bar take c, a 12px pill t ---------- */
+.pill{display:inline-block;font-family:var(--display);font-weight:900;font-size:12px;padding:3px 7px;border-radius:7px;border:1.5px solid var(--tc);color:var(--tc);line-height:1;white-space:nowrap;vertical-align:middle;letter-spacing:0;text-transform:none}
+.tw{display:inline-flex;align-items:center;gap:8px}
+.mu{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;vertical-align:middle}
+/* ---------- the day strip ---------- */
 .days{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;scrollbar-width:none}
 .days::-webkit-scrollbar{display:none}
-.day{flex:none;min-width:84px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px 12px;cursor:pointer;text-align:left;transition:all .18s var(--ease)}
-.day:hover{border-color:var(--line-2)}
+.day{flex:none;min-width:86px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;text-align:left;transition:all .18s var(--ease)}
+.day:hover{border-color:var(--line-2);transform:translateY(-1px)}
 .day.on{border-color:var(--ice);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--bg-2)}
 .day .dw{font-size:11px;color:var(--muted-ink);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.day .dn{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.1;margin-top:2px}
+.day .dn{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.1;margin-top:2px}
 .day .dc{font-size:11px;color:var(--ink-2);margin-top:3px}
 .day.on .dw{color:var(--ink-2)} .day.on .dc{color:var(--ice-2)}
-/* game cards */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}
-@media(max-width:420px){.grid{grid-template-columns:1fr}}
-.game{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 12px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+/* ---------- Refresh odds, Refresh scores: the NBA's odds bar ---------- */
+.oddsbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 14px}
+.oddsbar .btn,.pp-odds .btn{min-height:44px;padding:10px 16px;font-size:13px;flex:none}
+.odds-btn[aria-disabled="true"]{opacity:.6;cursor:progress;transform:none}
+.odds-note{font-size:12.5px;color:var(--ink-2);flex:1 1 220px;min-width:0;line-height:1.4}
+/* ---------- the game card: the NBA's ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+@media(max-width:420px){.grid{grid-template-columns:minmax(0,1fr)}}
+.game{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px;position:relative;overflow:hidden;min-width:0;transition:transform .2s var(--ease),border-color .2s var(--ease),box-shadow .2s var(--ease)}
+.game:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 40px -24px rgba(0,0,0,.6)}
 .game::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--ice),transparent)}
 .game.final::before{background:linear-gradient(180deg,var(--muted),transparent)}
-.game .when{font-size:12px;color:var(--muted-ink);display:flex;justify-content:space-between;gap:8px}
-.game .when .live{color:var(--rose-ink);font-weight:700}
-.side{display:grid;grid-template-columns:30px 1fr auto auto;gap:8px;align-items:center}
-.side img{width:30px;height:30px;object-fit:contain}
-.side .nm{font-weight:700;font-family:var(--display);font-size:13px}
-.side .nm small{color:var(--muted-ink);font-weight:500;margin-left:5px;font-family:var(--body);font-size:11.5px}
-.side .sc{font-family:var(--display);font-weight:700;font-size:20px;min-width:28px;text-align:right}
-.side .sc.lose{color:var(--muted)}
-.side .wp{font-variant-numeric:tabular-nums;font-weight:700;min-width:46px;text-align:right;color:var(--ink-2)}
-.side.picked .wp{color:var(--lime)}
-.side.won .nm{color:var(--lime)}
-.prob{height:8px;border-radius:999px;background:var(--panel-3);overflow:hidden;display:flex}
-.prob i{display:block;height:100%;background:var(--ac,#888)} .prob i.h{margin-left:auto;background:var(--hc,#888)}
-.lines{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:12.5px;border-top:1px solid var(--line);padding-top:8px}
-.lines .k{color:var(--muted-ink);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
-.lines .v{font-variant-numeric:tabular-nums}
-.tag{display:inline-block;font:700 10.5px var(--body);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
-.tag.pick{background:var(--lime-soft);color:var(--lime)} .tag.pass{background:var(--panel-3);color:var(--ink-2)}
-.tag.win{background:var(--lime-soft);color:var(--lime)} .tag.loss{background:var(--rose-soft);color:var(--rose-ink)} .tag.push{background:var(--gold-soft);color:var(--gold)}
-.tag.replay{background:var(--ice-soft);color:var(--ice-2)}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.tbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:13px}
-.tbl th,.tbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
-.tbl th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-ink);background:var(--panel-2);position:sticky;top:0}
+.game .top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:6px 10px;font-size:12px;color:var(--muted-ink);margin-bottom:12px}
+.game .top>span:first-child{min-width:0}
+.game .top b{color:var(--ink-2);font-weight:700}
+.tags{display:flex;gap:4px 6px;flex-wrap:wrap;justify-content:flex-end;min-width:0;margin-left:auto}
+.teams{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px}
+.team{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
+.team.home{align-items:flex-end;text-align:right}
+.badge{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:-.01em;line-height:1;padding:8px 10px;border-radius:12px;border:2px solid var(--tc);color:var(--tc);background:rgba(255,255,255,.02);user-select:none;white-space:nowrap}
+.badge.pick{background:var(--tc);color:#1E2230;box-shadow:0 0 18px -6px var(--tc)}
+@media(max-width:380px){.badge{font-size:22px;padding:7px 8px}}         /* WPG and WSH inside their column at 360, clear of the chance */
+.team .nm{font-size:12px;color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.team .rec{font-size:11.5px;color:var(--muted-ink);margin-top:-4px;font-variant-numeric:tabular-nums}
+.team .sc{font-family:var(--display);font-size:30px;font-weight:700;line-height:1}
+.team .sc.lose{color:var(--muted)}
+.vs{font-family:var(--display);font-size:11px;color:var(--muted-ink);text-align:center;line-height:1.3}
+.vs b{display:block;font-size:22px;color:var(--ink);font-weight:900}
+.prob{margin:14px 0 8px;height:10px;border-radius:999px;background:var(--panel-3);overflow:hidden;display:flex}
+.prob i{display:block;height:100%;background:var(--ac)}
+.prob i.h{margin-left:auto;background:var(--hc);border-left:2px solid var(--panel-3)}
+.pline{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink-2);font-weight:700}
+.pline b{color:var(--ink);font-family:var(--display);font-size:13px}
+/* who is out, under the chips: the goalies, the players out with what each is worth, the rest named on a line */
+.game .out{margin-top:10px;font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px}
+.game .out>span{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.game .out .who{color:var(--rose-ink);font-weight:700;min-width:0}   /* the name and the status each whole (.nw), the status under the name where a phone has no room */
+.game .out .dtd .who{color:var(--gold)}                /* day to day: he stays in the lineup */
+.game .out .gk>span,.game .out .also>span{min-width:0}
+.game .out .muted{color:var(--muted-ink);font-weight:500}
+.game .out .gk b{color:var(--ink)}
+.game .out .cost{color:var(--muted-ink);font-variant-numeric:tabular-nums;flex:none;white-space:nowrap}
+.game .out .src{display:block;font-size:11.5px;color:var(--muted-ink);margin-top:2px}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;flex-wrap:wrap}
+.foot>span{display:flex;gap:6px;flex-wrap:wrap}
+.foot>span:empty{display:none}
+.btn.pp-open.has{border-color:var(--ice);color:var(--ice)}
+.btn[data-lu][aria-expanded="true"]{border-color:var(--ice);color:var(--ice)}   /* Lineups open: the one toggle lit, its word kept */
+/* the Lineups drawer: who the call expects, club by club, stacked */
+.drawer{margin-top:12px;border-top:1px dashed var(--line-2);padding-top:10px;font-size:12px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.drawer .lu-key{margin:0;color:var(--muted-ink);font-size:11.5px}
+.drawer h4{margin:0 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-ink)}
+.drawer ul{list-style:none;margin:0;padding:0}
+.drawer li{display:flex;justify-content:space-between;gap:6px;padding:2px 0;border-bottom:1px solid var(--line)}
+.drawer li>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drawer .m{color:var(--muted-ink);flex:none;width:34px;text-align:right}
+.drawer .v{flex:none;width:48px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted-ink)}
+.drawer .v.pos{color:var(--lime)} .drawer .v.neg{color:var(--rose-ink)}
+.drawer .coach{color:var(--ink-2);margin-top:6px}
+.drawer .coach b{color:var(--ink)}
+.games-key{margin:-4px 0 12px;font-size:12px;color:var(--ink-2)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.game:hover,.day:hover,.btn:hover,nav button:hover{transform:none}}
+/* ---------- tables: the NBA's ---------- */
+.wrap{overflow-x:auto;border-radius:14px}
+.scroll{overflow:auto;max-height:72vh;border-radius:14px}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.tbl th,.tbl td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.tbl th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-ink);background:var(--panel-2)}
+.scroll .tbl th{position:sticky;top:0;z-index:2}
+/* the club or player column, held at the left while a table scrolls sideways; opaque so the figures pass under it */
+.tbl .sk{position:sticky;left:0;z-index:1;background:var(--panel)}
+@media(max-width:1100px){.tbl .sk{box-shadow:inset -1px 0 0 var(--line)}}   /* the held column's edge, where a table can be wider than the screen */
+.tbl th.sk{background:var(--panel-2);z-index:3}
+.tbl tbody tr:hover td.sk{background:#3B4256}
+.tbl th.on{color:var(--ice-2)}         /* the column the table is in order of, lit as the NBA's (its headers sort; the NHL's do not, so no pointer) */
 .tbl tr:last-child td{border-bottom:0}
 .tbl tbody tr:hover{background:rgba(255,255,255,.025)}
 .tbl td.n,.tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl .rk{color:var(--muted-ink);width:30px}
+.tbl .big{font-family:var(--display);font-weight:700}
+.tbl .pos{color:var(--lime)} .tbl .neg{color:var(--rose-ink)}
 .tbl tr.in td{font-weight:600} .tbl tr.cut td{border-bottom:2px dashed var(--line-2)}
-.tbl .linesTable td{white-space:normal}
-.tw{display:inline-flex;align-items:center;gap:7px}
-.tw img{width:20px;height:20px;object-fit:contain}
-.scroll{overflow:auto;max-height:72vh;border-radius:14px}
-.bar{height:6px;background:var(--panel-3);border-radius:3px;overflow:hidden;min-width:60px;display:inline-block;vertical-align:middle}
-.bar i{display:block;height:100%;background:var(--ice)}
-.bracket{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.bracket .conf{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px}
-.series{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
-.series:last-child{border-bottom:0}
-.series .seed{font:700 11px var(--display);color:var(--muted-ink);min-width:34px}
-.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
-.stat .k{color:var(--muted-ink);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.stat .v{font-family:var(--display);font-size:22px;font-weight:900;line-height:1.1;margin-top:4px}
-.stat .v.good{color:var(--lime)} .stat .v.bad{color:var(--rose)}
-.saved{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;background:var(--panel)}
-.saved .top{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
-.empty{background:var(--panel);border:1px dashed var(--line-2);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--ink-2)}
-.empty b{display:block;font-family:var(--display);font-size:22px;color:var(--ink);margin-bottom:6px}
+.tbl .outs{color:var(--rose-ink);white-space:normal;min-width:180px}
+.tbl .pn b{font-weight:700}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.bar .grow{flex:1}
+.bar .note-n{font-size:12.5px;color:var(--ink-2)}
+select,input[type=text],input[type=number]{background:var(--panel);border:1px solid var(--line-2);border-radius:10px;padding:9px 12px;color:var(--ink);min-width:0;min-height:44px}
+#plSearch{flex:1 1 160px;min-width:0}
+@media(max-width:640px){select,input[type=text]{font-size:16px}}            /* iOS zooms in on a box under 16px, and stays zoomed */
+::placeholder{color:var(--ink-2);opacity:1}
+.meter{display:inline-block;vertical-align:middle;height:6px;border-radius:999px;background:var(--panel-3);overflow:hidden;min-width:80px}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--ice),var(--lime))}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media(max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
+.stand+.stand{margin-top:28px}
+/* the Standings' four division tables share every column's width (laid out fixed on their heads' widths, each a little over what its
+   widest figure of a season needs), so GP, W, L and PTS run straight down the page from the Atlantic to the Pacific, where each table
+   once sized its Team column to its own longest name; narrower than that, a table scrolls sideways in its .wrap as every table does.
+   The order: #, Team, GP, W, L, OTL, PTS, RW, ROW, GF, GA, Diff, Rating, Playoff */
+#standings .tbl{table-layout:fixed;min-width:912px}
+#standings .tbl th:nth-child(1){width:36px} #standings .tbl th:nth-child(2){width:200px} #standings .tbl th:nth-child(3){width:46px} #standings .tbl th:nth-child(4){width:46px} #standings .tbl th:nth-child(5){width:46px} #standings .tbl th:nth-child(6){width:52px} #standings .tbl th:nth-child(7){width:60px} #standings .tbl th:nth-child(8){width:48px} #standings .tbl th:nth-child(9){width:56px} #standings .tbl th:nth-child(10){width:54px} #standings .tbl th:nth-child(11){width:54px} #standings .tbl th:nth-child(12){width:56px} #standings .tbl th:nth-child(13){width:78px} #standings .tbl th:nth-child(14){width:80px}
+@media(max-width:640px){#standings .tbl{min-width:660px}
+  #standings .tbl th:nth-child(1){width:28px} #standings .tbl th:nth-child(2){width:74px} #standings .tbl th:nth-child(3){width:36px} #standings .tbl th:nth-child(4){width:36px} #standings .tbl th:nth-child(5){width:36px} #standings .tbl th:nth-child(6){width:40px} #standings .tbl th:nth-child(7){width:52px} #standings .tbl th:nth-child(8){width:38px} #standings .tbl th:nth-child(9){width:46px} #standings .tbl th:nth-child(10){width:46px} #standings .tbl th:nth-child(11){width:46px} #standings .tbl th:nth-child(12){width:46px} #standings .tbl th:nth-child(13){width:68px} #standings .tbl th:nth-child(14){width:68px}}
 .spark{display:inline-block;vertical-align:middle;height:22px;width:90px}
 .spark polyline{fill:none;stroke:var(--ice);stroke-width:1.5}
 .spark circle{fill:var(--lime)}
-.lineup{margin-top:2px;font-size:12px;color:var(--ink-2);display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;border-top:1px solid var(--line);padding-top:8px}
-.lineup .k{color:var(--muted-ink);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
-.lineup .who{color:var(--rose-ink);font-weight:700}
-.countdown{font-family:var(--display);font-size:clamp(36px,8vw,72px);font-weight:900;color:var(--ice);line-height:1;letter-spacing:-.03em;margin:6px 0 4px}
-.note{background:linear-gradient(var(--gold-soft),var(--gold-soft)),var(--bg-2);border:1px solid rgba(255,209,102,.35);color:var(--ink-2);border-radius:12px;padding:9px 12px;font-size:12.5px;margin-bottom:12px}
-.note b{color:var(--gold)}
-.game .when .asof{color:var(--gold);font-weight:700}
+/* ---------- the playoff bracket ---------- */
+/* two conferences side by side where a 14-letter name (Golden Knights) keeps one line in its club's column: the middle column only
+   as wide as its "vs" until a series has a score (.scored, 118px for "UTA leads 3-2"), so two a row from 1081px, and in the playoffs
+   from 1261px; one a row below */
+.bracket{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:28px;--mid:28px}
+.bracket.scored{--mid:118px}
+@media(max-width:1080px){.bracket{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:1260px){.bracket.scored{grid-template-columns:minmax(0,1fr)}}
+.bracket .conf{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0;overflow-x:auto}
+.series{display:grid;grid-template-columns:36px minmax(0,1fr) var(--mid) minmax(0,1fr) 36px;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.series:last-child{border-bottom:0}
+/* a club: its pill, its name, and its points under the name (a line of their own, so the name has the column's width); the pill's
+   and the name's own boxes give way to the grid (display:contents), the markup the tables' */
+.series .side{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;align-items:center;min-width:0}
+.series .side>span:not(.pts),.series .side .tw{display:contents}
+.series .side .pill{grid-column:1;grid-row:1/3}
+.series .side .tn,.series .side .pts{grid-column:2;line-height:1.3}
+.series .side .tn{grid-row:1} .series .side .pts{grid-row:2}
+.series .side.sb{grid-template-columns:minmax(0,1fr) auto;text-align:right}
+.series .side.sb .pill{grid-column:2} .series .side.sb .tn,.series .side.sb .pts{grid-column:1}
+.series .seed{font:700 11px var(--display);color:var(--muted-ink)}
+.series .seed.sb{text-align:right}
+.series .score,.series .vs-w{text-align:center}
 .series .score{font:700 12px var(--display);color:var(--ink-2);white-space:nowrap}
 .series.done .score{color:var(--lime)}
-.series .out{opacity:.65;text-decoration:line-through} .series .out .tw>span{text-decoration:line-through}
+.series .vs-w,.series .pts{font-size:12px;color:var(--muted-ink)}
+.series .pts{white-space:nowrap}
+/* a club knocked out: struck through in --muted-ink, its pill too (an opacity takes the text under 4.5:1) */
+.series .ko .tn{color:var(--muted-ink);text-decoration:line-through}
+.series .ko .pill{color:var(--muted-ink);border-color:var(--muted-ink)}
 .champ{font-family:var(--display);font-weight:900;font-size:20px;color:var(--gold);margin:4px 0 10px}
-/* a phone: one conference a row, never wider than the screen (each scrolls inside itself if it must); the points stay in the odds table below */
-@media (max-width:640px){.bracket{grid-template-columns:minmax(0,1fr)}.bracket .conf{min-width:0;overflow-x:auto}.series .pts{display:none}}
+/* a phone: a series on two lines, a club a line with its seed, its score or "vs" beside the two; the points stay in the odds table below */
+@media (max-width:640px){
+  .series{grid-template-columns:36px minmax(0,1fr) auto;gap:4px 10px}
+  .series .seed.sa{grid-column:1;grid-row:1} .series .side.sa{grid-column:2;grid-row:1}
+  .series .seed.sb{grid-column:1;grid-row:2;text-align:left} .series .side.sb{grid-column:2;grid-row:2;grid-template-columns:auto minmax(0,1fr);text-align:left}
+  .series .side .pill,.series .side.sb .pill{grid-column:1;grid-row:1} .series .side.sb .tn{grid-column:2}
+  .series>.score,.series>.vs-w{grid-column:3;grid-row:1/3}
+  .series .pts{display:none}
+}
+/* ---------- the record: the NBA's stat strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;min-width:0}
+#recordTotals .stat::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(95,212,255,.25),transparent 70%);pointer-events:none}
+/* the figures step down together to fit their tiles on one line (fitRecord, 16px the least), so "784-646" never breaks at its hyphen */
+#recordTotals .stat>b{font-family:var(--display);font-size:30px;font-weight:900;display:block;line-height:1;letter-spacing:-.02em;position:relative}
+#recordTotals .stat>b.good{color:var(--lime)} #recordTotals .stat>b.bad{color:var(--rose-ink)}
+#recordTotals .stat>span{color:var(--muted-ink);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block;margin-top:6px;position:relative}
 /* ---------- the Parlay Builder (pb-) and the parlay card (pc-) ----------
    Every control here is at least 44px tall and shows an --ice ring when focused by keyboard. Quiet text is
    the NBA's --muted on --bg-2 (the builder's legs) and --muted-ink on --panel and --panel-2; on --panel-3
    secondary text is --ink-2; the far-off flag is --rose-ink; so every text is 4.5:1 or more on its own background */
 .nw{white-space:nowrap}
 :focus-visible,.btn:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
-/* a segmented control clips its buttons (overflow:hidden), so their ring is drawn inside them, dark on the chosen white one */
+/* a segmented control's ring is drawn inside its button, dark on the chosen white one */
 .seg button:focus-visible{outline-offset:-3px} .seg button.on:focus-visible{outline-color:#1E2230}
-.pb .btn,#builder .btn,.pb-pick .btn,.pc-panel .btn,.pb-slip .btn,.pb-bet,.pb-seg button,.pb-box,.pb-gt,.pb-lock,.leg .x,.pb-games>summary,.pb-rules>summary,.pb-pick>summary,.saved .btn,.pp-add{min-height:44px}
+.pb .btn,#builder .btn,.pb-pick .btn,.pc-panel .btn,.pb-slip .btn,.pb-bet,.pb-seg button,.pb-box,.pb-gt,.pb-lock,.leg .x,.pb-games>summary,.pb-rules>summary,.pb-pick>summary,.saved .btn,.pp-add,.pp-open{min-height:44px}
 .pb-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pb-head h2{margin:0}
-.tag.pb-slate{background:var(--ice-soft);color:var(--ice-2)}
 .pb-sub{margin:6px 0 0;color:var(--ink-2);font-size:13px}
-/* Refresh odds (the Games toolbar and the Parlay Builder's panel): DraftKings' lines read from ESPN on a press alone, its
-   status line beside it; a press while a read runs does nothing, and the button says so by its look and aria-disabled */
-.odds-btn,#tab-games .toolbar .btn{min-height:44px}
-.odds-btn[aria-disabled="true"]{opacity:.7;cursor:progress}
-.odds-note{font-size:12.5px;color:var(--ink-2);flex:1 1 220px;min-width:0}
-.pb-odds{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 0}
-.pb-ctl{background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:14px 0 12px}
-.pb-row{display:grid;grid-template-columns:104px minmax(0,1fr);gap:8px 14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
-.pb-row:last-child{border-bottom:0}
-.pb-k{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+/* the controls: the NBA's .bk-ctrl, a group a label over its control */
+.pb-ctl{display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px 34px;background:var(--panel-3);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0 6px}
+.pb-ctlnote{margin:0 0 12px;font-size:12.5px;color:var(--ink-2)}
+.pb-row{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pb-row.pb-amt{flex:0 0 auto}
+.pb-k{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
 .pb-v{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;min-width:0}
 .pb-hint{font-size:12.5px;color:var(--ink-2)}
 .pb-stake{display:inline-flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line-2);border-radius:12px;padding:0 12px;min-height:44px;font:700 17px var(--display);color:var(--ink-2)}
 .pb-stake input{background:transparent;border:0;border-radius:0;padding:0;width:6.5em;min-height:42px;font:700 17px var(--display);color:var(--ink)}
 .pb-stake input:focus{outline:none}
 .pb-stake:focus-within{border-color:var(--ice);box-shadow:0 0 0 2px var(--ice)}
-.pb-seg{flex-wrap:wrap;max-width:100%}
+.pb-seg{flex-wrap:wrap}
 .pb-seg button{padding:0 15px;font-size:13px}
 .pb-seg button small{display:block;font-size:10.5px;font-weight:600;opacity:.85}
 .pb-box{display:inline-flex;align-items:center;gap:8px;padding:0 14px;border:1px solid var(--line-2);border-radius:999px;background:var(--panel);cursor:pointer;font-weight:700;font-size:13px;color:var(--ink)}
 .pb-box input{width:18px;height:18px;accent-color:var(--ice);margin:0;flex:none}
 .pb-box em{font-style:normal;font-weight:500;color:var(--ink-2)}
-.pb-box:has(input:checked){border-color:var(--ice);background:var(--ice-soft)}
-.pb-games{border-top:1px solid var(--line);padding:2px 0 8px}
+.pb-box:has(input:checked){border-color:var(--ice);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--panel)}
+.pb-games{flex:1 1 100%;border-top:1px solid var(--line);padding:2px 0 0}
 .pb-games>summary{display:flex;align-items:center;gap:14px;cursor:pointer;list-style:none}
 .pb-games>summary::-webkit-details-marker{display:none}
-.pb-games>summary::after,.pb-rules>summary::after,.pb-pick>summary::after{content:"";margin-left:auto;flex:none;width:8px;height:8px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);transition:transform .15s var(--ease)}
+.pb-games>summary::after,.pb-rules>summary::after,.pb-pick>summary::after{content:"";margin:0 3px 0 auto;flex:none;width:8px;height:8px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);transition:transform .15s var(--ease)}
 .pb-games[open]>summary::after,.pb-rules[open]>summary::after,.pb-pick[open]>summary::after{transform:rotate(-135deg)}
-.pb-games>summary .pb-k{width:104px}
 .pb-gsum{font-weight:800}
 .pb-tap{color:var(--ink-2);font-size:12px;font-weight:600}
 @media(min-width:761px){.pb-tap{display:none}}
 .pb-gbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px}
 .pb-gbar .btn{padding:0 16px}
-.pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-.pb-gt{display:flex;align-items:center;gap:10px;padding:6px 12px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);cursor:pointer;min-width:0}
+.pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:8px;padding-bottom:4px}   /* "WPG @ WSH" on one line */
+.pb-gt{display:flex;align-items:center;gap:10px;padding:6px 12px;border:1px solid var(--ice);border-radius:12px;background:var(--panel);cursor:pointer;min-width:0}
 .pb-gt input{width:18px;height:18px;accent-color:var(--ice);flex:none;margin:0}
+.pb-gt>span{min-width:0}
 .pb-gt b{display:block;font-size:13px}
-.pb-gt span{display:block;font-size:12px;color:var(--ink-2)}
-.pb-gt.un,.pb-gt.no{border-style:dashed;background:transparent}
-.pb-gt.un b,.pb-gt.no b{color:var(--ink-2);font-weight:600}
+.pb-gt .pb-gtt{display:block;font-size:12px;color:var(--ink-2)}
+.pb-gt .mu{flex-wrap:wrap;gap:3px 4px}                 /* "CAR @" over "WPG" where a phone's tile is too narrow for both */
+.pb-gt .pill{font-size:10.5px;padding:2px 5px}
+.pb-gt.un,.pb-gt.no{border-color:var(--line-2);border-style:dashed;background:transparent}
+.pb-gt.un b,.pb-gt.no b{font-weight:600}
 .pb-gt.no{cursor:default}
 .pb-dayh{grid-column:1/-1;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:6px 0 0}
 .pb-notes p{margin:8px 0 0;font-size:12.5px;color:var(--ink-2)}
 .pb-notes p b{color:var(--gold)}
 .pb-wide{margin-top:12px}
-.pb-tiers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
-@media(max-width:1100px){.pb-tiers{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:640px){.pb-tiers{grid-template-columns:1fr}}
-.pb-tier{--ac:var(--ice);background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.pb-tier[data-tier=safe]{--ac:var(--lime)} .pb-tier[data-tier=med]{--ac:var(--gold)} .pb-tier[data-tier=aggr]{--ac:var(--rose)} .pb-tier[data-tier=xtrm]{--ac:var(--ice)}
+/* the four levels: the NBA's suggested-parlay cards (.sugg-tier), two a row (a leg a line or two, as the NBA's), one on a phone */
+.pb-tiers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px;align-items:start}
+@media(max-width:640px){.pb-tiers{grid-template-columns:minmax(0,1fr)}}
+.pb-tier{--ac:var(--ice);background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pb-tier[data-tier=safe]{--ac:var(--lime)} .pb-tier[data-tier=med]{--ac:var(--ice)} .pb-tier[data-tier=aggr]{--ac:var(--rose)} .pb-tier[data-tier=xtrm]{--ac:var(--gold)}
 .pb-tier.none{border-style:dashed;border-top-style:dashed}
-.pb-th{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pb-th{flex-wrap:nowrap;align-items:flex-start}
-.pb-tn{display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap;min-width:0;min-height:44px}
-.pb-tn>b{font:700 16px var(--display)}
-.pb-turn{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.pb-th{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;min-height:44px}
+.pb-tn{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}
+.pb-tn>b{font:700 15px var(--display)}
+.pb-tc{color:var(--muted-ink);font-size:13px}
+.pb-turn{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .pb-turn .btn{padding:0 11px;font-size:12px}
 .pb-rule{font-size:12px;color:var(--ink-2);margin:-4px 0 0}
-.pb-nums{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
-.pb-n{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
-.pb-n .v{font:900 20px var(--display);line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.pb-n .k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-top:3px;overflow-wrap:anywhere;white-space:normal}
-.pb-n .s{font-size:12px;color:var(--ink-2);margin-top:1px}
-.pb-n.pay{grid-column:1/-1}
-.pb-n.pay .v{color:var(--lime)}
-.pb-tl{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+/* the NBA's three numbers in a row: the fair chance, the price, what the amount pays; each steps down to fit (fitNums), never cut */
+.pb-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;text-align:center}
+.pb-n{min-width:0;padding:2px 0}
+.pb-n .v{font:700 18px var(--display);line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink);overflow-wrap:anywhere}
+.pb-n .k{font-size:11px;color:var(--muted-ink);margin-top:2px}
+.pb-n .s{font-size:11px;color:var(--muted-ink);margin-top:1px}
+.pb-n.pb-span{grid-column:1/-1}
+/* a leg: the NBA's row, its club's pill and the bet, the price at the right; under it the game and its puck drop, the fair and model
+   chances at the right; the lock at the row's end */
+.pb-tl{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
 .pb-tl:first-child{border-top:0}
-.pb-lock{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink-2);cursor:pointer;padding:0}
-.pb-lock svg{width:16px;height:16px}
-.pb-lock[aria-pressed=true]{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.pb-tlegs{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pb-tier .pb-ll{flex:1 1 auto;display:flex;flex-direction:column;gap:3px}
+.pb-tier .pb-l1,.pb-tier .pb-l2{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px;color:var(--ink)}
+.pb-tier .pb-l1 .pb-who{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-width:0}
+.pb-tier .pb-l1>.tag.thin{grid-column:1/-1;justify-self:start}
+.pb-tier .pb-who .pill{margin:0}
+.pb-tier .pb-l1 b{font-size:13.5px}
+.pb-tier .pb-lp{grid-column:2;grid-row:1;justify-self:end;font:700 14px var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pb-tier .pb-l2 .m{font-size:12px}
+.pb-tier .pb-fm{justify-self:end;font-size:12px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pb-tier .pb-l2>.m{min-width:0}
+.pb-tier .tag.thin{margin:0}
+/* a level's lock: a text toggle, Lock or Locked (aria-pressed) */
+.pb-lock{flex:none;min-width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink-2);cursor:pointer;padding:0 9px;font:700 12px var(--body)}
+.pb-lock:hover{border-color:var(--ink-2)}
+.pb-lock[aria-pressed=true]{border-color:var(--ice);color:var(--ice);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--bg-2)}
 .pb-ll{min-width:0}
-.pb-ll b{display:block;font-size:13.5px;overflow-wrap:anywhere}
-.pb-ll span{display:block;font-size:12.5px;color:var(--ink-2)}
+.pb-ll>span{display:block;font-size:12.5px;color:var(--ink-2)}
+.pb-ll>.pb-who{color:var(--ink);font-size:inherit}
+.pb-who .pill{margin:0 5px 2px 0}
+.pb-ll b{font-size:13.5px;overflow-wrap:anywhere;min-width:0}
 .pb-ll .m,.pb-lr .m{color:var(--muted-ink)} #legs .pb-ll .m{color:var(--muted)}
 .pb-ll span.nw{display:inline;color:inherit;font-size:inherit}
+.pb-ll>span.tag{width:fit-content;max-width:100%}                 /* a leg's tag on a line of its own, as wide as its words */
 .pb-lr{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.pb-lr b{display:block;font-size:14px}
+.pb-lr b{display:block;font:700 14px var(--display)}
 .pb-lr>span{display:block;font-size:12px;color:var(--ink-2)}
-.tag.thin{background:var(--gold-soft);color:var(--gold);margin-top:3px}
+.tag.thin,.tag.sg{margin-top:3px}
 .pb-far{display:block;font-size:12px;font-weight:700;color:var(--rose-ink)}
 .pb-why{font-size:12px;color:var(--ink-2);margin:0}
 .pb-empty{font-size:13px;color:var(--ink-2);margin:0}
-.pb-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.pb-none{font-size:13px;color:var(--ink-2);margin:0;max-width:760px}            /* an empty builder or saved list: the NBA's plain paragraph */
+.pb-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pb-acts .btn{white-space:normal}
 .pb-rules{margin-top:14px;border-top:1px solid var(--line);padding-top:4px}
 .pb-rules>summary,.pb-pick>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;font-weight:700;color:var(--ink-2)}
@@ -256,27 +395,38 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
 .pb-rules p{font-size:12.5px;color:var(--ink-2);margin:6px 0 0}
 .pb-pick>summary h2{margin:0}
 .pb-pick>summary small{font-weight:500;color:var(--ink-2);font-size:12.5px}
-.pb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-top:10px}
-@media(max-width:640px){.pb-list{grid-template-columns:1fr}}
-.pb-pg{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
-.pb-pgh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px}
-.pb-pgh span{color:var(--muted-ink);font-size:12px}
-/* the bet block: a game's three markets, two sides a row, each a button */
-.pb-bets{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px}
-.pb-brow{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;align-items:start}
-.pb-bk{color:var(--ink-2);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding-top:12px}
-.pb-bb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
-.pb-bet{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 6px;align-items:baseline;align-content:start;text-align:left;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:6px 9px;cursor:pointer;color:var(--ink);font-size:12.5px;min-width:0}
-.pb-bet:hover{border-color:var(--ink-2)}
-.pb-bs{font-weight:800;overflow-wrap:anywhere}
-.pb-bp{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+/* Pick your own legs: a game a mini-card */
+.pb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-top:12px}
+@media(max-width:640px){.pb-list{grid-template-columns:minmax(0,1fr)}}
+.pb-pg{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.pb-pgh{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;font-size:13px}
+.pb-pgh>.pb-pgt{color:var(--muted-ink);font-size:12px}
+.pb-pgh>.chip{margin-left:auto}
+.pb-pg .pp-open{width:100%;margin-top:10px}
+/* the bets board: a game's three markets as the NBA's Game lines rows, two sides a row, each a button */
+/* the label beside its two buttons, as the NBA's Game lines rows; over them where the board is under 328px (a 360px phone, Pick your own
+   legs on a phone), so a button is never too narrow for its side and price */
+.pb-bets{display:flex;flex-direction:column;margin-top:12px;container-type:inline-size}
+.pb-brow{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
+@container (max-width:327px){.pb-brow{grid-template-columns:minmax(0,1fr);gap:4px}}
+.pb-bk{color:var(--ink-2);font-size:12.5px;font-weight:700}
+.pb-bb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.pb-bet{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 6px;align-items:baseline;align-content:center;text-align:left;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:5px 10px;cursor:pointer;color:var(--ink);font-size:12.5px;min-width:0;line-height:1.3;transition:border-color .15s var(--ease)}
+.pb-bet:hover{border-color:var(--ice)}
+.pb-bs{font-weight:800;font-size:13px;overflow-wrap:anywhere}
+.pb-bp{font:700 13px var(--display);font-variant-numeric:tabular-nums;text-align:right}
 .pb-bc{grid-column:1/-1;color:var(--ink-2);font-size:11.5px;font-variant-numeric:tabular-nums}
 .pb-bt{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--lime);margin-top:1px}
 .pb-bt.far{color:var(--rose-ink)}
-.pb-bin{grid-column:1/-1;font-size:11px;font-weight:800;color:var(--gold);margin-top:1px}
-.pb-bet.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
-.pb-key{margin:2px 0 0;font-size:11.5px;color:var(--ink-2)}
-.pb-stale{grid-column:1/-1;color:var(--gold);font-size:12px}
+/* the model's call: lit lime as the NBA's edge; a call far off the market keeps the plain ground its rose words need */
+.pb-bet.call:not(.on){border-color:rgba(205,255,79,.5);background:linear-gradient(var(--lime-soft),var(--lime-soft)),var(--bg-2)}
+.pb-bet.call.far:not(.on){background:var(--bg-2)}
+/* in the parlay: an ice fill, every word on it #1E2230 */
+.pb-bet.on{background:var(--ice);border-color:var(--ice);color:#1E2230}
+.pb-bet.on .pb-bs,.pb-bet.on .pb-bp,.pb-bet.on .pb-bc,.pb-bet.on .pb-bt,.pb-bet.on .pb-bin{color:#1E2230}
+.pb-bin{grid-column:1/-1;font-size:11px;font-weight:800;color:#1E2230;margin-top:1px}
+.pb-key{margin:6px 0 0;font-size:11.5px;color:var(--ink-2)}
+.pb-stale{margin:10px 0 0;color:var(--gold);font-size:12px}
 /* the builder */
 #builder h2 small{font-family:var(--body)}
 #tab-parlays h2 small,#tab-parlays .muted{color:var(--ink-2)}
@@ -291,23 +441,29 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
 .pb-stakes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0}
 .pb-chip{padding:0 12px;min-width:52px}
 .pb-chip.on{background:var(--ice-soft);border-color:var(--ice);color:var(--ice-2)}
-.pb-tot{grid-template-columns:repeat(4,minmax(0,1fr))}
+/* the builder's summary: the NBA's stat tiles, no glow (its quiet text would fall under 4.5:1 there) */
+.pb-tot{grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 0 0}
 @media(max-width:1100px){.pb-tot{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pb-tot .stat{min-width:0}
+.stat .k{color:var(--muted-ink);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.stat .v{font-family:var(--display);font-size:24px;font-weight:900;line-height:1.1;letter-spacing:-.02em}
 .pb-tot .stat .k{overflow-wrap:anywhere}
 /* a figure steps down to fit its tile (fitTiles), and wraps rather than being cut where even 13px will not fit */
 .pb-tot .stat .v{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .pb-tot .stat.pb-span{grid-column:1/-1}
 .stat .s{font-size:12px;color:var(--ink-2);margin-top:2px}
-.pb-bnotes{font-size:12px;color:var(--ink-2);margin:4px 0 0}
+.pb-bnotes{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .pb-bacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .pb-bacts .btn{padding:0 16px}
 .pb .btn[disabled],#builder .btn[disabled],.pc-panel .btn[disabled]{cursor:default;background:var(--panel);border-color:var(--line);color:var(--ink-2)}
+/* saved parlays */
+.saved{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;background:var(--bg-2)}
+.saved .top{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.saved .top>b{font:700 14px var(--display)}
 .saved .pb-sl{font-size:12.5px;color:var(--ink-2);margin:2px 0}
 .saved .pb-slegs{margin:6px 0 0;padding:0;list-style:none;font-size:12.5px}
-.saved .pb-slegs li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;border-top:1px solid var(--line)}
+.saved .pb-slegs li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line)}
 .saved .pb-slegs li .tag{flex:none}
-.tag.void,.tag.gone{background:var(--panel-3);color:var(--ink-2)}
 /* the slip bar: the builder at a glance, on every tab but the builder's own */
 .pb-slip{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--bg-2);border-top:1px solid var(--line-2);box-shadow:0 -10px 30px rgba(0,0,0,.45);padding-bottom:env(safe-area-inset-bottom)}
 .pb-slip-in{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 16px;max-width:1240px;margin:0 auto}
@@ -317,13 +473,13 @@ select,input[type=number]{background:var(--panel-3);border:1px solid var(--line-
 .pb-slip .btn{padding:0 16px;flex:none}
 @media(min-width:641px){.pb-slip{left:auto;right:20px;bottom:20px;border:1px solid var(--line-2);border-radius:16px;max-width:460px}.pb-slip-in{padding:6px 8px 6px 16px}}
 body.has-slip main{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
-/* the parlay card's window */
+/* the windows (the parlay card's, the player props'): the NBA's sheet */
 body.pc-open{overflow:hidden}
-.pc-back{position:fixed;inset:0;z-index:80;background:rgba(15,17,24,.74);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:28px 16px}
-.pc-panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:20px;width:100%;max-width:560px;padding:16px 18px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.pc-back{position:fixed;inset:0;z-index:80;background:rgba(14,17,27,.66);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:28px 16px}
+.pc-panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r);width:100%;max-width:560px;padding:16px 18px 20px;box-shadow:0 30px 80px -30px rgba(0,0,0,.8)}
 .pc-panel:focus{outline:none}
 .pc-top{display:flex;align-items:center;gap:10px;margin:0 0 12px}
-.pc-top h2{margin:0;flex:1}
+.pc-top h2{margin:0;flex:1;font-size:18px}
 .pc-top .btn{padding:0 16px}
 .pc-card{background:var(--panel);border:1px solid var(--line-2);border-radius:18px;overflow:hidden}
 .pc-head{background:var(--bg);padding:15px 18px 14px;border-bottom:1px solid var(--line-2)}
@@ -352,23 +508,27 @@ body.pc-open{overflow:hidden}
 .pc-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;margin-top:14px;padding:10px 18px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted-ink)}
 .pc-foot b{color:var(--ink-2)}
 .pc-acts{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
-.pc-acts .btn{flex:1 1 auto;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.pc-acts .btn{flex:1 1 auto;padding:0 16px}
 .pc-acts .pc-dkb{background:var(--bg);border-color:var(--line-2);color:var(--ink)}
 .pc-note{font-size:12.5px;color:var(--ink-2);margin:12px 0 0;line-height:1.55}
 .pc-note p{margin:0 0 4px}
 .pc-note ul{margin:2px 0 4px;padding-left:18px}
-.pc-note a{color:var(--ice);font-weight:700;display:inline-block;min-width:24px;padding:2px 2px;text-align:center}
+.pc-one{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.pc-note a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 10px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);color:var(--ice-2);font-weight:800;text-decoration:none}
+.pc-note a:hover{border-color:var(--ice)}
 .pc-msg{min-height:1.4em;font-size:12.5px;color:var(--gold);margin:8px 0 0}
 .pc-own{font-size:12px;color:var(--ink-2);margin:2px 0 0}
+.pc-est{font:800 12px var(--body);color:var(--gold);letter-spacing:.04em;margin-left:4px}
 @media(max-width:640px){
   .pc-back{padding:0;align-items:stretch;overflow:hidden}
   .pc-panel{border-radius:0;border:0;max-width:none;height:100%;overflow-y:auto;padding:12px 14px calc(24px + env(safe-area-inset-bottom))}
   .pc-acts .btn{flex:1 1 calc(50% - 4px)}
   .pc-legs{padding:2px 14px} .pc-money{padding:6px 14px 0;gap:6px} .pc-chance{padding:11px 14px 0} .pc-foot{padding:10px 14px 12px} .pc-head{padding:14px 14px 13px}
   .pc-money b{font-size:clamp(14px,4.2vw,17px)} .pc-price{font-size:26px} .pc-title{font-size:19px}
-  .pb-row{grid-template-columns:1fr}
-  .pb-games>summary .pb-k{width:auto}
-  /* a phone: each segmented choice shares its row equally (never a ragged second row), the bet types and the game tiles two a row */
+  /* a phone: each control group takes the row; each segmented choice shares its row equally (never a ragged second row),
+     the bet types and the game tiles two a row */
+  .pb-ctl{padding:14px;gap:14px}
+  .pb-row,.pb-row.pb-amt{flex:1 1 100%}
   .pb-seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr);width:100%}
   .pb-seg button{padding:4px 3px;font-size:12px;line-height:1.2;white-space:nowrap;letter-spacing:-.01em}
   .pb-seg button small{font-size:10.5px}
@@ -378,43 +538,49 @@ body.pc-open{overflow:hidden}
   .pb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pb-gt{padding:6px 8px;gap:7px}
   .pb-gt b{font-size:12.5px;letter-spacing:-.01em}
-  .pb-brow{grid-template-columns:1fr}
-  .pb-bk{padding-top:0}
 }
 /* ---------- player props (pp-): DraftKings' player prices read from ESPN on a Refresh odds press, the props model on trial beside
    them. A Player props button on each game card still to come (and in Pick your own legs) opens a window over the page, the
-   parlay card's (pc-back, pc-panel: a sheet on a phone); every control 44px; quiet text --ink-2 on --panel and --bg-2 */
+   NBA's sheet (pc-back, pc-panel: full screen on a phone); every control 44px; quiet text --ink-2 on --panel and --bg-2 */
 body.pp-on{overflow:hidden}
-.pp-open{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center;width:100%;min-height:44px;padding:6px 12px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink);cursor:pointer;text-align:left;font-size:13px}
-.pp-open:hover{border-color:var(--ink-2)}
-.pp-open b{grid-column:1;font-weight:800}
-.pp-open span{grid-column:1;color:var(--ink-2);font-size:12px;min-width:0}
-.pp-open::after{content:"›";grid-column:2;grid-row:1/span 2;font:700 22px/1 var(--body);color:var(--ice)}
-.pp-panel{max-width:720px}
-.pp-game{margin:-4px 0 10px;color:var(--ink-2);font-size:13px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+/* the NBA's sheet (.pp-sheet): 900px wide, 28px from the top, as tall as the screen allows and scrolling inside itself under a head
+   that stays put (the title, the game by its pills, its time, the trial tag and Close) */
+.pp-back{overflow:hidden}
+.pc-panel.pp-panel{position:relative;max-width:900px;max-height:calc(100vh - 56px);max-height:calc(100dvh - 56px);overflow-y:auto;overscroll-behavior:contain;padding:0}
+.pp-head{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;gap:12px;padding:16px 18px 12px;background:var(--bg-2);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0}
+.pp-head h2{margin:0;font-size:18px}
+.pp-head .grow{flex:1;min-width:0}
+.pp-head .btn{flex:none;padding:0 16px}
+.pp-body{padding:14px 18px 22px}
+.pp-game{margin:4px 0 0;color:var(--ink-2);font-size:12.5px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
 .pp-game b{color:var(--ink)}
-.tag.trial{background:var(--gold-soft);color:var(--gold)}
-.pp-odds{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 8px}
-.pp-read{margin:0 0 10px;font-size:13px;color:var(--ink)}
-.pp-trial{background:linear-gradient(var(--gold-soft),var(--gold-soft)),var(--bg-2);border:1px solid rgba(255,209,102,.35);border-radius:12px;padding:9px 12px;font-size:12.5px;color:var(--ink-2);margin:0 0 12px}
+/* the NBA's sheet: the read said in a note, Refresh odds filled in it */
+.pp-note{margin:0 0 12px}
+.pp-odds{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 0}
+.pp-read{margin:0;font-size:13px;color:var(--ink)}
+/* the trial, folded to a line as the NBA's (a dashed box); open, its words */
+.pp-trial{font-size:12.5px;color:var(--ink-2);background:var(--panel);border:1px dashed var(--line-2);border-radius:12px;padding:0 14px;margin:0 0 12px;line-height:1.5}
+.pp-trial>summary{display:flex;align-items:center;min-height:44px;cursor:pointer;list-style:none;font-weight:700;color:var(--ink)}
+.pp-trial>summary::-webkit-details-marker{display:none}
+.pp-trial>summary::after{content:"";margin:0 3px 0 auto;flex:none;width:7px;height:7px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);transition:transform .15s var(--ease)}
+.pp-trial[open]>summary::after{transform:rotate(-135deg)}
+.pp-trial p{margin:0 0 10px}
 .pp-trial b{color:var(--gold)}
-.pp-trial p{margin:0 0 4px} .pp-trial p:last-child{margin:0}
-.pp-stats{display:flex;flex-wrap:wrap;margin:0 0 6px}
-.pp-stats button{min-height:44px;padding:0 12px;font-size:12.5px}
+.pp-stats{margin:0 0 6px;flex-wrap:wrap}
+.pp-stats button{padding:0 12px;font-size:12.5px}
 .pp-stats button small{font-weight:600;margin-left:5px;opacity:.85}
 .pp-key{margin:0 0 4px;font-size:12px;color:var(--ink-2)}
 .pp-team h3{display:flex;align-items:center;gap:8px;margin:14px 0 6px}
-.pp-team h3 img{width:20px;height:20px;object-fit:contain}
 .pp-team h3 small{font:600 11.5px var(--body);color:var(--ink-2);text-transform:none;letter-spacing:0}
-.pp-row{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 6px;min-width:0}
+.pp-row{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 8px;min-width:0}
 .pp-who{display:flex;justify-content:space-between;align-items:baseline;gap:2px 10px;flex-wrap:wrap}
 .pp-who b{font-size:13.5px;overflow-wrap:anywhere}
 .pp-who span{color:var(--ink-2);font-size:12px}
-.pp-main{display:flex;flex-wrap:wrap;gap:4px 16px;font-variant-numeric:tabular-nums;font-size:13px;margin-top:4px}
+.pp-main{display:flex;flex-wrap:wrap;gap:6px 10px;font-variant-numeric:tabular-nums;font-size:13px;margin-top:6px}
 .pp-main b{font-weight:800}
-.pp-cmp{font-size:12.5px;color:var(--ink-2);margin-top:2px;font-variant-numeric:tabular-nums}
-.pp-lad{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.pp-k{background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.pp-cmp{font-size:12.5px;color:var(--ink-2);margin-top:4px;font-variant-numeric:tabular-nums}
+.pp-lad{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pp-k{background:var(--panel-3);border:1px solid var(--line);border-radius:10px;padding:6px 9px;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .pp-k b{color:var(--ink);font-weight:800}
 .pp-none{font-size:12.5px;color:var(--ink-2);margin:0 0 6px}
 .pp-more{margin:2px 0 6px}
@@ -424,21 +590,33 @@ body.pp-on{overflow:hidden}
 .pp-more[open]>summary::after,.pp-how[open]>summary::after{transform:rotate(-135deg)}
 .pp-how{margin-top:12px;border-top:1px solid var(--line);padding-top:2px}
 .pp-how p{font-size:12.5px;color:var(--ink-2);margin:4px 0 6px}
-@media(max-width:640px){.pp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.pp-stats button{padding:4px 4px;white-space:normal;line-height:1.2}.pp-stats button small{display:block;margin:0}}
-/* a DraftKings price in the props window is a button once a press has read it: a tap puts that leg in the builder at DraftKings'
-   price as read (pressed: in your parlay), a second tap takes it out; 44px, the window's own status line says what happened */
-.pp-add{min-height:44px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:6px 10px}
-.pp-main .pp-add{font-size:13px;font-variant-numeric:tabular-nums}
-.pp-k.pp-add{padding:6px 10px;color:var(--ink-2)}
-.pp-add:hover{border-color:var(--ink-2)}
-.pp-add[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
-.pp-add[aria-pressed="true"]::after{content:" ✓ in your parlay";color:var(--gold);font-weight:800}
+@media(max-width:640px){.pc-panel.pp-panel{max-height:none;padding:0}.pp-head{border-radius:0;padding:12px 16px 10px}.pp-body{padding:12px 16px calc(28px + env(safe-area-inset-bottom))}
+  .pp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;border-radius:14px}.pp-stats button{padding:4px 4px;white-space:normal;line-height:1.2;border-radius:11px}.pp-stats button small{display:block;margin:0}}
+/* a DraftKings price in the props window is a button once a press has read it (the NBA's add-a-bet control): a tap puts that leg
+   in the builder at DraftKings' price as read (pressed: an ice fill, in your parlay), a second tap takes it out; 44px, the window's
+   own status line says what happened */
+.pp-add{min-height:44px;min-width:44px;cursor:pointer;text-align:left;font:inherit;font-variant-numeric:tabular-nums;color:var(--ink);background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;padding:6px 10px;transition:border-color .15s var(--ease)}
+.pp-main .pp-add{font-size:13px}
+.pp-k.pp-add{padding:6px 10px;color:var(--ink-2);background:var(--panel-2);border-color:var(--line-2)}
+.pp-add:hover{border-color:var(--ice)}
+.pp-add[aria-pressed="true"],.pp-k.pp-add[aria-pressed="true"]{background:var(--ice);border-color:var(--ice);color:#1E2230}
+.pp-add[aria-pressed="true"] b{color:#1E2230}
+.pp-add[aria-pressed="true"]::after{content:" ✓ in your parlay";color:#1E2230;font-weight:800}
 .pp-msg{margin:0 0 10px;font-size:12.5px;color:var(--gold);min-height:0}
 .pp-msg:empty{display:none}
-/* the builder's legs of one game: a same-game parlay, its price an estimate */
-.tag.sg{background:var(--ice-soft);color:var(--ice-2);margin-top:3px}
-.pb-ll span.tag{width:fit-content;max-width:100%}                 /* a leg's tag on a line of its own, as wide as its words */
-.pc-est{font:800 12px var(--body);color:var(--gold);letter-spacing:.04em;margin-left:4px}
+/* ---------- the tables at narrower widths ----------
+   No column ever gives way: a table wider than the screen scrolls sideways inside its own wrapper (.wrap, .scroll), its club or player
+   column (.sk) held at the left as the figures pass under it, so every number on a desktop is a swipe away on a phone. On a phone a
+   club in a table is its pill alone (its name kept for a screen reader), and a heading or a month may be written short (.t-wide over
+   .t-narrow, the words only, never a column) */
+@media(min-width:641px){.t-narrow{display:none}}
+@media(max-width:640px){.t-wide{display:none} .tbl th,.tbl td{padding:9px 8px} .tbl th{letter-spacing:.03em}
+  .tbl td.wrap-any{overflow-wrap:anywhere;white-space:normal}
+  .tbl .tw .tn{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  /* the club's own box holds its hidden name: without it a club cell that is not the held (sticky) column, the players' Club, set each
+     name against main, outside the table's scrolling box, and the 400 of them ran the page on some 14,000px past the last table */
+  .tbl .tw{position:relative}
+  .meter{min-width:44px}}
 </style>
 </head>
 <body>
@@ -452,8 +630,8 @@ body.pp-on{overflow:hidden}
     <div class="stamp"><b id="stamp">Loading…</b><span id="buildTag"></span></div>
   </div>
   <nav id="tabs">
-    <button data-tab="games" class="on">Games</button>
-    <button data-tab="parlays">Parlay Builder <span id="legCount" class="n" hidden>0</span></button>
+    <button data-tab="games" class="on">Games<span id="gameCount" class="n" hidden>0</span></button>
+    <button data-tab="parlays">Parlay Builder<span id="legCount" class="n" hidden>0</span></button>
     <button data-tab="standings">Standings</button>
     <button data-tab="ratings">Power Ratings</button>
     <button data-tab="playoff">Playoff</button>
@@ -463,74 +641,64 @@ body.pp-on{overflow:hidden}
 </header>
 <main>
   <section id="tab-games">
-    <div class="days" id="days"></div>
-    <div id="sourceNote" class="note" hidden></div>
-    <div id="opening" hidden></div>
-    <div class="toolbar">
-      <button class="btn ghost" id="refreshScores" title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>
-      <button type="button" class="btn ghost odds-btn" id="refreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button>
+    <div class="oddsbar">
+      <button type="button" class="btn" id="refreshScores" title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>
+      <button type="button" class="btn odds-btn" id="refreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button>
       <span class="odds-note" id="oddsNote" role="status" aria-live="polite"></span>
-      <span class="small muted" id="gamesNote"></span>
     </div>
+    <div class="days" id="days"></div>
+    <p class="games-key" id="gamesKey" hidden>Tap a bet on a card to add it to your parlay. Edge: the model's chance less the price's, in points.</p>
+    <div id="sourceNote" class="note warn" hidden></div>
+    <div id="opening" hidden></div>
     <div class="grid" id="games"></div>
   </section>
 
   <section id="tab-standings" hidden>
-    <p class="small muted">Two points a win, one for a loss past regulation. The top three of each division and two wild cards a conference are in; the dashed line is the cut. Playoff is the simulation's chance of a spot.</p>
+    <p class="intro">Two points a win, one for a loss past regulation. The top three of each division and two wild cards a conference are in; the dashed line is the cut. Playoff is the simulation's chance of a spot.</p>
     <div id="standings"></div>
   </section>
 
   <section id="tab-ratings" hidden>
-    <div class="card">
-      <div class="toolbar">
-        <h2 style="margin:0">Power ratings</h2>
-        <select id="ratConf"><option value="">Both conferences</option><option value="East">East</option><option value="West">West</option></select>
-        <span class="small muted">Elo: home ice <b id="hfaNote"></b>, <b id="gpeNote"></b> per goal of margin.</span>
-      </div>
-      <div class="scroll"><table class="tbl" id="ratTable"></table></div>
-    </div>
+    <h2>Power ratings <small>Elo: home ice <b id="hfaNote"></b>, <b id="gpeNote"></b> per goal of margin.</small></h2>
+    <div class="bar"><select id="ratConf" aria-label="Conference"><option value="">Both conferences</option><option value="East">East</option><option value="West">West</option></select></div>
+    <div class="wrap"><table class="tbl" id="ratTable"></table></div>
   </section>
 
   <section id="tab-playoff" hidden>
-    <div class="card">
-      <h2 id="bracketHead">If the season ended today</h2>
-      <div id="champ" class="champ" hidden></div>
-      <p class="small muted" id="bracketNote"></p>
-      <div class="bracket" id="bracket"></div>
-    </div>
-    <div class="card">
-      <div class="toolbar"><h2 style="margin:0">Playoff odds</h2><select id="poConf"><option value="">Both conferences</option><option value="East">East</option><option value="West">West</option></select><span class="small muted" id="poNote"></span></div>
-      <div class="scroll"><table class="tbl" id="poTable"></table></div>
-    </div>
+    <h2 id="bracketHead">If the season ended today</h2>
+    <div id="champ" class="champ" hidden></div>
+    <p class="intro" id="bracketNote"></p>
+    <div class="bracket" id="bracket"></div>
+    <h2>Playoff odds</h2>
+    <div class="bar"><select id="poConf" aria-label="Conference"><option value="">Both conferences</option><option value="East">East</option><option value="West">West</option></select></div>
+    <p class="intro" id="poNote"></p>
+    <div class="wrap"><table class="tbl" id="poTable"></table></div>
   </section>
 
   <section id="tab-players" hidden>
-    <div class="card">
-      <div class="toolbar">
-        <h2 style="margin:0">Player rankings</h2>
-        <div class="seg" id="plKind"><button data-kind="skaters" class="on">Skaters</button><button data-kind="goalies">Goalies</button></div>
-        <select id="plTeam"><option value="">Every club</option></select>
-        <input type="text" id="plSearch" placeholder="Search a name" style="background:var(--panel-3);border:1px solid var(--line-2);border-radius:10px;padding:7px 10px;color:var(--ink)">
-        <span class="small muted" id="plNoteP"></span>
-      </div>
-      <p class="small muted" id="plModelNote"></p>
-      <div class="scroll"><table class="tbl" id="plTable"></table></div>
+    <h2>Player rankings</h2>
+    <div class="bar">
+      <div class="seg" id="plKind" role="group" aria-label="Skaters or goalies"><button type="button" data-kind="skaters" class="on" aria-pressed="true">Skaters</button><button type="button" data-kind="goalies" aria-pressed="false">Goalies</button></div>
+      <select id="plTeam" aria-label="Club"><option value="">Every club</option></select>
+      <input type="text" id="plSearch" placeholder="Search a name" aria-label="Search a name">
+      <span class="grow"></span>
+      <span class="note-n" id="plNoteP"></span>
     </div>
-    <div class="card">
-      <h2>Club strength tonight <small>who dressed last, minus the injury report, and the goalie for the club's next game</small></h2>
-      <p class="small muted" id="plSources"></p>
-      <div class="scroll"><table class="tbl" id="plTeams"></table></div>
-    </div>
+    <p class="intro" id="plModelNote"></p>
+    <div class="scroll"><table class="tbl" id="plTable"></table></div>
+    <h2 style="margin-top:28px">Club strength tonight <small>who dressed last, minus the injury report, and the goalie for the club's next game</small></h2>
+    <p class="intro" id="plSources"></p>
+    <div class="wrap"><table class="tbl" id="plTeams"></table></div>
   </section>
 
   <section id="tab-parlays" hidden>
+    <div class="oddsbar"><button type="button" class="btn odds-btn" id="pbRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="pbOddsNote" role="status" aria-live="polite"></span></div>
     <div class="card pb" id="pbPanel">
-      <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Suggested parlays</h2><span class="tag pb-slate" id="pbSlate"></span></div>
+      <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Suggested parlays</h2><span class="tag ice" id="pbSlate"></span></div>
       <p class="pb-sub">Choose what to build from: every level below uses only the bet types and games ticked here.</p>
       <p class="pb-sub" id="pbRead"></p>
-      <div class="pb-odds"><button type="button" class="btn ghost odds-btn" id="pbRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="pbOddsNote" role="status" aria-live="polite"></span></div>
       <div class="pb-ctl">
-        <div class="pb-row"><span class="pb-k" id="pbStakeK">Bet amount</span><div class="pb-v"><label class="pb-stake">$<input type="number" id="pbStake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="pbStakeK" autocomplete="off"></label><span class="pb-hint">Every level pays on this amount, and the builder below uses it too.</span></div></div>
+        <div class="pb-row pb-amt"><span class="pb-k" id="pbStakeK">Bet amount</span><div class="pb-v"><label class="pb-stake">$<input type="number" id="pbStake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="pbStakeK" aria-describedby="pbStakeH" autocomplete="off"></label></div></div>
         <div class="pb-row"><span class="pb-k">Build from</span><div class="pb-v"><div class="seg pb-seg" id="pbMix" role="group" aria-label="Build from"><button type="button" data-mix="all" aria-pressed="false">All</button><button type="button" data-mix="teams" aria-pressed="false">Teams only</button><button type="button" data-mix="totals" aria-pressed="false">Totals only</button></div></div></div>
         <div class="pb-row"><span class="pb-k">Bet types</span><div class="pb-v" id="pbKinds"><label class="pb-box"><input type="checkbox" data-k="ml" checked><span>Moneyline <em>straight up</em></span></label><label class="pb-box"><input type="checkbox" data-k="pl" checked><span>Puck line <em>±1.5</em></span></label><label class="pb-box"><input type="checkbox" data-k="ou" checked><span>Total <em>over/under</em></span></label></div></div>
         <div class="pb-row" id="pbDayRow" hidden><span class="pb-k">Day</span><div class="pb-v"><div class="seg pb-seg" id="pbDay" role="group" aria-label="Day"></div></div></div>
@@ -539,11 +707,13 @@ body.pp-on{overflow:hidden}
           <div class="pb-grid" id="pbGrid"></div>
         </details>
       </div>
+      <p class="pb-ctlnote" id="pbStakeH">Every level pays on the bet amount, and the builder below uses it too.</p>
       <div class="pb-notes" id="pbNotes" hidden></div>
       <div id="pbBody"></div>
       <details class="pb-rules"><summary>How the levels are chosen</summary><p id="pbRules"></p></details>
     </div>
     <details class="card pb-pick" id="pbPick"><summary><h2>Pick your own legs</h2><small id="pbPickN"></small></summary>
+      <p class="pb-sub">Tap a bet to add it to your parlay. Edge: the model's chance less the price's, in points.</p>
       <div id="plLines" class="pb-list"></div>
     </details>
     <div class="card" id="builder">
@@ -562,23 +732,21 @@ body.pp-on{overflow:hidden}
     </div>
     <div class="card" id="saved">
       <h2>Your saved parlays</h2>
-      <p class="small muted">Kept in this browser only. Graded from the scores the job publishes.</p>
+      <p class="pb-sub" style="margin:-6px 0 12px">Kept in this browser only. Graded from the scores the job publishes.</p>
       <div id="savedList"></div>
     </div>
   </section>
 
   <section id="tab-record" hidden>
-    <div class="card">
-      <h2>The model's record</h2>
-      <p class="small muted" id="recordNote"></p>
-      <div class="strip" id="recordTotals"></div>
-      <h3>By month</h3>
-      <div class="scroll"><table class="tbl" id="recMonth"></table></div>
-      <h3>By confidence</h3>
-      <div class="scroll"><table class="tbl" id="recBand"></table></div>
-      <h3>How it was fitted</h3>
-      <p class="small muted" id="fitNote"></p>
+    <h2>The model's record</h2>
+    <p class="intro" id="recordNote"></p>
+    <div class="strip" id="recordTotals"></div>
+    <div class="two">
+      <div><h2>By month</h2><div class="wrap"><table class="tbl" id="recMonth"></table></div></div>
+      <div><h2>By confidence</h2><div class="wrap"><table class="tbl" id="recBand"></table></div></div>
     </div>
+    <h2 style="margin-top:28px">How it was fitted</h2>
+    <p class="intro" id="fitNote"></p>
   </section>
 </main>
 <div class="pb-slip" id="slip" hidden>
@@ -600,22 +768,23 @@ body.pp-on{overflow:hidden}
     <p class="pc-own" id="pcOwn">Yours alone: this card is not saved anywhere. Save on this device keeps it in your saved parlays.</p>
   </div>
 </div>
-<div class="pc-back" id="ppWin" hidden>
+<div class="pc-back pp-back" id="ppWin" hidden>
   <div class="pc-panel pp-panel" id="ppPanel" role="dialog" aria-modal="true" aria-labelledby="ppTitle" tabindex="-1">
-    <div class="pc-top"><h2 id="ppTitle">Player props</h2><button type="button" class="btn ghost" id="ppClose">Close</button></div>
-    <div class="pp-game" id="ppGame"></div>
-    <div class="pp-odds"><button type="button" class="btn ghost odds-btn" id="ppRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="ppOddsNote" role="status" aria-live="polite"></span></div>
-    <p class="pp-read" id="ppRead"></p>
-    <p class="pp-msg" id="ppMsg" role="status" aria-live="polite"></p>
-    <div class="pp-trial" id="ppTrial"></div>
-    <div class="seg pp-stats" id="ppStats" role="group" aria-label="Stat"></div>
-    <div id="ppBody"></div>
-    <details class="pp-how"><summary>How these numbers are worked out</summary><div id="ppHow"></div></details>
+    <div class="pp-head"><div class="grow"><h2 id="ppTitle">Player props</h2><div class="pp-game" id="ppGame"></div></div><button type="button" class="btn ghost" id="ppClose">Close</button></div>
+    <div class="pp-body">
+      <div class="note pp-note"><p class="pp-read" id="ppRead"></p>
+        <div class="pp-odds"><button type="button" class="btn ice odds-btn" id="ppRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="ppOddsNote" role="status" aria-live="polite"></span></div></div>
+      <p class="pp-msg" id="ppMsg" role="status" aria-live="polite"></p>
+      <details class="pp-trial" id="ppTrialBox"><summary id="ppTrialSum">The props model is on trial</summary><div id="ppTrial"></div></details>
+      <div class="seg pp-stats" id="ppStats" role="group" aria-label="Stat"></div>
+      <div id="ppBody"></div>
+      <details class="pp-how"><summary>How these numbers are worked out</summary><div id="ppHow"></div></details>
+    </div>
   </div>
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v11 · 2026-10-15';
+const APP_BUILD = 'nhl v12 · 2026-10-16';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -628,6 +797,8 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const pct = p => (p * 100).toFixed(0) + '%';
 const pct1 = p => (p * 100).toFixed(1) + '%';
 const signed = n => n > 0 ? '+' + n : String(n);
+const fix1 = x => typeof x === 'number' && isFinite(x) ? x.toFixed(1) : '—';    /* a column of figures at one place, 1553.0 beside 1600.5 */
+const sgn = n => n > 0 ? ' pos' : n < 0 ? ' neg' : '';                     /* a table's signed figure: lime above zero, --rose-ink below */
 const fmtLine = n => n === 0 ? 'PK' : (n > 0 ? '+' + n : String(n));
 const fmtOdds = n => n === null || n === undefined ? '—' : (n > 0 ? '+' + n : String(n));
 const dec = am => am > 0 ? 1 + am / 100 : 1 + 100 / -am;
@@ -736,8 +907,39 @@ const gameById = () => { const m = {}; for (const g of S.games) m[g.id] = g; ret
 const rec = t => `${t.w}-${t.l}-${t.otl}`;
 function when(g) { return new Date(g.start).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }); }
 function timeOf(g) { return hhmm(g.start); }
-function teamCell(id) { const t = T(id); return `<span class="tw">${t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : ''}<span>${esc(t.short)}</span></span>`; }
-const modelMargin = g => g.mu === 0 ? 'even' : (g.mu > 0 ? `${T(g.home).abbr} by ${Math.abs(g.mu).toFixed(1)}` : `${T(g.away).abbr} by ${Math.abs(g.mu).toFixed(1)}`);
+/* ---------- a club, as the NBA Hub shows one: no image, its abbreviation in its own colour ----------
+   The page loads no team logo (ESPN's images were 32 requests and some two megabytes on a table tab); a club is a badge on a
+   game card, a pill everywhere else, in its own colour (the NBA's TEAMS map, made for the NHL): each club's primary colour (the
+   Kings' silver, the Kraken's ice blue, Vegas's gold and Utah's mountain blue as they are; navy, forest green and burgundy given
+   the brightness of a club's hue they need), lifted in OKLCH, its hue kept, only until it reads on these graphite panels. c, the
+   badge's outline and text, its fill when it is the model's pick (with #1E2230 on it) and the win-chance bar, is 3.25:1 or more on
+   every surface a badge sits on (a badge is large text, held a little over 3:1 so the glow behind a card cannot take it under),
+   which puts #1E2230 on it at 6:1 or more; t, a 12px pill's, is 4.5:1 or
+   more. Clubs that share a colour share it here, as the NBA's Bulls and Raptors do: their three letters tell them apart, and the
+   win bar splits two clubs of one colour with a line. The smoke holds every bar. Keyed by the state's club keys (Utah is UTAH,
+   shown UTA); state.json's logo and color are not read */
+const TEAM_COLORS = {
+  ANA: { c: '#FE8342', t: '#FFB38F', on: '#1E2230' }, BOS: { c: '#FFB81C', t: '#FFB81C', on: '#1E2230' }, BUF: { c: '#73A5FE', t: '#A6C6FE', on: '#1E2230' },
+  CAR: { c: '#FF806F', t: '#FFB1A4', on: '#1E2230' }, CBJ: { c: '#6DA8F6', t: '#9EC7FE', on: '#1E2230' }, CGY: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' },
+  CHI: { c: '#FE7F7C', t: '#FFB0AB', on: '#1E2230' }, COL: { c: '#EE86A1', t: '#FFAFC2', on: '#1E2230' }, DAL: { c: '#40BA89', t: '#64DAA7', on: '#1E2230' },
+  DET: { c: '#FF7F78', t: '#FFB2AB', on: '#1E2230' }, EDM: { c: '#FF815D', t: '#FEB39D', on: '#1E2230' }, FLA: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' },
+  LA: { c: '#A2AAAD', t: '#BEC6C9', on: '#1E2230' }, MIN: { c: '#3BBA8B', t: '#60DAA9', on: '#1E2230' }, MTL: { c: '#FF7F7D', t: '#FFB0AC', on: '#1E2230' },
+  NJ: { c: '#FF7F78', t: '#FFB2AB', on: '#1E2230' }, NSH: { c: '#FFB81C', t: '#FFB81C', on: '#1E2230' }, NYI: { c: '#63A9F8', t: '#99C8FE', on: '#1E2230' },
+  NYR: { c: '#75A5FE', t: '#A6C5FF', on: '#1E2230' }, OTT: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' }, PHI: { c: '#FE815E', t: '#FEB29C', on: '#1E2230' },
+  PIT: { c: '#FCB514', t: '#FFB81B', on: '#1E2230' }, SEA: { c: '#99D9D9', t: '#99D9D9', on: '#1E2230' }, SJ: { c: '#08B7C3', t: '#47D7E3', on: '#1E2230' },
+  STL: { c: '#73A5FF', t: '#A6C6FE', on: '#1E2230' }, TB: { c: '#74A6F7', t: '#A3C6FE', on: '#1E2230' }, TOR: { c: '#76A6F7', t: '#A3C6FF', on: '#1E2230' },
+  UTAH: { c: '#6CACE4', t: '#90CAFE', on: '#1E2230' }, VAN: { c: '#76A6F7', t: '#A3C6FF', on: '#1E2230' }, VGK: { c: '#BFA264', t: '#DFC182', on: '#1E2230' },
+  WPG: { c: '#66A8FB', t: '#9DC8FE', on: '#1E2230' }, WSH: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' },
+};
+const TC = id => TEAM_COLORS[id] || { c: '#A0A7BB', t: '#B3B9CB', on: '#1E2230' };
+/* a club's pill (hidden from a screen reader where its name stands beside it), and a game's two, "PIT @ COL" as text */
+const pill = (id, hide) => `<span class="pill"${hide ? ' aria-hidden="true"' : ''} style="--tc:${TC(id).t}">${esc(T(id).abbr)}</span>`;
+const muPills = g => `<span class="mu">${pill(g.away)} @ ${pill(g.home)}</span>`;
+function teamCell(id) { return `<span class="tw">${pill(id, true)}<span class="tn">${esc(T(id).short)}</span></span>`; }
+/* the goals layer's margin, on the card's chip: the side it favours and by how much, even under 0.05 of a goal. The card's win chance
+   blends that layer with the team Elo (tools/players.js), so the two can favour different clubs on a close game: the chip says Margin,
+   never Model, and its title says why */
+const marginText = g => Math.abs(g.mu) < 0.05 ? 'even' : `${T(g.mu > 0 ? g.home : g.away).abbr} +${Math.abs(g.mu).toFixed(1)}`;
 
 /* ---------- tabs ---------- */
 /* a tab by name; #parlay, the NFL site's name for the builder, opens it too. On a phone the bar scrolls
@@ -779,9 +981,9 @@ function dayStrip() {
   const first = S.games.length ? S.games[0].date : null;
   if (!DAY || !days.includes(DAY)) DAY = days.includes(today) && (counts[today] || !counts[addDays(today, 1)]) ? today : (days.find(d => d >= today && counts[d]) || days.find(d => counts[d]) || days[0]);
   $('days').innerHTML = days.map(d => { const dt = new Date(d + 'T12:00:00Z'); return `<button class="day ${d === DAY ? 'on' : ''}" data-day="${d}">
-    <div class="dw">${d === today ? 'Today' : dt.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' })}</div>
+    <div class="dw">${d === today ? 'Today' : d === addDays(today, 1) ? 'Tomorrow' : dt.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' })}</div>
     <div class="dn">${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
-    <div class="dc">${counts[d] ? counts[d] + ' games' : '—'}</div></button>`; }).join('');
+    <div class="dc">${counts[d] ? `${counts[d]} game${counts[d] === 1 ? '' : 's'}` : '—'}</div></button>`; }).join('');
   const opening = first && first > today ? Math.round((Date.parse(first + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000) : 0;
   $('opening').hidden = !opening && S.games.length > 0;
   if (opening) $('opening').innerHTML = `<div class="empty" style="margin-bottom:14px"><div class="countdown">${opening}</div><b>days to opening night</b><span class="muted small">The ratings below are last season's, carried ${Math.round(S.model.params.carry * 100)}% of the way; the lines are DraftKings' as they stand.</span></div>`;
@@ -799,87 +1001,198 @@ function sourceNote() {
 }
 $('days').addEventListener('click', e => { const b = e.target.closest('button[data-day]'); if (!b) return; DAY = b.dataset.day; renderGames(); });
 
+/* a redraw replaces only the cards whose markup changed (CARD_HTML: each card as last drawn), so a bet tapped redraws its own card and
+   leaves the day's others, and the keyboard's focus with them, as they were; another day, or another set of games, is drawn whole */
+const CARD_HTML = new Map();
 function renderGames() {
   dayStrip();
   const gs = S.games.filter(g => g.date === DAY).sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
-  $('gamesNote').textContent = gs.length ? `${gs.length} games` : '';
-  if (!gs.length) { $('games').innerHTML = '<div class="empty">No games this day.</div>'; return; }
-  $('games').innerHTML = gs.map(gameCard).join('');
+  const box = $('games');
+  if (!gs.length) { box.innerHTML = '<div class="empty">No games this day.</div>'; CARD_HTML.clear(); $('gamesKey').hidden = true; updateTabCounts(); return; }
+  GO_DAYS = null;
+  const html = gs.map(g => [g.id, gameCard(g)]), cur = [...box.children];
+  if (cur.length === html.length && cur.every((el, i) => el.dataset && el.dataset.id === html[i][0] && CARD_HTML.has(html[i][0]))) {
+    html.forEach(([id, h], i) => { if (CARD_HTML.get(id) === h) return; const t = document.createElement('template'); t.innerHTML = h; cur[i].replaceWith(t.content.firstElementChild); });
+  } else box.innerHTML = html.map(x => x[1]).join('');
+  CARD_HTML.clear(); for (const [id, h] of html) CARD_HTML.set(id, h);
+  $('gamesKey').hidden = !box.querySelector('.pb-bets');
+  updateTabCounts();
 }
+/* the days the Parlay Builder offers (pbSlate), worked once a draw of the Games tab: a card's Parlay Builder → is there only for them */
+let GO_DAYS = null;
+const goDays = () => GO_DAYS || (GO_DAYS = pbSlate().days);
+/* ---------- a game card: the NBA's ----------
+   The top line (puck drop, the date, the tags: live, final, the start moved, neutral ice, the call right or wrong, replayed); the two
+   clubs' badges, the model's pick filled (the state's own straight-up call, kept after the game); its chance in the middle; the win
+   bar with each side's chance; the chips (the model's numbers, the market's lines where the card has no bets board, the calls and
+   their grades); the bets board (a game still to come on a fresh line: every side a button, one tap puts it in the parlay); who is
+   out; the Lineups drawer; the foot (Lineups, Player props, Parlay Builder →). Every number is the state's, or LIVE's for a score */
 function gameCard(g) {
-  const live = LIVE[g.id]; const state = live ? live.state : g.state;
+  const live = LIVE[g.id], state = live ? live.state : g.state;
   const hs = live ? live.hs : g.hs, as = live ? live.as : g.as;
   const th = T(g.home), ta = T(g.away);
   const final = state === 'final';
-  const homeWon = final && hs > as, awayWon = final && as > hs;
+  const scored = (final || state === 'live') && typeof hs === 'number' && typeof as === 'number' && isFinite(hs) && isFinite(as);
   const line = g.line;
-  const side = (id, rc, p, sc, picked, won, lost) => `
-    <div class="side ${picked ? 'picked' : ''} ${won ? 'won' : ''}">
-      ${T(id).logo ? `<img src="${esc(T(id).logo)}" alt="" onerror="this.style.visibility='hidden'">` : '<span></span>'}
-      <span class="nm">${esc(T(id).short)}<small>${esc(rc || '')}</small></span>
-      <span class="wp" title="the model's chance to win, overtime included">${pct(p)}</span>
-      <span class="sc ${lost ? 'lose' : ''}">${sc === null || sc === undefined ? '' : sc}</span>
-    </div>`;
-  let mkt = '—', ml = '—', tot = '—';
-  if (line) {
-    ml = `${ta.abbr} ${fmtOdds(line.awayML)} · ${th.abbr} ${fmtOdds(line.homeML)}`;
-    if (line.homeLine !== null && line.homeLine !== undefined) mkt = `${ta.abbr} ${fmtLine(-line.homeLine)} ${fmtOdds(line.awaySpreadOdds)} · ${th.abbr} ${fmtLine(line.homeLine)} ${fmtOdds(line.homeSpreadOdds)}`;
-    if (line.total !== null && line.total !== undefined) tot = `${line.total} · o ${fmtOdds(line.overOdds)} · u ${fmtOdds(line.underOdds)}`;
+  const started = final || state === 'live' || hasStarted(g);
+  /* a game still to come with a line DraftKings listed at the last run: its bets as buttons */
+  const bets = !started && !!line && freshLine(g);
+  /* the tags: a live score is the job's, as of its run, unless this browser read ESPN since; a game the state has as to come whose
+     puck drop has passed says so instead */
+  const tags = [];
+  if (live && live.state === 'live') tags.push(`<span class="tag ice">${esc(live.detail)}</span>`);
+  else if (live && live.state === 'final') tags.push(`<span class="tag">${esc(live.detail || 'Final')}</span>`);
+  else if (g.state === 'live') tags.push(`<span class="tag ice">${esc(g.detail)}</span>`, `<span class="tag gold" title="the score when the job last read it; Refresh scores reads ESPN now">as of ${esc(hhmm(g.scoreAt || S.published))}</span>`);
+  else if (g.state === 'final') tags.push(`<span class="tag">${esc(g.detail || 'Final')}</span>`);
+  else if (g.state === 'pre' && Date.parse(g.start) > Date.now() && started) tags.push('<span class="tag gold" title="the feed moved the start after the first puck drop; the call shown is the one made before it">start moved · call kept</span>');
+  else if (started) tags.push('<span class="tag gold" title="Refresh scores reads ESPN now">under way · no score yet</span>');
+  if (g.neutral) tags.push('<span class="tag">neutral ice</span>');
+  if (g.result) tags.push(g.result.su ? '<span class="tag lime">call right</span>' : '<span class="tag rose">call wrong</span>');
+  if (g.result && !g.frozen) tags.push('<span class="tag replay" title="this game was over before the job first ran; the call is the replay\'s">replayed</span>');
+  const date = new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const homeWon = final && scored && hs > as, awayWon = final && scored && as > hs;
+  const team = (side, id, rc, sc, lose) => `<div class="team ${side}" style="--tc:${TC(id).c}"><span class="badge${g.pick === side ? ' pick' : ''}" title="${esc(T(id).short)}">${esc(T(id).abbr)}</span><span class="nm">${esc(T(id).short)}</span>${rc ? `<span class="rec">${esc(rc)}</span>` : ''}${scored ? `<span class="sc${lose ? ' lose' : ''}">${sc}</span>` : ''}</div>`;
+  const pickId = g.pick ? g[g.pick] : (g.pHome >= 0.5 ? g.home : g.away);
+  const wpT = "the model's chance to win, overtime included";
+  return `<article class="game${final ? ' final' : ''}" data-id="${g.id}">
+    <div class="top when"><span><b>${esc(hhmm(g.start))}</b> · ${esc(date)}${g.note ? ' · ' + esc(g.note) : ''}</span>${tags.length ? `<span class="tags">${tags.join('')}</span>` : ''}</div>
+    <div class="teams">
+      ${team('away', g.away, g.arec, as, homeWon)}
+      <div class="vs" title="${wpT}"><b>${pct(Math.max(g.pHome, 1 - g.pHome))}</b>${esc(T(pickId).abbr)}</div>
+      ${team('home', g.home, g.hrec, hs, awayWon)}
+    </div>
+    <div class="prob" style="--ac:${TC(g.away).c};--hc:${TC(g.home).c}"><i style="width:${Math.round((1 - g.pHome) * 100)}%"></i><i class="h" style="width:${Math.round(g.pHome * 100)}%"></i></div>
+    <div class="pline" title="${wpT}"><span>${esc(ta.abbr)} <b class="wp">${pct(1 - g.pHome)}</b></span><span><b class="wp">${pct(g.pHome)}</b> ${esc(th.abbr)}</span></div>
+    <div class="chips">${cardChips(g, bets)}</div>
+    ${!started && line && !bets ? `<p class="pb-stale">line from ${esc(hhmm(line.at))}: not on DraftKings at the last run</p>` : ''}
+    ${bets ? betBlock(g) : ''}
+    ${outBlock(g)}
+    ${luBlock(g, started)}
+  </article>`;
+}
+/* the card's chips: the model's numbers (the goals layer's margin, the expected goals, the overtime chance, and the model that does
+   not make the call); the market's lines where the card has no bets board (a game started, over, or on a stale line); each side the
+   model took, lit lime until its grade, then plain with the grade as a pill; else why there is no call (a side far off the market is
+   flagged on its own bet button, with its two numbers) */
+function cardChips(g, bets) {
+  const L = g.line, ta = T(g.away), th = T(g.home), out = [];
+  out.push(`<span class="chip" data-ck="model" title="the model's expected goal margin, from its goals layer; the win chance above blends that layer with the team Elo, so on a close game the two can favour different clubs">Margin <b>${esc(marginText(g))}</b></span>`);
+  out.push(`<span class="chip" data-ck="xt" title="the model's expected goals, both clubs">Goals <b>${g.xt.toFixed(1)}</b></span>`);
+  out.push(`<span class="chip" data-ck="ot" title="the model's chance the game goes past regulation">OT <b>${pct(g.tie)}</b></span>`);
+  const side = p => p >= 0.5 ? th.abbr : ta.abbr;
+  if (g.elo && g.by === 'players') out.push(`<span class="chip" data-ck="alt" title="the team Elo's chance and expected goals, shown beside the call; the call is the player model's">Team Elo <b>${esc(side(g.elo.pHome))} ${pct(Math.max(g.elo.pHome, 1 - g.elo.pHome))}</b> <span class="muted">${g.elo.xt.toFixed(1)} goals</span></span>`);
+  else if (g.pm) out.push(`<span class="chip" data-ck="alt" title="the player model's chance and expected goals, shown beside the call; the team Elo makes it">Player model <b>${esc(side(g.pm.pHome))} ${pct(Math.max(g.pm.pHome, 1 - g.pm.pHome))}</b> <span class="muted">${g.pm.xt.toFixed(1)} goals</span></span>`);
+  if (!bets && L) {
+    if (priced(L.awayML) || priced(L.homeML)) out.push(`<span class="chip" data-ck="ml">Moneyline <b>${esc(ta.abbr)} ${fmtOdds(L.awayML)}</b> <b>${esc(th.abbr)} ${fmtOdds(L.homeML)}</b></span>`);
+    if (L.homeLine !== null && L.homeLine !== undefined) out.push(`<span class="chip" data-ck="pl">Puck line <b>${esc(ta.abbr)} ${fmtLine(-L.homeLine)} ${fmtOdds(L.awaySpreadOdds)}</b> <b>${esc(th.abbr)} ${fmtLine(L.homeLine)} ${fmtOdds(L.homeSpreadOdds)}</b></span>`);
+    if (L.total !== null && L.total !== undefined) out.push(`<span class="chip" data-ck="ou">Over/under <b>${L.total}</b> <span class="muted">o ${fmtOdds(L.overOdds)} · u ${fmtOdds(L.underOdds)}</span></span>`);
   }
   /* the calls: a side on the moneyline, the puck line or the total wherever the model's chance beats the book's by the edge */
-  const chips = [], edgeT = e => `the model's chance is ${Math.round(e * 100)} points above the chance DraftKings' price implies`;
-  if (g.mlPick) chips.push(`<span class="tag pick" title="${edgeT(g.mlEdge[g.mlPick])}">ML ${esc(T(g[g.mlPick]).abbr)} · edge +${Math.round(g.mlEdge[g.mlPick] * 100)}</span>`);
-  if (g.plPick) chips.push(`<span class="tag pick" title="${edgeT(g.plEdge[g.plPick])}">${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? line.homeLine : -line.homeLine)} · edge +${Math.round(g.plEdge[g.plPick] * 100)}</span>`);
-  if (g.ouPick) chips.push(`<span class="tag pick" title="${edgeT(g.ouEdge[g.ouPick])}">${g.ouPick} ${line.total} · edge +${Math.round(g.ouEdge[g.ouPick] * 100)}</span>`);
-  let calls = chips.length ? chips.join(' ') : (line ? '<span class="tag pass">no edge</span>' : '<span class="muted">no line yet</span>');
-  let result = '';
-  if (g.result) {
-    result = `<span class="tag ${g.result.su ? 'win' : 'loss'}">${g.result.su ? 'call right' : 'call wrong'}</span>`;
-    if (g.result.ml) result += ` <span class="tag ${g.result.ml}">ML ${g.result.ml}</span>`;
-    if (g.result.pl) result += ` <span class="tag ${g.result.pl}">PL ${g.result.pl}</span>`;
-    if (g.result.ou) result += ` <span class="tag ${g.result.ou}">${g.ouPick} ${g.result.ou}</span>`;
-    if (!g.frozen) result += ` <span class="tag replay" title="this game was over before the job first ran; the call is the replay's">replayed</span>`;
-  }
-  const started = final || state === 'live' || hasStarted(g);
-  /* a game still to come with a line DraftKings listed at the last run: its bets as buttons, under the model and the call */
-  const bets = !started && !!line && freshLine(g);
-  /* a live score is the job's, as of its run, unless this browser read ESPN since; a game the state
-     has as to come whose puck drop has passed says so instead of a time */
-  let detail = '';
-  if (live) detail = `<span class="${state === 'live' ? 'live' : ''}">${esc(live.detail)}</span>`;
-  else if (g.state === 'live') detail = `<span class="live">${esc(g.detail)}</span> <span class="asof" title="the score when the job last read it; Refresh scores reads ESPN now">as of ${esc(hhmm(g.scoreAt || S.published))}</span>`;
-  else if (g.state === 'final') detail = esc(g.detail);
-  else if (g.state === 'pre' && Date.parse(g.start) > Date.now() && started) detail = '<span class="asof" title="the feed moved the start after the first puck drop; the call shown is the one made before it">start moved · call kept</span>';
-  else if (started) detail = '<span class="asof" title="Refresh scores reads ESPN now">under way · no score yet</span>';
-  return `<div class="game ${final ? 'final' : ''}" data-id="${g.id}">
-    <div class="when"><span>${when(g)}${g.neutral ? ' · neutral ice' : ''}${g.note ? ' · ' + esc(g.note) : ''}</span><span>${detail}</span></div>
-    ${side(g.away, g.arec, 1 - g.pHome, as, g.pick === 'away', awayWon, homeWon)}
-    ${side(g.home, g.hrec, g.pHome, hs, g.pick === 'home', homeWon, awayWon)}
-    <div class="prob" style="--ac:${esc(ta.color || '#888')};--hc:${esc(th.color || '#888')}"><i style="width:${Math.round((1 - g.pHome) * 100)}%"></i><i class="h" style="width:${Math.round(g.pHome * 100)}%"></i></div>
-    <div class="lines">
-      <div${bets ? ' style="grid-column:1/-1"' : ''}><div class="k">Model</div><div class="v">${modelMargin(g)} · total ${g.xt.toFixed(1)} · OT ${pct(g.tie)}</div></div>
-      ${bets ? '' : `<div><div class="k">Moneyline</div><div class="v">${ml}</div></div>
-      <div><div class="k">Puck line</div><div class="v">${mkt}</div></div>
-      <div><div class="k">Total</div><div class="v">${tot}</div></div>`}
-      ${!started && line && !bets ? `<div class="pb-stale">line from ${esc(hhmm(line.at))}: not on DraftKings at the last run</div>` : ''}
-      <div style="grid-column:1/-1"><div class="k">${g.result ? 'Result' : 'The call'}</div><div class="v chips">${g.result ? result : calls}</div></div>
-    </div>
-    ${bets ? betBlock(g) : ''}
-    ${started ? '' : ppBtn(g)}
-    ${lineupBlock(g)}
-  </div>`;
+  const edgeT = e => `the model's chance is ${Math.round(e * 100)} points above the chance DraftKings' price implies`;
+  const R = g.result, res = (k, word) => R && R[k] ? ` <span class="res ${esc(R[k])}">${esc(word)} ${esc(R[k])}</span>` : '';
+  const call = (k, b, e, word) => `<span class="chip${R ? '' : ' edge'}" data-ck="call" title="${edgeT(e)}">${b} · edge +${Math.round(e * 100)}${res(k, word)}</span>`;
+  if (g.mlPick) out.push(call('ml', `ML <b>${esc(T(g[g.mlPick]).abbr)}</b>`, g.mlEdge[g.mlPick], 'ML'));
+  if (g.plPick) out.push(call('pl', `<b>${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? L.homeLine : -L.homeLine)}</b>`, g.plEdge[g.plPick], 'PL'));
+  if (g.ouPick) out.push(call('ou', `<b>${g.ouPick} ${L.total}</b>`, g.ouEdge[g.ouPick], g.ouPick));
+  if (!g.mlPick && !g.plPick && !g.ouPick && !R) out.push(L ? '<span class="chip" data-ck="call">no edge</span>' : '<span class="chip" data-ck="call"><span class="muted">no line yet</span></span>');
+  return out.join('');
 }
-/* the player model's side of a card: each goalie and how he was chosen, who is out, and the two models' chances when the call is one of them */
-function lineupBlock(g) {
+/* who is out, under the chips, a row each as the NBA's: each club's goalie and how he was chosen; each player the report has out (status
+   Out or suspended) or who is worth 0.02 goals a game or more, his status and what he adds to his club by the player model; each player
+   day to day (he stays in the lineup, so no figure); the rest of a club's outs named on one line; the source and whose call it is. A
+   phrase never breaks across lines and nothing is cut: a row wraps between its parts, a player's status going under his name where a
+   phone has no room for both beside his figure (a phone shows no title, so an ellipsis there could never be read) */
+const OUT_ROW = 0.02;
+const outRow = o => /^out$|suspen/i.test(String(o.status || '')) || (typeof o.cost === 'number' && Math.abs(o.cost) >= OUT_ROW);
+const goalsWorth = x => { const r = Math.round(x * 100) / 100; return `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)} goals`; };
+const outGroup = st => /injured reserve/i.test(st) ? 'on injured reserve' : `out (${String(st || 'out').toLowerCase()})`;
+function outBlock(g) {
   const pm = g.pm; if (!pm) return '';
-  const boxNote = t => t.lastBox && t.lastFinal && t.lastFinal > t.lastBox ? `<div class="muted small">lineup from ${esc(t.lastBox)}: the box score of ${esc(t.lastFinal)} not read yet</div>` : '';
-  const side = (code, t) => `<div><div class="k">${esc(T(code).abbr)}</div>${t.goalie ? `<div>${esc(t.goalie.name)} <span class="muted">in goal · ${esc(t.goalie.how)}${t.goalie.debut ? ' · first NHL start' : ''}</span></div>` : '<div class="muted">goalie unknown</div>'}${t.out && t.out.length ? `<div><span class="who">out</span> ${t.out.map(o => esc(o.name)).join(', ')}</div>` : ''}${t.dtd && t.dtd.length ? `<div><span class="muted">day to day</span> ${t.dtd.map(o => esc(o.name)).join(', ')}</div>` : ''}${boxNote(t)}</div>`;
-  const both = g.elo ? `<div style="grid-column:1/-1" class="muted">Players ${pct(pm.pHome)} · ${pm.xt.toFixed(1)} goals; team Elo ${pct(g.elo.pHome)} · ${g.elo.xt.toFixed(1)}. The call is the ${g.by === 'players' ? 'player model' : 'team Elo'}.</div>` : `<div style="grid-column:1/-1" class="muted">Player model ${pct(pm.pHome)} · ${pm.xt.toFixed(1)} goals, shown beside the call; the team Elo makes it.</div>`;
-  const inj = pm.inj ? `<div style="grid-column:1/-1" class="muted small">Injury report of ${esc(dateClock(pm.inj))}${hasStarted(g) ? ', as the call was made' : ''}.</div>` : '';
-  return `<div class="lineup">${side(g.away, pm.away)}${side(g.home, pm.home)}${both}${inj}</div>`;
+  const rows = [], sides = ['away', 'home'], nw = t => `<span class="nw">${t}</span>`;
+  for (const side of sides) {
+    const t = pm[side], ab = T(g[side]).abbr;
+    rows.push(t.goalie ? `<span class="gk"><span><b class="nw">${esc(t.goalie.name)}</b> <span class="muted">${nw(`${esc(ab)} · in goal`)} · ${nw(esc(t.goalie.how))}${t.goalie.debut ? ` · ${nw('first NHL start')}` : ''}</span></span></span>` : `<span class="gk"><span class="muted">${esc(ab)} · goalie unknown</span></span>`);
+  }
+  const costT = "What he adds to his club in a game by the player model: his rating times his expected ice time. Out, his club plays without it.";
+  const row = (cls, name, ab, st, cost) => `<span class="${cls}"><span class="who" title="${esc(`${name} · ${ab} · ${st}`)}">${nw(esc(name))} <span class="muted nw">${esc(ab)} · ${esc(st)}</span></span>${typeof cost === 'number' ? ` <span class="cost" title="${costT}">${goalsWorth(cost)}</span>` : ''}</span>`;
+  for (const side of sides) for (const o of (pm[side].out || []).filter(outRow)) rows.push(row('orow', o.name, T(g[side]).abbr, o.status || 'Out', o.cost));
+  for (const side of sides) for (const o of pm[side].dtd || []) rows.push(row('dtd', o.name, T(g[side]).abbr, 'Day to day', null));
+  /* the rest of each club's outs on one line a club */
+  for (const side of sides) {
+    const rest = (pm[side].out || []).filter(o => !outRow(o)), groups = new Map(), parts = [];
+    for (const o of rest) { const k = outGroup(o.status); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o.name); }
+    for (const [k, names] of groups) parts.push(`<span class="muted">${parts.length ? '' : esc(T(g[side]).abbr) + ' '}also ${esc(k)}:</span> ${names.map(n => nw(esc(n))).join(', ')}`);
+    if (parts.length) rows.push(`<span class="also"><span>${parts.join(' · ')}</span></span>`);
+  }
+  for (const side of sides) { const t = pm[side]; if (t.lastBox && t.lastFinal && t.lastFinal > t.lastBox) rows.push(`<span class="muted">${esc(T(g[side]).abbr)} lineup from ${esc(t.lastBox)}: the box score of ${esc(t.lastFinal)} not read yet</span>`); }
+  const whose = `The call is the ${g.by === 'players' ? "player model's" : "team Elo's"}.`;
+  rows.push(`<span class="src">${pm.inj ? `Injury report of ${nw(esc(dateClock(pm.inj)))}${hasStarted(g) ? ', as the call was made' : ''}.` : 'No injury report was applied to this call.'} ${whose}</span>`);
+  return `<div class="out">${rows.join('')}</div>`;
 }
-/* the tab bar counts the builder's legs still on offer */
+/* the Lineups drawer: who the call expects to dress, each club's goalie and its nine skaters with the most ice time, in goals a game
+   by the player model; open or shut in this page's memory alone (LU_OPEN), so a redraw keeps it open, and never stored */
+const LU_OPEN = new Set();
+const luV = x => { const r = Math.round(x * 100) / 100; return { t: `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)}`, c: r > 0 ? 'pos' : r < 0 ? 'neg' : '' }; };
+const luOk = g => !!(g.pm && S.players && isObj(S.players.teams) && S.players.teams[g.away] && S.players.teams[g.home]);
+function luDrawer(g) {
+  const open = LU_OPEN.has(g.id);
+  const club = side => {
+    const code = g[side], t = S.players.teams[code], pm = g.pm[side], gk = pm.goalie, lu = Array.isArray(t.lineup) ? t.lineup : [];
+    const li = (name, m, v) => { const x = luV(v); return `<li><span>${esc(name)}</span><span class="m">${m}</span><span class="v${x.c ? ' ' + x.c : ''}">${x.t}</span></li>`; };
+    /* the strength is the state's own, g.pm[side].strength, to the hundredth (half away from zero), the figure the Players tab shows;
+       its three parts are shown so they add up to it: each part's hundredths taken down, and the hundredths left given to the parts with
+       the most cut off (largest remainder), so each part is within a hundredth of its own value. Each part rounded on its own was a
+       hundredth off the total in about 40% of lines, and a total made of those parts was off the Players tab's in 13 clubs of 32 */
+    const parts = [t.offence, t.defence, gk ? gk.gk : 0], tot = Math.sign(pm.strength) * Math.round(Math.abs(pm.strength) * 100);
+    const m = parts.map(x => Math.round(x * 1e5) / 1e3), fl = m.map(Math.floor), ord = m.map((x, i) => [x - fl[i], i]).sort((a, b) => b[0] - a[0]);
+    for (let k = tot - fl.reduce((a, b) => a + b, 0), j = 0; k > 0 && j < 3; k--, j++) fl[ord[j][1]]++;
+    const sh = fl.reduce((a, b) => a + b, 0) === tot ? fl.map(x => x / 100) : parts;
+    return `<div><h4>${esc(T(code).abbr)} · expected</h4><ul>${gk ? li(gk.name, 'G', gk.gk) : ''}${lu.slice(0, 9).map(p => li(p.name, `${Math.round(p.share * 60)}'`, p.v)).join('')}</ul>`
+      + `<div class="coach">Strength <b>${luV(tot / 100).t}</b> goals a game: attack ${luV(sh[0]).t} · defence ${luV(sh[1]).t} · goalie ${luV(sh[2]).t} · top 9 of ${lu.length} skaters shown</div></div>`;
+  };
+  return `<div class="drawer lu" id="lu-${g.id}" role="region" aria-label="Lineups, ${esc(matchup(g))}"${open ? '' : ' hidden'}><p class="lu-key">Who the call expects to dress: the last lineup less the injury report's outs. Minutes and goals a game by the player model; the Players tab shows ratings ×100.</p>${club('away')}${club('home')}</div>`;
+}
+/* the drawer and the foot: Lineups and Player props on the left, Parlay Builder → on the right, each only on a game still to come */
+function luBlock(g, started) {
+  const lu = !started && luOk(g), pp = started ? '' : ppBtn(g);
+  const go = !started && freshLine(g) && goDays().includes(g.date);
+  if (lu || go) SHOWN.add(g.id);
+  const left = (lu ? `<button type="button" class="btn ghost" data-lu="${g.id}" aria-expanded="${LU_OPEN.has(g.id)}" aria-controls="lu-${g.id}">Lineups</button>` : '') + pp;
+  const right = go ? `<button type="button" class="btn" data-pbgo="${g.id}" title="Open the Parlay Builder on this game's day, the game ticked">Parlay Builder →</button>` : '';
+  return (lu ? luDrawer(g) : '') + (left || right ? `<div class="foot"><span>${left}</span><span>${right}</span></div>` : '');
+}
+/* opened in place under the card's chips, from its one toggle in the foot, as the NBA's: the word stays Lineups (so the foot never
+   rewraps), aria-expanded and the ice outline say it is open; shut, the page scrolls so the toggle stands where the finger was (the
+   drawer above it is some 600px tall on a phone, and shut without that the card would leave the screen) */
+document.addEventListener('click', e => {
+  const tg = e.target.closest('button[data-lu]'); if (!tg) return;
+  const id = tg.dataset.lu, d = document.getElementById('lu-' + id); if (!d) return;
+  const open = d.hidden, before = tg.getBoundingClientRect().top;
+  d.hidden = !open; tg.setAttribute('aria-expanded', String(open));
+  if (open) { LU_OPEN.add(id); return; }
+  LU_OPEN.delete(id);
+  const dy = Math.round(tg.getBoundingClientRect().top - before);
+  if (dy && typeof window.scrollBy === 'function') window.scrollBy(0, dy);
+});
+/* Parlay Builder → on a card: the builder's panel on that game's day (Both days kept where they are chosen and hold it), the game ticked */
+document.addEventListener('click', e => {
+  const b = e.target.closest('button[data-pbgo]'); if (!b || !S) return;
+  const g = gameById()[b.dataset.pbgo];
+  if (!g || hasStarted(g) || !freshLine(g)) { rerender(); return; }
+  const ui = pbUi(), sl = pbSlate();
+  if (!(sl.pick === 'both' && sl.both && sl.days.includes(g.date))) ui.day = g.date;
+  ui.off = ui.off.filter(x => x !== g.id);
+  pbQuiet(); save(); showTab('parlays'); scrollToEl($('pbPanel'));
+  try { $('pbTitle').focus({ preventScroll: true }); } catch (err) { $('pbTitle').focus(); }
+});
+/* the tab bar's counts: the builder's legs still on offer, and today's games still to come (Eastern), which a puck drop moves */
 function updateLegCount() { const n = S ? builderLegs(false).length : P.legs.length; $('legCount').hidden = !n; $('legCount').textContent = n; }
+function updateTabCounts() {
+  updateLegCount();
+  if (!S) return;
+  const t = etToday(), n = S.games.filter(g => g.date === t && !hasStarted(g)).length;
+  $('gameCount').hidden = !n; $('gameCount').textContent = n; $('gameCount').title = `${n} game${n === 1 ? '' : 's'} still to come today`;
+}
 
 /* live scores, read from ESPN in this browser: on the button, and once on opening when the open day
    has a game under way that the job has no final for */
@@ -911,13 +1224,13 @@ function renderStandings() {
   const PO = S.playoff; const po = PO.odds || {};
   const inField = new Set();
   for (const conf of ['East', 'West']) { const f = PO.bracket[conf]; for (const t of [].concat(...Object.values(f.divs), f.wild)) inField.add(t); }
-  const row = (r, i, cut) => { const t = T(r.team); return `<tr class="${inField.has(r.team) ? 'in' : ''} ${cut ? 'cut' : ''}"><td class="n muted">${i + 1}</td><td>${teamCell(r.team)}</td><td class="n">${r.gp}</td><td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.otl}</td><td class="n"><b>${r.pts}</b></td><td class="n">${r.rw}</td><td class="n">${r.row}</td><td class="n">${r.gf}</td><td class="n">${r.ga}</td><td class="n">${signed(r.gf - r.ga)}</td><td class="n">${t.rating}</td><td class="n">${po[r.team] ? pct(po[r.team].playoff) : '—'}</td></tr>`; };
-  const head = '<thead><tr><th class="n">#</th><th>Team</th><th class="n">GP</th><th class="n">W</th><th class="n">L</th><th class="n">OTL</th><th class="n">PTS</th><th class="n">RW</th><th class="n">ROW</th><th class="n">GF</th><th class="n">GA</th><th class="n">Diff</th><th class="n">Rating</th><th class="n">Playoff</th></tr></thead>';
+  const row = (r, i, cut) => { const t = T(r.team), df = r.gf - r.ga; return `<tr class="${inField.has(r.team) ? 'in' : ''} ${cut ? 'cut' : ''}"><td class="n rk">${i + 1}</td><td class="sk">${teamCell(r.team)}</td><td class="n">${r.gp}</td><td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.otl}</td><td class="n big">${r.pts}</td><td class="n">${r.rw}</td><td class="n">${r.row}</td><td class="n">${r.gf}</td><td class="n">${r.ga}</td><td class="n${sgn(df)}">${signed(df)}</td><td class="n">${fix1(t.rating)}</td><td class="n">${po[r.team] ? pct(po[r.team].playoff) : '—'}</td></tr>`; };
+  const head = '<thead><tr><th class="n on">#</th><th class="sk">Team</th><th class="n">GP</th><th class="n">W</th><th class="n">L</th><th class="n">OTL</th><th class="n on">PTS</th><th class="n">RW</th><th class="n">ROW</th><th class="n">GF</th><th class="n">GA</th><th class="n">Diff</th><th class="n">Rating</th><th class="n">Playoff</th></tr></thead>';
   const divs = { East: ['Atlantic', 'Metropolitan'], West: ['Central', 'Pacific'] };
   $('standings').innerHTML = ['East', 'West'].map(conf => {
     const f = PO.bracket[conf];
     const wild = f.wild.map(t => T(t).abbr).join(', ');
-    return `<div class="card"><h2>${conf}ern Conference <small>wild cards ${esc(wild)}</small></h2>` + divs[conf].map(d => `<h3>${d}</h3><div class="scroll"><table class="tbl">${head}<tbody>${PO.standings[d].map((r, i) => row(r, i, i === 2)).join('')}</tbody></table></div>`).join('') + '</div>';
+    return `<div class="stand"><h2>${conf}ern Conference <small><span class="nw">wild cards ${esc(wild)}</span></small></h2>` + divs[conf].map(d => `<h3>${d}</h3><div class="wrap"><table class="tbl">${head}<tbody>${PO.standings[d].map((r, i) => row(r, i, i === 2)).join('')}</tbody></table></div>`).join('') + '</div>';
   }).join('');
 }
 
@@ -928,8 +1241,8 @@ function renderRatings() {
   const conf = $('ratConf').value; const po = S.playoff.odds || {};
   let ids = Object.keys(S.teams); if (conf) ids = ids.filter(id => T(id).conf === conf);
   ids.sort((a, b) => T(b).rating - T(a).rating);
-  $('ratTable').innerHTML = '<thead><tr><th class="n">#</th><th>Team</th><th>Div</th><th class="n">Rating</th><th class="n">Record</th><th class="n">PTS</th><th class="n">GF/g</th><th class="n">GA/g</th><th class="n">Playoff</th><th class="n">Cup</th></tr></thead><tbody>' +
-    ids.map(id => { const t = T(id); return `<tr><td class="n">${t.rank}</td><td>${teamCell(id)}</td><td class="muted">${esc(t.div)}</td><td class="n"><b>${t.rating}</b></td><td class="n">${rec(t)}</td><td class="n">${t.pts}</td><td class="n">${t.gfRate.toFixed(2)}</td><td class="n">${t.gaRate.toFixed(2)}</td><td class="n">${po[id] ? pct(po[id].playoff) : '—'}</td><td class="n">${po[id] ? pct1(po[id].cup) : '—'}</td></tr>`; }).join('') + '</tbody>';
+  $('ratTable').innerHTML = '<thead><tr><th class="n on">#</th><th class="sk">Team</th><th>Div</th><th class="n on">Rating</th><th class="n">Record</th><th class="n">PTS</th><th class="n">GF/g</th><th class="n">GA/g</th><th class="n">Playoff</th><th class="n">Cup</th></tr></thead><tbody>' +
+    ids.map(id => { const t = T(id); return `<tr><td class="n rk">${t.rank}</td><td class="sk">${teamCell(id)}</td><td class="muted">${esc(t.div)}</td><td class="n big">${fix1(t.rating)}</td><td class="n">${rec(t)}</td><td class="n">${t.pts}</td><td class="n">${t.gfRate.toFixed(2)}</td><td class="n">${t.gaRate.toFixed(2)}</td><td class="n">${po[id] ? pct(po[id].playoff) : '—'}</td><td class="n">${po[id] ? pct1(po[id].cup) : '—'}</td></tr>`; }).join('') + '</tbody>';
 }
 
 /* ---------- Playoff ---------- */
@@ -946,27 +1259,32 @@ function renderPlayoff() {
     ? `The first round as it was drawn and every series ESPN has a game in, with its score; a club knocked out is struck through. Rounds two to four follow the league's bracket, home ice to the higher seed.`
     : `The league's bracket: the top three of each division and two wild cards a conference, the stronger division winner against the second wild card, second against third within each division. Ties by points are broken by regulation wins, then wins past the shootout, then goal difference.`;
   const score = (a, b) => { const s = find(a, b); if (!s) return null; const wa = s.wins[a], wb = s.wins[b]; return { s, text: s.winner ? `${T(s.winner).abbr} won ${Math.max(wa, wb)}-${Math.min(wa, wb)}` : wa === wb ? `tied ${wa}-${wb}` : `${T(wa > wb ? a : b).abbr} leads ${Math.max(wa, wb)}-${Math.min(wa, wb)}` }; };
-  const cell = t => `<span class="${lost.has(t) ? 'out' : ''}">${teamCell(t)}</span>`;
-  const serie = ([a, b], seedA, seedB) => { const sc = score(a, b); return `<div class="series ${sc && sc.s.winner ? 'done' : ''}"><span class="tw"><span class="seed">${seedA}</span>${cell(a)}<span class="muted small pts">${T(a).pts} pts</span></span>${sc ? `<span class="score">${esc(sc.text)}</span>` : '<span class="muted small">vs</span>'}<span class="tw"><span class="muted small pts">${T(b).pts} pts</span>${cell(b)}<span class="seed">${seedB}</span></span></div>`; };
+  const cell = t => `<span class="${lost.has(t) ? 'ko' : ''}">${teamCell(t)}</span>`;
+  /* a series a row of five columns, the same widths in every row (the seed, the club, the score or "vs", the club, the seed), so they line
+     up down the box as a table's do, a club's points under its name; on a phone a club a line, the score beside the two */
+  const serie = ([a, b], seedA, seedB) => { const sc = score(a, b); return `<div class="series ${sc && sc.s.winner ? 'done' : ''}"><span class="seed sa">${seedA}</span><span class="side sa">${cell(a)}<span class="pts">${T(a).pts} pts</span></span>${sc ? `<span class="score">${esc(sc.text)}</span>` : '<span class="vs-w">vs</span>'}<span class="side sb"><span class="pts">${T(b).pts} pts</span>${cell(b)}</span><span class="seed sb">${seedB}</span></div>`; };
   const later = r => ser.filter(s => s.round === r).map(s => serie([s.a, s.b], 'R' + r, '')).join('');
   $('bracket').innerHTML = ['East', 'West'].map(conf => {
     const f = PO.bracket[conf]; const [d1, d2] = Object.keys(f.divs);
     const rest = real ? [2, 3].map(r => { const h = ser.filter(s => s.round === r && s.conf === conf).map(s => serie([s.a, s.b], 'R' + r, '')).join(''); return h ? `<h3>${r === 2 ? 'Second round' : 'Conference final'}</h3>${h}` : ''; }).join('') : '';
     return `<div class="conf"><h3 style="margin-top:0">${conf}</h3>${serie(f.series[0], d1.slice(0, 1) + '1', 'WC2')}${serie(f.series[1], d1.slice(0, 1) + '2', d1.slice(0, 1) + '3')}${serie(f.series[2], d2.slice(0, 1) + '1', 'WC1')}${serie(f.series[3], d2.slice(0, 1) + '2', d2.slice(0, 1) + '3')}${rest}</div>`;
   }).join('') + (real && later(4) ? `<div class="conf" style="grid-column:1/-1"><h3 style="margin-top:0">Stanley Cup Final</h3>${later(4)}</div>` : '');
+  $('bracket').classList.toggle('scored', !!$('bracket').querySelector('.series .score'));
   const conf = $('poConf').value;
   let ids = Object.keys(PO.odds).filter(id => !conf || T(id).conf === conf);
   ids.sort((a, b) => PO.odds[b].cup - PO.odds[a].cup || PO.odds[b].playoff - PO.odds[a].playoff);
   if (!real) ids.sort((a, b) => PO.odds[b].playoff - PO.odds[a].playoff || PO.odds[b].cup - PO.odds[a].cup);
   $('poNote').textContent = phase === 'over' ? 'The season is over.' : real ? `${PO.sims} simulations of every series still to finish, each from its real score, best of seven with home ice to the higher seed, at the current ratings. A club knocked out has none.` : `${PO.sims} simulations of the ${PO.remaining} games left and the four rounds, best of seven with home ice to the higher seed, at the current ratings.`;
-  const bar = p => `<span class="tw"><span class="bar"><i style="width:${Math.round(p * 100)}%"></i></span>${pct1(p)}</span>`;
-  $('poTable').innerHTML = '<thead><tr><th>Team</th><th>Div</th><th class="n">Record</th><th class="n">PTS</th><th class="n">Exp. pts</th><th>Playoff</th><th class="n">Division</th><th class="n">Conference</th><th class="n">Stanley Cup</th></tr></thead><tbody>' +
-    ids.map(id => { const t = T(id), o = PO.odds[id]; const gone = real && (lost.has(id) || !o.playoff); return `<tr><td>${teamCell(id)}${gone ? ' <span class="muted small">out</span>' : ''}</td><td class="muted">${esc(t.div)}</td><td class="n">${rec(t)}</td><td class="n">${t.pts}</td><td class="n">${o.expPts}</td><td>${bar(o.playoff)}</td><td class="n">${pct(o.div)}</td><td class="n">${pct(o.conf)}</td><td class="n">${gone ? '—' : pct1(o.cup)}</td></tr>`; }).join('') + '</tbody>';
+  const bar = p => `<span class="tw"><span class="meter"><i style="width:${Math.round(p * 100)}%"></i></span>${pct1(p)}</span>`;
+  $('poTable').innerHTML = `<thead><tr><th class="sk">Team</th><th>Div</th><th class="n">Record</th><th class="n">PTS</th><th class="n">Exp. pts</th><th${real ? '' : ' class="on"'}>Playoff</th><th class="n">Division</th><th class="n">Conference</th><th class="n${real ? ' on' : ''}"><span class="t-wide">Stanley </span>Cup</th></tr></thead><tbody>` +
+    ids.map(id => { const t = T(id), o = PO.odds[id]; const gone = real && (lost.has(id) || !o.playoff); return `<tr><td class="sk">${teamCell(id)}${gone ? ' <span class="muted small">out</span>' : ''}</td><td class="muted">${esc(t.div)}</td><td class="n">${rec(t)}</td><td class="n">${t.pts}</td><td class="n">${fix1(o.expPts)}</td><td>${bar(o.playoff)}</td><td class="n">${pct(o.div)}</td><td class="n">${pct(o.conf)}</td><td class="n">${gone ? '—' : pct1(o.cup)}</td></tr>`; }).join('') + '</tbody>';
 }
 
 /* ---------- Players ---------- */
 $('plKind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; P.ui.plKind = b.dataset.kind; save(); renderPlayers(); });
-$('plTeam').addEventListener('change', renderPlayers); $('plSearch').addEventListener('input', renderPlayers);
+/* the search draws once the typing pauses (a fifth of a second): up to 400 rows a draw */
+let PL_T = null;
+$('plTeam').addEventListener('change', renderPlayers); $('plSearch').addEventListener('input', () => { clearTimeout(PL_T); PL_T = setTimeout(renderPlayers, 200); });
 function spark(seasons, now) {
   const ks = Object.keys(seasons).sort(); const vs = ks.map(k => seasons[k]).concat([now]);
   if (vs.length < 2) return '';
@@ -979,7 +1297,7 @@ function renderPlayers() {
   const PL = S.players;
   if (!PL) { $('plModelNote').textContent = 'No player model yet: the box scores have not been pulled.'; $('plTable').innerHTML = ''; $('plTeams').innerHTML = ''; return; }
   const kind = P.ui.plKind || 'skaters';
-  for (const b of $('plKind').querySelectorAll('button')) b.classList.toggle('on', b.dataset.kind === kind);
+  for (const b of $('plKind').querySelectorAll('button')) { b.classList.toggle('on', b.dataset.kind === kind); b.setAttribute('aria-pressed', String(b.dataset.kind === kind)); }
   if ($('plTeam').options.length === 1) $('plTeam').innerHTML += Object.keys(S.teams).sort().map(c => `<option value="${c}">${esc(T(c).short)}</option>`).join('');
   const R = PL.report; const w = R.walk || {}; const ws = Object.keys(w).sort();
   const I = PL.injuries, ST = PL.starters, when2 = iso => iso ? dateClock(iso) : '—';
@@ -992,13 +1310,32 @@ function renderPlayers() {
   rows = rows.filter(p => team || q || p.gp >= (kind === 'goalies' ? 10 : 20)).sort((a, b) => b.v - a.v);
   $('plNoteP').textContent = `${rows.length} ${kind}`;
   const x100 = v => (v * 100).toFixed(1);
-  const head = kind === 'goalies' ? '<thead><tr><th class="n">#</th><th>Goalie</th><th>Club</th><th class="n">Rating</th><th class="n">Starts</th><th>Five seasons</th></tr></thead>' : '<thead><tr><th class="n">#</th><th>Player</th><th>Club</th><th>Pos</th><th class="n">Rating</th><th class="n">Offence</th><th class="n">Defence</th><th class="n">Games</th><th class="n">TOI</th><th>Five seasons</th></tr></thead>';
-  $('plTable').innerHTML = head + '<tbody>' + rows.slice(0, 400).map((p, i) => kind === 'goalies'
-    ? `<tr><td class="n">${i + 1}</td><td>${esc(p.name)}</td><td>${teamCell(p.team)}</td><td class="n"><b>${x100(p.v)}</b></td><td class="n">${p.gp}</td><td>${spark(p.seasons, p.v)}</td></tr>`
-    : `<tr><td class="n">${i + 1}</td><td>${esc(p.name)}</td><td>${teamCell(p.team)}</td><td class="muted">${esc(p.pos)}</td><td class="n"><b>${x100(p.v)}</b></td><td class="n">${x100(p.o)}</td><td class="n">${x100(p.d)}</td><td class="n">${p.gp}</td><td class="n">${Math.floor(p.toi / 60)}:${String(p.toi % 60).padStart(2, '0')}</td><td>${spark(p.seasons, p.v)}</td></tr>`).join('') + '</tbody>';
+  /* the NBA's player rows: the name in bold, the position beside it; the name held at the left as the table scrolls sideways, the
+     rating (the table's order) right beside it so a phone shows it without a swipe */
+  const head = kind === 'goalies' ? '<thead><tr><th class="n on">#</th><th class="sk">Goalie</th><th class="n on">Rating</th><th>Club</th><th class="n">Starts</th><th>Five seasons</th></tr></thead>' : '<thead><tr><th class="n on">#</th><th class="sk">Player</th><th class="n on">Rating</th><th>Club</th><th class="n">Offence</th><th class="n">Defence</th><th class="n">Games</th><th class="n">TOI</th><th>Five seasons</th></tr></thead>';
+  const sx = v => sgn(+x100(v));          /* coloured by the sign shown */
+  /* a signed figure printed signed, as the NBA's and as the Standings' Diff: +29.5 lime, -8.3 rose, 0.0 plain (never -0.0); a rating
+     or a strength, a column a table is in order of, stays unsigned */
+  const s100 = v => { const t = x100(v), n = +t; return n > 0 ? '+' + t : n < 0 ? t : (0).toFixed(1); };
+  const who = p => `<td class="pn sk"><b>${esc(p.name)}</b>${kind === 'goalies' ? '' : ` <span class="muted">${esc(p.pos)}</span>`}</td>`;
+  const tr = (p, i) => kind === 'goalies'
+    ? `<tr><td class="n rk">${i + 1}</td>${who(p)}<td class="n big">${x100(p.v)}</td><td>${teamCell(p.team)}</td><td class="n">${p.gp}</td><td>${spark(p.seasons, p.v)}</td></tr>`
+    : `<tr><td class="n rk">${i + 1}</td>${who(p)}<td class="n big">${x100(p.v)}</td><td>${teamCell(p.team)}</td><td class="n${sx(p.o)}">${s100(p.o)}</td><td class="n${sx(p.d)}">${s100(p.d)}</td><td class="n">${p.gp}</td><td class="n">${Math.floor(p.toi / 60)}:${String(p.toi % 60).padStart(2, '0')}</td><td>${spark(p.seasons, p.v)}</td></tr>`;
+  /* the first rows at once, the rest (to 400) eighty at a time between frames, so a press or a keystroke is answered and painted before
+     the long tail is laid out; a newer draw stops an older one's tail */
+  const all = rows.slice(0, 400), first = 60, run = ++PL_RUN, raf = window.requestAnimationFrame ? f => window.requestAnimationFrame(f) : f => setTimeout(f, 16);
+  $('plTable').innerHTML = head + '<tbody>' + all.slice(0, first).map(tr).join('') + '</tbody>';
+  const more = i => raf(() => setTimeout(() => {
+    if (run !== PL_RUN || i >= all.length) return;
+    const tb = $('plTable').tBodies[0]; if (!tb) return;
+    tb.insertAdjacentHTML('beforeend', all.slice(i, i + 80).map((p, j) => tr(p, i + j)).join(''));
+    more(i + 80);
+  }, 0));
+  if (all.length > first) more(first);
   const ts = Object.entries(PL.teams).sort((a, b) => b[1].strength - a[1].strength);
-  $('plTeams').innerHTML = '<thead><tr><th class="n">#</th><th>Club</th><th class="n">Strength</th><th class="n">Attack</th><th class="n">Defence</th><th>Goalie</th><th>Out</th></tr></thead><tbody>' + ts.map(([c, t], i) => `<tr><td class="n">${i + 1}</td><td>${teamCell(c)}</td><td class="n"><b>${x100(t.strength)}</b></td><td class="n">${x100(t.offence)}</td><td class="n">${x100(t.defence)}</td><td>${t.goalie ? `${esc(t.goalie.name)} <span class="muted small">${x100(t.goalie.gk)} · ${esc(t.goalie.how)}</span>` : '—'}</td><td class="small">${(t.out || []).map(o => esc(o.name)).join(', ') || '<span class="muted">nobody</span>'}</td></tr>`).join('') + '</tbody>';
+  $('plTeams').innerHTML = '<thead><tr><th class="n on">#</th><th class="sk">Club</th><th class="n on">Strength</th><th class="n">Attack</th><th class="n">Defence</th><th>Goalie</th><th>Out</th></tr></thead><tbody>' + ts.map(([c, t], i) => `<tr><td class="n rk">${i + 1}</td><td class="sk">${teamCell(c)}</td><td class="n big">${x100(t.strength)}</td><td class="n${sx(t.offence)}">${s100(t.offence)}</td><td class="n${sx(t.defence)}">${s100(t.defence)}</td><td>${t.goalie ? `${esc(t.goalie.name)} <span class="muted small">${x100(t.goalie.gk)} · ${esc(t.goalie.how)}</span>` : '—'}</td><td class="small outs wrap-any">${(t.out || []).map(o => esc(o.name)).join(', ') || '<span class="muted">nobody</span>'}</td></tr>`).join('') + '</tbody>';
 }
+let PL_RUN = 0;
 
 /* ---------- a bet, as the page names it: the state's own numbers, nothing recomputed ----------
    A leg is one side of one market on one game: the moneyline (home or away), the puck line (home or
@@ -1474,7 +1811,10 @@ const heldOut = drawn => { const ids = new Set(drawn.map(L => L.id)); return dra
 const legsN = n => `${n} leg${n > 1 ? 's' : ''}`;
 const pbStake = () => stakeRead(P.stake) || 20;
 const confOf = c => c >= 0.7 ? 'High' : c >= 0.45 ? 'Medium' : 'Low';
-const lockSvg = on => `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0${on ? 'v2' : ''}" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+/* a leg's club pills: its club's for a side bet or a player's leg, both clubs' for a total (each beside the names, hidden from a screen reader) */
+/* a level's leg in a few words beside its pill(s): "to win", "+1.5", "Under 6.5" */
+const tierBet = L => L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? fmtLine(L.num) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num}`;
+const legPills = L => L.kind === 'ou' ? pill(L.g.away, true) + pill(L.g.home, true) : pill(L.prop ? L.team : L.g[L.side], true);
 
 /* ---------- the Parlay Builder's suggested parlays (#pbPanel) ----------
    The slate is one Eastern day: today or tomorrow by the visitor's clock (each offered while it has a
@@ -1667,28 +2007,30 @@ function pbRule(t, res, v) {
 const sameLegs = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
 function pbTierCard(t, res, why, sl) {
   const [id, label, n] = t;
-  if (!res) return `<div class="pb-tier none" data-tier="${id}"><div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="tag">${n} legs</span></span></div><p class="pb-empty">${esc(why)}</p></div>`;
+  if (!res) return `<div class="pb-tier none" data-tier="${id}"><div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="pb-tc">${n} legs</span></span></div><p class="pb-empty">${esc(why)}</p></div>`;
   const v = PB_VIEW.t[id], stake = pbStake();
   const inB = sameLegs(builderLegs(false).map(L => L.id), res.legs.map(L => L.id));          // the builder as drawn (a leg a Refresh odds read moved out stays stored, unseen)
   const thin = res.legs.filter(L => L.thin).length;
   const allLocked = v && res.legs.every(L => v.locks.has(L.id));
   const both = sl.dates.length > 1;
+  /* a leg a row, as the NBA's: its club's pill (a total's two) and the bet, the price; the game and its puck drop, the fair and model
+     chances; the lock last */
   const rows = res.legs.map(L => { const lk = !!(v && v.locks.has(L.id)); return `<div class="pb-tl" data-id="${esc(L.id)}">
-      <button type="button" class="pb-lock" data-pb-lock="${id}|${esc(L.id)}" aria-pressed="${lk}" aria-label="${lk ? 'Unlock' : 'Lock'} ${esc(legName(L))} (${lk ? 'locked: ' : ''}New legs keeps it)" title="${lk ? 'Locked: New legs keeps it' : 'Lock it: New legs keeps it'}">${lockSvg(lk)}</button>
-      <div class="pb-ll"><b>${esc(L.who)}</b><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(both ? dayClock(L.start) : timeOf(L.g))}</span></span>${L.thin ? '<span class="tag thin">thin edge</span>' : ''}</div>
-      <div class="pb-lr"><b>${fmtOdds(L.price)}</b><span>fair ${whole(L.fair)}</span><span class="m">model ${whole(L.p)}</span></div></div>`; }).join('');
+      <div class="pb-ll"><span class="pb-l1"><span class="pb-who">${L.kind === 'ou' ? pill(L.g.away) + pill(L.g.home) : pill(L.g[L.side])}<b>${esc(tierBet(L))}</b></span><b class="pb-lp">${fmtOdds(L.price)}</b>${L.thin ? '<span class="tag thin">thin edge</span>' : ''}</span>
+        <span class="pb-l2"><span class="m">${esc(L.mu)} · <span class="nw">${esc(both ? dayClock(L.start) : timeOf(L.g))}</span></span><span class="pb-fm">fair ${whole(L.fair)} · model ${whole(L.p)}</span></span></div>
+      <button type="button" class="pb-lock" data-pb-lock="${id}|${esc(L.id)}" aria-pressed="${lk}" aria-label="${lk ? 'Locked' : 'Lock'} ${esc(legName(L))} (${lk ? 'press to unlock; ' : ''}New legs keeps it)" title="${lk ? 'Locked: New legs keeps it; press to unlock' : 'Lock it: New legs keeps it'}">${lk ? 'Locked' : 'Lock'}</button></div>`; }).join('');
   return `<div class="pb-tier" data-tier="${id}">
-    <div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="tag">${n} legs</span></span><span class="pb-turn"><button type="button" class="btn ghost" data-pb-new="${id}"${allLocked ? ' disabled' : ''} title="Other legs on your picks, by this level's rule; a locked leg stays">↻ New legs</button>${v && (v.turned || v.locks.size) ? `<button type="button" class="btn ghost" data-pb-reset="${id}">Reset</button>` : ''}</span></div>
+    <div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="pb-tc">${n} legs</span></span><span class="pb-turn"><button type="button" class="btn ghost" data-pb-new="${id}"${allLocked ? ' disabled' : ''} title="Other legs on your picks, by this level's rule; a locked leg stays">New legs</button>${v && (v.turned || v.locks.size) ? `<button type="button" class="btn ghost" data-pb-reset="${id}">Reset</button>` : ''}</span></div>
     <div class="pb-rule">${esc(pbRule(t, res, v))}</div>
     ${v && v.wrapped ? '<p class="pb-why">Every other leg on your picks has had its turn here: back to the first.</p>' : ''}
     <div class="pb-nums">
-      <div class="pb-n"><div class="v">${res.fair === null ? whole(res.p) : whole(res.fair)}</div><div class="k">${res.fair === null ? "Model's chance" : 'Fair chance'}</div><div class="s">${res.fair === null ? 'no fair chance' : `model says ${whole(res.p)}`}</div></div>
-      <div class="pb-n"><div class="v">${toAm(res.dec)}</div><div class="k">Price</div></div>
+      <div class="pb-n"><div class="v">${res.fair === null ? whole(res.p) : whole(res.fair)}</div><div class="k">${res.fair === null ? "model's chance" : 'fair chance'}</div><div class="s">${res.fair === null ? 'no fair chance' : `model says ${whole(res.p)}`}</div></div>
+      <div class="pb-n"><div class="v">${toAm(res.dec)}</div><div class="k">price</div></div>
       <div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>
     </div>
     <div class="pb-tlegs">${rows}</div>
     ${thin ? `<p class="pb-why">${thin} leg${thin > 1 ? 's have' : ' has'} a thin edge: the model rates ${thin > 1 ? 'them' : 'it'} at or above DraftKings' price, but not ${Math.round(S.edge * 100)} points above it.</p>` : ''}
-    <div class="pb-acts"><button type="button" class="btn ghost" data-pb-add="${id}"${inB ? ' disabled' : ''}>${inB ? 'In the builder' : 'Add to builder'}</button><button type="button" class="btn ice" data-pb-finish="${id}">Finish</button></div>
+    <div class="pb-acts"><button type="button" class="btn ice" data-pb-finish="${id}">Finish</button><button type="button" class="btn" data-pb-add="${id}"${inB ? ' disabled' : ''}>${inB ? 'In the builder' : 'Add to builder'}</button></div>
   </div>`;
 }
 /* the panel-wide line in place of the four levels: no season left, before the opener, no line yet, one game */
@@ -1743,8 +2085,8 @@ function renderPb() {
   const gx = typeof ui.gx === 'boolean' ? ui.gx : wide;
   if ($('pbGames').open !== gx) { PB_GX_QUIET = true; $('pbGames').open = gx; }
   const tile = g => { const fr = freshLine(g), un = off.has(g.id), when = timeOf(g);
-    return fr ? `<label class="pb-gt${un ? ' un' : ''}"><input type="checkbox" data-g="${g.id}"${un ? '' : ' checked'}><span><b>${esc(matchup(g))}</b><span>${esc(when)}</span></span></label>`
-      : `<div class="pb-gt no" aria-disabled="true"><span><b>${esc(matchup(g))}</b><span>${g.line ? 'line not on DraftKings at the last run' : 'no line yet'}</span></span></div>`; };
+    return fr ? `<label class="pb-gt${un ? ' un' : ''}"><input type="checkbox" data-g="${g.id}"${un ? '' : ' checked'}><span><b>${muPills(g)}</b><span class="pb-gtt">${esc(when)}</span></span></label>`
+      : `<div class="pb-gt no" aria-disabled="true"><span><b>${muPills(g)}</b><span class="pb-gtt">${g.line ? 'line not on DraftKings at the last run' : 'no line yet'}</span></span></div>`; };
   $('pbGrid').innerHTML = sl.dates.length > 1 ? sl.dates.map(d => `<div class="pb-dayh">${esc(dayText(d))}</div>` + sl.games.filter(g => g.date === d).map(tile).join('')).join('') : sl.games.map(tile).join('') || '<span class="pb-hint">No game to come on this day.</span>';
   /* the notes, when they apply */
   const notes = [];
@@ -1758,6 +2100,7 @@ function renderPb() {
   $('pbNotes').innerHTML = notes.join(''); $('pbNotes').hidden = !notes.length;
   const w = pbWide(sl, pool);
   $('pbBody').innerHTML = w ? `<div class="empty pb-wide" id="pbWide">${esc(w)}</div>` : `<div class="pb-tiers">${PB_TIERS.map(t => pbTierCard(t, C.levels[t[0]], C.why[t[0]], sl)).join('')}</div>`;
+  fitNums();
   $('pbRules').textContent = `Each level is built only from the bet types and games ticked above, one leg a game. A leg qualifies when DraftKings prices both sides of it, the model gives it 45% to 97%, and its chance is at or above the chance DraftKings' price implies (the book's margin left in). Legs ${Math.round(S.edge * 100)} points or more above it are the model's calls, the ones the Games cards show; legs above it by less are used only where the calls cannot make a level, the fewest first, and are marked thin edge. A leg the model rates 15 points or more above DraftKings' fair chance (its two prices with the margin taken out) is left out. Safe is the likeliest pair; Medium, Aggressive and Extreme are the 3-, 4- and 5-leg parlays with the best return (chance times payout) that land at least 25%, 12% and 5% of the time by the model's chance, or, where none does, the likeliest of that size. Each leads with DraftKings' fair chance, the model's beside it; the levels are chosen on the model's. The price is DraftKings' parlay price: the legs' prices multiplied, as it pays a parlay of different games. The levels never take a player leg or two legs of one game; the builder below does, a same-game parlay's price an estimate.`;
   for (const g of sl.games) SHOWN.add(g.id);
 }
@@ -1766,6 +2109,7 @@ let PB_GX_QUIET = false;
 function pbPays() {
   const stake = pbStake();
   for (const el of document.querySelectorAll('[data-pb-pay]')) { const d = +el.dataset.pbPay; el.querySelector('.v').textContent = money(cents(stake * d)); el.querySelector('.k').textContent = `${stakeShort(stake)} pays`; }
+  fitNums();
 }
 let PB_STAKE_T = null;
 $('pbStake').addEventListener('input', () => {
@@ -1855,17 +2199,20 @@ function betBtn(g, side, kind, inB) {
   const on = inB.has(L.id);
   const call = L.pick === side, far = legFarOff(L);
   const lab = kind === 'ou' ? (side === 'over' ? 'Over' : 'Under') : kind === 'ml' ? T(g[side]).abbr : `${T(g[side]).abbr} ${fmtLine(L.num)}`;
-  const tag = call && far ? `<span class="pb-bt far">model's call · far off the market: left out of the levels · model ${whole(L.p)} · market ${whole(L.fair)}</span>`
-    : call ? `<span class="pb-bt">model's call · edge +${Math.round(L.edge * 100)}</span>`
-    : far ? `<span class="pb-bt far">far off the market · model ${whole(L.p)} · market ${whole(L.fair)}</span>` : '';
-  return `<button type="button" class="pb-bet${on ? ' on' : ''}${call ? ' call' : ''}${far ? ' far' : ''}" data-leg="${g.id}|${side}|${kind}" aria-pressed="${on}" aria-label="${esc(`${L.desc}, ${fmtOdds(L.price)}, model ${whole(L.p)}${on ? ', in your parlay' : ''}`)}"><span class="pb-bs">${esc(lab)}</span><span class="pb-bp">${fmtOdds(L.price)}</span><span class="pb-bc">model ${whole(L.p)}</span>${tag}${on ? '<span class="pb-bin">✓ In your parlay</span>' : ''}</button>`;
+  /* the model's call (the button lit lime), a side far off the market flagged with its two numbers, on the button itself wherever it is
+     drawn (a phone shows no title) */
+  const nw = t => `<span class="nw">${t}</span>`, both = `${nw(`model ${whole(L.p)}`)} · ${nw(`market ${whole(L.fair)}`)}`;
+  const tag = call && far ? `<span class="pb-bt far">${nw("model's call")} · far off the market: left out of the levels · ${both}</span>`
+    : call ? `<span class="pb-bt">${nw("model's call")} · ${nw(`edge +${Math.round(L.edge * 100)}`)}</span>`
+    : far ? `<span class="pb-bt far">${nw('far off the market')} · ${both}</span>` : '';
+  return `<button type="button" class="pb-bet${on ? ' on' : ''}${call ? ' call' : ''}${far ? ' far' : ''}" data-leg="${g.id}|${side}|${kind}" aria-pressed="${on}" aria-label="${esc(`${L.desc}, ${fmtOdds(L.price)}, model ${whole(L.p)}${far ? `, far off the market: model ${whole(L.p)}, market ${whole(L.fair)}` : ''}${on ? ', in your parlay' : ''}`)}"${far ? ` title="${esc(farText(L))}: left out of the suggested levels"` : ''}><span class="pb-bs">${esc(lab)}</span><span class="pb-bp">${fmtOdds(L.price)}</span><span class="pb-bc">model ${whole(L.p)}</span>${tag}${on ? '<span class="pb-bin">✓ In your parlay</span>' : ''}</button>`;
 }
 function betBlock(g) {
   const L = g.line;
   const inB = new Set(builderLegs(false).filter(B => B.game === g.id).map(B => B.id));
   const row = (k, label, a, b) => { const x = betBtn(g, a, k, inB) + betBtn(g, b, k, inB); return x ? `<div class="pb-brow"><span class="pb-bk">${esc(label)}</span><div class="pb-bb">${x}</div></div>` : ''; };
   SHOWN.add(g.id);
-  return `<div class="pb-bets">${row('ml', 'Moneyline', 'away', 'home')}${row('pl', 'Puck line', 'away', 'home')}${L.total !== null && L.total !== undefined ? row('ou', `Total ${L.total}`, 'over', 'under') : ''}<p class="pb-key">Tap a bet to add it. Edge: the model's chance less the price's, in points.${L.refreshed ? ` <span class="pb-rd">${esc(bookName(L))} as read from ESPN at ${esc(hhmm(L.at))}.</span>` : ''}</p></div>`;
+  return `<div class="pb-bets">${row('ml', 'Moneyline', 'away', 'home')}${row('pl', 'Puck line', 'away', 'home')}${L.total !== null && L.total !== undefined ? row('ou', `Total ${L.total}`, 'over', 'under') : ''}${L.refreshed ? `<p class="pb-key"><span class="pb-rd">${esc(bookName(L))} as read from ESPN at ${esc(hhmm(L.at))}.</span></p>` : ''}</div>`;
 }
 /* a leg button anywhere on the page adds or removes that bet: taken out where the builder draws it (its button pressed); else put in by
    the same-game rule, a stored leg at a number moved since replaced and one the builder leaves out (a game kept to one leg) put in */
@@ -1957,11 +2304,11 @@ function builderLegs(say) {
 function legRow(L, sgGames, withProps) {
   const sg = sgGames && sgGames.has(L.game) ? `<span class="tag sg" title="Priced with the other legs of its game as a same-game parlay: an estimate">same game</span>` : '';
   const x = `<button type="button" class="x" aria-label="Remove ${esc(legName(L))}" title="Remove">×</button>`;
-  if (L.prop) return `<div class="leg" data-id="${esc(L.id)}"><div class="pb-ll"><b>${esc(L.who)}</b><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(dayClock(L.start))}</span></span><span class="m pb-at">DraftKings, as read ${esc(hhmm(L.at))}</span>${sg}</div>
+  if (L.prop) return `<div class="leg" data-id="${esc(L.id)}"><div class="pb-ll"><span class="pb-who">${legPills(L)}<b>${esc(L.who)}</b></span><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(dayClock(L.start))}</span></span><span class="m pb-at">DraftKings, as read ${esc(hhmm(L.at))}</span>${sg}</div>
     <div class="pb-lr"><b>${fmtOdds(L.price)}</b><span class="pb-fm"><span>${L.fair === null ? 'no fair chance' : `fair ${whole(L.fair)}${L.fairEst ? ' est.' : ''}`}</span><span class="sep"> · </span><span>${L.p === null ? 'no projection' : `model ${whole(L.p)}, on trial`}</span></span></div>
     ${x}</div>`;
   const below = L.edge !== null && L.edge < 0, thin = !withProps && L.edge !== null && L.edge >= 0 && L.edge < S.edge;
-  return `<div class="leg" data-id="${esc(L.id)}"><div class="pb-ll"><b>${esc(L.who)}</b><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(dayClock(L.start))}</span></span>${thin ? '<span class="tag thin">thin edge</span>' : ''}${sg}${legFarOff(L) ? `<span class="pb-far">${esc(farText(L))}</span>` : ''}${below ? `<span class="pb-below">the model rates it below DraftKings' price</span>` : ''}</div>
+  return `<div class="leg" data-id="${esc(L.id)}"><div class="pb-ll"><span class="pb-who">${legPills(L)}<b>${esc(L.who)}</b></span><span>${esc(L.bet)}</span><span class="m">${esc(L.mu)} · <span class="nw">${esc(dayClock(L.start))}</span></span>${thin ? '<span class="tag thin">thin edge</span>' : ''}${sg}${legFarOff(L) ? `<span class="pb-far">${esc(farText(L))}</span>` : ''}${below ? `<span class="pb-below">the model rates it below DraftKings' price</span>` : ''}</div>
     <div class="pb-lr"><b>${fmtOdds(L.price)}</b><span class="pb-fm"><span>${L.fair === null ? 'no fair chance' : `fair ${whole(L.fair)}`}</span><span class="sep"> · </span><span>model ${whole(L.p)}</span></span></div>
     ${x}</div>`;
 }
@@ -1969,18 +2316,48 @@ function legRow(L, sgGames, withProps) {
    least), as the card's image does with its money; one that will not fit at 13px takes the whole row (a
    $100,000 stake's pays figure on a phone) and is fitted again there, so no figure is ever cut. Again
    whenever the width or the fonts change (Unbounded is wider than the fallback it replaces) */
+/* too wide: measured to the fraction of a pixel (scrollWidth is a whole number, so a figure 0.3px wider than its box passed and then
+   wrapped mid-number, "$158.4" over "1") */
+function tooWide(v) {
+  if (!(v.clientWidth > 0)) return false;
+  if (v.scrollWidth > v.clientWidth) return true;
+  let w = 0;
+  try { const r = document.createRange(); r.selectNodeContents(v); const b = r.getBoundingClientRect(); w = b ? b.width : 0; } catch (e) {}
+  return w > v.clientWidth - 0.5;
+}
+function fitOne(v, min) {
+  v.style.fontSize = ''; v.style.whiteSpace = 'nowrap';
+  let s = parseFloat(getComputedStyle(v).fontSize) || 22;
+  while (tooWide(v) && s > min) { s -= 1; v.style.fontSize = s + 'px'; }
+  const ok = !tooWide(v);
+  v.style.whiteSpace = '';
+  return ok;
+}
 function fitTiles() {
-  const fit = v => {
-    v.style.fontSize = ''; v.style.whiteSpace = 'nowrap';
-    let s = parseFloat(getComputedStyle(v).fontSize) || 22;
-    while (v.clientWidth > 0 && v.scrollWidth > v.clientWidth && s > 13) { s -= 1; v.style.fontSize = s + 'px'; }
-    const ok = !(v.clientWidth > 0 && v.scrollWidth > v.clientWidth);
-    v.style.whiteSpace = '';
-    return ok;
-  };
   for (const v of document.querySelectorAll('#parlayTotals .stat .v')) {
     const tile = v.closest('.stat'); tile.classList.remove('pb-span');
-    if (!fit(v)) { tile.classList.add('pb-span'); fit(v); }
+    if (!fitOne(v, 13)) { tile.classList.add('pb-span'); fitOne(v, 13); }
+  }
+  fitNums(); fitRecord();
+}
+/* the Record's five figures stepped down from 30px until each fits its tile on one line (16px the least), all five then at the smallest
+   size any needed so the strip reads as one row of figures, so a three-figure record never breaks at its hyphen ("179-" over "145");
+   one that will not fit even at 16px wraps rather than being cut */
+function fitRecord() {
+  const vs = [...document.querySelectorAll('#recordTotals .stat>b')]; if (!vs.length) return;
+  for (const v of vs) fitOne(v, 16);
+  const px = v => parseFloat(v.style.fontSize) || parseFloat(getComputedStyle(v).fontSize) || 30, min = Math.min(...vs.map(px));
+  for (const v of vs) v.style.fontSize = px(v) > min ? min + 'px' : v.style.fontSize;
+}
+/* a level's three numbers, each stepped down to fit its third of the card (13px the least); a pays figure that will not fit at 13px
+   (a $100,000 amount on a phone) takes the card's width and is fitted again there, as the builder's tiles do; never cut */
+function fitNums() {
+  for (const n of document.querySelectorAll('#pbBody .pb-n')) {
+    const v = n.querySelector('.v'); if (!v) continue;
+    n.classList.remove('pb-span');
+    if (fitOne(v, 13)) continue;
+    if (n.classList.contains('pay')) n.classList.add('pb-span');
+    fitOne(v, 11);
   }
 }
 let FIT_T = null;
@@ -1998,7 +2375,7 @@ function renderBuilder(legs) {
   const sgGames = new Set(Object.keys(per).filter(id => per[id] > 1)), withProps = legs.some(L => L.prop);
   $('bHead').textContent = n ? `${n}-leg parlay` : '';
   $('bMsg').innerHTML = BMSG.map(esc).join('<br>');
-  $('legs').innerHTML = n ? legs.map(L => legRow(L, sgGames, withProps)).join('') : `<div class="empty">No legs yet. Add a level's legs above, tap a bet in Pick your own legs or on the Games tab, or add a DraftKings player line from a game's Player props once Refresh odds has read it. A game takes one side bet (the moneyline or the puck line), one total and one leg a player a stat; legs of one game are priced as a same-game parlay, an estimate.</div>`;
+  $('legs').innerHTML = n ? legs.map(L => legRow(L, sgGames, withProps)).join('') : `<p class="pb-none">No legs yet. Add a level's legs above, tap a bet in Pick your own legs or on the Games tab, or add a DraftKings player line from a game's Player props once Refresh odds has read it. A game takes one side bet (the moneyline or the puck line), one total and one leg a player a stat; legs of one game are priced as a same-game parlay, an estimate.</p>`;
   if (document.activeElement !== $('stake')) $('stake').value = String(pbStake());
   for (const c of document.querySelectorAll('#chips [data-chip]')) c.classList.toggle('on', +c.dataset.chip === pbStake());
   const all = n === 1 ? 'it lands' : `all ${n} land`;
@@ -2165,7 +2542,7 @@ function renderSaved() {
       const shown = res && typeof res.x === 'number' && /^(win|loss|push)$/.test(gl) ? `${word} (${res.x})` : word;
       const day = l.start ? new Date(l.start).toLocaleDateString('en-US', Object.assign({ weekday: 'short', month: 'short', day: 'numeric' }, ETZ)).replace(',', '') : l.date ? dayText(l.date).replace(',', '') : '';
       const desc = isProp(l) ? descStored(l, g) : g ? descOf(l.kind, l.side, l.line === null || l.line === undefined ? null : +l.line, g) : String(l.text || '');
-      return `<li><span>${esc(g ? matchup(g) : String(l.label || ''))}${day ? ', ' + esc(day) : ''} · ${esc(desc)} ${fmtOdds(+l.odds)}</span><span class="tag ${gl === 'win' || gl === 'loss' || gl === 'push' ? gl : gl === 'void' ? 'void' : GONE_LEG.has(gl) ? 'gone' : ''}">${esc(shown)}</span></li>`;
+      return `<li><span>${g ? muPills(g) : esc(String(l.label || ''))}${day ? ', ' + esc(day) : ''} · ${esc(desc)} ${fmtOdds(+l.odds)}</span><span class="tag ${gl === 'win' || gl === 'loss' || gl === 'push' ? gl : gl === 'void' ? 'void' : GONE_LEG.has(gl) ? 'gone' : ''}">${esc(shown)}</span></li>`;
     }).join('');
     const when = typeof sp.at === 'string' ? new Date(sp.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
     const est = sp.est ? ' est.' : '', mword = sp.props ? `model ${whole(p)}, props model on trial` : `model ${whole(p)}`;
@@ -2173,7 +2550,7 @@ function renderSaved() {
       <div class="pb-sl">${stakeShort(stake)} · pays ${money(cents(stake * d))} if it lands${sp.est ? ' (an estimate of DraftKings\' same-game price)' : ''}${when ? ' · saved ' + esc(when) : ''}</div>
       <ul class="pb-slegs">${legs}</ul>
       <div class="pb-sl">${fair !== null && isFinite(fair) ? `fair ${whole(fair)}${sp.fairEst ? ' est.' : ''}${isFinite(p) ? ' · ' + mword : ''}` : isFinite(p) ? `${mword} · the price says ${whole(imp)}` : ''}</div></div>`;
-  }).join('') : '<div class="empty">Nothing saved on this device.</div>';
+  }).join('') : '<p class="pb-none">Nothing saved on this device.</p>';
   if (SAVED_DIRTY) { SAVED_DIRTY = false; save(); }
 }
 $('savedList').addEventListener('click', e => {
@@ -2219,7 +2596,7 @@ function updateSlip() {
   const show = q ? (tab !== 'parlays' || BUILDER_OUT) : (SLIP_SAY && tab !== 'parlays');
   $('slip').hidden = !show; document.body.classList.toggle('has-slip', show);
   $('slipText').textContent = q ? `${q.n} leg${q.n > 1 ? 's' : ''} · ${q.am}${q.est ? ' est.' : ''} · ${stakeShort(q.stake)} pays ${money(q.pays)}` : 'No legs in the builder';
-  updateLegCount();
+  updateTabCounts();
 }
 $('slipOpen').addEventListener('click', () => { showTab('parlays'); scrollToEl($('builder')); });
 if (typeof IntersectionObserver === 'function') new IntersectionObserver(es => { for (const e of es) BUILDER_OUT = !e.isIntersecting; updateSlip(); }).observe($('builder'));
@@ -2306,13 +2683,13 @@ function cardHtml(c) {
 }
 function noteHtml(c) {
   const P2 = c.plan, n = c.legs.length, k = P2.open.length;
-  const links = P2.rows.map(r => { const u = P2.link(r); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener" aria-label="Leg ${r.n} on DraftKings">${r.n}</a>` : ''; }).filter(Boolean);
-  const one = links.length ? ` One leg at a time: ${links.join(' · ')}.` : '';
-  const head = k ? `${P2.read ? `DraftKings' lines as read ${esc(etRead(P2.read))}` : "When DraftKings' lines were read is not recorded"}: Open in DraftKings opens ${k === n ? `the ${n} legs` : `${k} of the ${n} legs`} as DraftKings had them then; a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet.${one}`
-    : `Open DraftKings opens DraftKings' NHL page: add the legs by hand.${one}`;
+  const links = P2.rows.map(r => { const u = P2.link(r); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener" aria-label="Leg ${r.n} on DraftKings">Leg ${r.n}</a>` : ''; }).filter(Boolean);
+  const one = links.length ? `<p class="pc-one">One leg at a time: ${links.join(' ')}</p>` : '';
+  const head = k ? `${P2.read ? `DraftKings' lines as read ${esc(etRead(P2.read))}` : "When DraftKings' lines were read is not recorded"}: Open in DraftKings opens ${k === n ? `the ${n} legs` : `${k} of the ${n} legs`} as DraftKings had them then; a leg whose line DraftKings has moved or pulled since will not be on the slip, so check it before you bet.`
+    : `Open DraftKings opens DraftKings' NHL page: add the legs by hand.`;
   const hand = P2.rows.filter(r => !r.id);
   const est = c.q.est ? `<p>The price here is an estimate: ${esc(SGP_WHY)}, so the slip will show DraftKings' own same-game price.</p>` : '';
-  return `<p>${head}</p>${est}${hand.length ? `<p>${k ? 'Not on the slip, to add by hand:' : 'Why none can go on the slip:'}</p><ul>${hand.map(r => `<li>Leg ${r.n}, ${esc(r.L.who)} ${esc(r.L.bet)}: ${esc(r.why)}.</li>`).join('')}</ul>` : ''}`;
+  return `<p>${head}</p>${one}${est}${hand.length ? `<p>${k ? 'Not on the slip, to add by hand:' : 'Why none can go on the slip:'}</p><ul>${hand.map(r => `<li>Leg ${r.n}, ${esc(r.L.who)} ${esc(r.L.bet)}: ${esc(r.why)}.</li>`).join('')}</ul>` : ''}`;
 }
 function canShareFile(name) {
   try { return typeof navigator.canShare === 'function' && typeof navigator.share === 'function' && typeof File === 'function' && !!navigator.canShare({ files: [new File([new Uint8Array([137, 80, 78, 71])], name, { type: 'image/png' })] }); } catch (e) { return false; }
@@ -2475,7 +2852,7 @@ function renderParlayLines() {
   const sl = pbSlate(), gs = sl.games.filter(freshLine);
   $('pbPickN').textContent = gs.length ? `${gs.length} game${gs.length > 1 ? 's' : ''} on ${slateText(sl)}` : '';
   if (!PICK_SET) { PICK_SET = true; $('pbPick').open = !(window.matchMedia && window.matchMedia('(max-width:760px)').matches); }
-  $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh"><b>${esc(matchup(g))}</b><span>${esc(sl.dates.length > 1 ? when(g) : timeOf(g))} · model ${esc(T(g.pHome >= 0.5 ? g.home : g.away).abbr)} ${pct(Math.max(g.pHome, 1 - g.pHome))}</span></div>${betBlock(g)}${ppBtn(g)}</div>`).join('')
+  $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh">${muPills(g)}<span class="pb-pgt">${esc(sl.dates.length > 1 ? when(g) : timeOf(g))}</span><span class="chip" title="the model's chance to win, overtime included">Model <b>${esc(T(g.pHome >= 0.5 ? g.home : g.away).abbr)} ${pct(Math.max(g.pHome, 1 - g.pHome))}</b></span></div>${betBlock(g)}${ppBtn(g)}</div>`).join('')
     : `<div class="empty">Nothing to bet yet: no game on ${esc(slateText(sl) || 'the schedule')} still to come has a DraftKings line. Lines come about a day before puck drop.</div>`;
 }
 let PICK_SET = false;
@@ -2490,11 +2867,12 @@ function renderParlays() {
   if (P.ui.bmsg !== undefined) { delete P.ui.bmsg; save(); }          // said in the builder now
 }
 function rerender() {
-  const t = curTab(), a = document.activeElement, leg = a && a.dataset ? a.dataset.leg : null, box = leg && a.closest('#games, #plLines');
+  const t = curTab(), a = document.activeElement, ds = a && a.dataset ? a.dataset : null;
+  const key = ds ? ['leg', 'lu', 'pp', 'pbgo'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#games, #plLines');
   if (t === 'parlays') renderParlays(); else if (t === 'games') { SHOWN = new Set(); renderGames(); }
   updateSlip();
-  /* a bet button redrawn under the visitor's finger keeps the focus, where it is still offered */
-  if (leg && box && !document.contains(a)) { const nb = [...box.querySelectorAll('button[data-leg]')].find(x => x.dataset.leg === leg); if (nb) nb.focus(); }
+  /* a bet button, a card's Lineups, Player props or Parlay Builder → redrawn under the visitor's finger keeps the focus, where it is still offered */
+  if (key && box && !document.contains(a)) { const nb = [...box.querySelectorAll(`button[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}]`)].find(x => x.dataset[key] === val); if (nb) nb.focus(); }
 }
 /* every half minute, and when the page comes back into view: a game shown as still to come that has
    started leaves every level, the lists and the builder (said there), and an emptied slate moves on */
@@ -2509,6 +2887,7 @@ function pbWatch() {
   if (over(PB_DROP)) { PB_DROP = null; said = true; }
   if (pruneLegs() || shownGone || (said && curTab() === 'parlays')) rerender();      // once: a pruned builder holds no leg the watch would see again
   ppWatch();                                                                         // the props window on a game whose puck dropped says so
+  updateTabCounts();                                                                 // a puck drop moves the Games tab's count, whatever tab is open
 }
 /* the stored legs read again from the state, on any tab: a leg that can no longer be bet leaves the
    builder (said there and on the slip bar) and a moved price is updated, so the Games cards, the slip and
@@ -2980,7 +3359,12 @@ function ppBtn(g) {
   const sub = !rd ? "the model's projections (on trial) · press Refresh odds for DraftKings' props"
     : rd.status === 200 ? `DraftKings: ${plural(rd.main.length, 'main line', 'main lines')} and ${plural(rd.yes.length, 'milestone price', 'milestone prices')}, read ${hhmm(rd.at)}`
     : rd.status === 404 ? `DraftKings: none posted yet (read ${hhmm(rd.at)})` : "DraftKings' props could not be read";
-  return `<button type="button" class="pp-open" data-pp="${esc(g.id)}" aria-haspopup="dialog"><b>Player props</b> <span>${esc(sub)}</span></button>`;
+  /* on the button, in few words (the NBA's): Player props alone until a press (the model's projections, said on its title), then
+     what DraftKings has and when it was read; the whole sentence on its title */
+  const has = !!rd && rd.status === 200 && rd.main.length + rd.yes.length > 0;
+  const word = !rd ? '' : rd.status === 200 ? `${rd.main.length ? plural(rd.main.length, 'line', 'lines') : plural(rd.yes.length, 'price', 'prices')} · ${hhmm(rd.at)}`
+    : rd.status === 404 ? `none posted yet · ${hhmm(rd.at)}` : 'not read';
+  return `<button type="button" class="btn ghost pp-open${has ? ' has' : ''}" data-pp="${esc(g.id)}" aria-haspopup="dialog" title="${esc(sub)}">Player props${word ? ' · ' + esc(word) : ''}</button>`;
 }
 /* every player of the game: the props model's projection for each stat (the published distribution), DraftKings' main line
    and Yes ladder for each stat from the read, matched by ESPN's athlete id; the club and name from the projections, else the
@@ -3049,7 +3433,7 @@ function renderProps() {
   if (!PP || !S) return;
   const g = gameById()[PP.gid];
   PP.gone = !g || hasStarted(g);
-  $('ppGame').innerHTML = g ? `<b>${esc(T(g.away).short)} @ ${esc(T(g.home).short)}</b><span>${esc(when(g))}</span><span class="tag trial">props model on trial</span>` : '';
+  $('ppGame').innerHTML = g ? `${muPills(g)}<span>${esc(when(g))}</span><span class="tag rose" title="Not yet shown to beat DraftKings: shown beside its lines, it suggests nothing">props model on trial</span>` : '';
   const trial = `<p><b>The props model is on trial.</b> Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once Refresh odds has read it), at DraftKings' price as read; the suggested levels never use a prop.</p>${ppLedger() ? `<p>${esc(ppLedger())}</p>` : ''}`;
   $('ppTrial').innerHTML = S.props ? trial : `<p><b>No props model in this publish.</b> DraftKings' prices are shown alone.</p>`;
   $('ppHow').innerHTML = ppHow();
@@ -3074,7 +3458,7 @@ function renderProps() {
   const block = (club, list, label) => {
     const priced = list.filter(x => ppPriced(x, stat)).sort(byProj), rest = list.filter(x => !ppPriced(x, stat) && x.proj[stat]).sort(byProj);
     const t = club ? T(club) : null;
-    const head = `<h3>${t && t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : ''}${esc(t ? t.short : 'Not matched to either club')}${label ? ` <small>${esc(label)}</small>` : ''}</h3>`;
+    const head = `<h3>${club ? pill(club, true) + ' ' : ''}${esc(t ? t.short : 'Not matched to either club')}${label ? ` <small>${esc(label)}</small>` : ''}</h3>`;
     let body = '';
     if (dkIn) {
       body += priced.length ? priced.map(x => ppRow(x, stat, !pr, g, inB)).join('') : `<p class="pp-none">DraftKings has no ${PP_NAME[stat]} line on ${esc(t ? t.short : 'them')}.</p>`;
@@ -3157,21 +3541,25 @@ document.addEventListener('keydown', e => {
 /* ---------- Record ---------- */
 function renderRecord() {
   const R = S.record; const f = S.model.fitted;
-  const stat = (k, v, cls) => `<div class="stat"><div class="k">${k}</div><div class="v ${cls || ''}">${v}</div></div>`;
+  const stat = (k, v, cls) => `<div class="stat"><b${cls ? ` class="${cls}"` : ''}>${v}</b><span>${k}</span></div>`;
   const rate = r => r.w + r.l ? pct1(r.w / (r.w + r.l)) : '—';
   const wl = r => `${r.w}-${r.l}${r.p ? '-' + r.p : ''}`;
   const cls = r => r.w > r.l ? 'good' : r.w < r.l ? 'bad' : '';
   $('recordTotals').innerHTML = stat('Straight up', `${R.su.w}-${R.su.l}`) + stat('SU rate', rate(R.su)) + stat('Moneyline picks', wl(R.ml), cls(R.ml)) + stat('Puck line picks', wl(R.pl), cls(R.pl)) + stat('Totals picks', wl(R.ou), cls(R.ou));
+  fitRecord();
   const replayed = S.games.filter(g => g.result && !g.frozen).length;
   /* calls made before the injury report was read right (ESPN's feed gives the id only in a link, and an
      older job read none, so nobody was ever taken out): they stand as shown, and say so */
   const blind = S.games.filter(g => g.result && g.frozen && g.pm && !g.pm.inj).length;
   $('recordNote').textContent = `Every game the model called, straight up; and every side it took on the moneyline, the puck line or the total, where its chance beat DraftKings' implied by ${Math.round(S.edge * 100)} points or more, each graded on the call shown before puck drop. ${replayed ? replayed + ' games were over before the job first ran and are graded from the replay, without a line. ' : ''}${blind ? `${blind} calls were made before the injury report was applied (a reading error kept every injured player, goalies included, in the lineups); they are graded as they were shown.` : ''}`;
   const months = Object.keys(R.byMonth).sort((a, b) => (a === 'playoffs') - (b === 'playoffs') || a.localeCompare(b));
+  /* on a phone the month is written short; every column stays, the table scrolling sideways in its wrapper where it must */
   const mName = m => m === 'playoffs' ? 'Playoffs' : new Date(m + '-15T12:00:00Z').toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const head = '<thead><tr><th>When</th><th class="n">SU</th><th class="n">Rate</th><th class="n">ML</th><th class="n">Puck line</th><th class="n">Totals</th></tr></thead>';
-  $('recMonth').innerHTML = head + '<tbody>' + months.map(m => `<tr><td>${mName(m)}</td><td class="n">${R.byMonth[m].su.w}-${R.byMonth[m].su.l}</td><td class="n">${rate(R.byMonth[m].su)}</td><td class="n">${wl(R.byMonth[m].ml)}</td><td class="n">${wl(R.byMonth[m].pl)}</td><td class="n">${wl(R.byMonth[m].ou)}</td></tr>`).join('') + '</tbody>';
-  $('recBand').innerHTML = head.replace('When', 'Model chance') + '<tbody>' + ['70+', '60-70', '50-60'].filter(b => R.bands[b]).map(b => `<tr><td>${b}%</td><td class="n">${R.bands[b].su.w}-${R.bands[b].su.l}</td><td class="n">${rate(R.bands[b].su)}</td><td class="n">${wl(R.bands[b].ml)}</td><td class="n">${wl(R.bands[b].pl)}</td><td class="n">${wl(R.bands[b].ou)}</td></tr>`).join('') + '</tbody>';
+  const mShort = m => m === 'playoffs' ? 'Playoffs' : new Date(m + '-15T12:00:00Z').toLocaleDateString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const head = '<thead><tr><th class="sk">When</th><th class="n">SU</th><th class="n">Rate</th><th class="n">ML</th><th class="n"><span class="t-wide">Puck line</span><span class="t-narrow">PL</span></th><th class="n">Totals</th></tr></thead>';
+  const cells = r => `<td class="n big">${r.su.w}-${r.su.l}</td><td class="n">${rate(r.su)}</td><td class="n">${wl(r.ml)}</td><td class="n">${wl(r.pl)}</td><td class="n">${wl(r.ou)}</td>`;
+  $('recMonth').innerHTML = head + '<tbody>' + months.map(m => `<tr><td class="sk">${m === 'playoffs' ? 'Playoffs' : `<span class="t-wide">${mName(m)}</span><span class="t-narrow">${mShort(m)}</span>`}</td>${cells(R.byMonth[m])}</tr>`).join('') + '</tbody>';
+  $('recBand').innerHTML = head.replace('When', 'Model chance') + '<tbody>' + ['70+', '60-70', '50-60'].filter(b => R.bands[b]).map(b => `<tr><td class="sk">${b}%</td>${cells(R.bands[b])}</tr>`).join('') + '</tbody>';
   const p = S.model.params;
   $('fitNote').textContent = `Elo with K ${p.K}, ${Math.round(p.carry * 100)}% of a rating carried between seasons, ${p.hfa} Elo of home ice, ${p.b2b} off a side that played yesterday, ${p.rest} on for three days' rest, a result past regulation worth ${Math.round(p.ot * 100)}% of a win and a goal-margin multiplier, chosen by log loss on ${f.seasons[0]}-${f.seasons[f.seasons.length - 1]} (${f.games} games, ${pct1(f.accuracy)} of winners called). Held out, ${f.holdout}: ${pct1(f.holdoutAccuracy)} of winners, margin off by ${f.holdoutMarginMae} goals on average. The puck line and the total come from a Poisson goals layer on the club's scoring rates, ${Math.round(S.model.pull * 100)}% of one-goal games pulled into overtime so it goes to overtime as often as the league does (${pct1(S.model.otRate)}).`;
 }

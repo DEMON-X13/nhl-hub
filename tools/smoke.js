@@ -39,6 +39,11 @@
        (NHL_PREV_LEDGER, else git's HEAD:data/props_ledger.json), and the state's projections: games still to
        come only, every distribution whole, every player in his club's lineup and not out, each game the
        ledger's open call
+     - the look (THE LOOK, nhl v12): no image anywhere, every club's colour at its contrast bar and in a hue of its own, every game
+       card of every day on the strip worked out from the state, part by part, a side far off the market said on its own button with
+       both numbers, and every table keeping every column at every width, scrolling sideways in its wrapper with its hidden names held
+       inside it (the Standings' four on the same column widths); the figures' formats, the bracket's rows, and the Record's figures
+       fitted to their tiles (jsdom lays nothing out: the rules are read, and the Record's fit is held on a made-up layout)
    NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page. */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -835,7 +840,8 @@ async function cardChecks(w, legs, origin) {
   /* the Tab order: Close, Open in DraftKings, Share link, Download image, Start over, then each leg's own link */
   const focusables = () => [...$('pcPanel').querySelectorAll('button, a[href]')].filter(x => !x.hidden && !x.disabled && !x.closest('[hidden]')).map(x => x.id || ('leg ' + txt(x)));
   const order = focusables();
-  chk(order.slice(0, 5).join(',') === 'pcClose,pcDk,pcLink,pcDown,pcAgain' && order.slice(5).every(x => /^leg \d+$/.test(x)), `the Tab order is Close, Open in DraftKings, Share link, Download image, Start over, the legs (${order.join(', ')})`);
+  chk(order.slice(0, 5).join(',') === 'pcClose,pcDk,pcLink,pcDown,pcAgain' && order.slice(5).every((x, i) => x === `leg Leg ${i + 1}` || /^leg Leg \d+$/.test(x)), `the Tab order is Close, Open in DraftKings, Share link, Download image, Start over, the legs, each a 44px link named Leg N (${order.join(', ')})`);
+  chk([...$('pcNote').querySelectorAll('a[href]')].every(a => w.getComputedStyle(a).minHeight === '44px' && w.getComputedStyle(a).minWidth === '44px'), 'each leg\'s own link is 44px square or more');
   const last = [...$('pcPanel').querySelectorAll('button, a[href]')].filter(x => !x.hidden && !x.closest('[hidden]')).pop();
   last.focus(); d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
   chk(d.activeElement === $('pcClose'), `Tab from the last stays inside: back to Close (${d.activeElement && d.activeElement.id})`);
@@ -1091,7 +1097,12 @@ async function parlayEdges() {
       d.querySelector('#tabs button[data-tab="games"]').click();
       const db = d.querySelector(`#days .day[data-day="${st.date}"]`); if (db) db.click();
       const c = d.querySelector(`#games .game[data-id="${st.id}"]`);
-      chk(c && !c.querySelector('button[data-leg]') && /not on DraftKings at the last run/.test(txt(c)), `a stale line's card offers no bet and says why: ${c && txt(c.querySelector('.lines')).slice(0, 160)}`);
+      chk(c && !c.querySelector('button[data-leg]') && txt(c.querySelector('.pb-stale')) === `line from ${clockOf(Date.parse(st.line.at))}: not on DraftKings at the last run`, `a stale line's card offers no bet and says why: ${c && txt(c.querySelector('.pb-stale'))}`);
+      /* and shows the market's lines as chips, every number the line's, as the card does a game started */
+      const L = st.line, mkW = [`Moneyline ${ab(st.away)} ${oddsS(L.awayML)} ${ab(st.home)} ${oddsS(L.homeML)}`].concat(L.homeLine !== null && L.homeLine !== undefined ? [`Puck line ${ab(st.away)} ${lineS(-L.homeLine)} ${oddsS(L.awaySpreadOdds)} ${ab(st.home)} ${lineS(L.homeLine)} ${oddsS(L.homeSpreadOdds)}`] : [], L.total !== null && L.total !== undefined ? [`Over/under ${L.total} o ${oddsS(L.overOdds)} · u ${oddsS(L.underOdds)}`] : []);
+      const mkH = c ? [...c.querySelectorAll('.chip[data-ck="ml"], .chip[data-ck="pl"], .chip[data-ck="ou"]')].map(txt) : [];
+      chk(eqA(mkH, mkW), `the stale card's market chips are the line's numbers ${JSON.stringify(mkW)} (${JSON.stringify(mkH)})`);
+      if (c) { const bad = cardWrongs(w, c, st, PUB + 60000, pageMap(w)); chk(!bad.length, `the stale card is the state's (${bad.slice(0, 3).join(' | ')})`); }
       chk(!errs.length, 'no runtime error on a stale line: ' + errs.join(' | '));
     } finally { S = real; }
   }
@@ -1912,7 +1923,8 @@ function ppTrialChecks(w, tag) {
     : `Its shadow ledger: ${(+Lg.compared || 0).toLocaleString('en-US')} of ${of} DraftKings main lines graded${+Lg.graded_games ? `, in ${Lg.graded_games} game${+Lg.graded_games === 1 ? '' : 's'}` : ''}.${nums} The verdict comes at ${of}, not before.`;
   chk(tr.endsWith(want), `${tag}: the ledger's running numbers, quietly ("${want}": ${tr.slice(-160)})`);
   chk(Lg.decision || !/\bpass/i.test(tr), `${tag}: no word of passing before the bar is decided`);
-  chk(!/model says|\bedge/i.test(win) && ![...d.querySelectorAll('.pp-open')].some(b => /model says|\bedge/i.test(txt(b))), `${tag}: neither the window nor a Player props button says "model says" or "edge" on a prop`);
+  const ppBtns = [...d.querySelectorAll('button[data-pp]')];
+  chk(ppBtns.length > 0 && !/model says|\bedge/i.test(win) && !ppBtns.some(b => /model says|\bedge/i.test(txt(b) + ' ' + b.title)), `${tag}: neither the window nor a Player props button says "model says" or "edge" on a prop (${ppBtns.length} buttons)`);
   chk(!d.querySelector('#ppWin button[data-leg], #ppWin [data-pb-add], #ppWin [data-pc-finish]'), `${tag}: nothing in the window puts a level or a game's bet in a parlay`);
   const rd = w.eval('PP && PROPS.games[PP.gid] ? PROPS.games[PP.gid].status : null');
   if (rd !== 200) chk(!d.querySelector('#ppWin [data-pp-add]'), `${tag}: with no DraftKings price read, no price in the window can be added (${d.querySelectorAll('#ppWin [data-pp-add]').length})`);
@@ -1952,10 +1964,10 @@ async function playerPropsChecks() {
     const errs = [], w = await boot(AT, errs, { hash: 'games' }), d = w.document, writes0 = w.__writes.length, st0 = w.localStorage.getItem('nhl_v1');
     const allBtn = () => [...d.querySelectorAll('button[data-pp]')];
     const days = [...d.querySelectorAll('#days .day')].map(b => b.dataset.day), seen = new Map();
-    for (const dd of days) { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); for (const x of allBtn()) seen.set(x.dataset.pp, txt(x)); }
+    for (const dd of days) { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); for (const x of allBtn()) seen.set(x.dataset.pp, txt(x) + ' | ' + x.title); }
     const want = S.games.filter(g => !sStarted(g, AT) && S.props && S.props.games && S.props.games[g.id]).map(g => g.id).sort();
     chk(canon([...seen.keys()].sort()) === canon(want), `before a press a Player props button on every game still to come that the props model projects, and on no other (${seen.size} buttons, ${want.length} projected)`);
-    chk([...seen.values()].every(t => t === "Player props the model's projections (on trial) · press Refresh odds for DraftKings' props"), `and each says it shows the model's projections, on trial, until Refresh odds (${[...seen.values()][0]})`);
+    chk(seen.size > 0 === want.length > 0 && [...seen.values()].every(t => t === "Player props | the model's projections (on trial) · press Refresh odds for DraftKings' props"), `and each says it shows the model's projections, on trial, until Refresh odds (${[...seen.values()][0]})`);
     for (const b of allBtn().slice(0, 1)) chk(w.getComputedStyle(b).minHeight === '44px' && b.getAttribute('aria-haspopup') === 'dialog', 'a Player props button is 44px tall and says it opens a window');
     let g0 = null;
     if (projected.length) {
@@ -1983,7 +1995,12 @@ async function playerPropsChecks() {
       /* Pick your own legs carries the button too, on a game with a fresh line the model projects */
       d.querySelector('#tabs button[data-tab="parlays"]').click();
       const pick = d.querySelector('#plLines .pb-pg button[data-pp]');
-      if (pick) { pick.click(); chk(!d.getElementById('ppWin').hidden && txt(d.getElementById('ppGame')).includes(S.teams[S.games.find(g => g.id === pick.dataset.pp).home].short), 'Pick your own legs carries the Player props button, which opens its game'); d.getElementById('ppClose').click(); }
+      if (pick) {
+        const pg = S.games.find(g => g.id === pick.dataset.pp); pick.click();
+        /* the window's head names the game by its clubs' pills, "PIT @ COL", as the NBA's sheet does */
+        chk(!d.getElementById('ppWin').hidden && txt(d.querySelector('#ppGame .mu')) === `${S.teams[pg.away].abbr} @ ${S.teams[pg.home].abbr}`, `Pick your own legs carries the Player props button, which opens its game (${txt(d.querySelector('#ppGame .mu'))})`);
+        d.getElementById('ppClose').click();
+      }
       d.dispatchEvent(new w.Event('visibilitychange'));
       for (const t of ['standings', 'games', 'players', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     } else console.log('  no game still to come today or tomorrow that the props model projects: the window before a press is not opened');
@@ -2061,7 +2078,8 @@ async function playerPropsChecks() {
   chk(canon(pageGames(w)) === games0 && w.eval('ODDS.v') === v0 && w.eval('JSON.stringify(P.legs)') === legs0, 'the props read moves nothing the levels or the builder stand on: every game, line and leg as before, the levels\' cache unmoved');
   void tiers0;
   const names = [...new Set([].concat(...Object.values(S.props.games).map(r => [...r.homeP.skaters, ...r.awayP.skaters].map(p => p.name))))].filter(n => n && n.length > 5);
-  const panelT = ['pbPanel', 'builder', 'slip', 'plLines'].map(id => { const el = d.getElementById(id); if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('.pp-open').forEach(x => x.remove()); return txt(c); }).join(' ');
+  chk(d.querySelectorAll('#plLines button[data-pp]').length > 0 || !d.querySelector('#plLines .pb-pg'), 'Pick your own legs carries the Player props buttons it is held without');
+  const panelT = ['pbPanel', 'builder', 'slip', 'plLines'].map(id => { const el = d.getElementById(id); if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('button[data-pp]').forEach(x => x.remove()); return txt(c); }).join(' ');
   chk(!names.some(n => panelT.includes(n)) && [...d.querySelectorAll('.pb-tier .pb-tl, #legs .leg')].every(x => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(x.dataset.id)), 'no player is put in a level, the builder or Pick your own legs: every leg is a game\'s');
   chk(w.__writes.length === writes0 && w.localStorage.getItem('nhl_v1') === store0, `the press writes nothing to storage (${w.__writes.length - writes0} writes)`);
   /* the window on the game read in two pages: every number worked out here */
@@ -2070,12 +2088,13 @@ async function playerPropsChecks() {
   const dayOn = dd => { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); };     // the strip is drawn again on each click
   dayOn(G.date);
   const opener = d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`);
-  chk(!!opener && txt(opener) === `Player props DraftKings: ${parsedG.main.length} main line${parsedG.main.length === 1 ? '' : 's'} and ${parsedG.yes.length} milestone price${parsedG.yes.length === 1 ? '' : 's'}, read ${clockOf(at)}`, `after the press the game's button says what DraftKings has (${opener && txt(opener)})`);
-  for (const [g, word] of [[H, "Player props DraftKings' props could not be read"]].concat(live.filter(g => !taken.has(g.id) && S.props.games[g.id]).slice(0, 1).map(g => [g, `Player props DraftKings: none posted yet (read ${clockOf(at)})`]))) {
+  const nG = parsedG.main.length, yG = parsedG.yes.length, wordG = nG ? `${nG} line${nG === 1 ? '' : 's'}` : `${yG} price${yG === 1 ? '' : 's'}`;
+  chk(!!opener && txt(opener) === `Player props · ${wordG} · ${clockOf(at)}` && opener.title === `DraftKings: ${nG} main line${nG === 1 ? '' : 's'} and ${yG} milestone price${yG === 1 ? '' : 's'}, read ${clockOf(at)}` && opener.classList.contains('has'), `after the press the game's button says what DraftKings has, and when, lit (${opener && txt(opener) + ' | ' + opener.title})`);
+  for (const [g, word, title] of [[H, 'Player props · not read', "DraftKings' props could not be read"]].concat(live.filter(g => !taken.has(g.id) && S.props.games[g.id]).slice(0, 1).map(g => [g, `Player props · none posted yet · ${clockOf(at)}`, `DraftKings: none posted yet (read ${clockOf(at)})`]))) {
     if (!g || !S.props.games[g.id]) continue;
     const db = d.querySelector(`#days .day[data-day="${g.date}"]`); if (db) db.click();
     const b = d.querySelector(`#games .game[data-id="${g.id}"] button[data-pp]`);
-    chk(!!b && txt(b) === word, `${g.id}: its button says "${word}" (${b && txt(b)})`);
+    chk(!!b && txt(b) === word && b.title === title && !b.classList.contains('has'), `${g.id}: its button says "${word}" ("${title}") (${b && txt(b) + ' | ' + b.title})`);
   }
   dayOn(G.date);
   d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
@@ -2140,7 +2159,7 @@ async function playerPropsChecks() {
     const errsR = [], wR = await boot(T2, errsR, { hash: 'games', store: w.localStorage.getItem('nhl_v1') }), dR = wR.document;
     const db = dR.querySelector(`#days .day[data-day="${G.date}"]`); if (db) db.click();
     const b = dR.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`);
-    chk(!!b && txt(b) === "Player props the model's projections (on trial) · press Refresh odds for DraftKings' props" && wR.eval('Object.keys(PROPS.games).length') === 0, `a reload is the published page: no DraftKings props, the button back to the projections (${b && txt(b)})`);
+    chk(!!b && txt(b) === 'Player props' && b.title === "the model's projections (on trial) · press Refresh odds for DraftKings' props" && wR.eval('Object.keys(PROPS.games).length') === 0, `a reload is the published page: no DraftKings props, the button back to the projections (${b && txt(b)})`);
     if (b) { b.click(); chk(txt(dR.getElementById('ppRead')).startsWith("Press Refresh odds for DraftKings' player props on this game.") && !dR.querySelector('#ppBody .pp-main, #ppBody .pp-k'), 'and its window shows the projections alone until a press'); }
     chk(!propReqs(wR).length && !errsR.length, `and asks ESPN for no props (${propReqs(wR).length}; ${errsR.join(' | ')})`);
   }
@@ -3009,6 +3028,485 @@ async function gradingChecks(C) {
   } finally { S = real; }
 }
 
+/* ---------- THE LOOK (nhl v12): the NBA Hub's components, every one held to the state with this smoke's own code ----------
+   No image anywhere (the page's source names none and a walk of every tab, day, drawer and window finds none); the club colours
+   (TEAM_COLORS) on every club, each at its contrast bar on every surface and in a hue of its own; every game
+   card's badges, pick, chances, chips, tags, bets board, who is out, Lineups drawer and foot worked out here from the state; the tab
+   counts; Parlay Builder → on a card; every pill and table head; the Record's tiles; the 44px controls */
+const pctS = p => (p * 100).toFixed(0) + '%';
+const oddsS = n => n === null || n === undefined ? '—' : n > 0 ? '+' + n : String(n);
+const lineS = n => n === 0 ? 'PK' : n > 0 ? '+' + n : String(n);
+const ab = id => S.teams[id] ? S.teams[id].abbr : id;
+const sh = id => S.teams[id] ? S.teams[id].short : id;
+const okPrice = v => v !== null && v !== undefined && isFinite(v) && v !== 0;
+const styleVar = (el, k) => { const m = new RegExp(`${k}:\\s*([^;]+)`).exec((el && el.getAttribute('style')) || ''); return m ? m[1].trim() : null; };
+const sMarginS = g => Math.abs(g.mu) < 0.05 ? 'even' : `${ab(g.mu > 0 ? g.home : g.away)} +${Math.abs(g.mu).toFixed(1)}`;
+/* a goals figure as the card and the drawer write it: two places, its sign from the rounded value (never -0.00) */
+const v2S = x => { const r = Math.round(x * 100) / 100; return { t: `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)}`, c: r > 0 ? 'pos' : r < 0 ? 'neg' : '' }; };
+/* a player out gets a row of his own when the report has him Out or suspended, or he is worth 0.02 goals a game or more; the rest of
+   his club's outs are named on one line, with its day to day */
+const outRowS = o => /^out$|suspen/i.test(String(o.status || '')) || (typeof o.cost === 'number' && Math.abs(o.cost) >= 0.02);
+const outGroupS = st => /injured reserve/i.test(String(st || '')) ? 'on injured reserve' : `out (${String(st || 'out').toLowerCase()})`;
+const eqA = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+/* WCAG contrast and CIELAB, written here on their own */
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+const linC = c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+const lumH = h => { const [r, g, b] = hexRgb(h).map(linC); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const crH = (a, b) => { const x = lumH(a), y = lumH(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+function labH(h) {
+  const [r, g, b] = hexRgb(h).map(linC), f = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  const X = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047, Y = r * 0.2126 + g * 0.7152 + b * 0.0722, Z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+  return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
+}
+/* every surface a badge or a pill sits on: the page's grounds and panels, the badge at rest and on hover (white over --panel-2), a hovered table row */
+const SURFACES = ['#2A3043', '#30374B', '#363D52', '#3D455B', '#475068', '#41495E', '#495065', '#424A5F'];
+const pageMap = w => JSON.parse(w.eval('JSON.stringify(TEAM_COLORS)'));
+/* the page's CSS rules (in any media query) whose `prop` reads as `re`, as [selector, the media it is under or '']; read once a window */
+const RULES = new WeakMap();
+function cssWith(w, prop, re) {
+  if (!RULES.has(w)) { const all = []; const walk = (rules, media) => { for (const r of rules || []) { if (r.cssRules && !r.selectorText) walk(r.cssRules, r.media ? String(r.media.mediaText || '') : media); else if (r.style && r.selectorText) all.push([r.selectorText, media, r.style]); } }; for (const sh of w.document.styleSheets) walk(sh.cssRules, ''); RULES.set(w, all); }
+  return RULES.get(w).filter(([, , st]) => re.test(String(st.getPropertyValue(prop)).trim())).map(([sel, media]) => [sel, media]);
+}
+/* an element matched by a selector list, a selector the DOM cannot parse taken a part at a time */
+const hitsSel = (el, sel) => { try { return el.matches(sel); } catch (e) { return sel.split(',').some(x => { try { return el.matches(x); } catch (e2) { return false; } }); } };
+
+/* a bet button's far-off words, worked out here: the model 15 points or more above DraftKings' fair chance, its two numbers beside it */
+const farWant = (B, s) => B.fair === null || !(B.p - B.fair >= 0.15) ? null
+  : B.pick === s ? `model's call · far off the market: left out of the levels · model ${PBS.pctW(B.p)} · market ${PBS.pctW(B.fair)}` : `far off the market · model ${PBS.pctW(B.p)} · market ${PBS.pctW(B.fair)}`;
+/* one game card against the state: returns what is wrong, [] when nothing is */
+function cardWrongs(w, c, g, ms, MAP) {
+  const bad = [], ck = (ok, m) => { if (!ok) bad.push(m); };
+  const L = g.line, started = sStarted(g, ms), fresh = sFresh(g), bets = !started && !!L && fresh;
+  /* the top line: the puck drop and the date in the visitor's clock, a note after it; the tags */
+  const top = c.querySelector('.top.when');
+  ck(!!top && txt(top.firstElementChild) === `${clockOf(Date.parse(g.start))} · ${new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}${g.note ? ' · ' + g.note : ''}`, `the top line (${top && txt(top.firstElementChild)})`);
+  const tags = [];
+  if (g.state === 'live') tags.push(g.detail, `as of ${clockOf(Date.parse(g.scoreAt || S.published))}`);
+  else if (g.state === 'final') tags.push(g.detail || 'Final');
+  else if (Date.parse(g.start) > ms && started) tags.push('start moved · call kept');
+  else if (started) tags.push('under way · no score yet');
+  if (g.neutral) tags.push('neutral ice');
+  if (g.result) tags.push(g.result.su ? 'call right' : 'call wrong');
+  if (g.result && !g.frozen) tags.push('replayed');
+  ck(eqA([...c.querySelectorAll('.top .tags .tag')].map(txt), tags), `the tags ${JSON.stringify(tags)} (${[...c.querySelectorAll('.top .tags .tag')].map(txt).join(' | ')})`);
+  /* the clubs: badges in the map's colour, the state's call filled, names, records, a score where one is known */
+  const teams = [...c.querySelectorAll('.teams .team')], badges = [...c.querySelectorAll('.teams .badge')];
+  ck(badges.length === 2 && txt(badges[0]) === ab(g.away) && txt(badges[1]) === ab(g.home), `the badges ${ab(g.away)}, ${ab(g.home)} (${badges.map(txt).join(', ')})`);
+  ck(teams.length === 2 && styleVar(teams[0], '--tc') === MAP[g.away].c && styleVar(teams[1], '--tc') === MAP[g.home].c, `the badges in the clubs' colours (${teams.map(t => styleVar(t, '--tc')).join(', ')})`);
+  const picks = [...c.querySelectorAll('.badge.pick')];
+  ck(picks.length === 1 && picks[0] === badges[g.pick === 'away' ? 0 : 1], `exactly one badge filled, on the call ${g.pick}`);
+  ck(txt(c.querySelector('.vs b')) === pctS(Math.max(g.pHome, 1 - g.pHome)) && txt(c.querySelector('.vs')) === pctS(Math.max(g.pHome, 1 - g.pHome)) + ab(g[g.pick]), `the call's chance in the middle (${txt(c.querySelector('.vs'))})`);
+  ck(teams.length === 2 && txt(teams[0].querySelector('.nm')) === sh(g.away) && txt(teams[1].querySelector('.nm')) === sh(g.home), 'the clubs named');
+  ck(teams.length === 2 && txt(teams[0].querySelector('.rec')) === (g.arec || '') && txt(teams[1].querySelector('.rec')) === (g.hrec || ''), `the records ${g.arec}, ${g.hrec}`);
+  const known = (g.state === 'final' || g.state === 'live') && typeof g.hs === 'number' && typeof g.as === 'number';
+  const scs = teams.map(t => t.querySelector('.sc'));
+  ck(scs.every(x => !!x === known) && (!known || (txt(scs[0]) === String(g.as) && txt(scs[1]) === String(g.hs))), `a score exactly where one is known (${scs.map(txt).join('-')})`);
+  if (known && g.state === 'final') ck(scs[0].classList.contains('lose') === (g.as < g.hs) && scs[1].classList.contains('lose') === (g.hs < g.as), 'the loser of a final muted');
+  const prob = c.querySelector('.prob');
+  ck(!!prob && styleVar(prob, '--ac') === MAP[g.away].c && styleVar(prob, '--hc') === MAP[g.home].c, 'the win bar in the clubs\' colours');
+  ck(eqA([...c.querySelectorAll('.pline .wp')].map(txt), [pctS(1 - g.pHome), pctS(g.pHome)]), `each side's chance under the bar (${[...c.querySelectorAll('.pline .wp')].map(txt).join(' + ')})`);
+  /* the chips */
+  const chips = k => [...c.querySelectorAll(`.chips .chip[data-ck="${k}"]`)].map(txt);
+  ck(eqA(chips('model'), [`Margin ${sMarginS(g)}`]), `the margin chip (${chips('model')})`);
+  ck(eqA(chips('xt'), [`Goals ${g.xt.toFixed(1)}`]) && eqA(chips('ot'), [`OT ${pctS(g.tie)}`]), `the goals and overtime chips (${chips('xt')}; ${chips('ot')})`);
+  const alt = g.elo && g.by === 'players' ? [`Team Elo ${ab(g.elo.pHome >= 0.5 ? g.home : g.away)} ${pctS(Math.max(g.elo.pHome, 1 - g.elo.pHome))} ${g.elo.xt.toFixed(1)} goals`]
+    : g.pm ? [`Player model ${ab(g.pm.pHome >= 0.5 ? g.home : g.away)} ${pctS(Math.max(g.pm.pHome, 1 - g.pm.pHome))} ${g.pm.xt.toFixed(1)} goals`] : [];
+  ck(eqA(chips('alt'), alt), `the other model's chip ${JSON.stringify(alt)} (${chips('alt')})`);
+  const mk = { ml: [], pl: [], ou: [] };
+  if (!bets && L) {
+    if (okPrice(L.awayML) || okPrice(L.homeML)) mk.ml.push(`Moneyline ${ab(g.away)} ${oddsS(L.awayML)} ${ab(g.home)} ${oddsS(L.homeML)}`);
+    if (L.homeLine !== null && L.homeLine !== undefined) mk.pl.push(`Puck line ${ab(g.away)} ${lineS(-L.homeLine)} ${oddsS(L.awaySpreadOdds)} ${ab(g.home)} ${lineS(L.homeLine)} ${oddsS(L.homeSpreadOdds)}`);
+    if (L.total !== null && L.total !== undefined) mk.ou.push(`Over/under ${L.total} o ${oddsS(L.overOdds)} · u ${oddsS(L.underOdds)}`);
+  }
+  for (const k of ['ml', 'pl', 'ou']) ck(eqA(chips(k), mk[k]), `the market's ${k} chip exactly where the card has no bets board and the line has it ${JSON.stringify(mk[k])} (${chips(k)})`);
+  const R = g.result, e = x => Math.round(x * 100), res = (k, word) => R && R[k] ? ` ${word} ${R[k]}` : '', calls = [];
+  if (g.mlPick) calls.push([`ML ${ab(g[g.mlPick])} · edge +${e(g.mlEdge[g.mlPick])}${res('ml', 'ML')}`, !R]);
+  if (g.plPick) calls.push([`${ab(g[g.plPick])} ${lineS(g.plPick === 'home' ? L.homeLine : -L.homeLine)} · edge +${e(g.plEdge[g.plPick])}${res('pl', 'PL')}`, !R]);
+  if (g.ouPick) calls.push([`${g.ouPick} ${L.total} · edge +${e(g.ouEdge[g.ouPick])}${res('ou', g.ouPick)}`, !R]);
+  if (!calls.length && !R) calls.push([L ? 'no edge' : 'no line yet', false]);
+  const callEls = [...c.querySelectorAll('.chips .chip[data-ck="call"]')], haveCalls = callEls.map(x => [txt(x), x.classList.contains('edge')]);
+  ck(eqA(haveCalls, calls), `the calls, lit until graded, their grades, else why none ${JSON.stringify(calls)} (${JSON.stringify(haveCalls)})`);
+  ck(callEls.every(x => [...x.querySelectorAll('.res')].every(r => /^(win|loss|push)$/.test(r.className.replace('res', '').trim()))), 'each grade a pill in its colour');
+  /* a side far off the market says so on its own button, its two numbers in view (a phone shows no title), and in no chip */
+  ck(!c.querySelector('.chips .chip[data-ck="far"]'), 'no Far off chip: the button carries it');
+  if (bets) for (const k of PBS.KINDS) for (const s of PBS.SIDES[k]) {
+    const B = sLeg(g, s, k), btn = c.querySelector(`button[data-leg="${g.id}|${s}|${k}"]`); if (!B || !btn) continue;
+    const want = farWant(B, s), have = btn.querySelector('.pb-bt.far');
+    ck((have ? txt(have) : null) === want, `${s} ${k}: far off the market said on the button with both numbers exactly where it is ${JSON.stringify(want)} (${have ? txt(have) : 'none'})`);
+  }
+  /* a stale line, the bets board */
+  const stale = c.querySelector('.pb-stale'), wantStale = !started && !!L && !fresh;
+  ck(!!stale === wantStale && (!stale || txt(stale) === `line from ${clockOf(Date.parse(L.at))}: not on DraftKings at the last run`), `a stale line says so exactly where it is (${stale && txt(stale)})`);
+  const rows = [...c.querySelectorAll('.pb-bets .pb-bk')].map(txt);
+  const wantRows = !bets ? null : [['ml', 'Moneyline'], ['pl', 'Puck line'], ['ou', `Total ${L.total}`]].filter(([k]) => (k !== 'ou' || (L.total !== null && L.total !== undefined)) && PBS.SIDES[k].some(s => sLeg(g, s, k))).map(x => x[1]);
+  ck(!!c.querySelector('.pb-bets') === bets && (!bets || eqA(rows, wantRows)), `the bets board exactly on a game to come with a fresh line, its rows ${JSON.stringify(wantRows)} (${JSON.stringify(rows)})`);
+  if (!bets) ck(!c.querySelector('button[data-leg]'), 'no bet offered without the board');
+  /* who is out */
+  const out = c.querySelector('.out');
+  ck(!!out === !!g.pm, 'who is out exactly where the player model lined the game up');
+  if (g.pm && out) {
+    const kids = [...out.children], gk = kids.filter(x => x.classList.contains('gk')).map(txt);
+    const wantGk = ['away', 'home'].map(s => { const t = g.pm[s].goalie; return t ? `${t.name} ${ab(g[s])} · in goal · ${t.how}${t.debut ? ' · first NHL start' : ''}` : `${ab(g[s])} · goalie unknown`; });
+    ck(eqA(gk, wantGk), `each club's goalie and how he was chosen ${JSON.stringify(wantGk)} (${JSON.stringify(gk)})`);
+    const rowsW = [], dtdW = [], alsoW = [];
+    for (const s of ['away', 'home']) for (const o of (g.pm[s].out || []).filter(outRowS)) rowsW.push(`${o.name} ${ab(g[s])} · ${o.status || 'Out'}${typeof o.cost === 'number' ? ` ${v2S(o.cost).t} goals` : ''}`);
+    for (const s of ['away', 'home']) for (const o of g.pm[s].dtd || []) dtdW.push(`${o.name} ${ab(g[s])} · Day to day`);
+    for (const s of ['away', 'home']) {
+      const parts = [], groups = new Map();
+      for (const o of (g.pm[s].out || []).filter(o => !outRowS(o))) { const k = outGroupS(o.status); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o.name); }
+      for (const [k, names] of groups) parts.push(`${parts.length ? '' : ab(g[s]) + ' '}also ${k}: ${names.join(', ')}`);
+      if (parts.length) alsoW.push(parts.join(' · '));
+    }
+    const rowsH = kids.filter(x => x.classList.contains('orow')).map(txt), dtdH = kids.filter(x => x.classList.contains('dtd')).map(txt), alsoH = kids.filter(x => x.classList.contains('also')).map(txt);
+    ck(eqA(rowsH, rowsW), `a row for each player out (Out, suspended or worth 0.02 goals), with his status and what he is worth ${JSON.stringify(rowsW).slice(0, 300)} (${JSON.stringify(rowsH).slice(0, 300)})`);
+    ck(eqA(dtdH, dtdW), `a row for each player day to day, with no figure ${JSON.stringify(dtdW).slice(0, 300)} (${JSON.stringify(dtdH).slice(0, 300)})`);
+    ck(eqA(alsoH, alsoW), `the rest of each club's outs on one line ${JSON.stringify(alsoW)} (${JSON.stringify(alsoH)})`);
+    ck(kids.every(x => ['gk', 'orow', 'dtd', 'also', 'muted', 'src'].some(k => x.classList.contains(k))), 'every row of who is out is a goalie, a player out, a player day to day, the rest named, a box note or the source');
+    const costs = kids.filter(x => x.classList.contains('orow')).map(x => !!x.querySelector('.cost')), wantCosts = ['away', 'home'].flatMap(s => (g.pm[s].out || []).filter(outRowS).map(o => typeof o.cost === 'number'));
+    ck(eqA(costs, wantCosts) && kids.filter(x => x.classList.contains('dtd')).every(x => !x.querySelector('.cost')), 'a figure beside each player out the player model rates, none beside one it does not, none beside a player day to day');
+    ck(kids.filter(x => x.classList.contains('orow') || x.classList.contains('dtd')).every(x => { const wh = x.querySelector('.who'); return !!wh && wh.getAttribute('title') === txt(wh).replace(/ (\S+) · /, ' · $1 · '); }), 'each player\'s name and status carry the whole on their title');
+    /* nothing cut (a phone shows no title): the name and the status each kept whole, the status free to go under the name, and no rule of
+       the page's, in any media query, ellipsing a row of who is out (on a 360 phone it once read "Ryan Nugent-Hopkins EDM · Injured Re…") */
+    const ell = cssWith(w, 'text-overflow', /^ellipsis$/), pr = kids.filter(x => x.classList.contains('orow') || x.classList.contains('dtd'));
+    ck(pr.every(x => { const wh = x.querySelector('.who'), nm = wh && wh.querySelector(':scope > .nw'), st = wh && wh.querySelector(':scope > .muted.nw'); return !!nm && !!st && txt(wh) === `${txt(nm)} ${txt(st)}`; }), 'each player\'s name and his club and status each kept whole on a line, the two free to wrap between');
+    const cutBy = [out, ...out.querySelectorAll('*')].map(el => ell.find(([sel]) => hitsSel(el, sel))).find(Boolean);
+    ck(!cutBy, `no rule cuts who is out short with an ellipsis (${cutBy ? cutBy.join(' @media ') : 'none'})`);
+    const src = out.querySelector('.src'), whose = `The call is the ${g.by === 'players' ? "player model's" : "team Elo's"}.`;
+    const wantSrc = g.pm.inj ? `Injury report of ${new Date(g.pm.inj).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}${started ? ', as the call was made' : ''}. ${whose}` : `No injury report was applied to this call. ${whose}`;
+    ck(!!src && txt(src) === wantSrc, `the source line "${wantSrc}" (${src && txt(src)})`);
+  }
+  /* the Lineups drawer and the foot */
+  const PLT = S.players && S.players.teams, lu = !started && !!g.pm && !!PLT && !!PLT[g.away] && !!PLT[g.home];
+  const luB = c.querySelector('button[data-lu]'), dr = c.querySelector(`#lu-${g.id}`);
+  ck(!!luB === lu && !!dr === lu, `Lineups exactly on a game to come the player model lines up (${!!luB}, ${!!dr})`);
+  if (lu && luB && dr) {
+    ck(luB.getAttribute('aria-controls') === `lu-${g.id}` && luB.getAttribute('aria-expanded') === String(!dr.hidden) && txt(luB) === 'Lineups', `the Lineups toggle names its drawer, says by aria-expanded whether it is open, and keeps its word, Lineups, so the foot never rewraps (${txt(luB)})`);
+    ck(!dr.querySelector('button') && c.querySelectorAll('button[data-lu]').length === 1 && !!luB.closest('.foot'), 'one Lineups toggle, in the foot, as the NBA\'s: the drawer has no button of its own (it once ended on a second Hide lineups right over the foot\'s)');
+    for (const [i, s] of [[0, 'away'], [1, 'home']]) {
+      const blk = dr.querySelectorAll(':scope > div')[i], t = PLT[g[s]], gkp = g.pm[s].goalie;
+      const want = (gkp ? [`${gkp.name}G${v2S(gkp.gk).t}`] : []).concat((t.lineup || []).slice(0, 9).map(p => `${p.name}${Math.round(p.share * 60)}'${v2S(p.v).t}`));
+      const have = blk ? [...blk.querySelectorAll('li')].map(txt) : [];
+      ck(blk && txt(blk.querySelector('h4')) === `${ab(g[s])} · expected` && eqA(have, want), `${ab(g[s])}'s goalie and nine skaters with the most ice time, minutes and goals ${JSON.stringify(want).slice(0, 200)} (${JSON.stringify(have).slice(0, 200)})`);
+      const cls = blk ? [...blk.querySelectorAll('li .v')].map(x => x.classList.contains('pos') ? 'pos' : x.classList.contains('neg') ? 'neg' : '') : [];
+      ck(eqA(cls, (gkp ? [v2S(gkp.gk).c] : []).concat((t.lineup || []).slice(0, 9).map(p => v2S(p.v).c))), `${ab(g[s])}'s figures lime above zero, rose below, plain at 0.00`);
+      /* the strength the state's own to the hundredth, half away from zero (the Players tab's figure), and its three parts shown so
+         they add up to it, each within a hundredth of its own value (worked here from the line itself, not the page's apportioning) */
+      const coachT = txt(blk && blk.querySelector('.coach'));
+      const cm = coachT.match(/^Strength ([+-]?\d+\.\d\d) goals a game: attack ([+-]?\d+\.\d\d) · defence ([+-]?\d+\.\d\d) · goalie ([+-]?\d+\.\d\d) · top 9 of (\d+) skaters shown$/);
+      ck(!!cm && +cm[5] === (t.lineup || []).length, `${ab(g[s])}'s strength line reads "Strength … goals a game: attack … · defence … · goalie … · top 9 of ${(t.lineup || []).length} skaters shown" (${coachT.slice(0, 120)})`);
+      const nums = cm ? cm.slice(1, 5).map(x => Math.round(parseFloat(x) * 100)) : [];
+      const own = Math.sign(g.pm[s].strength) * Math.round(Math.abs(g.pm[s].strength) * 100);
+      ck(nums.length === 4 && nums[0] === own, `${ab(g[s])}'s strength shown is the state's own ${g.pm[s].strength} to the hundredth, ${own / 100} (${nums[0] / 100})`);
+      ck(nums.length === 4 && nums[0] === nums[1] + nums[2] + nums[3], `${ab(g[s])}'s strength is the sum of the attack, defence and goalie shown beside it (${coachT.slice(0, 80)})`);
+      const trueP = [t.offence, t.defence, gkp ? gkp.gk : 0];
+      ck(nums.length === 4 && trueP.every((x, i) => Math.abs(nums[i + 1] / 100 - x) < 0.0101), `${ab(g[s])}'s attack, defence and goalie each within a hundredth of the state's ${JSON.stringify(trueP)} (${nums.slice(1).map(x => x / 100).join(', ')})`);
+      ck(nums.length === 4 && cm.slice(1, 5).every((x, i) => v2S(nums[i] / 100).t === x), `${ab(g[s])}'s strength line signed and to two places as the drawer's other figures (${cm ? cm.slice(1, 5).join(' ') : ''})`);
+    }
+  }
+  const go = !started && fresh && sSlate(ms).days.includes(g.date), goB = c.querySelector('button[data-pbgo]');
+  ck(!!goB === go && (!goB || txt(goB) === 'Parlay Builder →'), `Parlay Builder → exactly on a game to come with a fresh line on a day the panel offers (${!!goB})`);
+  const foot = c.querySelector('.foot'), footed = !!luB || !!goB || !!c.querySelector('button[data-pp]');
+  ck(!!foot === footed, 'a foot exactly where it holds a button');
+  ck(!c.querySelector('img'), 'no image on the card');
+  return bad;
+}
+
+async function theLook() {
+  console.log('THE LOOK');
+  const AT = PUB + 60000;
+  /* no image: the page names none, reads no club logo or colour from the state, and carries no ESPN image address */
+  const script = HTML.slice(HTML.indexOf('<script>')).replace(/\/\*[\s\S]*?\*\//g, '');
+  chk(!/<img\b/i.test(HTML) && !/espncdn/i.test(HTML) && !/\.(logo|color)\b/.test(script) && !/url\(/i.test(HTML.slice(0, HTML.indexOf('<script>')).replace(/\/\*[\s\S]*?\*\//g, '')), 'the page names no image: no <img>, no espncdn, no CSS url(), never a club\'s logo or colour read from the state');
+  const errs = [], w = await boot(AT, errs), d = w.document, MAP = pageMap(w);
+  /* the colour map: every club, #1E2230 on each, each colour at its bar on every surface, each club in a hue of its own */
+  const keys = Object.keys(S.teams), missing = keys.filter(k => !MAP[k]);
+  chk(!missing.length && keys.every(k => !MAP[k] || MAP[k].on === '#1E2230'), `TEAM_COLORS has every club, #1E2230 on each (${missing.join(', ') || 'none missing'})`);
+  const lowC = [], lowT = [], lowOn = [];
+  for (const k of keys.filter(k => MAP[k])) {
+    const m = MAP[k];
+    for (const s of SURFACES) { if (!(crH(m.c, s) >= 3.2)) lowC.push(`${k} ${m.c} on ${s} ${crH(m.c, s).toFixed(2)}`); if (!(crH(m.t, s) >= 4.5)) lowT.push(`${k} ${m.t} on ${s} ${crH(m.t, s).toFixed(2)}`); }
+    if (!(crH('#1E2230', m.c) >= 4.5)) lowOn.push(`${k} ${crH('#1E2230', m.c).toFixed(2)}`);
+  }
+  chk(!lowC.length, `every badge colour is 3:1 or more on every surface (large text), held at 3.2 so a card's glow cannot take it under (${lowC.slice(0, 4).join('; ')})`);
+  chk(!lowT.length, `every pill colour is 4.5:1 or more on every surface (${lowT.slice(0, 4).join('; ')})`);
+  chk(!lowOn.length, `#1E2230 is 4.5:1 or more on every badge filled (${lowOn.join('; ')})`);
+  /* each club in a colour of its own hue, as the NBA's: none grey or white but the Kings, whose colour is silver (CIELAB chroma 15 or more) */
+  const grey = keys.filter(k => MAP[k] && k !== 'LA' && !(Math.hypot(...labH(MAP[k].c).slice(1)) >= 15)).map(k => `${k} ${MAP[k].c} ${Math.hypot(...labH(MAP[k].c).slice(1)).toFixed(1)}`);
+  chk(!grey.length, `every club but the Kings (silver) in a colour of its own hue, none grey or white (${grey.join(', ')})`);
+  /* every card of every day on the strip */
+  let held = 0;
+  for (const day of [...d.querySelectorAll('#days .day')].map(b => b.dataset.day)) {
+    d.querySelector(`#days .day[data-day="${day}"]`).click();
+    const want = S.games.filter(g => g.date === day).map(g => g.id).sort(), cards = [...d.querySelectorAll('#games .game')];
+    chk(eqA(cards.map(c => c.dataset.id).sort(), want), `${day}: a card for each game of the day`);
+    const dc = txt(d.querySelector(`#days .day[data-day="${day}"] .dc`));
+    chk(dc === (want.length ? `${want.length} game${want.length === 1 ? '' : 's'}` : '—'), `${day}: the strip counts its games (${dc})`);
+    for (const c of cards) { const g = S.games.find(x => x.id === c.dataset.id); if (!g) continue; const bad = cardWrongs(w, c, g, AT, MAP); held++; chk(!bad.length, `${g.id} (${ab(g.away)} @ ${ab(g.home)}, ${day}): ${bad.slice(0, 3).join(' | ')}`); }
+    /* the bets' key said once over the day's cards, exactly where a card has a board, and on no board */
+    const gk = d.getElementById('gamesKey'), boards = cards.filter(c => c.querySelector('.pb-bets')).length;
+    chk(!!gk && gk.hidden === !boards && txt(gk) === "Tap a bet on a card to add it to your parlay. Edge: the model's chance less the price's, in points." && ![...d.querySelectorAll('#games .pb-bets')].some(b => /Tap a bet|Edge:/.test(txt(b))), `${day}: the bets' key once over the cards, where ${boards} card(s) have a board (${gk && (gk.hidden ? 'hidden' : 'shown')})`);
+  }
+  console.log(`  ${held} game cards held to the state, every day on the strip`);
+  /* the strip names today and tomorrow */
+  const today = etDate(AT), dw = dd => { const b = d.querySelector(`#days .day[data-day="${dd}"] .dw`); return b ? txt(b) : null; };
+  chk([null, 'Today'].includes(dw(today)) && [null, 'Tomorrow'].includes(dw(PBS.nextDay(today))), `the strip says Today and Tomorrow (${dw(today)}, ${dw(PBS.nextDay(today))})`);
+  /* the Games tab's count: today's games still to come (Eastern), hidden at none, moved by a puck drop on the watch */
+  const gc = () => d.getElementById('gameCount'), nToday = ms => S.games.filter(g => g.date === etDate(ms) && !sStarted(g, ms)).length;
+  const cnt = ms => { const n = nToday(ms); return gc() && gc().hidden === !n && (!n || (txt(gc()) === String(n) && gc().title === `${n} game${n === 1 ? '' : 's'} still to come today`)); };
+  chk(cnt(AT), `the Games tab counts today's ${nToday(AT)} games still to come (${gc() && (gc().hidden ? 'hidden' : txt(gc()))})`);
+  const nextToday = S.games.filter(g => g.date === today && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
+  /* 44px: the toolbar, the tabs, the players' switch, a card's Lineups and Parlay Builder → */
+  const tall = el => !!el && w.getComputedStyle(el).minHeight === '44px';
+  chk(tall(d.getElementById('refreshScores')) && [...d.querySelectorAll('#tabs button')].every(tall) && [...d.querySelectorAll('#plKind button')].every(tall), 'Refresh scores, every tab and the Skaters/Goalies switch are 44px tall');
+  /* Lineups: shut, opened in place, kept open through a redraw (a bet tapped), never stored; the focus kept on it through the watch's redraw */
+  const luDay = [...d.querySelectorAll('#days .day')].map(b => b.dataset.day).find(dd => { d.querySelector(`#days .day[data-day="${dd}"]`).click(); return !!d.querySelector('#games button[data-lu]'); });
+  if (luDay) {
+    const b = d.querySelector('#games button[data-lu]'), id = b.dataset.lu, card = () => d.querySelector(`#games .game[data-id="${id}"]`);
+    chk(tall(b) && tall(d.querySelector('#games button[data-pbgo]') || b), 'a Lineups toggle and Parlay Builder → are 44px tall');
+    const w0 = w.__writes.length, s0 = w.localStorage.getItem('nhl_v1');
+    chk(b.getAttribute('aria-expanded') === 'false' && d.getElementById('lu-' + id).hidden, 'a Lineups drawer starts shut');
+    b.click();
+    chk(b.getAttribute('aria-expanded') === 'true' && !d.getElementById('lu-' + id).hidden && card().querySelector('button[data-lu]') === b && txt(b) === 'Lineups', 'Lineups opens its drawer in place, the toggle saying so by aria-expanded, its word kept');
+    chk(w.__writes.length === w0 && w.localStorage.getItem('nhl_v1') === s0, 'opening Lineups writes nothing');
+    b.focus(); w.eval('rerender()');
+    chk(d.activeElement && d.activeElement.dataset && d.activeElement.dataset.lu === id && !d.getElementById('lu-' + id).hidden && d.activeElement.getAttribute('aria-expanded') === 'true', 'a redraw keeps the drawer open and the keyboard on its toggle');
+    const bet = card().querySelector('button[data-leg]');
+    if (bet) {
+      const others = [...d.querySelectorAll('#games .game')].filter(c => c.dataset.id !== id);
+      const leg = bet.dataset.leg; bet.click();
+      chk(others.every(c => c.isConnected) && !!card().querySelector(`button[data-leg="${leg}"][aria-pressed="true"]`), `a bet tapped redraws its own card alone, the day's ${others.length} other cards left as they were`);
+      chk(!d.getElementById('lu-' + id).hidden && card().querySelector('button[data-lu]').getAttribute('aria-expanded') === 'true', 'a bet tapped on the card redraws it with the drawer still open');
+      const again = card().querySelector(`button[data-leg="${leg}"]`); if (again) again.click();
+    }
+    card().querySelector('button[data-lu]').click();
+    chk(d.getElementById('lu-' + id).hidden && card().querySelector('button[data-lu]').getAttribute('aria-expanded') === 'false' && txt(card().querySelector('button[data-lu]')) === 'Lineups', 'and shuts it again, the toggle saying Lineups');
+    /* opened and shut from the keyboard: the one toggle keeps the focus, and the foot its buttons and their words throughout */
+    const w1 = w.__writes.length, s1 = w.localStorage.getItem('nhl_v1'), footW = () => [...card().querySelectorAll('.foot button')].map(txt).join(' | '), f0 = footW();
+    const kb = card().querySelector('button[data-lu]'); kb.focus(); kb.click();
+    chk(!d.getElementById('lu-' + id).hidden && footW() === f0 && !d.querySelector(`#lu-${id} button`), `open, the foot is as it was shut, one toggle and no second Hide lineups (${footW()})`);
+    kb.click();
+    chk(d.getElementById('lu-' + id).hidden && kb.getAttribute('aria-expanded') === 'false' && d.activeElement === kb && footW() === f0, 'shut again from the keyboard, the focus still on the toggle');
+    chk(w.__writes.length === w1 && w.localStorage.getItem('nhl_v1') === s1, 'opening and shutting Lineups writes nothing');
+    const g = S.games.find(x => x.id === id), errsP = [], wP = await boot(Date.parse(g.start) + 60000, errsP), dP = wP.document;
+    const bd = dP.querySelector(`#days .day[data-day="${g.date}"]`); if (bd) bd.click();
+    const cP = dP.querySelector(`#games .game[data-id="${id}"]`);
+    chk(!!cP && !cP.querySelector('button[data-lu]') && !cP.querySelector('.drawer') && !cP.querySelector('button[data-pbgo]'), `opened at its puck drop the card offers neither Lineups nor Parlay Builder → (${id})`);
+    chk(!errsP.length, 'no runtime error at the puck drop: ' + errsP.join(' | '));
+  } else console.log('  no game to come the player model lines up: the Lineups checks skipped');
+  /* Parlay Builder → : the panel on that game's day, the game ticked though it was unticked, the keyboard on the panel's heading */
+  const goG = S.games.filter(g => !sStarted(g, AT) && sFresh(g) && sSlate(AT).days.includes(g.date)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  for (const [g, day] of goG.length ? [[goG[0], undefined]].concat(sSlate(AT).both ? [[goG[goG.length - 1], 'both']] : []) : []) {
+    const store = JSON.stringify({ ui: { pb: Object.assign({ off: [g.id] }, day ? { day } : {}) } });
+    const errsG = [], wG = await boot(AT, errsG, { store }), dG = wG.document;
+    const bd = dG.querySelector(`#days .day[data-day="${g.date}"]`); if (bd) bd.click();
+    const b = dG.querySelector(`#games .game[data-id="${g.id}"] button[data-pbgo]`);
+    if (!b) { chk(false, `Parlay Builder → on ${g.id}`); continue; }
+    b.click();
+    const ui = (JSON.parse(wG.localStorage.getItem('nhl_v1') || '{}').ui || {}).pb || {}, wantDay = day === 'both' && sSlate(AT, 'both').pick === 'both' ? 'both' : g.date;
+    const tile = dG.querySelector(`#pbGrid input[data-g="${g.id}"]`);
+    chk(!dG.getElementById('tab-parlays').hidden && wG.location.hash === '#parlays' && ui.day === wantDay && !(ui.off || []).includes(g.id), `Parlay Builder → on ${g.id} opens the panel on ${wantDay}, the game no longer unticked (day ${ui.day}, off ${JSON.stringify(ui.off)})`);
+    chk(!!tile && tile.checked && txt(dG.getElementById('pbSlate')) === sSlate(AT, wantDay).text, `and its tile is ticked on the slate shown (${txt(dG.getElementById('pbSlate'))})`);
+    chk(dG.activeElement === dG.getElementById('pbTitle'), 'and the keyboard is on the panel\'s heading');
+    chk(!errsG.length, 'no runtime error on Parlay Builder →: ' + errsG.join(' | '));
+  }
+  /* the watch at a puck drop today: the Games tab's count follows it on any tab */
+  if (nextToday) {
+    /* a page opened on another tab, no game card ever drawn: only the watch can move the count */
+    const errsW = [], wW = await boot(AT, errsW, { hash: 'standings' }), dW = wW.document, gW = () => dW.getElementById('gameCount');
+    const cntW = ms => { const n = nToday(ms); return gW() && gW().hidden === !n && (!n || txt(gW()) === String(n)); };
+    chk(cntW(AT), `opened on Standings, the Games tab counts today's ${nToday(AT)} games still to come (${gW() && (gW().hidden ? 'hidden' : txt(gW()))})`);
+    const at = Date.parse(nextToday.start) + 60000; wW.__setClock(at); dW.dispatchEvent(new wW.Event('visibilitychange'));
+    chk(cntW(at), `after ${nextToday.id}'s puck drop the watch moves the count to ${nToday(at)} (${gW() && (gW().hidden ? 'hidden' : txt(gW()))})`);
+    chk(!errsW.length, 'no runtime error as the count moves: ' + errsW.join(' | '));
+  }
+  /* every pill: a club's abbreviation in that club's pill colour; beside a club's name, the same club, hidden from a screen reader */
+  const byAbbr = new Map(keys.map(k => [S.teams[k].abbr, k]));
+  const pills = () => {
+    const wrong = [];
+    for (const p of d.querySelectorAll('.pill')) {
+      const k = byAbbr.get(txt(p)); if (!k || !MAP[k] || styleVar(p, '--tc') !== MAP[k].t) { wrong.push(`${txt(p)} ${styleVar(p, '--tc')}`); continue; }
+      const tw = p.parentElement && p.parentElement.classList.contains('tw') ? p.parentElement : null;
+      if (tw && (txt(tw.querySelector('.tn')) !== S.teams[k].short || p.getAttribute('aria-hidden') !== 'true')) wrong.push(`${txt(p)} beside ${txt(tw.querySelector('.tn'))}`);
+    }
+    return wrong;
+  };
+  for (const t of ['standings', 'ratings', 'playoff', 'players', 'parlays', 'games']) { d.querySelector(`#tabs button[data-tab="${t}"]`).click(); const wr = pills(); chk(!wr.length, `${t}: every pill is its club's abbreviation in its club's colour, the club's own name beside it (${wr.slice(0, 4).join('; ')})`); }
+  /* the tables: the column each is in order of, marked; the Standings' four */
+  d.querySelector('#tabs button[data-tab="standings"]').click();
+  chk([...d.querySelectorAll('#standings table')].every(t => eqA([...t.querySelectorAll('th.on')].map(txt), ['#', 'PTS'])), 'each Standings table marks # and PTS, its order');
+  d.querySelector('#tabs button[data-tab="ratings"]').click();
+  chk(eqA([...d.querySelectorAll('#ratTable th.on')].map(txt), ['#', 'Rating']), 'Power ratings mark # and Rating');
+  d.querySelector('#tabs button[data-tab="playoff"]').click();
+  const real = ['postseason', 'over'].includes(S.playoff.phase || 'regular');
+  chk(eqA([...d.querySelectorAll('#poTable th.on')].map(txt), [real ? 'Stanley Cup' : 'Playoff']), `the playoff odds mark ${real ? 'Stanley Cup' : 'Playoff'}, their order`);
+  chk([...d.querySelectorAll('#poTable tbody tr')].every(r => !!r.querySelector('.meter i')), 'each club\'s playoff chance has its meter');
+  d.querySelector('#tabs button[data-tab="players"]').click();
+  if (S.players) chk(eqA([...d.querySelectorAll('#plTable th.on')].map(txt), ['#', 'Rating']) && eqA([...d.querySelectorAll('#plTeams th.on')].map(txt), ['#', 'Strength']), 'the players mark # and Rating, the clubs # and Strength');
+  /* every column at every width: no rule in the page's CSS, in any media query, hides a table, a row or a cell (so a phone has every number a
+     desktop has, a swipe away); each table scrolls sideways inside its own wrapper; its club or player column is the one held at the left;
+     and each table has the columns it had before the restyle (the skaters' position beside the name now, and a player's rating
+     right after his name, as the NBA's Elo), checked header by header */
+  const hiders = [], walkCss = rules => { for (const r of rules || []) { if (r.cssRules && !r.selectorText) walkCss(r.cssRules); else if (r.style && /^none$/i.test(String(r.style.getPropertyValue('display')).trim())) hiders.push(r.selectorText); } };
+  for (const sh of d.styleSheets) walkCss(sh.cssRules);
+  const hits = (el, sel) => { try { return el.matches(sel); } catch (e) { return sel.split(',').some(x => { try { return el.matches(x); } catch (e2) { return false; } }); } };
+  const scrollers = []; const walkO = rules => { for (const r of rules || []) { if (r.cssRules && !r.selectorText) walkO(r.cssRules); else if (r.style && /^(auto|scroll)$/.test(String(r.style.getPropertyValue('overflow-x') || r.style.getPropertyValue('overflow')).trim().split(/\s+/).pop())) scrollers.push(r.selectorText); } };
+  for (const sh of d.styleSheets) walkO(sh.cssRules);
+  chk(hiders.length > 0 && scrollers.length > 0, `the page's CSS read: ${hiders.length} rules that hide, ${scrollers.length} that scroll`);
+  const COLS = { standings: ['#', 'Team', 'GP', 'W', 'L', 'OTL', 'PTS', 'RW', 'ROW', 'GF', 'GA', 'Diff', 'Rating', 'Playoff'], ratTable: ['#', 'Team', 'Div', 'Rating', 'Record', 'PTS', 'GF/g', 'GA/g', 'Playoff', 'Cup'],
+    poTable: ['Team', 'Div', 'Record', 'PTS', 'Exp. pts', 'Playoff', 'Division', 'Conference', 'Stanley Cup'], plTable: ['#', 'Player', 'Rating', 'Club', 'Offence', 'Defence', 'Games', 'TOI', 'Five seasons'],
+    plGoalies: ['#', 'Goalie', 'Rating', 'Club', 'Starts', 'Five seasons'], plTeams: ['#', 'Club', 'Strength', 'Attack', 'Defence', 'Goalie', 'Out'], recMonth: ['When', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'], recBand: ['Model chance', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'] };
+  const STICK = { standings: 'Team', ratTable: 'Team', poTable: 'Team', plTable: 'Player', plGoalies: 'Goalie', plTeams: 'Club', recMonth: 'When', recBand: 'Model chance' };
+  /* a heading as a desktop shows it: its words without the short form a phone shows instead (.t-narrow) */
+  const wideTxt = th => { const c = th.cloneNode(true); for (const x of c.querySelectorAll('.t-narrow')) x.remove(); return txt(c); };
+  const lost = [], seen = [];
+  const tablesHeld = (tab, keyOf) => {
+    for (const tb of d.querySelectorAll(`#tab-${tab} table.tbl`)) {
+      const key = keyOf(tb), ths = [...tb.querySelectorAll('thead th')], heads = ths.map(wideTxt), want = COLS[key]; seen.push(key);
+      if (!want || !eqA(heads, want)) lost.push(`${key}: columns ${JSON.stringify(heads)}, want ${JSON.stringify(want)}`);
+      const wr = tb.parentElement;
+      if (!wr || !scrollers.some(sel => hits(wr, sel))) lost.push(`${key}: not inside a wrapper that scrolls sideways (${wr && wr.className})`);
+      for (const el of [tb, ...tb.querySelectorAll('thead, tbody, tr, th, td')]) { const h = hiders.find(sel => hits(el, sel)); if (h) { lost.push(`${key}: ${el.tagName.toLowerCase()} "${txt(el).slice(0, 30)}" hidden by ${h}`); break; } }
+      const si = heads.indexOf(STICK[key]), rows = [...tb.querySelectorAll('tr')];
+      if (si < 0 || !rows.length || rows.some(r => !r.cells[si] || !r.cells[si].classList.contains('sk') || [...r.cells].filter(c => c.classList.contains('sk')).length !== 1)) lost.push(`${key}: the ${STICK[key]} column is not the one held at the left`);
+      if (rows.some(r => r.cells.length !== ths.length)) lost.push(`${key}: a row with a cell missing`);
+    }
+  };
+  for (const t of ['standings', 'ratings', 'playoff', 'players', 'record']) {
+    d.querySelector(`#tabs button[data-tab="${t}"]`).click();
+    tablesHeld(t, tb => tb.id || 'standings');
+    if (t === 'players' && S.players) { d.querySelector('#plKind button[data-kind="goalies"]').click(); tablesHeld(t, tb => tb.id === 'plTable' ? 'plGoalies' : tb.id); d.querySelector('#plKind button[data-kind="skaters"]').click(); }
+  }
+  chk(!lost.length && ['standings', 'ratTable', 'poTable', 'recMonth', 'recBand'].every(k => seen.includes(k)) && (!S.players || ['plTable', 'plGoalies', 'plTeams'].every(k => seen.includes(k))), `every table keeps every column at every width, scrolling sideways in its wrapper with its club or player held (${seen.length} tables; ${lost.slice(0, 4).join(' | ')})`);
+  const plRows = [...d.querySelectorAll('#plTable tbody tr')];
+  if (S.players) {
+    const plWrong = plRows.filter(r => { const id = r.cells[3] && r.cells[3].querySelector('.pill'), k = id && byAbbr.get(txt(id)); return !(r.cells[1] && r.cells[1].querySelector('b') && k && txt(r.cells[3].querySelector('.tn')) === S.teams[k].short); });
+    chk(plRows.length > 0 && !plWrong.length, `each player's name in bold, his club in the Club column (${plRows.length} rows${plWrong.length ? '; ' + txt(plWrong[0]).slice(0, 60) : ''})`);
+    /* the figures (ratings ×100, one place): a rating or a strength, the column a table is in order of, unsigned; offence, defence and
+       attack signed and coloured by the sign shown, as the NBA's and the Standings' Diff (a lime 29.9 once sat beside a rose -8.3) */
+    const f1 = v => (v * 100).toFixed(1), sg1 = v => { const t = f1(v), n = +t; return n > 0 ? '+' + t : n < 0 ? t : '0.0'; };
+    const clsOf = v => { const n = +f1(v); return n > 0 ? 'pos' : n < 0 ? 'neg' : ''; }, clsHas = c => c.classList.contains('pos') ? 'pos' : c.classList.contains('neg') ? 'neg' : '';
+    const byNameClub = new Map(Object.values(S.players.players || {}).filter(p => p.pos !== 'G').map(p => [`${p.name}|${p.team}`, p])), figBad = [];
+    for (const r of plRows) {
+      const k = byAbbr.get(txt(r.cells[3] && r.cells[3].querySelector('.pill'))), p = byNameClub.get(`${txt(r.cells[1] && r.cells[1].querySelector('b'))}|${k}`);
+      if (!p) { figBad.push(`no skater ${txt(r.cells[1]).slice(0, 30)}`); continue; }
+      const want = [f1(p.v), sg1(p.o), sg1(p.d)], have = [txt(r.cells[2]), txt(r.cells[4]), txt(r.cells[5])];
+      if (!eqA(want, have) || clsHas(r.cells[4]) !== clsOf(p.o) || clsHas(r.cells[5]) !== clsOf(p.d) || clsHas(r.cells[2])) figBad.push(`${p.name}: ${have.join(' ')} (want ${want.join(' ')})`);
+    }
+    const tmRows = [...d.querySelectorAll('#plTeams tbody tr')];
+    for (const r of tmRows) {
+      const k = byAbbr.get(txt(r.cells[1] && r.cells[1].querySelector('.pill'))), t = k && S.players.teams[k];
+      if (!t) { figBad.push(`no club ${txt(r.cells[1])}`); continue; }
+      const want = [f1(t.strength), sg1(t.offence), sg1(t.defence)], have = [txt(r.cells[2]), txt(r.cells[3]), txt(r.cells[4])];
+      if (!eqA(want, have) || clsHas(r.cells[3]) !== clsOf(t.offence) || clsHas(r.cells[4]) !== clsOf(t.defence) || clsHas(r.cells[2])) figBad.push(`${k}: ${have.join(' ')} (want ${want.join(' ')})`);
+    }
+    chk(plRows.length > 0 && tmRows.length > 0 && !figBad.length, `the skaters' rating unsigned, offence and defence signed and coloured by their sign; the clubs' strength unsigned, attack and defence signed (${plRows.length} skaters, ${tmRows.length} clubs; ${figBad.slice(0, 3).join(' | ')})`);
+  }
+  /* a column of figures at one place: Rating on Standings and Power ratings and Exp. pts on the odds, 1553.0 beside 1600.5 (a whole
+     number once dropped its place) */
+  const oneBad = [], clubOf = cell => byAbbr.get(txt(cell && cell.querySelector('.pill'))), at1 = x => typeof x === 'number' ? x.toFixed(1) : '—';
+  d.querySelector('#tabs button[data-tab="standings"]').click();
+  for (const r of d.querySelectorAll('#standings tbody tr')) { const k = clubOf(r.cells[1]); if (!k || txt(r.cells[12]) !== at1(S.teams[k].rating)) oneBad.push(`standings ${k}: ${txt(r.cells[12])}`); }
+  /* the Standings' four tables share every column's width, so GP, W, L and PTS run straight down the page (each once sized its Team
+     column to its own longest name, the Pacific's 40px right of the Central's): laid out fixed on the same widths, never narrower than
+     those widths add to (it scrolls instead), on a desktop and on a phone; jsdom lays nothing out, so this reads the rules */
+  const stT = [...d.querySelectorAll('#standings table')], stW = stT.map(t => [...t.querySelectorAll('thead th')].map(th => w.getComputedStyle(th).width));
+  const pxN = x => parseFloat(String(x || '').replace('px', '')) || 0;
+  const stMin = (media) => { const m = cssWith(w, 'min-width', /px$/).filter(([sel, md]) => md === media && /#standings/.test(sel)); return m.length ? m : null; };
+  const phoneM = (cssWith(w, 'width', /px$/).find(([sel, md]) => /#standings/.test(sel) && md) || [])[1];
+  const phoneSum = phoneM ? cssWith(w, 'width', /px$/).filter(([sel, md]) => md === phoneM && /#standings .*th:nth-child/.test(sel)) : [];
+  const phoneCols = new Set(phoneSum.map(([sel]) => (/nth-child\((\d+)\)/.exec(sel) || [])[1]));
+  const phoneW = phoneM ? RULES.get(w).filter(([sel, md]) => md === phoneM && /#standings .*th:nth-child/.test(sel)).reduce((a, [, , st]) => a + pxN(st.getPropertyValue('width')), 0) : 0;
+  const phoneMin = phoneM ? pxN((RULES.get(w).find(([sel, md, st]) => md === phoneM && /#standings \.tbl$/.test(sel.trim()) && st.getPropertyValue('min-width')) || [, , { getPropertyValue: () => '' }])[2].getPropertyValue('min-width')) : 0;
+  chk(stT.length === 4 && stT.every(t => w.getComputedStyle(t).tableLayout === 'fixed') && stW.every(ws => ws.length === 14 && ws.every(x => /^\d+(\.\d+)?px$/.test(x)) && eqA(ws, stW[0]))
+    && pxN(w.getComputedStyle(stT[0]).minWidth) >= stW[0].reduce((a, x) => a + pxN(x), 0) && !!stMin('') && phoneCols.size === 14 && phoneMin >= phoneW,
+    `the Standings' four tables laid out fixed on the same 14 column widths, never squeezed under them, on a desktop and a phone (${stW[0] ? stW[0].join(',') : 'none'}; min ${stT[0] && w.getComputedStyle(stT[0]).minWidth}; phone ${phoneCols.size} columns, ${phoneW}px, min ${phoneMin}px)`);
+  d.querySelector('#tabs button[data-tab="ratings"]').click();
+  for (const r of d.querySelectorAll('#ratTable tbody tr')) { const k = clubOf(r.cells[1]); if (!k || txt(r.cells[3]) !== at1(S.teams[k].rating)) oneBad.push(`ratings ${k}: ${txt(r.cells[3])}`); }
+  d.querySelector('#tabs button[data-tab="playoff"]').click();
+  for (const r of d.querySelectorAll('#poTable tbody tr')) { const k = clubOf(r.cells[0]); if (!k || txt(r.cells[4]) !== at1(S.playoff.odds[k].expPts)) oneBad.push(`odds ${k}: ${txt(r.cells[4])}`); }
+  chk(!oneBad.length, `every Rating and Exp. pts at one place (${oneBad.slice(0, 4).join(' | ')})`);
+  /* the bracket: a club's points under its name (the same column, the next row), so a 14-letter name keeps its line and every series
+     row is the same height (Golden Knights once took two lines at 1280); the middle column widened for a score only where one is */
+  const series = [...d.querySelectorAll('#bracket .series')], gs = x => w.getComputedStyle(x);
+  const stackBad = series.filter(r => r.querySelectorAll('.side').length !== 2 || [...r.querySelectorAll('.side')].some(sd => { const pts = sd.querySelector('.pts'), tn = sd.querySelector('.tn'), pl = sd.querySelector('.pill'); return !(pts && tn && pl && gs(tn).gridRow === '1' && gs(pts).gridRow === '2' && gs(pts).gridColumn === gs(tn).gridColumn && gs(pl).gridColumn !== gs(tn).gridColumn && /^1 \/ 3$|^1\/3$/.test(gs(pl).gridRow.replace(/\s+/g, ' '))); }));
+  chk(series.length >= 8 && !stackBad.length, `each club in the bracket its pill beside its name, its points under the name (${series.length} series; ${stackBad.slice(0, 2).map(r => txt(r).slice(0, 40)).join(' | ')})`);
+  chk(d.getElementById('bracket').classList.contains('scored') === series.some(r => !!r.querySelector(':scope > .score')), 'the bracket\'s middle column widens for a score exactly where a series has one');
+  /* a hidden name in a table (on a phone a club is its pill, its name absolute for a screen reader) is held by a positioned box inside its
+     table, never set against the page: a club cell that was not the held (sticky) column once set the Players' 400 names against main,
+     outside the table's scrolling box, and ran the tab on some 14,000px past its last table on a phone. jsdom lays nothing out, so this
+     reads the rules: an element some rule sets absolute has an ancestor inside its table that a rule under the same media (or none) positions */
+  const absR = cssWith(w, 'position', /^absolute$/), posR = cssWith(w, 'position', /^(relative|sticky|absolute|fixed)$/), loose = [];
+  let absN = 0;
+  for (const t of ['standings', 'ratings', 'playoff', 'players', 'record']) {
+    d.querySelector(`#tabs button[data-tab="${t}"]`).click();
+    for (const kind of t === 'players' && S.players ? ['skaters', 'goalies'] : [null]) {
+      if (kind) d.querySelector(`#plKind button[data-kind="${kind}"]`).click();
+      for (const tb of d.querySelectorAll(`#tab-${t} table.tbl`)) for (const el of tb.querySelectorAll('span, div, b, i, small, em')) {
+        const a = absR.find(([sel]) => hitsSel(el, sel)); if (!a) continue;
+        absN++;
+        let held = false; for (let q = el.parentElement; q && q !== tb.parentElement; q = q.parentElement) if (posR.some(([sel, md]) => (md === '' || md === a[1]) && hitsSel(q, sel))) { held = true; break; }
+        if (!held) { loose.push(`${tb.id || t}${kind ? ' ' + kind : ''}: ${el.className} "${txt(el).slice(0, 20)}" in ${el.parentElement && el.parentElement.parentElement && el.parentElement.parentElement.tagName.toLowerCase()} (${a[0]})`); break; }
+      }
+    }
+    if (t === 'players' && S.players) d.querySelector('#plKind button[data-kind="skaters"]').click();
+  }
+  chk(absN > 0 && !loose.length, `every name a table hides for a screen reader is held by a positioned box inside its table (${absN} held; ${loose.slice(0, 3).join(' | ')})`);
+  /* the Record's tiles: a figure and its label, lime where the side picks won more than they lost, rose where fewer, none on the straight-up two */
+  d.querySelector('#tabs button[data-tab="record"]').click();
+  const R = S.record, rate = r => r.w + r.l ? (r.w / (r.w + r.l) * 100).toFixed(1) + '%' : '—', wl = r => `${r.w}-${r.l}${r.p ? '-' + r.p : ''}`, cl = r => r.w > r.l ? 'good' : r.w < r.l ? 'bad' : '';
+  const wantT = [[`${R.su.w}-${R.su.l}`, 'Straight up', ''], [rate(R.su), 'SU rate', ''], [wl(R.ml), 'Moneyline picks', cl(R.ml)], [wl(R.pl), 'Puck line picks', cl(R.pl)], [wl(R.ou), 'Totals picks', cl(R.ou)]];
+  const haveT = [...d.querySelectorAll('#recordTotals .stat')].map(s => [txt(s.querySelector(':scope > b')), txt(s.querySelector(':scope > span')), (s.querySelector(':scope > b') || { className: '' }).className]);
+  chk(eqA(haveT, wantT), `the Record's five tiles ${JSON.stringify(wantT)} (${JSON.stringify(haveT)})`);
+  /* the Record's figures fit their tiles on one line, all five at one size: at 30px a three-figure record ("179-145") broke at its hyphen
+     on a phone. jsdom lays nothing out, so here a tile is 120px wide and a figure 0.7 of its font size a character, and the page is held to
+     stepping its figures down until each fits (fitRecord), on drawing the tab and again on a resize, on a record of 784-646 */
+  {
+    const big = Object.assign({}, S, { record: Object.assign({}, S.record, { su: { w: 784, l: 646 }, ml: { w: 157, l: 129, p: 3 }, pl: { w: 314, l: 226 }, ou: { w: 353, l: 355, p: 12 } }) });
+    const errsR = [], wR = await boot(AT, errsR, { state: JSON.stringify(big) }), dR = wR.document, TILE = 120;
+    const fig = el => !!(el && el.matches && el.matches('#recordTotals .stat>b')), fpx = el => parseFloat(wR.getComputedStyle(el).fontSize) || 30;
+    const natural = el => txt(el).length * fpx(el) * 0.7;
+    Object.defineProperty(wR.HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return fig(this) ? TILE : 0; } });
+    Object.defineProperty(wR.HTMLElement.prototype, 'scrollWidth', { configurable: true, get() { return fig(this) ? Math.ceil(Math.max(TILE, natural(this))) : 0; } });
+    const fits = () => { const bs = [...dR.querySelectorAll('#recordTotals .stat>b')], sz = bs.map(fpx); return bs.length === 5 && bs.every(b => natural(b) <= TILE) && sz.every(x => x === sz[0]) && sz[0] >= 16 ? null : bs.map(b => `${txt(b)} ${fpx(b)}px`).join(', '); };
+    dR.querySelector('#tabs button[data-tab="record"]').click();
+    const f1 = fits();
+    chk(txt(dR.querySelector('#recordTotals .stat>b')) === '784-646' && 7 * 30 * 0.7 > TILE && !f1, `the Record's figures step down together until each fits its tile on one line (${f1 || 'all fit'})`);
+    for (const b of dR.querySelectorAll('#recordTotals .stat>b')) b.style.fontSize = '';
+    wR.dispatchEvent(new wR.Event('resize')); await wait(250);
+    const f2 = fits();
+    chk(!f2, `and again on a resize (${f2 || 'all fit'})`);
+    chk(!errsR.length, 'no runtime error fitting the Record: ' + errsR.join(' | '));
+  }
+  /* Pick your own legs (no chips there): a side far off the market says so on its own button, both numbers in view; on Both days where
+     offered, so tomorrow's games are held too */
+  d.querySelector('#tabs button[data-tab="parlays"]').click();
+  const day0 = (d.querySelector('#pbDay button.on') || { dataset: {} }).dataset.day, bothB = d.querySelector('#pbDay button[data-day="both"]'); if (bothB) bothB.click();
+  let farN = 0, farB = 0; const farBad = [];
+  for (const b of d.querySelectorAll('#plLines button[data-leg]')) {
+    const [gid, s, k] = b.dataset.leg.split('|'), g = S.games.find(x => x.id === gid), B = g && sLeg(g, s, k); if (!B) continue;
+    const want = farWant(B, s), have = b.querySelector('.pb-bt.far'); farB++; if (want) farN++;
+    if ((have ? txt(have) : null) !== want) farBad.push(`${b.dataset.leg}: ${have ? txt(have) : 'none'} (want ${want})`);
+  }
+  chk(!farBad.length, `Pick your own legs: each side far off the market says so on its button, model and market in view (${farB} buttons, ${farN} far; ${farBad.slice(0, 3).join(' | ')})`);
+  console.log(`  Pick your own legs: ${farB} bet buttons held, ${farN} of them far off the market`);
+  if (bothB && day0) { const b0 = d.querySelector(`#pbDay button[data-day="${day0}"]`); if (b0) b0.click(); }
+  /* no image after every tab, every day, a drawer, the props window and the card window */
+  d.querySelector('#tabs button[data-tab="games"]').click();
+  for (const b of [...d.querySelectorAll('#days .day')]) { b.click(); const l = d.querySelector('#games button[data-lu]'); if (l) l.click(); }
+  const ppB = [...d.querySelectorAll('#days .day')].map(b => { b.click(); return d.querySelector('#games button[data-pp]'); }).find(Boolean);
+  if (ppB) { ppB.click(); chk(!d.getElementById('ppWin').hidden && [...d.querySelectorAll('#ppBody .pp-team h3')].every(h => !h.querySelector('img')), 'the props window opens, its clubs\' headings without an image'); chk(!d.querySelectorAll('img').length, 'no image with the props window open'); d.getElementById('ppClose').click(); }
+  d.querySelector('#tabs button[data-tab="parlays"]').click();
+  const fin = d.querySelector('[data-pb-finish]');
+  if (fin) { fin.click(); chk(!d.getElementById('pcWin').hidden && !d.querySelectorAll('img').length, 'no image with the parlay card open'); d.getElementById('pcClose').click(); }
+  chk(!d.querySelectorAll('img').length, `no image anywhere after every tab, day, drawer and window (${d.querySelectorAll('img').length})`);
+  /* the level's lock: a word, Lock or Locked, never an icon */
+  const lk = d.querySelector('[data-pb-lock]');
+  if (lk) { chk(txt(lk) === 'Lock' && !lk.querySelector('svg'), `a level's lock says Lock (${txt(lk)})`); lk.click(); const l2 = d.querySelector(`[data-pb-lock="${lk.dataset.pbLock}"]`); chk(!!l2 && txt(l2) === 'Locked' && l2.getAttribute('aria-pressed') === 'true', `pressed, it says Locked (${l2 && txt(l2)})`); l2.click(); }
+  chk(!d.querySelector('svg:not(.spark)'), 'no icon drawn on the page but the players\' sparklines');
+  chk(!errs.length, 'no runtime error in THE LOOK: ' + errs.join(' | '));
+  holdRequests(w, 'THE LOOK');
+}
+
 async function main() {
   const errors = [];
   reality();
@@ -3029,19 +3527,20 @@ async function main() {
   const dayGames = S.games.filter(g => g.date === on.dataset.day);
   let cards = d.querySelectorAll('#games .game');
   chk(cards.length === dayGames.length, `the open day shows ${dayGames.length} games, not ${cards.length}`);
-  const withGames = days.find(b => /games/.test(txt(b)) && !b.classList.contains('on'));
+  const withGames = days.find(b => /\d+ games?/.test(txt(b)) && !b.classList.contains('on'));
   if (withGames) {
     withGames.click();
     const n = S.games.filter(g => g.date === withGames.dataset.day).length;
     chk(d.querySelectorAll('#games .game').length === n, `clicking a day shows its ${n} games`);
   }
   cards = d.querySelectorAll('#games .game');
+  const MAP0 = pageMap(w);
   for (const c of cards) {
-    const wps = [...c.querySelectorAll('.wp')].map(x => parseInt(txt(x)));
+    const wps = [...c.querySelectorAll('.pline .wp')].map(x => parseInt(txt(x)));
     chk(wps.length === 2 && Math.abs(wps[0] + wps[1] - 100) <= 1, 'the two chances on a card add to 100: ' + wps.join('+'));
-    chk(/Model/.test(txt(c)) && /total/.test(txt(c)), 'a card shows the model margin and total');
-    chk(/call right|call wrong|no edge|no line yet|ML |\+\d/.test(txt(c)), 'every card carries a call, a result or the reason there is none');
     const g = S.games.find(x => x.id === c.dataset.id);
+    /* the card, worked out here: the margin, goals and overtime chips, the calls and their grades or why there is none, every part (THE LOOK) */
+    if (g) { const bad = cardWrongs(w, c, g, PUB + 60000, MAP0); chk(!bad.length, `${g.id}: the card is the state's (${bad.slice(0, 3).join(' | ')})`); }
     if (g && g.state === 'live') chk(/as of/.test(txt(c.querySelector('.when'))), `a live score the job published says when it was read: ${g.id}`);
     if (g && startedAt(g, PUB + 60000)) chk(!c.querySelector('button[data-leg]'), `no bet offered on a game that has started: ${g.id}`);
     if (g && g.pm && g.pm.inj) chk(/Injury report of/.test(txt(c)), `a card names the injury report its lineup was built on: ${g.id}`);
@@ -3218,6 +3717,7 @@ async function main() {
   }
 
   holdRequests(w, 'the page as published');
+  try { await theLook(); } catch (e) { chk(false, `THE LOOK stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   await parlayBuilder();
   await parlayEdges();
   await refreshOddsChecks();

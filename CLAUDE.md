@@ -153,15 +153,26 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
 - **No images.** The page loads no team logo or any other image: on the table tabs ESPN's 32 logos were some 2.2 MB
   of 2.75 MB. A club is a badge on a game card and a pill everywhere else (`pill()`, `muPills()`, `teamCell()`: the
   short name stays as text beside it), in its own colour from `TEAM_COLORS` in the page (keyed by the state's club
-  keys; Utah is `UTAH`, shown UTA), as the NBA's `TEAMS` gives each club its own: each club's primary colour (the
-  Kings' silver, the Kraken's ice blue, Vegas's gold and Utah's mountain blue as they are; navy, forest green and
-  burgundy given the brightness of their hue), lifted in OKLCH with its hue kept only until it reads on these panels:
-  `c` (the badge's outline and text, its fill as the model's pick with `#1E2230` on it, the win bar) 3.25:1 or more on
-  every surface a badge sits on (large text, held over 3:1 so a card's glow cannot take it under), which puts `#1E2230`
-  on it at 6:1 or more; `t` (a 12px pill's) 4.5:1. Clubs whose colours are the same share it, as the NBA's Bulls and
-  Raptors do (the Atlantic's reds, the Leafs' and Canucks' blue): their letters tell them apart and the win bar splits
-  two of one colour with a line. The smoke holds every bar, and holds every club but the Kings in a hue (CIELAB chroma
-  15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
+  keys; Utah is `UTAH`, shown UTA), as the NBA's `TEAMS` gives each club its own. Since nhl v13 (17 October 2026, the
+  owner's "ok" to "closer to the NBA's richer colours", where v12's left the reds salmon, the navies pastel and the
+  Avalanche pink): each club's primary colour, or its secondary where the primary is near-black (the Bruins', Predators'
+  and Penguins' gold, the Kraken's ice blue, the Jets' aviator blue), lifted in OKLCH, its hue kept and its chroma as
+  far as the gamut allows, only until it meets the standard itself: `c` (the badge's outline and text, its fill as the
+  model's pick with `#1E2230` on it, the win bar) 3:1, WCAG's bar for large text and a component, on every surface a
+  badge or the bar sits on (the card's two grounds, `--panel` and `--panel-2`, and the badge's own ground, 2% white over
+  each), which puts `#1E2230` on it at 5.3:1 or more; `t` (a 12px pill's, small text) 4.5:1 on every ground a pill is
+  drawn on. The Ducks' orange, Vegas's gold, Utah's mountain blue and the Kings' silver pass as they are. Then a few
+  picked by hand, as the NBA's map was: the navy clubs (TB, TOR, VAN, CBJ, WPG, NYI) at the full chroma their hue
+  allows, a stronger blue; the Avalanche's burgundy turned toward red (OKLCH hue 13°, full chroma), a crimson where its
+  own hue gave a dusty pink; Dallas's green at full chroma and Minnesota's forest green a yellower, quieter one (v12 had
+  the two 0.7 apart); San Jose's teal stronger. None copies the NBA's values under 3:1. Clubs whose brands share a
+  colour share it, as the NBA's Bulls and Raptors do (the reds, the navies, the golds, Edmonton's and Philadelphia's
+  orange): their letters tell them apart and the win bar splits two of one colour with a line; any two clubs outside one
+  of those are 5 or more apart in CIEDE2000 (v12's closest such pairs were 0.7 and 2.8; v13's is 6.2), and no two
+  clubs within 15 of each other are closer than they were in v12 but the Avalanche and the reds (11 to 6.7 at the least: the red the owner
+  asked for), the Ducks' orange and Edmonton's and Philadelphia's (7.1 to 6.9 and 7.3 to 7.1, as the oranges went
+  to their own brand colours) and pairs already one colour (under 1). The smoke holds every bar, the families' distance, and every club but the Kings
+  in a hue (CIELAB chroma 15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
   icons left are the drawn ones (the puck, the folds' chevrons, the players' sparklines); a level's lock is a word,
   Lock or Locked.
 - **The game card** (`gameCard`): the top line (puck drop and date in the visitor's clock, a note after them; tags:
@@ -172,30 +183,55 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   the team Elo, so on a close game the two can favour different clubs, and the chip is never called Model), Goals
   (the model's expected total), OT, the other model (Team Elo, or the player model where the team Elo makes the call),
   the market's moneyline, puck line and over/under where the card has no bets board, each side the model took (lit
-  lime until its grade, then plain with the grade as a solid pill), else "no edge" or "no line yet" (only before a
-  result); the stale-line note; the bets board (the NBA's Game lines rows, the label beside its two buttons, or over
-  them where the board is under 328px wide, a container query: a 360px phone, Pick your own legs on a phone; a 44px
-  button a side, the model's call lit lime with "model's call · edge +N", a side far off the market flagged on its own
-  button with both numbers in view, "far off the market · model 74% · market 47%" or the call's "model's call · far
-  off the market: left out of the levels · model 74% · market 47%" (a phone shows no title), in the parlay an ice fill;
-  "Tap a bet ... Edge: ..." said once over the day's cards, and in Pick your own legs once over its list, not on each
-  board; a board on a line Refresh odds read says so, dated); a badge 22px at 380px and under, so WPG and WSH stay in
-  their column; who is out, a row each as the NBA's (each goalie and how he was chosen; each player the report has Out
-  or suspended or who is worth 0.02 goals a game or more, "-0.09 goals" at the right, what he adds to his club by the
-  player model; each player day to day, in gold with no figure, since he stays in the lineup; the rest of each club's
-  outs on one line; the source line, or "No injury report was applied to this call"; a phrase never broken across
-  lines and nothing cut: a player's club and status go under his name where a phone has no room for both beside his
-  figure, since a phone shows no title and an ellipsis there could never be read); the Lineups
-  drawer; the foot: Lineups and Player props (`.btn.ghost`: "Player props" before a press, as the NBA's, then "· 24
+  lime until its grade, then plain with the grade as a solid pill) unless the bets board carries it on its button with
+  its edge (each call said once: a call far off the market, whose button says that instead, keeps its chip), else "no
+  edge" or "no line yet" (only before a result); the stale-line note; the bets board (the NBA's Game lines rows, the
+  label beside its two buttons, over them only where the board is under 260px, a container query; since nhl v13 each
+  button 44px and one line where it fits, "PIT +170 · 34%", the side, DraftKings' price and the model's chance, and
+  where a phone has no room for the three, the price and the chance under the side at the right in the same 44px (a
+  puck line at 390, most at 360), never broken inside a side or a price; a row's two buttons laid out alike, both on
+  one line or both with the price under the side (`syncBetRows` reads the browser's wrap after each draw of the cards
+  and of Pick your own legs, when a board's width changes, `BET_RO`, and once the fonts are in, and marks a row whose
+  either button wrapped `.st`: one button on one line beside one wrapped looked uneven); the model's call lit lime
+  with a tag on the button's top edge, "call · edge +N", taking no line; a side far off the market a rose tag, "far
+  off" or the call's "call · far off", and both numbers under its line, "model 74% · market 47%" (the call's "· left
+  out of the levels"), wrapping between words with each number whole, in view since a phone shows no title (about one
+  button in twenty: the only button taller than 44px); every piece that cannot wrap fits the narrowest button the page
+  draws (94px at 320, 76 inside: a tag at most "call · edge +99", 84px; "far off the market" as a tag and "left out of
+  the levels" kept whole ran out of their buttons at 320 to 1024 in v13's first draft); in the parlay an ice fill and a
+  check before the side; the button's name for a screen reader says all of it; "Tap a bet to add it to your parlay:
+  DraftKings' price · the model's chance. Edge: the model's less the price's, in points." said once over the day's
+  cards, and in Pick your own legs once over its list, not on each board; a board on a line Refresh odds read says so,
+  dated); a badge 22px at 380px and under, so WPG and WSH stay in their column; who is out (nhl v13, cut to what moves
+  the call): the two goalies on one row, "In goal: Jake Allen NJ · Logan Thompson WSH both named by DailyFaceoff (no
+  status)" (each with his own how where they differ, a first NHL start said); a row as the NBA's for each player worth
+  `OUT_ROW`, 0.13 goals a game or more to his club by the player model, "-0.16 goals" at the right, whatever his status
+  (the card's chance on a player model's call is half its goals layer, where a goal of margin is about 15 points of
+  chance at the league's scoring: 0.13 goals is about a point, 1.00 at the median of 17 October's games to come, 0.76 to
+  1.20 at the ends, and the smoke works it out again from `tools/elo.js` and `data/players.json` on every state); each
+  club's day to day on one line in gold, no figure, since they stay in the lineup; the rest of each club's outs named on
+  one line a club, grouped by status (out, suspended, any other, on IR), most valuable first, each one's figure beside
+  his name on a card with no Lineups drawer (a game under way or over), and on a card with one his figure in Lineups,
+  where the players on injured reserve are named too: the card counts them, at the end of the club's line or, for clubs
+  with no one else out, on one line for both ("On IR, named in Lineups: VAN 4 · TB 1"); the source line, "Injury report
+  of Oct 17, 6:57 AM EDT · the player model's call", or "No injury report applied"; the bar said once over the day's
+  cards (`#outKey`, "Who's out: a row for a player worth 0.13 goals a game or more to his club, about a point of its
+  chance to win.", two lines on a phone at 360 and 390 and three at 320, as the bets' key is: with the two keys the first card starts 39px lower than
+  v12's, and being shorter its bets board ends higher, at 974px against v12's 1006 at 390 and 987 against 1071 at
+  360; what the bar means is on each row's title too, and where the rest's figures are on their line's); a phrase never broken across lines and nothing cut, since a phone shows no title and an ellipsis
+  there could never be read); the Lineups drawer; the foot: Lineups and Player props (`.btn.ghost`: "Player props" before a press, as the NBA's, then "· 24
   lines · 3:12 PM EDT", "· none posted yet · …" or "· not read", the whole sentence on its title) on the left,
-  Parlay Builder → on the right. A redraw replaces only the cards whose markup changed (`CARD_HTML`), so a bet tapped
+  Parlay Builder → on the right, its buttons' sides 8px at 380px and under so Parlay Builder → keeps their line at 360.
+  A redraw replaces only the cards whose markup changed (`CARD_HTML`), so a bet tapped
   redraws its own card (about 130ms at 4x CPU on a 14-game day, where the whole tab took about 230ms).
 - **Lineups** (`luDrawer`, on a game to come the player model lines up): each club's goalie and its nine skaters with
   the most ice time (`S.players.teams[club].lineup`), minutes and goals a game, the club's strength line (the strength
   is the state's own, `g.pm[side].strength`, to the hundredth, half away from zero, the figure the Players tab shows;
   attack, defence and goalie are shown so they add up to it, largest remainder: each part's hundredths taken down and
   the ones left given to the parts with the most cut off, so each is within a hundredth of its own value. Rounded each on
-  its own, the parts missed the total by a hundredth in about 40% of lines). Opened in place, never redrawn to open; open in this
+  its own, the parts missed the total by a hundredth in about 40% of lines); under each club (nhl v13), everyone the report
+  has out, his status and what he adds to his club in a game ("—" where the model does not rate him), most valuable first,
+  each name and status whole. Opened in place, never redrawn to open; open in this
   page's memory alone (`LU_OPEN`), so a redraw keeps it open; never stored. One toggle, in the foot, as the NBA's: its
   word stays Lineups, so the foot never rewraps, and `aria-expanded` and an ice outline say it is open (the drawer once
   ended on a second Hide lineups right over the foot's); shut, the page scrolls so the toggle stands where the finger
@@ -232,9 +268,13 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   cards BOS, NJ" never breaks.
 
 A card is taller than the NBA's (whose game lines live in its props sheet): the bets board stays on the card, a tap a bet
-as before (the owner's call to make: in a drawer from the foot instead, a card to come would be about 600px on a phone).
-Measured at 390px on 16 October 2026, both cards 366px wide: 788px median with the board (915px before this round's
-compacting), 589px without one, against the NBA's 424 (its preseason cards, 506 to 667 with a long injury list). Without
+(the owner's call, nhl v13: no fold-out), and the card is shortened otherwise (the one-line buttons, who is out cut to what
+moves the call, a call said once). Measured on 17 October 2026 on every card to come with a board, on every day of the strip,
+of three published states (17 October 10:57 UTC, 15 October 12:31, 16 October 21:19; 41 cards): at 390px, 638px median and
+741 at the most, where nhl v12 drew the same cards 831 and 965; at 360px, 668 and 768 where v12 drew 963 and 1,119 (its puck
+lines wrapped to three lines, its who-is-out rows to two, Parlay Builder → to a second line). Who is out went from about
+250px to about 120 at 390, the bets board from 206 to 174, the chips from 123 to 84; the NBA's cards run some 360 to 670
+by their injury lists. Without
 the logos every tab is 5 requests and about 520 KB where a table tab was 37 and 2.74 MB, done in about 2.7s on a
 throttled phone where it took about 14.2s (a local replay of HEAD's page and this one on the same state, Lighthouse's phone
 profile, three cold loads a tab, ESPN's API and image host aborted; the Games tab adds the one live-score read of ESPN's
@@ -337,13 +377,29 @@ games it plants on or clicks are taken from the day the panel shows (the Day con
 day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the props window (under The props model) on answers it makes from the state's own
-projections. Its section THE LOOK (nhl v12) holds the page's look with its own code: no image (the source names none, no CSS
-`url()`, no club logo or colour read from the state; a walk of every tab, day, drawer and window finds none), `TEAM_COLORS` (every
-club, each colour at its contrast bar on every surface by its own WCAG sums, the badge's held at 3.2, every club but the Kings in a
-hue of its own by its own CIELAB sums), every game card of every day on the strip worked out from the state (badges, colours, the
-filled pick, chances, every chip by its `data-ck`, the tags, the stale line, the bets board's rows, who is out row by row: the
-goalies, each player out with his figure, each day to day with none, the rest on a line, every name's title, each name and status
-kept whole and no rule in any media query ellipsing a row; the Lineups drawer's every row and its strength line the state's own to the
+projections. Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
+source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, drawer and window finds none),
+`TEAM_COLORS` (every club; each badge colour 3:1 or more on every surface a badge or the win bar sits on, those surfaces read from the
+page's CSS (the card's two grounds and the badge's own over each), each pill colour 4.5:1 on every ground a pill is drawn on, `#1E2230`
+4.5:1 on each, by its own WCAG sums; every club but the Kings in a hue of its own by its own CIELAB sums; any two clubs outside one
+brand colour, the reds, the navies, the golds, the two oranges, 5 or more apart by its own CIEDE2000), every game card of every day
+on the strip worked out from the state (badges, colours, the filled pick, chances, every chip by its `data-ck`, each call said once,
+in a chip or on its button's tag with its edge, never both, never neither, the tags, the stale line, the bets board's rows, every bet
+button part by part (its side, a check in the parlay, its price, its chance, the call's tag with its edge, far off the market's tag
+and both numbers, nothing else) and its name for a screen reader, the rules that keep it one line where it fits (the side and the
+price and chance each whole, the call's tag on its edge taking no line, 44px), every piece of it that cannot wrap within the narrowest
+button's room (counted, since jsdom lays nothing out: a tag 15 characters at most, a word or number under the line 11, with any rule
+that keeps the far line or the button whole read too), a row's two buttons laid out alike (the wrap planted in a row's first button, its
+second or neither: a row marked exactly where either wraps, on the cards and in Pick your own legs, and no mark kept once drawn again
+unwrapped), who is out row by row and word for word: the goalies'
+row, a row exactly for each player worth `OUT_ROW` (the page's is the smoke's 0.13, and the smoke works out on every game to come
+from `tools/elo.js`'s goals layer and `data/players.json`'s blend that 0.13 goals moves a club's chance about a point, held only at
+the median and loosely, 0.5 to 2 points, the ends reported and never held: the job never moves the blend or the pull, and one lopsided
+game on the schedule is the model's honest number, never a reason to stop a publish), each club's day to day on its line, the rest named a line a club grouped and ordered, with their
+figures where the card has no drawer and the IR count where it has one, the source line, the bar's key once over the cards; every
+player out named on the card with his status and figure on it or in its Lineups (worked out on its own: one dropped from Lineups,
+a figure missing, an IR player not counted, each fails), every row's title, each name and status kept whole and no rule in any media
+query ellipsing a row or a name in Lineups' outs; the Lineups drawer's every row and its strength line the state's own to the
 hundredth with its parts as shown adding up to it, each within a hundredth of its own value, its one toggle in the foot keeping its word and no button in the drawer,
 Parlay Builder → and the foot exactly where they belong), the tab counts and a puck drop moving them, Lineups (shut, opened in place,
 kept open through a redraw and a bet tapped, the focus kept, opened and shut from the keyboard with the foot as it was, nothing
@@ -357,8 +413,8 @@ and his club in the Club column, the Players' figures (ratings and strengths uns
 coloured by the sign shown), Rating and Exp. pts at one place, the Standings' four tables laid out fixed on the same 14 widths and
 never squeezed under them on a desktop and a phone, the bracket's points under each name and its middle column widened only for a
 score, the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
-side far off the market said on its own button with both numbers exactly (on the Games cards and in Pick your own legs, Both days
-included) and in no chip, the props window's head naming its game by its pills, the Record's tiles, the lock's words, the card's
+side far off the market said on its own button with both numbers exactly and every other part of the button (on the Games cards and
+in Pick your own legs, Both days included) and in no chip, the props window's head naming its game by its pills, the Record's tiles, the lock's words, the card's
 leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE PROPS MODEL (in the state's
 reality) holds the box files' shots (no old-shape line, no `sog`, the skater shots against the goalies' at the
 column level) and starting goalies (at most one mark a side, on a goalie of that side who played, and the sides that

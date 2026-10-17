@@ -39,9 +39,13 @@
        (NHL_PREV_LEDGER, else git's HEAD:data/props_ledger.json), and the state's projections: games still to
        come only, every distribution whole, every player in his club's lineup and not out, each game the
        ledger's open call
-     - the look (THE LOOK, nhl v12): no image anywhere, every club's colour at its contrast bar and in a hue of its own, every game
-       card of every day on the strip worked out from the state, part by part, a side far off the market said on its own button with
-       both numbers, and every table keeping every column at every width, scrolling sideways in its wrapper with its hidden names held
+     - the look (THE LOOK, nhl v12, the card and the colours nhl v13): no image anywhere, every club's colour at its contrast bar (3:1 for
+       a badge, 4.5:1 for a pill), in a hue of its own and clear of every club outside its own colour, every game card of every day on the
+       strip worked out from the state, part by part (each bet button its one line, its call's tag and edge, a side far off the market
+       said on its own button with both numbers, every piece that cannot wrap within the narrowest button's room, a row's two buttons
+       laid out alike; who is out cut to the goalies and the players worth OUT_ROW goals, the bar worked out
+       again from the model, the rest named a line a club and every out player's status and figure on the card or in its Lineups), and
+       every table keeping every column at every width, scrolling sideways in its wrapper with its hidden names held
        inside it (the Standings' four on the same column widths); the figures' formats, the bracket's rows, and the Record's figures
        fitted to their tiles (jsdom lays nothing out: the rules are read, and the Record's fit is held on a made-up layout)
    NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page. */
@@ -808,10 +812,11 @@ async function parlayBuilder() {
         const L = sLeg(g, s, k), btn = c.querySelector(`button[data-leg="${g.id}|${s}|${k}"]`);
         chk(!!L === !!btn, `${g.id} ${s} ${k}: a button exactly where DraftKings prices it`);
         if (!L || !btn) continue;
-        const t = txt(btn);
-        chk(t.includes(PBS.odds(L.price)) && t.includes(PBS.pctW(L.p)), `${g.id} ${s} ${k}: the button shows the state's price and model chance (${t})`);
-        chk(/model's call/.test(t) === (L.pick === s), `${g.id} ${s} ${k}: the call's side is tagged (${t})`);
-        chk(/far off the market/.test(t) === (L.fair !== null && L.p - L.fair >= 0.15), `${g.id} ${s} ${k}: flagged far off exactly at 15 points over the fair chance (${t})`);
+        const t = txt(btn), bw = betHave(btn), bad1 = betWrong(btn, L, s);
+        chk(bw.price === PBS.odds(L.price) && bw.chance === `· ${PBS.pctW(L.p)}`, `${g.id} ${s} ${k}: the button shows the state's price and model chance (${t})`);
+        chk(/^call · /.test(bw.tag || '') === (L.pick === s), `${g.id} ${s} ${k}: the call's side is tagged (${t})`);
+        chk(/far off/.test(bw.tag || '') === (L.fair !== null && L.p - L.fair >= 0.15), `${g.id} ${s} ${k}: flagged far off exactly at 15 points over the fair chance (${t})`);
+        chk(!bad1, `${g.id} ${s} ${k}: every part of the button exactly (${bad1})`);
       }
     }
   }
@@ -1704,7 +1709,7 @@ async function refreshOddsChecks() {
       for (const k of PBS.KINDS) for (const s of PBS.SIDES[k]) {
         const L = sLeg(eg, s, k), btn = c.querySelector(`button[data-leg="${g.id}|${s}|${k}"]`);
         chk(!!L === !!btn, `${g.id} ${s} ${k}: after the press a button exactly where the new line prices it`);
-        if (L && btn) chk(txt(btn).includes(PBS.odds(L.price)) && txt(btn).includes(PBS.pctW(L.p)) && /model's call/.test(txt(btn)) === (L.pick === s), `${g.id} ${s} ${k}: the new price, chance and call (${txt(btn)})`);
+        if (L && btn) { const bad1 = betWrong(btn, L, s); chk(!bad1, `${g.id} ${s} ${k}: the new price, chance and call (${bad1})`); }
       }
       chk(txt(c).includes(`as read from ESPN at ${clockOf(atMs)}`), `${g.id}: the card says its prices were read from ESPN (${txt(c.querySelector('.pb-key'))})`);
     }
@@ -3043,10 +3048,6 @@ const styleVar = (el, k) => { const m = new RegExp(`${k}:\\s*([^;]+)`).exec((el 
 const sMarginS = g => Math.abs(g.mu) < 0.05 ? 'even' : `${ab(g.mu > 0 ? g.home : g.away)} +${Math.abs(g.mu).toFixed(1)}`;
 /* a goals figure as the card and the drawer write it: two places, its sign from the rounded value (never -0.00) */
 const v2S = x => { const r = Math.round(x * 100) / 100; return { t: `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)}`, c: r > 0 ? 'pos' : r < 0 ? 'neg' : '' }; };
-/* a player out gets a row of his own when the report has him Out or suspended, or he is worth 0.02 goals a game or more; the rest of
-   his club's outs are named on one line, with its day to day */
-const outRowS = o => /^out$|suspen/i.test(String(o.status || '')) || (typeof o.cost === 'number' && Math.abs(o.cost) >= 0.02);
-const outGroupS = st => /injured reserve/i.test(String(st || '')) ? 'on injured reserve' : `out (${String(st || 'out').toLowerCase()})`;
 const eqA = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 /* WCAG contrast and CIELAB, written here on their own */
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
@@ -3058,8 +3059,29 @@ function labH(h) {
   const X = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047, Y = r * 0.2126 + g * 0.7152 + b * 0.0722, Z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
   return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
 }
-/* every surface a badge or a pill sits on: the page's grounds and panels, the badge at rest and on hover (white over --panel-2), a hovered table row */
+/* every surface a 12px pill sits on: the page's grounds and panels, white over --panel-2, a hovered table row */
 const SURFACES = ['#2A3043', '#30374B', '#363D52', '#3D455B', '#475068', '#41495E', '#495065', '#424A5F'];
+/* every surface a badge or the win bar sits on: the card's two grounds (--panel, --panel-2, read from the page's CSS in theLook) and the
+   badge's own ground, 2% white over each */
+const BADGE_SURFACES = ['#363D52', '#3D455B', '#3A4155', '#41495E'];
+/* CIEDE2000 (Sharma, Wu and Dalal 2005), on labH above: how far apart two colours look */
+function de2000S(h1, h2) {
+  const [L1, a1, b1] = labH(h1), [L2, a2, b2] = labH(h2), rad = Math.PI / 180, deg = 180 / Math.PI;
+  const C1 = Math.hypot(a1, b1), C2 = Math.hypot(a2, b2), Cb = (C1 + C2) / 2, G = 0.5 * (1 - Math.sqrt(Cb ** 7 / (Cb ** 7 + 25 ** 7)));
+  const a1p = (1 + G) * a1, a2p = (1 + G) * a2, C1p = Math.hypot(a1p, b1), C2p = Math.hypot(a2p, b2);
+  const hp = (a, b) => { if (a === 0 && b === 0) return 0; const h = Math.atan2(b, a) * deg; return h < 0 ? h + 360 : h; };
+  const h1p = hp(a1p, b1), h2p = hp(a2p, b2), dLp = L2 - L1, dCp = C2p - C1p;
+  let dhp = 0; if (C1p * C2p !== 0) { dhp = h2p - h1p; if (dhp > 180) dhp -= 360; else if (dhp < -180) dhp += 360; }
+  const dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin(dhp / 2 * rad), Lbp = (L1 + L2) / 2, Cbp = (C1p + C2p) / 2;
+  let hbp = h1p + h2p; if (C1p * C2p !== 0) hbp = Math.abs(h1p - h2p) > 180 ? (h1p + h2p < 360 ? (h1p + h2p + 360) / 2 : (h1p + h2p - 360) / 2) : (h1p + h2p) / 2;
+  const T = 1 - 0.17 * Math.cos((hbp - 30) * rad) + 0.24 * Math.cos(2 * hbp * rad) + 0.32 * Math.cos((3 * hbp + 6) * rad) - 0.20 * Math.cos((4 * hbp - 63) * rad);
+  const dTh = 30 * Math.exp(-(((hbp - 275) / 25) ** 2)), RC = 2 * Math.sqrt(Cbp ** 7 / (Cbp ** 7 + 25 ** 7));
+  const SL = 1 + 0.015 * (Lbp - 50) ** 2 / Math.sqrt(20 + (Lbp - 50) ** 2), SC = 1 + 0.045 * Cbp, SH = 1 + 0.015 * Cbp * T, RT = -Math.sin(2 * dTh * rad) * RC;
+  return Math.sqrt((dLp / SL) ** 2 + (dCp / SC) ** 2 + (dHp / SH) ** 2 + RT * (dCp / SC) * (dHp / SH));
+}
+/* the clubs that share a colour, as the NBA's Bulls and Raptors do: their brands' reds, navies, golds and oranges. Any two clubs outside
+   one of these are 5 or more apart (a difference anyone sees); nhl v12 had Dallas and Minnesota 0.7 apart and Utah and the Islanders 2.8 */
+const COLOR_FAMILIES = [['CGY', 'CAR', 'CHI', 'DET', 'FLA', 'MTL', 'NJ', 'OTT', 'WSH'], ['BUF', 'CBJ', 'NYI', 'NYR', 'STL', 'TB', 'TOR', 'VAN', 'WPG'], ['BOS', 'NSH', 'PIT'], ['EDM', 'PHI']];
 const pageMap = w => JSON.parse(w.eval('JSON.stringify(TEAM_COLORS)'));
 /* the page's CSS rules (in any media query) whose `prop` reads as `re`, as [selector, the media it is under or '']; read once a window */
 const RULES = new WeakMap();
@@ -3070,9 +3092,52 @@ function cssWith(w, prop, re) {
 /* an element matched by a selector list, a selector the DOM cannot parse taken a part at a time */
 const hitsSel = (el, sel) => { try { return el.matches(sel); } catch (e) { return sel.split(',').some(x => { try { return el.matches(x); } catch (e2) { return false; } }); } };
 
-/* a bet button's far-off words, worked out here: the model 15 points or more above DraftKings' fair chance, its two numbers beside it */
-const farWant = (B, s) => B.fair === null || !(B.p - B.fair >= 0.15) ? null
-  : B.pick === s ? `model's call · far off the market: left out of the levels · model ${PBS.pctW(B.p)} · market ${PBS.pctW(B.fair)}` : `far off the market · model ${PBS.pctW(B.p)} · market ${PBS.pctW(B.fair)}`;
+/* a bet button's every part, worked out here (nhl v13): one line, the side, DraftKings' price and the model's chance, "PIT +170 · 34%",
+   a check before the side in the parlay; the model's call a tag on its top edge with its edge ("call · edge +8"); a side far off the
+   market a tag ("far off", or "call · far off") and, under the line, both numbers (the call's "left out of the levels") */
+const isFarS = B => B.fair !== null && B.p - B.fair >= 0.15;
+const betWant = (B, s, on) => {
+  const far = isFarS(B), call = B.pick === s;
+  const side = B.kind === 'ml' ? ab(B.g[s]) : B.kind === 'pl' ? `${ab(B.g[s])} ${lineS(B.num)}` : (s === 'over' ? 'Over' : 'Under');
+  return { side: (on ? '✓' : '') + side, price: PBS.odds(B.price), chance: `· ${PBS.pctW(B.p)}`,
+    tag: call && far ? 'call · far off' : call ? `call · edge +${Math.round(B.edge * 100)}` : far ? 'far off' : null,
+    far: far ? `model ${PBS.pctW(B.p)} · market ${PBS.pctW(B.fair)}${call ? ' · left out of the levels' : ''}` : null,
+    kids: ['pb-bs', 'pb-bn'].concat(call || far ? ['pb-bt tg' + (far ? ' far' : '')] : [], far ? ['pb-bt far'] : []) };
+};
+const betHave = btn => { const tg = btn.querySelector(':scope > .pb-bt.tg'), fl = btn.querySelector(':scope > .pb-bt.far:not(.tg)'), bn = btn.querySelector(':scope > .pb-bn');
+  return { side: txt(btn.querySelector(':scope > .pb-bs')), price: txt(bn && bn.querySelector(':scope > .pb-bp')), chance: txt(bn && bn.querySelector(':scope > .pb-bc')), tag: tg ? txt(tg) : null, far: fl ? txt(fl) : null,
+    kids: [...btn.children].map(x => x.className) }; };
+/* its name for a screen reader, which carries the call, its edge and the far-off numbers too */
+const betAria = (B, s, on) => { const far = isFarS(B), call = B.pick === s, sh2 = sh(B.g[s]);
+  const desc = B.kind === 'ml' ? `${sh2} to win` : B.kind === 'pl' ? `${sh2} ${lineS(B.num)}` : `${s === 'over' ? 'Over' : 'Under'} ${B.num}`;
+  return `${desc}, ${PBS.odds(B.price)}, model ${PBS.pctW(B.p)}${call && !far ? `, the model's call, edge +${Math.round(B.edge * 100)}` : ''}${far ? `${call ? ", the model's call" : ''}, far off the market: model ${PBS.pctW(B.p)}, market ${PBS.pctW(B.fair)}` : ''}${on ? ', in your parlay' : ''}`; };
+/* every piece of a bet button that cannot wrap fits the narrowest button the page draws (nhl v13). jsdom lays nothing out, so the pieces
+   are counted against widths measured in Chromium with the page's Manrope: at 320px a card's bet button is 94px wide, 76 inside, and its
+   tag, one line on its top edge 6px in, has 86 of it: "call · edge +99", 15 characters, is 84px. Under the line the far-off numbers wrap
+   between words, each number whole: "market 100%", 11 characters, is 69px at 11px. "far off the market" as a tag (18, 101px) and "left
+   out of the levels" kept whole (22, 108px) ran out of their buttons at 320 and 360, on the cards and in Pick your own legs. The side
+   and the price and chance are the data's (a club's three letters and a line, a price and a chance) and are held whole by the rules */
+const BET_FIT = { tag: 15, run: 11 };
+const betRuns = (w, el, up) => { if ([el].concat(up || []).some(x => w.getComputedStyle(x).whiteSpace === 'nowrap')) return [el.textContent];
+  const out = []; for (const n of el.childNodes) { if (n.nodeType === 3) out.push(...n.textContent.split(/\s+/).filter(Boolean)); else if (n.nodeType === 1) out.push(...betRuns(w, n)); } return out; };
+const betFit = btn => { const w = btn.ownerDocument.defaultView, tg = btn.querySelector(':scope > .pb-bt.tg'), fl = btn.querySelector(':scope > .pb-bt.far:not(.tg)'), bad = [];
+  if (tg && txt(tg).length > BET_FIT.tag) bad.push(`its tag "${txt(tg)}" is ${txt(tg).length} characters, wider than the ${BET_FIT.tag} the narrowest button has room for`);
+  if (fl) for (const r of betRuns(w, fl, [btn])) if (r.trim().length > BET_FIT.run) bad.push(`"${r.trim()}" under its line cannot wrap and is ${r.trim().length} characters, wider than the ${BET_FIT.run} the narrowest button has room for`);
+  return bad.join('; '); };
+/* what is wrong with one button, '' when nothing is */
+const betWrong = (btn, B, s) => { const on = btn.getAttribute('aria-pressed') === 'true', want = betWant(B, s, on), have = betHave(btn);
+  if (!eqA(have, want)) return `${btn.dataset.leg}: ${JSON.stringify(have)} where ${JSON.stringify(want)}`;
+  const fit = betFit(btn); if (fit) return `${btn.dataset.leg}: ${fit}`;
+  if (btn.getAttribute('aria-label') !== betAria(B, s, on)) return `${btn.dataset.leg}: named "${btn.getAttribute('aria-label')}" where "${betAria(B, s, on)}"`;
+  return ''; };
+/* who is out (nhl v13): a row for a player worth OUT_ROW_S goals a game or more to his club, by the size of his figure; the bar is worked
+   out again in theLook from tools/elo.js's goals layer and the player model's blend: about a point of the club's chance to win */
+const OUT_ROW_S = 0.13;
+const isRowS = o => typeof o.cost === 'number' && Math.abs(o.cost) >= OUT_ROW_S - 1e-9;
+const orderS = list => list.map((o, i) => [o, i]).sort((a, b) => ((typeof b[0].cost === 'number' ? Math.abs(b[0].cost) : -1) - (typeof a[0].cost === 'number' ? Math.abs(a[0].cost) : -1)) || a[1] - b[1]).map(x => x[0]);
+const groupS = st => /injured reserve/i.test(String(st || '')) ? 'IR' : /^out$/i.test(String(st || 'out')) ? 'out' : /suspen/i.test(String(st)) ? 'suspended' : `out (${String(st).toLowerCase()})`;
+const groupRankS = k => k === 'out' ? 0 : k === 'suspended' ? 1 : k === 'IR' ? 3 : 2;
+const OUT_KEY_S = `Who's out: a row for a player worth ${OUT_ROW_S.toFixed(2)} goals a game or more to his club, about a point of its chance to win.`;
 /* one game card against the state: returns what is wrong, [] when nothing is */
 function cardWrongs(w, c, g, ms, MAP) {
   const bad = [], ck = (ok, m) => { if (!ok) bad.push(m); };
@@ -3119,20 +3184,28 @@ function cardWrongs(w, c, g, ms, MAP) {
     if (L.total !== null && L.total !== undefined) mk.ou.push(`Over/under ${L.total} o ${oddsS(L.overOdds)} · u ${oddsS(L.underOdds)}`);
   }
   for (const k of ['ml', 'pl', 'ou']) ck(eqA(chips(k), mk[k]), `the market's ${k} chip exactly where the card has no bets board and the line has it ${JSON.stringify(mk[k])} (${chips(k)})`);
+  /* each call said once on the card: on its own bet button where the board shows it with its edge ("call · edge +8"), else in a chip
+     (a game started or over, a stale line, a call far off the market, whose button says that instead of its edge) */
   const R = g.result, e = x => Math.round(x * 100), res = (k, word) => R && R[k] ? ` ${word} ${R[k]}` : '', calls = [];
-  if (g.mlPick) calls.push([`ML ${ab(g[g.mlPick])} · edge +${e(g.mlEdge[g.mlPick])}${res('ml', 'ML')}`, !R]);
-  if (g.plPick) calls.push([`${ab(g[g.plPick])} ${lineS(g.plPick === 'home' ? L.homeLine : -L.homeLine)} · edge +${e(g.plEdge[g.plPick])}${res('pl', 'PL')}`, !R]);
-  if (g.ouPick) calls.push([`${g.ouPick} ${L.total} · edge +${e(g.ouEdge[g.ouPick])}${res('ou', g.ouPick)}`, !R]);
-  if (!calls.length && !R) calls.push([L ? 'no edge' : 'no line yet', false]);
+  const onBoard = (side, kind) => { if (!bets) return false; const B = sLeg(g, side, kind); return !!B && !isFarS(B); };
+  if (g.mlPick && !onBoard(g.mlPick, 'ml')) calls.push([`ML ${ab(g[g.mlPick])} · edge +${e(g.mlEdge[g.mlPick])}${res('ml', 'ML')}`, !R]);
+  if (g.plPick && !onBoard(g.plPick, 'pl')) calls.push([`${ab(g[g.plPick])} ${lineS(g.plPick === 'home' ? L.homeLine : -L.homeLine)} · edge +${e(g.plEdge[g.plPick])}${res('pl', 'PL')}`, !R]);
+  if (g.ouPick && !onBoard(g.ouPick, 'ou')) calls.push([`${g.ouPick} ${L.total} · edge +${e(g.ouEdge[g.ouPick])}${res('ou', g.ouPick)}`, !R]);
+  if (!g.mlPick && !g.plPick && !g.ouPick && !R) calls.push([L ? 'no edge' : 'no line yet', false]);
   const callEls = [...c.querySelectorAll('.chips .chip[data-ck="call"]')], haveCalls = callEls.map(x => [txt(x), x.classList.contains('edge')]);
-  ck(eqA(haveCalls, calls), `the calls, lit until graded, their grades, else why none ${JSON.stringify(calls)} (${JSON.stringify(haveCalls)})`);
+  ck(eqA(haveCalls, calls), `the calls, lit until graded, their grades, else why none, each in a chip only where its button does not carry it with its edge ${JSON.stringify(calls)} (${JSON.stringify(haveCalls)})`);
+  for (const [k, pk] of [['ml', g.mlPick], ['pl', g.plPick], ['ou', g.ouPick]]) if (pk) {
+    const tag = c.querySelector(`button[data-leg="${g.id}|${pk}|${k}"] .pb-bt.tg`), onTag = !!tag && /^call · edge \+\d+$/.test(txt(tag));
+    const head = k === 'ml' ? `ML ${ab(g[pk])} ·` : k === 'pl' ? `${ab(g[pk])} ${lineS(pk === 'home' ? L.homeLine : -L.homeLine)} ·` : `${pk} ${L.total} ·`, inChip = callEls.some(x => txt(x).startsWith(head));
+    ck(onTag !== inChip, `the ${k} call said exactly once, with its edge: on its button's tag (${onTag}) or in a chip (${inChip}), never both, never neither`);
+  }
   ck(callEls.every(x => [...x.querySelectorAll('.res')].every(r => /^(win|loss|push)$/.test(r.className.replace('res', '').trim()))), 'each grade a pill in its colour');
   /* a side far off the market says so on its own button, its two numbers in view (a phone shows no title), and in no chip */
   ck(!c.querySelector('.chips .chip[data-ck="far"]'), 'no Far off chip: the button carries it');
   if (bets) for (const k of PBS.KINDS) for (const s of PBS.SIDES[k]) {
     const B = sLeg(g, s, k), btn = c.querySelector(`button[data-leg="${g.id}|${s}|${k}"]`); if (!B || !btn) continue;
-    const want = farWant(B, s), have = btn.querySelector('.pb-bt.far');
-    ck((have ? txt(have) : null) === want, `${s} ${k}: far off the market said on the button with both numbers exactly where it is ${JSON.stringify(want)} (${have ? txt(have) : 'none'})`);
+    const bad1 = betWrong(btn, B, s);
+    ck(!bad1, `${s} ${k}: the button is its one line (the side, the price, the model's chance), the call's tag with its edge, far off the market on its own button with both numbers, exactly: ${bad1}`);
   }
   /* a stale line, the bets board */
   const stale = c.querySelector('.pb-stale'), wantStale = !started && !!L && !fresh;
@@ -3141,42 +3214,62 @@ function cardWrongs(w, c, g, ms, MAP) {
   const wantRows = !bets ? null : [['ml', 'Moneyline'], ['pl', 'Puck line'], ['ou', `Total ${L.total}`]].filter(([k]) => (k !== 'ou' || (L.total !== null && L.total !== undefined)) && PBS.SIDES[k].some(s => sLeg(g, s, k))).map(x => x[1]);
   ck(!!c.querySelector('.pb-bets') === bets && (!bets || eqA(rows, wantRows)), `the bets board exactly on a game to come with a fresh line, its rows ${JSON.stringify(wantRows)} (${JSON.stringify(rows)})`);
   if (!bets) ck(!c.querySelector('button[data-leg]'), 'no bet offered without the board');
-  /* who is out */
+  /* who is out (nhl v13): the two goalies on one row, a row for each player worth OUT_ROW_S goals or more, each club's day to day on
+     a line, the rest of each club's outs named on a line grouped by status, most valuable first, their figures beside them on a card
+     with no drawer and in Lineups on one with a drawer, where the players on injured reserve are counted on the card and named in it */
+  const PLT = S.players && S.players.teams, lu = !started && !!g.pm && !!PLT && !!PLT[g.away] && !!PLT[g.home];
   const out = c.querySelector('.out');
   ck(!!out === !!g.pm, 'who is out exactly where the player model lined the game up');
   if (g.pm && out) {
-    const kids = [...out.children], gk = kids.filter(x => x.classList.contains('gk')).map(txt);
-    const wantGk = ['away', 'home'].map(s => { const t = g.pm[s].goalie; return t ? `${t.name} ${ab(g[s])} · in goal · ${t.how}${t.debut ? ' · first NHL start' : ''}` : `${ab(g[s])} · goalie unknown`; });
-    ck(eqA(gk, wantGk), `each club's goalie and how he was chosen ${JSON.stringify(wantGk)} (${JSON.stringify(gk)})`);
-    const rowsW = [], dtdW = [], alsoW = [];
-    for (const s of ['away', 'home']) for (const o of (g.pm[s].out || []).filter(outRowS)) rowsW.push(`${o.name} ${ab(g[s])} · ${o.status || 'Out'}${typeof o.cost === 'number' ? ` ${v2S(o.cost).t} goals` : ''}`);
-    for (const s of ['away', 'home']) for (const o of g.pm[s].dtd || []) dtdW.push(`${o.name} ${ab(g[s])} · Day to day`);
-    for (const s of ['away', 'home']) {
-      const parts = [], groups = new Map();
-      for (const o of (g.pm[s].out || []).filter(o => !outRowS(o))) { const k = outGroupS(o.status); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o.name); }
-      for (const [k, names] of groups) parts.push(`${parts.length ? '' : ab(g[s]) + ' '}also ${k}: ${names.join(', ')}`);
-      if (parts.length) alsoW.push(parts.join(' · '));
+    const kids = [...out.children], sides = ['away', 'home'];
+    const gks = sides.map(s => ({ t: g.pm[s].goalie, ab: ab(g[s]) })), same = gks.every(x => x.t && !x.t.debut) && gks[0].t.how === gks[1].t.how;
+    const gk1 = ({ t, ab: a }) => !t ? `${a} goalie unknown` : `${t.name} ${a}${same ? '' : `, ${t.how}`}${t.debut ? ', first NHL start' : ''}`;
+    const want = [['gk', `In goal: ${gks.map(gk1).join(' · ')}${same ? ` both ${gks[0].t.how}` : ''}`]];
+    for (const s of sides) for (const o of orderS((g.pm[s].out || []).filter(isRowS))) want.push(['orow', `${o.name} ${ab(g[s])} · ${o.status || 'Out'} ${v2S(o.cost).t} goals`]);
+    for (const s of sides) if ((g.pm[s].dtd || []).length) want.push(['dtd', `${ab(g[s])} day to day: ${g.pm[s].dtd.map(o => o.name).join(', ')}`]);
+    const irOnly = [];
+    for (const s of sides) {
+      const groups = new Map(), parts = []; let ir = 0;
+      for (const o of orderS((g.pm[s].out || []).filter(o => !isRowS(o)))) { const k = groupS(o.status); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); }
+      for (const [k, list] of [...groups].sort((x, y) => groupRankS(x[0]) - groupRankS(y[0]))) {
+        if (lu && k === 'IR') { ir = list.length; continue; }
+        parts.push(`${parts.length ? '' : ab(g[s]) + ' '}${k === 'IR' ? 'on IR' : k}: ${list.map(o => `${o.name}${!lu && typeof o.cost === 'number' ? ' ' + v2S(o.cost).t : ''}`).join(', ')}`);
+      }
+      if (ir && parts.length) parts.push(`on IR: ${ir}, in Lineups`); else if (ir) irOnly.push(`${ab(g[s])} ${ir}`);
+      if (parts.length) want.push(['also', parts.join(' · ')]);
     }
-    const rowsH = kids.filter(x => x.classList.contains('orow')).map(txt), dtdH = kids.filter(x => x.classList.contains('dtd')).map(txt), alsoH = kids.filter(x => x.classList.contains('also')).map(txt);
-    ck(eqA(rowsH, rowsW), `a row for each player out (Out, suspended or worth 0.02 goals), with his status and what he is worth ${JSON.stringify(rowsW).slice(0, 300)} (${JSON.stringify(rowsH).slice(0, 300)})`);
-    ck(eqA(dtdH, dtdW), `a row for each player day to day, with no figure ${JSON.stringify(dtdW).slice(0, 300)} (${JSON.stringify(dtdH).slice(0, 300)})`);
-    ck(eqA(alsoH, alsoW), `the rest of each club's outs on one line ${JSON.stringify(alsoW)} (${JSON.stringify(alsoH)})`);
-    ck(kids.every(x => ['gk', 'orow', 'dtd', 'also', 'muted', 'src'].some(k => x.classList.contains(k))), 'every row of who is out is a goalie, a player out, a player day to day, the rest named, a box note or the source');
-    const costs = kids.filter(x => x.classList.contains('orow')).map(x => !!x.querySelector('.cost')), wantCosts = ['away', 'home'].flatMap(s => (g.pm[s].out || []).filter(outRowS).map(o => typeof o.cost === 'number'));
-    ck(eqA(costs, wantCosts) && kids.filter(x => x.classList.contains('dtd')).every(x => !x.querySelector('.cost')), 'a figure beside each player out the player model rates, none beside one it does not, none beside a player day to day');
-    ck(kids.filter(x => x.classList.contains('orow') || x.classList.contains('dtd')).every(x => { const wh = x.querySelector('.who'); return !!wh && wh.getAttribute('title') === txt(wh).replace(/ (\S+) · /, ' · $1 · '); }), 'each player\'s name and status carry the whole on their title');
-    /* nothing cut (a phone shows no title): the name and the status each kept whole, the status free to go under the name, and no rule of
-       the page's, in any media query, ellipsing a row of who is out (on a 360 phone it once read "Ryan Nugent-Hopkins EDM · Injured Re…") */
-    const ell = cssWith(w, 'text-overflow', /^ellipsis$/), pr = kids.filter(x => x.classList.contains('orow') || x.classList.contains('dtd'));
-    ck(pr.every(x => { const wh = x.querySelector('.who'), nm = wh && wh.querySelector(':scope > .nw'), st = wh && wh.querySelector(':scope > .muted.nw'); return !!nm && !!st && txt(wh) === `${txt(nm)} ${txt(st)}`; }), 'each player\'s name and his club and status each kept whole on a line, the two free to wrap between');
+    if (irOnly.length) want.push(['also ir', `On IR, named in Lineups: ${irOnly.join(' · ')}`]);
+    for (const s of sides) { const t = g.pm[s]; if (t.lastBox && t.lastFinal && t.lastFinal > t.lastBox) want.push(['muted', `${ab(g[s])} lineup from ${t.lastBox}: the box score of ${t.lastFinal} not read yet`]); }
+    want.push(['src', `${g.pm.inj ? `Injury report of ${new Date(g.pm.inj).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}${started ? ', as the call was made' : ''}` : 'No injury report applied'} · the ${g.by === 'players' ? "player model's" : "team Elo's"} call`]);
+    const have = kids.map(x => [x.className, txt(x)]);
+    ck(eqA(have, want), `who is out, row by row: ${JSON.stringify(want).slice(0, 500)} (${JSON.stringify(have).slice(0, 500)})`);
+    ck(kids.filter(x => x.classList.contains('orow')).every(x => { const wh = x.querySelector(':scope > .who'); return !!wh && wh.getAttribute('title') === txt(wh).replace(/ (\S+) · /, ' · $1 · ') && !!x.querySelector(':scope > .cost'); }), 'each player\'s row carries his name and status whole on its title, and his figure');
+    /* nothing lost: every player out is named on the card (one on injured reserve counted there where the card has a drawer) with his
+       status and figure on the card or in its Lineups, each worked out here from the state on its own */
+    const lost = [], outT = txt(out), dr = c.querySelector(`#lu-${g.id}`);
+    for (const [i, s] of sides.entries()) for (const o of g.pm[s].out || []) {
+      const fig = typeof o.cost === 'number' ? v2S(o.cost).t : null, st = o.status || 'Out';
+      const named = [...out.querySelectorAll('.nw, .who > .nw')].some(x => txt(x) === o.name || txt(x).startsWith(o.name + ' '));
+      if (lu) {
+        const blk = dr && dr.querySelectorAll(':scope > div')[i], li = blk && [...blk.querySelectorAll('.lu-out li')].find(x => txt(x.querySelector(':scope > span > .nw')) === o.name);
+        if (!li || txt(li.querySelector(':scope > span > .muted')) !== st || txt(li.querySelector(':scope > .v')) !== (fig === null ? '—' : fig)) lost.push(`${o.name}: not in Lineups with ${st} and ${fig}`);
+        if (!named && !(groupS(st) === 'IR' && !isRowS(o))) lost.push(`${o.name}: not named on the card`);
+      } else {
+        if (!named) lost.push(`${o.name}: not named on the card`);
+        if (fig !== null && !outT.includes(`${o.name} ${fig}`) && !outT.includes(`${o.name} ${ab(g[s])} · ${st} ${fig} goals`)) lost.push(`${o.name}: his figure ${fig} not beside him`);
+      }
+    }
+    if (lu && dr) for (const [i, s] of sides.entries()) { const blk = dr.querySelectorAll(':scope > div')[i], n = blk ? blk.querySelectorAll('.lu-out li').length : -1; if (n !== (g.pm[s].out || []).length) lost.push(`${ab(g[s])}: Lineups lists ${n} out where the report has ${(g.pm[s].out || []).length}`); }
+    ck(!lost.length, `every player out is named on the card, his status and figure on it or in its Lineups (${lost.slice(0, 4).join(' | ')})`);
+    /* nothing cut (a phone shows no title): every name and status, figure and count kept whole, and no rule of the page's, in any media
+       query, ellipsing who is out (on a 360 phone it once read "Ryan Nugent-Hopkins EDM · Injured Re…"), nor a name in Lineups' outs */
+    const ell = cssWith(w, 'text-overflow', /^ellipsis$/);
     const cutBy = [out, ...out.querySelectorAll('*')].map(el => ell.find(([sel]) => hitsSel(el, sel))).find(Boolean);
     ck(!cutBy, `no rule cuts who is out short with an ellipsis (${cutBy ? cutBy.join(' @media ') : 'none'})`);
-    const src = out.querySelector('.src'), whose = `The call is the ${g.by === 'players' ? "player model's" : "team Elo's"}.`;
-    const wantSrc = g.pm.inj ? `Injury report of ${new Date(g.pm.inj).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}${started ? ', as the call was made' : ''}. ${whose}` : `No injury report was applied to this call. ${whose}`;
-    ck(!!src && txt(src) === wantSrc, `the source line "${wantSrc}" (${src && txt(src)})`);
+    ck(kids.filter(x => x.classList.contains('orow')).every(x => { const wh = x.querySelector('.who'), nm = wh && wh.querySelector(':scope > .nw'), st = wh && wh.querySelector(':scope > .muted.nw'); return !!nm && !!st && txt(wh) === `${txt(nm)} ${txt(st)}`; }), 'each row\'s name and his club and status each kept whole on a line, the two free to wrap between');
+    if (dr) for (const sp of dr.querySelectorAll('.lu-out li > span:first-child')) { const cs = w.getComputedStyle(sp); if (cs.whiteSpace === 'nowrap' || cs.overflow === 'hidden') { ck(false, `a name in Lineups' outs is cut: white-space ${cs.whiteSpace}, overflow ${cs.overflow}`); break; } }
   }
   /* the Lineups drawer and the foot */
-  const PLT = S.players && S.players.teams, lu = !started && !!g.pm && !!PLT && !!PLT[g.away] && !!PLT[g.home];
   const luB = c.querySelector('button[data-lu]'), dr = c.querySelector(`#lu-${g.id}`);
   ck(!!luB === lu && !!dr === lu, `Lineups exactly on a game to come the player model lines up (${!!luB}, ${!!dr})`);
   if (lu && luB && dr) {
@@ -3185,9 +3278,9 @@ function cardWrongs(w, c, g, ms, MAP) {
     for (const [i, s] of [[0, 'away'], [1, 'home']]) {
       const blk = dr.querySelectorAll(':scope > div')[i], t = PLT[g[s]], gkp = g.pm[s].goalie;
       const want = (gkp ? [`${gkp.name}G${v2S(gkp.gk).t}`] : []).concat((t.lineup || []).slice(0, 9).map(p => `${p.name}${Math.round(p.share * 60)}'${v2S(p.v).t}`));
-      const have = blk ? [...blk.querySelectorAll('li')].map(txt) : [];
+      const have = blk ? [...blk.querySelectorAll('.lu-in li')].map(txt) : [];
       ck(blk && txt(blk.querySelector('h4')) === `${ab(g[s])} · expected` && eqA(have, want), `${ab(g[s])}'s goalie and nine skaters with the most ice time, minutes and goals ${JSON.stringify(want).slice(0, 200)} (${JSON.stringify(have).slice(0, 200)})`);
-      const cls = blk ? [...blk.querySelectorAll('li .v')].map(x => x.classList.contains('pos') ? 'pos' : x.classList.contains('neg') ? 'neg' : '') : [];
+      const cls = blk ? [...blk.querySelectorAll('.lu-in li .v')].map(x => x.classList.contains('pos') ? 'pos' : x.classList.contains('neg') ? 'neg' : '') : [];
       ck(eqA(cls, (gkp ? [v2S(gkp.gk).c] : []).concat((t.lineup || []).slice(0, 9).map(p => v2S(p.v).c))), `${ab(g[s])}'s figures lime above zero, rose below, plain at 0.00`);
       /* the strength the state's own to the hundredth, half away from zero (the Players tab's figure), and its three parts shown so
          they add up to it, each within a hundredth of its own value (worked here from the line itself, not the page's apportioning) */
@@ -3221,15 +3314,85 @@ async function theLook() {
   /* the colour map: every club, #1E2230 on each, each colour at its bar on every surface, each club in a hue of its own */
   const keys = Object.keys(S.teams), missing = keys.filter(k => !MAP[k]);
   chk(!missing.length && keys.every(k => !MAP[k] || MAP[k].on === '#1E2230'), `TEAM_COLORS has every club, #1E2230 on each (${missing.join(', ') || 'none missing'})`);
+  /* the badge's surfaces are the card's own grounds: held to the page's CSS, so a ground changed there is a ground checked here */
+  const cssVar = k => { const m = new RegExp(`${k}:\\s*(#[0-9A-Fa-f]{6})`).exec(HTML); return m ? m[1].toUpperCase() : null; };
+  const over2 = h => '#' + hexRgb(h).map(v => Math.round((v * 255) * 0.98 + 255 * 0.02).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const cardGrounds = [cssVar('--panel'), cssVar('--panel-2')];
+  chk(/\.game\{background:linear-gradient\(180deg,var\(--panel-2\),var\(--panel\)\)/.test(HTML) && /\.badge\{[^}]*background:rgba\(255,255,255,\.02\)/.test(HTML) && eqA(BADGE_SURFACES, cardGrounds.concat(cardGrounds.map(over2))),
+    `a badge and the win bar sit on the card's two grounds and the badge's own, 2% white over each: ${BADGE_SURFACES.join(', ')} (${cardGrounds.concat(cardGrounds.map(over2)).join(', ')})`);
   const lowC = [], lowT = [], lowOn = [];
   for (const k of keys.filter(k => MAP[k])) {
     const m = MAP[k];
-    for (const s of SURFACES) { if (!(crH(m.c, s) >= 3.2)) lowC.push(`${k} ${m.c} on ${s} ${crH(m.c, s).toFixed(2)}`); if (!(crH(m.t, s) >= 4.5)) lowT.push(`${k} ${m.t} on ${s} ${crH(m.t, s).toFixed(2)}`); }
+    for (const s of BADGE_SURFACES) if (!(crH(m.c, s) >= 3)) lowC.push(`${k} ${m.c} on ${s} ${crH(m.c, s).toFixed(3)}`);
+    for (const s of SURFACES) if (!(crH(m.t, s) >= 4.5)) lowT.push(`${k} ${m.t} on ${s} ${crH(m.t, s).toFixed(2)}`);
     if (!(crH('#1E2230', m.c) >= 4.5)) lowOn.push(`${k} ${crH('#1E2230', m.c).toFixed(2)}`);
   }
-  chk(!lowC.length, `every badge colour is 3:1 or more on every surface (large text), held at 3.2 so a card's glow cannot take it under (${lowC.slice(0, 4).join('; ')})`);
-  chk(!lowT.length, `every pill colour is 4.5:1 or more on every surface (${lowT.slice(0, 4).join('; ')})`);
+  chk(!lowC.length, `every badge and win-bar colour is 3:1 or more on every surface it sits on, WCAG's bar for large text and a component (${lowC.slice(0, 4).join('; ')})`);
+  chk(!lowT.length, `every pill colour (12px) is 4.5:1 or more on every surface (${lowT.slice(0, 4).join('; ')})`);
   chk(!lowOn.length, `#1E2230 is 4.5:1 or more on every badge filled (${lowOn.join('; ')})`);
+  /* clubs that share a colour share their brand's: two clubs outside one family are 5 or more apart by CIEDE2000 */
+  const famOf = {}; COLOR_FAMILIES.forEach((f, i) => f.forEach(k => { famOf[k] = i; }));
+  const close = []; for (let i = 0; i < keys.length; i++) for (let j = i + 1; j < keys.length; j++) { const a = keys[i], b = keys[j]; if (!MAP[a] || !MAP[b] || (famOf[a] !== undefined && famOf[a] === famOf[b])) continue; const dd = de2000S(MAP[a].c, MAP[b].c); if (!(dd >= 5)) close.push(`${a}-${b} ${dd.toFixed(1)}`); }
+  /* who is out's bar: the page's is the smoke's, and it is what it says, about a point of a club's chance to win. The card's chance on
+     a player model's call is its goals layer and the team Elo blended, the goals layer weighted 1 - params.blend (data/players.json; tools/players.js's
+     pHome = (1 - blend) * pG + blend * pE); a player out moves his
+     club's expected margin by what he is worth, and the goals layer (tools/elo.js, data/model.json's pull) turns a margin into a chance.
+     Only the median over the games to come is held, and loosely (0.5 to 2 points: "about a point" by a factor of two): the job never
+     moves the blend or the pull (players.js keeps its fitted params, fit.js is run by hand), and a lopsided game anywhere on the schedule
+     is the model's honest number, never a reason to stop a publish, so the ends are reported, not held. Holding them (0.7 to 1.3), as
+     v13's first draft did, failed a state whose one game a month out had its margin moved a third of a goal, and would have stopped the job */
+  chk(w.eval('OUT_ROW') === OUT_ROW_S, `the page's bar for a row of who is out is ${OUT_ROW_S} goals a game (${w.eval('OUT_ROW')})`);
+  {
+    const PJ = readJSON(path.join(DATA, 'players.json')), MJ = readJSON(path.join(DATA, 'model.json')), blend = PJ && PJ.params && PJ.params.blend;
+    const pts = S.games.filter(g => g.pm && typeof g.pm.mu === 'number' && typeof g.pm.xt === 'number' && typeof g.diff === 'number' && !sStarted(g, AT))
+      .map(g => (1 - blend) * (ELO.homeByGoals(ELO.goals(g.pm.xt, g.pm.mu + OUT_ROW_S, g.diff, MJ.pull)) - ELO.homeByGoals(ELO.goals(g.pm.xt, g.pm.mu, g.diff, MJ.pull)))).sort((a, b) => a - b);
+    const medP = pts.length ? pts[Math.floor((pts.length - 1) / 2)] : null;
+    if (!pts.length) console.log('  no game to come with the player model\'s numbers: the bar\'s meaning is not worked out on this state');
+    else {
+      chk(typeof blend === 'number' && medP >= 0.005 && medP <= 0.02, `${OUT_ROW_S} goals a game moves a club's chance to win by about a point at the median of the ${pts.length} games to come: ${(medP * 100).toFixed(2)} points (0.50 to 2.00 held; ${(pts[0] * 100).toFixed(2)} to ${(pts[pts.length - 1] * 100).toFixed(2)} at the ends, reported)`);
+      console.log(`  who is out's bar: ${OUT_ROW_S} goals a game moves a club's chance to win by ${(medP * 100).toFixed(2)} points at the median of ${pts.length} games to come (${(pts[0] * 100).toFixed(2)} to ${(pts[pts.length - 1] * 100).toFixed(2)})`);
+    }
+  }
+  /* a bet button is one line where it fits and 44px tall (jsdom lays nothing out: the rules are read): it wraps between its side and its
+     price and chance, never inside either, and the call's tag sits on its top edge, taking no line */
+  const rule = (sel, prop) => { const r = RULES.has(w) ? RULES.get(w) : (cssWith(w, prop, /./), RULES.get(w)); const hit = r.filter(([sl, media]) => !media && sl.split(',').map(x => x.trim()).includes(sel)); return hit.length ? String(hit[hit.length - 1][2].getPropertyValue(prop)).trim() : null; };
+  chk(rule('.pb-bs', 'white-space') === 'nowrap' && rule('.pb-bn', 'white-space') === 'nowrap' && rule('.pb-bet', 'flex-wrap') === 'wrap' && rule('.pb-bt.tg', 'position') === 'absolute' && rule('.pb-bet', 'position') === 'relative',
+    `a bet button wraps only between its side and its price and chance, each kept whole, the call's tag on its edge taking no line (${['.pb-bs white-space', '.pb-bn white-space', '.pb-bet flex-wrap', '.pb-bt.tg position', '.pb-bet position'].map(x => { const [a2, b2] = x.split(' '); return `${x} ${rule(a2, b2)}`; }).join(', ')})`);
+  chk(!!d.querySelector('#games button.pb-bet') ? w.getComputedStyle(d.querySelector('#games button.pb-bet')).minHeight === '44px' : true, 'a bet button is 44px tall');
+  /* a row's two bets laid out alike (nhl v13): the page reads each button's wrap (syncBetRows) and marks a row whose either button
+     wrapped .st, whose rule puts both buttons' price and chance under the side; a row with neither wrapped stays one line, and each draw
+     of the cards and of Pick your own legs reads them again. jsdom lays nothing out, so the wrap is planted, a price and chance 16px under
+     its side: in a row's first button, in its second, in neither, by turns. One button on one line beside one wrapped looked uneven */
+  chk(rule('.pb-bb.st .pb-bs', 'flex-basis') === '100%', `a row marked .st puts each button's price and chance under its side (.pb-bb.st .pb-bs flex-basis ${rule('.pb-bb.st .pb-bs', 'flex-basis')})`);
+  {
+    const P0 = Object.getOwnPropertyDescriptor(w.HTMLElement.prototype, 'offsetTop'), WR = new Set();
+    Object.defineProperty(w.HTMLElement.prototype, 'offsetTop', { configurable: true, get() { return this.classList && this.classList.contains('pb-bn') && this.parentElement && WR.has(this.parentElement.dataset.leg) ? 16 : 0; } });
+    const plant = box => { WR.clear(); [...d.querySelectorAll(`${box} .pb-bb`)].forEach((r, i) => { const b = r.querySelectorAll(':scope > .pb-bet')[i % 3]; if (b) WR.add(b.dataset.leg); }); return WR.size; };
+    const rowsOff = box => [...d.querySelectorAll(`${box} .pb-bb`)].filter(r => r.classList.contains('st') !== [...r.querySelectorAll(':scope > .pb-bet')].some(b => WR.has(b.dataset.leg))).map(r => [...r.querySelectorAll(':scope > .pb-bet')].map(b => b.dataset.leg).join(' & '));
+    const held = (box, redraw, where) => {
+      const n = plant(box); redraw();
+      const off1 = rowsOff(box), st1 = d.querySelectorAll(`${box} .pb-bb.st`).length;
+      chk(n > 0 && st1 === n && !off1.length, `${where}: a row is marked to lay out its two buttons alike exactly where either wraps (${n} planted, ${st1} marked; ${off1.slice(0, 3).join(' | ')})`);
+      WR.clear(); redraw();
+      const st2 = d.querySelectorAll(`${box} .pb-bb.st`).length;
+      chk(st2 === 0, `${where}: drawn again with no button wrapped, no row stays marked (${st2})`);
+    };
+    try {
+      /* the strip is drawn again with each day, so a day's button is looked up afresh each time */
+      const dayB = dd => d.querySelector(`#days .day[data-day="${dd}"]`);
+      const day = [...d.querySelectorAll('#days .day')].map(b => b.dataset.day).find(dd => { dayB(dd).click(); return !!d.querySelector('#games .pb-bb'); });
+      if (!day) console.log('  no card with a bets board: the rows laid out alike are held in Pick your own legs alone');
+      else held('#games', () => dayB(day).click(), 'the Games cards');
+      const pt = d.querySelector('#tabs button[data-tab="parlays"]');
+      pt.click();
+      if (d.querySelector('#plLines .pb-bb')) held('#plLines', () => pt.click(), 'Pick your own legs');
+      else console.log('  Pick your own legs lists no game: its rows laid out alike are not held here');
+    } finally {
+      if (P0) Object.defineProperty(w.HTMLElement.prototype, 'offsetTop', P0); else delete w.HTMLElement.prototype.offsetTop;
+      WR.clear(); d.querySelector('#tabs button[data-tab="games"]').click();
+    }
+  }
+  chk(!close.length && de2000S('#3D455B', '#363D52') > 0, `every two clubs that do not share a brand colour are 5 or more apart in CIEDE2000, so none is taken for another (${close.join(', ') || 'none closer'})`);
   /* each club in a colour of its own hue, as the NBA's: none grey or white but the Kings, whose colour is silver (CIELAB chroma 15 or more) */
   const grey = keys.filter(k => MAP[k] && k !== 'LA' && !(Math.hypot(...labH(MAP[k].c).slice(1)) >= 15)).map(k => `${k} ${MAP[k].c} ${Math.hypot(...labH(MAP[k].c).slice(1)).toFixed(1)}`);
   chk(!grey.length, `every club but the Kings (silver) in a colour of its own hue, none grey or white (${grey.join(', ')})`);
@@ -3244,9 +3407,50 @@ async function theLook() {
     for (const c of cards) { const g = S.games.find(x => x.id === c.dataset.id); if (!g) continue; const bad = cardWrongs(w, c, g, AT, MAP); held++; chk(!bad.length, `${g.id} (${ab(g.away)} @ ${ab(g.home)}, ${day}): ${bad.slice(0, 3).join(' | ')}`); }
     /* the bets' key said once over the day's cards, exactly where a card has a board, and on no board */
     const gk = d.getElementById('gamesKey'), boards = cards.filter(c => c.querySelector('.pb-bets')).length;
-    chk(!!gk && gk.hidden === !boards && txt(gk) === "Tap a bet on a card to add it to your parlay. Edge: the model's chance less the price's, in points." && ![...d.querySelectorAll('#games .pb-bets')].some(b => /Tap a bet|Edge:/.test(txt(b))), `${day}: the bets' key once over the cards, where ${boards} card(s) have a board (${gk && (gk.hidden ? 'hidden' : 'shown')})`);
+    chk(!!gk && gk.hidden === !boards && txt(gk) === "Tap a bet to add it to your parlay: DraftKings' price · the model's chance. Edge: the model's less the price's, in points." && ![...d.querySelectorAll('#games .pb-bets')].some(b => /Tap a bet|Edge:/.test(txt(b))), `${day}: the bets' key once over the cards, where ${boards} card(s) have a board (${gk && (gk.hidden ? 'hidden' : 'shown')})`);
+    /* who is out's key, saying the bar, once over the cards wherever a card says who is out */
+    const ok2 = d.getElementById('outKey'), outs = cards.filter(c => c.querySelector('.out')).length;
+    chk(!!ok2 && ok2.hidden === !outs && (!outs || txt(ok2) === OUT_KEY_S), `${day}: who is out's key once over the cards, saying the bar, where ${outs} card(s) say who is out (${ok2 && (ok2.hidden ? 'hidden' : txt(ok2))})`);
   }
   console.log(`  ${held} game cards held to the state, every day on the strip`);
+  /* a made-up card that takes every branch, whatever the day holds (nhl v13): on a copy of the state, the first game to come with a fresh
+     line and both clubs lined up gets a call on its moneyline with its edge (said on its button, in no chip), a puck-line side far off the
+     market that is no call, a call on the total far off the market (said in a chip too, its button carrying the numbers), and an injury
+     list with a player worth more than the bar, one worth less of each status (out, suspended, another, injured reserve, and one the model
+     does not rate), a day to day, a goalie making his first start; then the same game at its puck drop, where the card has no drawer */
+  {
+    const M = JSON.parse(STATE), G = M.games.filter(g => !sStarted(g, AT) && sFresh(g) && g.pm && S.players && S.players.teams && S.players.teams[g.away] && S.players.teams[g.home]).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
+    if (!G) console.log('  no game to come lined up with a fresh line: the made-up card is skipped');
+    else {
+      Object.assign(G.line, { awayML: 150, homeML: -170, homeLine: -1.5, homeSpreadOdds: 200, awaySpreadOdds: -240, total: 6.5, overOdds: -110, underOdds: -110 });
+      Object.assign(G, { pHome: 0.53, mlEdge: { away: 0.07, home: -0.1 }, mlPick: 'away', cover: { home: 0.5, push: 0, away: 0.5 }, plEdge: { home: 0.167, away: -0.206 }, plPick: null, ou: { over: 0.3, push: 0, under: 0.7 }, ouEdge: { over: -0.224, under: 0.176 }, ouPick: 'under' });
+      const nm = (k, i) => `Plant ${k}${i}`;
+      G.pm.away.out = [{ id: '9000001', name: nm('Row', 1), status: 'Out', cost: -0.16 }, { id: '9000002', name: nm('Susp', 1), status: 'Suspension', cost: 0.03 }, { id: '9000003', name: nm('Ir', 1), status: 'Injured Reserve', cost: 0.05 },
+        { id: '9000004', name: nm('Ir', 2), status: 'Injured Reserve', cost: null }, { id: '9000005', name: nm('Out', 1), status: 'Out', cost: 0.01 }, { id: '9000006', name: nm('Q', 1), status: 'Questionable', cost: -0.04 }];
+      G.pm.home.out = [{ id: '9000007', name: nm('Ir', 3), status: 'Injured Reserve', cost: 0.02 }];
+      G.pm.away.dtd = []; G.pm.home.dtd = [{ id: '9000008', name: nm('Dtd', 1), status: 'Day-To-Day' }];
+      if (G.pm.away.goalie) G.pm.away.goalie.debut = true;
+      const real = S; S = M;
+      try {
+        for (const [ms, tag] of [[AT, 'to come, with its drawer'], [Date.parse(G.start) + 60000, 'at its puck drop, no drawer']]) {
+          const e3 = [], w3 = await boot(ms, e3, { state: JSON.stringify(M) }), d3 = w3.document;
+          const db = d3.querySelector(`#days .day[data-day="${G.date}"]`); if (db) db.click();
+          const c3 = d3.querySelector(`#games .game[data-id="${G.id}"]`);
+          if (!c3) { chk(false, `the made-up card ${tag}: no card for ${G.id}`); continue; }
+          const bad = cardWrongs(w3, c3, G, ms, pageMap(w3));
+          chk(!bad.length, `the made-up card ${tag}: ${bad.slice(0, 3).join(' | ')}`);
+          const drawn = c3.querySelector(`#lu-${G.id}`), kinds = [...c3.querySelectorAll('.out > span')].map(x => x.className);
+          if (ms === AT) chk(!!drawn && c3.querySelectorAll('.pb-bt.tg:not(.far)').length === 1 && c3.querySelectorAll('.pb-bt.tg.far').length === 2 && c3.querySelectorAll('.chips .chip[data-ck="call"]').length === 1
+            && kinds.filter(k => k === 'orow').length === 1 && kinds.includes('also ir') && /on IR: 2, in Lineups/.test(txt(c3.querySelector('.out'))) && drawn.querySelectorAll('.lu-out li').length === 7 && (!G.pm.away.goalie || /first NHL start/.test(txt(c3.querySelector('.out .gk')))),
+            `the made-up card ${tag} takes every branch: one call's tag, two far-off tags, one call in a chip, one row, the IR counted on a club's line and on the shared one, seven in Lineups, a first start (${kinds.join(', ')})`);
+          else { const al = [...c3.querySelectorAll('.out > .also')].map(txt);
+            chk(!drawn && !c3.querySelector('.pb-bets') && !c3.querySelector('.out > .also.ir') && al.some(t => t.endsWith('on IR: Plant Ir1 +0.05, Plant Ir2')) && al.some(t => t.endsWith('on IR: Plant Ir3 +0.02')),
+              `the made-up card ${tag}: no drawer, every player on IR named on his club's line with his figure, one the model does not rate with none (${al.join(' | ').slice(0, 300)})`); }
+          chk(!e3.length, `no runtime error on the made-up card ${tag}: ${e3.join(' | ')}`);
+        }
+      } finally { S = real; }
+    }
+  }
   /* the strip names today and tomorrow */
   const today = etDate(AT), dw = dd => { const b = d.querySelector(`#days .day[data-day="${dd}"] .dw`); return b ? txt(b) : null; };
   chk([null, 'Today'].includes(dw(today)) && [null, 'Tomorrow'].includes(dw(PBS.nextDay(today))), `the strip says Today and Tomorrow (${dw(today)}, ${dw(PBS.nextDay(today))})`);
@@ -3484,10 +3688,10 @@ async function theLook() {
   let farN = 0, farB = 0; const farBad = [];
   for (const b of d.querySelectorAll('#plLines button[data-leg]')) {
     const [gid, s, k] = b.dataset.leg.split('|'), g = S.games.find(x => x.id === gid), B = g && sLeg(g, s, k); if (!B) continue;
-    const want = farWant(B, s), have = b.querySelector('.pb-bt.far'); farB++; if (want) farN++;
-    if ((have ? txt(have) : null) !== want) farBad.push(`${b.dataset.leg}: ${have ? txt(have) : 'none'} (want ${want})`);
+    const bad1 = betWrong(b, B, s); farB++; if (isFarS(B)) farN++;
+    if (bad1) farBad.push(bad1);
   }
-  chk(!farBad.length, `Pick your own legs: each side far off the market says so on its button, model and market in view (${farB} buttons, ${farN} far; ${farBad.slice(0, 3).join(' | ')})`);
+  chk(!farBad.length, `Pick your own legs: each button its one line, the call's tag with its edge, a side far off the market saying so on its button with model and market in view (${farB} buttons, ${farN} far; ${farBad.slice(0, 3).join(' | ')})`);
   console.log(`  Pick your own legs: ${farB} bet buttons held, ${farN} of them far off the market`);
   if (bothB && day0) { const b0 = d.querySelector(`#pbDay button[data-day="${day0}"]`); if (b0) b0.click(); }
   /* no image after every tab, every day, a drawer, the props window and the card window */

@@ -154,7 +154,7 @@ h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04e
 .pline{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink-2);font-weight:700}
 .pline b{color:var(--ink);font-family:var(--display);font-size:13px}
 /* who is out, under the chips: the goalies, the players out with what each is worth, the rest named on a line */
-.game .out{margin-top:10px;font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px}
+.game .out{margin-top:10px;font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
 .game .out>span{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .game .out .who{color:var(--rose-ink);font-weight:700;min-width:0}   /* the name and the status each whole (.nw), the status under the name where a phone has no room */
 .game .out .dtd .who{color:var(--gold)}                /* day to day: he stays in the lineup */
@@ -163,6 +163,9 @@ h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04e
 .game .out .gk b{color:var(--ink)}
 .game .out .cost{color:var(--muted-ink);font-variant-numeric:tabular-nums;flex:none;white-space:nowrap}
 .game .out .src{display:block;font-size:11.5px;color:var(--muted-ink);margin-top:2px}
+.game .out .also{color:var(--ink-2)}
+.game .out abbr{text-decoration:none}
+.game .out .fig{color:var(--muted-ink);font-variant-numeric:tabular-nums}
 .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;flex-wrap:wrap}
 .foot>span{display:flex;gap:6px;flex-wrap:wrap}
 .foot>span:empty{display:none}
@@ -180,7 +183,11 @@ h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04e
 .drawer .v.pos{color:var(--lime)} .drawer .v.neg{color:var(--rose-ink)}
 .drawer .coach{color:var(--ink-2);margin-top:6px}
 .drawer .coach b{color:var(--ink)}
+.drawer h4.lu-oh{margin:10px 0 6px}
+.drawer .lu-out li>span:first-child{white-space:normal;overflow:visible}      /* a name and his status whole, the status free to go under it: nothing cut */
+.drawer .lu-out .muted{color:var(--muted-ink)}
 .games-key{margin:-4px 0 12px;font-size:12px;color:var(--ink-2)}
+.games-key+.games-key{margin-top:-8px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.game:hover,.day:hover,.btn:hover,nav button:hover{transform:none}}
 /* ---------- tables: the NBA's ---------- */
 .wrap{overflow-x:auto;border-radius:14px}
@@ -403,28 +410,39 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pb-pgh>.pb-pgt{color:var(--muted-ink);font-size:12px}
 .pb-pgh>.chip{margin-left:auto}
 .pb-pg .pp-open{width:100%;margin-top:10px}
-/* the bets board: a game's three markets as the NBA's Game lines rows, two sides a row, each a button */
-/* the label beside its two buttons, as the NBA's Game lines rows; over them where the board is under 328px (a 360px phone, Pick your own
-   legs on a phone), so a button is never too narrow for its side and price */
+/* the bets board: a game's three markets as the NBA's Game lines rows, the label beside its two buttons, each button 44px and one line
+   where it fits, "PIT +170 · 34%" (the side, DraftKings' price, the model's chance); where a phone has no room for the three, the price
+   and the chance go under the side at the right, in the same 44px. The model's call is a lime tag on its button's top edge, "call ·
+   edge +8", and in the parlay a button is filled ice with a check before its side, so neither takes a line; a side far off the market
+   (about one button in twenty) says so under its line, both numbers in view. The label goes over the buttons only where the board is
+   under 260px, narrower than any phone the page is laid out for */
 .pb-bets{display:flex;flex-direction:column;margin-top:12px;container-type:inline-size}
-.pb-brow{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
-@container (max-width:327px){.pb-brow{grid-template-columns:minmax(0,1fr);gap:4px}}
-.pb-bk{color:var(--ink-2);font-size:12.5px;font-weight:700}
-.pb-bb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
-.pb-bet{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 6px;align-items:baseline;align-content:center;text-align:left;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:5px 10px;cursor:pointer;color:var(--ink);font-size:12.5px;min-width:0;line-height:1.3;transition:border-color .15s var(--ease)}
+.pb-brow{display:grid;grid-template-columns:60px minmax(0,1fr);gap:8px;align-items:center;padding:6px 0 3px;border-top:1px solid var(--line)}
+@container (max-width:259px){.pb-brow{grid-template-columns:minmax(0,1fr);gap:10px}}   /* 10px: room for a call's tag (top -7px) over the label */
+.pb-bk{color:var(--ink-2);font-size:12px;font-weight:700;line-height:1.25}
+.pb-bb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.pb-bet{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;align-content:center;gap:0 6px;text-align:left;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:4px 8px;cursor:pointer;color:var(--ink);font-size:13px;min-width:0;line-height:1.25;transition:border-color .15s var(--ease)}
 .pb-bet:hover{border-color:var(--ice)}
-.pb-bs{font-weight:800;font-size:13px;overflow-wrap:anywhere}
-.pb-bp{font:700 13px var(--display);font-variant-numeric:tabular-nums;text-align:right}
-.pb-bc{grid-column:1/-1;color:var(--ink-2);font-size:11.5px;font-variant-numeric:tabular-nums}
-.pb-bt{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--lime);margin-top:1px}
-.pb-bt.far{color:var(--rose-ink)}
+.pb-bs{font-weight:800;white-space:nowrap}
+.pb-bn{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pb-bp{font-weight:800}
+.pb-bc{color:var(--ink-2);font-size:12px;font-weight:600}
+.pb-bt{flex:1 0 100%;font-size:11px;font-weight:700;line-height:1.3;color:var(--rose-ink);margin-top:1px;overflow-wrap:break-word}
+/* the call's tag: on the button's top edge, the row's top padding leaves it room */
+.pb-bt.tg{position:absolute;top:-7px;right:6px;flex:none;margin:0;padding:0 6px;border-radius:999px;background:var(--lime);color:#1E2230;font:800 10px/13px var(--body);letter-spacing:.02em;white-space:nowrap}
+.pb-bt.tg.far{background:var(--rose-ink)}
 /* the model's call: lit lime as the NBA's edge; a call far off the market keeps the plain ground its rose words need */
 .pb-bet.call:not(.on){border-color:rgba(205,255,79,.5);background:linear-gradient(var(--lime-soft),var(--lime-soft)),var(--bg-2)}
 .pb-bet.call.far:not(.on){background:var(--bg-2)}
-/* in the parlay: an ice fill, every word on it #1E2230 */
+/* in the parlay: an ice fill, every word on it #1E2230, a check before the side */
 .pb-bet.on{background:var(--ice);border-color:var(--ice);color:#1E2230}
-.pb-bet.on .pb-bs,.pb-bet.on .pb-bp,.pb-bet.on .pb-bc,.pb-bet.on .pb-bt,.pb-bet.on .pb-bin{color:#1E2230}
-.pb-bin{grid-column:1/-1;font-size:11px;font-weight:800;color:#1E2230;margin-top:1px}
+.pb-bet.on .pb-bs,.pb-bet.on .pb-bp,.pb-bet.on .pb-bc,.pb-bet.on .pb-bt:not(.tg),.pb-bet.on .pb-bin{color:#1E2230}
+/* a phone of 380px or under: the foot's three buttons a little tighter, so Parlay Builder → stays on their line at 360 */
+@media(max-width:380px){.foot{gap:6px}.foot .btn{padding-left:8px;padding-right:8px}}
+.pb-bin{font-weight:900;margin-right:4px}
+/* a row whose either button cannot take its line on one (syncBetRows reads the browser's wrap) puts both buttons' price and chance under
+   the side, so the two lay out alike */
+.pb-bb.st .pb-bs{flex-basis:100%}
 .pb-key{margin:6px 0 0;font-size:11.5px;color:var(--ink-2)}
 .pb-stale{margin:10px 0 0;color:var(--gold);font-size:12px}
 /* the builder */
@@ -647,7 +665,8 @@ body.pp-on{overflow:hidden}
       <span class="odds-note" id="oddsNote" role="status" aria-live="polite"></span>
     </div>
     <div class="days" id="days"></div>
-    <p class="games-key" id="gamesKey" hidden>Tap a bet on a card to add it to your parlay. Edge: the model's chance less the price's, in points.</p>
+    <p class="games-key" id="gamesKey" hidden>Tap a bet to add it to your parlay: DraftKings' price · the model's chance. Edge: the model's less the price's, in points.</p>
+    <p class="games-key" id="outKey" hidden></p>
     <div id="sourceNote" class="note warn" hidden></div>
     <div id="opening" hidden></div>
     <div class="grid" id="games"></div>
@@ -784,7 +803,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v12 · 2026-10-16';
+const APP_BUILD = 'nhl v13 · 2026-10-17';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -909,27 +928,32 @@ function when(g) { return new Date(g.start).toLocaleString(undefined, { weekday:
 function timeOf(g) { return hhmm(g.start); }
 /* ---------- a club, as the NBA Hub shows one: no image, its abbreviation in its own colour ----------
    The page loads no team logo (ESPN's images were 32 requests and some two megabytes on a table tab); a club is a badge on a
-   game card, a pill everywhere else, in its own colour (the NBA's TEAMS map, made for the NHL): each club's primary colour (the
-   Kings' silver, the Kraken's ice blue, Vegas's gold and Utah's mountain blue as they are; navy, forest green and burgundy given
-   the brightness of a club's hue they need), lifted in OKLCH, its hue kept, only until it reads on these graphite panels. c, the
-   badge's outline and text, its fill when it is the model's pick (with #1E2230 on it) and the win-chance bar, is 3.25:1 or more on
-   every surface a badge sits on (a badge is large text, held a little over 3:1 so the glow behind a card cannot take it under),
-   which puts #1E2230 on it at 6:1 or more; t, a 12px pill's, is 4.5:1 or
-   more. Clubs that share a colour share it here, as the NBA's Bulls and Raptors do: their three letters tell them apart, and the
-   win bar splits two clubs of one colour with a line. The smoke holds every bar. Keyed by the state's club keys (Utah is UTAH,
-   shown UTA); state.json's logo and color are not read */
+   game card, a pill everywhere else, in its own colour (the NBA's TEAMS map, made for the NHL). Each is the club's primary colour, or
+   its secondary where the primary is near-black (the Bruins', Predators' and Penguins' gold, the Kraken's ice blue, the Jets' aviator
+   blue), lifted in OKLCH, its hue kept and its chroma as far as the gamut allows, only until it reads on these graphite panels at the
+   standard itself: c, the badge's outline and text, its fill when it is the model's pick (#1E2230 on it, 5.3:1 or more) and the
+   win-chance bar, is 3:1 (WCAG's bar for large text and for a component: the badge's letters are 22 to 26px and bold) on every
+   surface a badge or the bar sits on, the card's two grounds and the badge's own ground over each; t, a 12px pill's, is 4.5:1 or more
+   on every ground a pill is drawn on. The Ducks' orange, Vegas's gold, Utah's mountain blue and the Kings' silver pass as they are.
+   Then picked by hand, as the NBA's map was: the navy clubs (TB, TOR, VAN, CBJ, WPG, NYI) at the full chroma their hue allows at that
+   lightness, a stronger blue than their own chroma gave; the Avalanche's burgundy turned toward red (OKLCH hue 13 degrees, full
+   chroma), a crimson where its own hue gave a dusty pink; Dallas's green at full chroma and Minnesota's forest green a yellower,
+   quieter green, so the two no longer share one; San Jose's teal stronger. Before nhl v13, c was held at 3.25:1 on eight surfaces, which left the
+   reds salmon, the navies pastel and the Avalanche pink. Clubs that share a colour share it here, as the NBA's Bulls and Raptors do:
+   their three letters tell them apart, and the win bar splits two clubs of one colour with a line. The smoke holds every bar. Keyed by
+   the state's club keys (Utah is UTAH, shown UTA); state.json's logo and color are not read */
 const TEAM_COLORS = {
-  ANA: { c: '#FE8342', t: '#FFB38F', on: '#1E2230' }, BOS: { c: '#FFB81C', t: '#FFB81C', on: '#1E2230' }, BUF: { c: '#73A5FE', t: '#A6C6FE', on: '#1E2230' },
-  CAR: { c: '#FF806F', t: '#FFB1A4', on: '#1E2230' }, CBJ: { c: '#6DA8F6', t: '#9EC7FE', on: '#1E2230' }, CGY: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' },
-  CHI: { c: '#FE7F7C', t: '#FFB0AB', on: '#1E2230' }, COL: { c: '#EE86A1', t: '#FFAFC2', on: '#1E2230' }, DAL: { c: '#40BA89', t: '#64DAA7', on: '#1E2230' },
-  DET: { c: '#FF7F78', t: '#FFB2AB', on: '#1E2230' }, EDM: { c: '#FF815D', t: '#FEB39D', on: '#1E2230' }, FLA: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' },
-  LA: { c: '#A2AAAD', t: '#BEC6C9', on: '#1E2230' }, MIN: { c: '#3BBA8B', t: '#60DAA9', on: '#1E2230' }, MTL: { c: '#FF7F7D', t: '#FFB0AC', on: '#1E2230' },
-  NJ: { c: '#FF7F78', t: '#FFB2AB', on: '#1E2230' }, NSH: { c: '#FFB81C', t: '#FFB81C', on: '#1E2230' }, NYI: { c: '#63A9F8', t: '#99C8FE', on: '#1E2230' },
-  NYR: { c: '#75A5FE', t: '#A6C5FF', on: '#1E2230' }, OTT: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' }, PHI: { c: '#FE815E', t: '#FEB29C', on: '#1E2230' },
-  PIT: { c: '#FCB514', t: '#FFB81B', on: '#1E2230' }, SEA: { c: '#99D9D9', t: '#99D9D9', on: '#1E2230' }, SJ: { c: '#08B7C3', t: '#47D7E3', on: '#1E2230' },
-  STL: { c: '#73A5FF', t: '#A6C6FE', on: '#1E2230' }, TB: { c: '#74A6F7', t: '#A3C6FE', on: '#1E2230' }, TOR: { c: '#76A6F7', t: '#A3C6FF', on: '#1E2230' },
-  UTAH: { c: '#6CACE4', t: '#90CAFE', on: '#1E2230' }, VAN: { c: '#76A6F7', t: '#A3C6FF', on: '#1E2230' }, VGK: { c: '#BFA264', t: '#DFC182', on: '#1E2230' },
-  WPG: { c: '#66A8FB', t: '#9DC8FE', on: '#1E2230' }, WSH: { c: '#FF7E7C', t: '#FFB0AC', on: '#1E2230' },
+  ANA: { c: '#F47A38', t: '#FFB08A', on: '#1E2230' }, BOS: { c: '#FFB81C', t: '#FFB81C', on: '#1E2230' }, BUF: { c: '#5F94F4', t: '#A2C4FF', on: '#1E2230' },
+  CAR: { c: '#FF604F', t: '#FFAEA1', on: '#1E2230' }, CBJ: { c: '#4396FF', t: '#99C5FF', on: '#1E2230' }, CGY: { c: '#FF5E62', t: '#FFADA9', on: '#1E2230' },
+  CHI: { c: '#FF5E60', t: '#FFADA8', on: '#1E2230' }, COL: { c: '#FF5B79', t: '#FFACB4', on: '#1E2230' }, DAL: { c: '#00AB77', t: '#53D9A2', on: '#1E2230' },
+  DET: { c: '#FF5F5C', t: '#FFAEA7', on: '#1E2230' }, EDM: { c: '#FF6232', t: '#FFAF98', on: '#1E2230' }, FLA: { c: '#FF5E62', t: '#FFADA9', on: '#1E2230' },
+  LA: { c: '#A2AAAD', t: '#BBC4C7', on: '#1E2230' }, MIN: { c: '#49A863', t: '#77D68E', on: '#1E2230' }, MTL: { c: '#F76667', t: '#FFADA8', on: '#1E2230' },
+  NJ: { c: '#FF5F5C', t: '#FFAEA7', on: '#1E2230' }, NSH: { c: '#FFB81C', t: '#FFB81C', on: '#1E2230' }, NYI: { c: '#3498FF', t: '#95C6FF', on: '#1E2230' },
+  NYR: { c: '#5B93FF', t: '#A2C3FF', on: '#1E2230' }, OTT: { c: '#FF5E61', t: '#FFADA8', on: '#1E2230' }, PHI: { c: '#FF6233', t: '#FFAF98', on: '#1E2230' },
+  PIT: { c: '#FCB514', t: '#FDB616', on: '#1E2230' }, SEA: { c: '#99D9D9', t: '#99D9D9', on: '#1E2230' }, SJ: { c: '#2EA4AE', t: '#64D2DC', on: '#1E2230' },
+  STL: { c: '#5F94F4', t: '#A2C4FF', on: '#1E2230' }, TB: { c: '#5294FF', t: '#9EC4FF', on: '#1E2230' }, TOR: { c: '#5594FF', t: '#A0C4FF', on: '#1E2230' },
+  UTAH: { c: '#6CACE4', t: '#8AC8FF', on: '#1E2230' }, VAN: { c: '#5594FF', t: '#A0C4FF', on: '#1E2230' }, VGK: { c: '#B4975A', t: '#DDBF81', on: '#1E2230' },
+  WPG: { c: '#3F97FF', t: '#99C6FF', on: '#1E2230' }, WSH: { c: '#FF5E62', t: '#FFADA9', on: '#1E2230' },
 };
 const TC = id => TEAM_COLORS[id] || { c: '#A0A7BB', t: '#B3B9CB', on: '#1E2230' };
 /* a club's pill (hidden from a screen reader where its name stands beside it), and a game's two, "PIT @ COL" as text */
@@ -1008,7 +1032,7 @@ function renderGames() {
   dayStrip();
   const gs = S.games.filter(g => g.date === DAY).sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
   const box = $('games');
-  if (!gs.length) { box.innerHTML = '<div class="empty">No games this day.</div>'; CARD_HTML.clear(); $('gamesKey').hidden = true; updateTabCounts(); return; }
+  if (!gs.length) { box.innerHTML = '<div class="empty">No games this day.</div>'; CARD_HTML.clear(); $('gamesKey').hidden = true; $('outKey').hidden = true; updateTabCounts(); return; }
   GO_DAYS = null;
   const html = gs.map(g => [g.id, gameCard(g)]), cur = [...box.children];
   if (cur.length === html.length && cur.every((el, i) => el.dataset && el.dataset.id === html[i][0] && CARD_HTML.has(html[i][0]))) {
@@ -1016,6 +1040,8 @@ function renderGames() {
   } else box.innerHTML = html.map(x => x[1]).join('');
   CARD_HTML.clear(); for (const [id, h] of html) CARD_HTML.set(id, h);
   $('gamesKey').hidden = !box.querySelector('.pb-bets');
+  $('outKey').hidden = !box.querySelector('.out'); $('outKey').textContent = OUT_KEY;
+  syncBetRows(box);
   updateTabCounts();
 }
 /* the days the Parlay Builder offers (pbSlate), worked once a draw of the Games tab: a card's Parlay Builder → is there only for them */
@@ -1066,7 +1092,7 @@ function gameCard(g) {
     <div class="chips">${cardChips(g, bets)}</div>
     ${!started && line && !bets ? `<p class="pb-stale">line from ${esc(hhmm(line.at))}: not on DraftKings at the last run</p>` : ''}
     ${bets ? betBlock(g) : ''}
-    ${outBlock(g)}
+    ${outBlock(g, !started && luOk(g))}
     ${luBlock(g, started)}
   </article>`;
 }
@@ -1091,42 +1117,83 @@ function cardChips(g, bets) {
   const edgeT = e => `the model's chance is ${Math.round(e * 100)} points above the chance DraftKings' price implies`;
   const R = g.result, res = (k, word) => R && R[k] ? ` <span class="res ${esc(R[k])}">${esc(word)} ${esc(R[k])}</span>` : '';
   const call = (k, b, e, word) => `<span class="chip${R ? '' : ' edge'}" data-ck="call" title="${edgeT(e)}">${b} · edge +${Math.round(e * 100)}${res(k, word)}</span>`;
-  if (g.mlPick) out.push(call('ml', `ML <b>${esc(T(g[g.mlPick]).abbr)}</b>`, g.mlEdge[g.mlPick], 'ML'));
-  if (g.plPick) out.push(call('pl', `<b>${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? L.homeLine : -L.homeLine)}</b>`, g.plEdge[g.plPick], 'PL'));
-  if (g.ouPick) out.push(call('ou', `<b>${g.ouPick} ${L.total}</b>`, g.ouEdge[g.ouPick], g.ouPick));
+  /* a call the bets board shows on its own button, edge and all ("call · edge +8"), is not said again in a chip; a call far off the
+     market, whose button says that instead of its edge, keeps its chip */
+  const onBoard = (side, kind) => { if (!bets) return false; const B = legOf(g, side, kind); return !!B && !legFarOff(B); };
+  if (g.mlPick && !onBoard(g.mlPick, 'ml')) out.push(call('ml', `ML <b>${esc(T(g[g.mlPick]).abbr)}</b>`, g.mlEdge[g.mlPick], 'ML'));
+  if (g.plPick && !onBoard(g.plPick, 'pl')) out.push(call('pl', `<b>${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? L.homeLine : -L.homeLine)}</b>`, g.plEdge[g.plPick], 'PL'));
+  if (g.ouPick && !onBoard(g.ouPick, 'ou')) out.push(call('ou', `<b>${g.ouPick} ${L.total}</b>`, g.ouEdge[g.ouPick], g.ouPick));
   if (!g.mlPick && !g.plPick && !g.ouPick && !R) out.push(L ? '<span class="chip" data-ck="call">no edge</span>' : '<span class="chip" data-ck="call"><span class="muted">no line yet</span></span>');
   return out.join('');
 }
-/* who is out, under the chips, a row each as the NBA's: each club's goalie and how he was chosen; each player the report has out (status
-   Out or suspended) or who is worth 0.02 goals a game or more, his status and what he adds to his club by the player model; each player
-   day to day (he stays in the lineup, so no figure); the rest of a club's outs named on one line; the source and whose call it is. A
-   phrase never breaks across lines and nothing is cut: a row wraps between its parts, a player's status going under his name where a
-   phone has no room for both beside his figure (a phone shows no title, so an ellipsis there could never be read) */
-const OUT_ROW = 0.02;
-const outRow = o => /^out$|suspen/i.test(String(o.status || '')) || (typeof o.cost === 'number' && Math.abs(o.cost) >= OUT_ROW);
+/* who is out, under the chips, as the NBA's rows but cut to what moves the call: each club's goalie and how he was chosen; a row for
+   each player out who is worth OUT_ROW goals a game or more to his club by the player model (his rating times his expected ice time),
+   his status and that figure; each club's players day to day on one line (they stay in the lineup, so no figure); the rest of each
+   club's outs named on one line a club, grouped by status, most valuable first, with each one's figure beside his name on a card that
+   has no Lineups drawer and in the drawer on a card that has one; the source and whose call it is. A phrase never breaks across lines
+   and nothing is cut (a phone shows no title, so an ellipsis there could never be read).
+   OUT_ROW is what "matters" means here: about a point of the club's chance to win. The card's chance on a player model's call is half
+   its goals layer and half the team Elo (tools/players.js, blend 0.5), and a goal of margin moves the goals layer's chance by about
+   0.15 at the league's 5.5 to 6.5 goals a game (tools/elo.js's goals and homeByGoals), so a player worth 0.13 goals moves the card's
+   chance by a point: 1.00 at the median of the 1,224 games to come on 17 October 2026, 0.76 to 1.20 at the ends; the smoke works it out
+   again on every state it is given. Under it a player is named, never a row: 0.02 goals, the bar before nhl v13 (with every player the
+   report has Out), put some 70 players a night on rows of their own and a card to come past 800px on a phone */
+const OUT_ROW = 0.13;
+const outRow = o => typeof o.cost === 'number' && Math.abs(o.cost) >= OUT_ROW - 1e-9;
 const goalsWorth = x => { const r = Math.round(x * 100) / 100; return `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)} goals`; };
-const outGroup = st => /injured reserve/i.test(st) ? 'on injured reserve' : `out (${String(st || 'out').toLowerCase()})`;
-function outBlock(g) {
+const figOf = x => { const r = Math.round(x * 100) / 100; return `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)}`; };
+const outGroup = st => /injured reserve/i.test(String(st || '')) ? 'IR' : /^out$/i.test(String(st || 'out')) ? 'out' : /suspen/i.test(String(st)) ? 'suspended' : `out (${String(st).toLowerCase()})`;
+/* a club's line: out first, then suspended, any other status, injured reserve last */
+const groupRank = k => k === 'out' ? 0 : k === 'suspended' ? 1 : k === 'IR' ? 3 : 2;
+/* the rest of a club's outs, most valuable first (by the size of the figure, a player the model does not rate last), the report's order kept between equals */
+const outOrder = list => list.map((o, i) => [o, i]).sort((a, b) => ((typeof b[0].cost === 'number' ? Math.abs(b[0].cost) : -1) - (typeof a[0].cost === 'number' ? Math.abs(a[0].cost) : -1)) || a[1] - b[1]).map(x => x[0]);
+/* said once over the day's cards, two lines on a phone at 360 and 390 (three at 320, as the bets' key), so the keys put the first card no lower than
+   v12's one did: where the rest's figures are is said on their line's title and in Lineups itself */
+const OUT_KEY = `Who's out: a row for a player worth ${OUT_ROW.toFixed(2)} goals a game or more to his club, about a point of its chance to win.`;
+const ROW_T = `a row of his own: worth ${OUT_ROW.toFixed(2)} goals a game or more to his club by the player model, about a point of its chance to win`;
+function outBlock(g, drawer) {
   const pm = g.pm; if (!pm) return '';
   const rows = [], sides = ['away', 'home'], nw = t => `<span class="nw">${t}</span>`;
-  for (const side of sides) {
-    const t = pm[side], ab = T(g[side]).abbr;
-    rows.push(t.goalie ? `<span class="gk"><span><b class="nw">${esc(t.goalie.name)}</b> <span class="muted">${nw(`${esc(ab)} · in goal`)} · ${nw(esc(t.goalie.how))}${t.goalie.debut ? ` · ${nw('first NHL start')}` : ''}</span></span></span>` : `<span class="gk"><span class="muted">${esc(ab)} · goalie unknown</span></span>`);
+  /* the two goalies on one row, away first: each name, his club and how he was chosen, the how said once ("both ...") where the two
+     are chosen alike, as on most game days ("named by DailyFaceoff (no status)") */
+  const gks = sides.map(side => ({ t: pm[side].goalie, ab: T(g[side]).abbr }));
+  const same = gks.every(x => x.t && !x.t.debut) && gks[0].t.how === gks[1].t.how;
+  const gk1 = ({ t, ab }) => !t ? `<span class="g1"><span class="muted">${nw(`${esc(ab)} goalie unknown`)}</span></span>`
+    : `<span class="g1"><b class="nw">${esc(t.name)}</b> <span class="muted">${nw(esc(ab))}${same ? '' : `, ${nw(esc(t.how))}`}${t.debut ? `, ${nw('first NHL start')}` : ''}</span></span>`;
+  rows.push(`<span class="gk"><span><span class="muted">In goal:</span> ${gks.map(gk1).join(' · ')}${same ? ` <span class="muted">${nw(`both ${esc(gks[0].t.how)}`)}</span>` : ''}</span></span>`);
+  const costT = `What he adds to his club in a game by the player model: his rating times his expected ice time. Out, his club plays without it. ${ROW_T[0].toUpperCase() + ROW_T.slice(1)}.`;
+  for (const side of sides) for (const o of outOrder((pm[side].out || []).filter(outRow))) {
+    const name = o.name, ab = T(g[side]).abbr, st = o.status || 'Out';
+    rows.push(`<span class="orow"><span class="who" title="${esc(`${name} · ${ab} · ${st}`)}">${nw(esc(name))} <span class="muted nw">${esc(ab)} · ${esc(st)}</span></span> <span class="cost" title="${esc(costT)}">${goalsWorth(o.cost)}</span></span>`);
   }
-  const costT = "What he adds to his club in a game by the player model: his rating times his expected ice time. Out, his club plays without it.";
-  const row = (cls, name, ab, st, cost) => `<span class="${cls}"><span class="who" title="${esc(`${name} · ${ab} · ${st}`)}">${nw(esc(name))} <span class="muted nw">${esc(ab)} · ${esc(st)}</span></span>${typeof cost === 'number' ? ` <span class="cost" title="${costT}">${goalsWorth(cost)}</span>` : ''}</span>`;
-  for (const side of sides) for (const o of (pm[side].out || []).filter(outRow)) rows.push(row('orow', o.name, T(g[side]).abbr, o.status || 'Out', o.cost));
-  for (const side of sides) for (const o of pm[side].dtd || []) rows.push(row('dtd', o.name, T(g[side]).abbr, 'Day to day', null));
-  /* the rest of each club's outs on one line a club */
+  /* each club's day to day on one line, in gold: he stays in the lineup */
   for (const side of sides) {
-    const rest = (pm[side].out || []).filter(o => !outRow(o)), groups = new Map(), parts = [];
-    for (const o of rest) { const k = outGroup(o.status); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o.name); }
-    for (const [k, names] of groups) parts.push(`<span class="muted">${parts.length ? '' : esc(T(g[side]).abbr) + ' '}also ${esc(k)}:</span> ${names.map(n => nw(esc(n))).join(', ')}`);
-    if (parts.length) rows.push(`<span class="also"><span>${parts.join(' · ')}</span></span>`);
+    const d = pm[side].dtd || []; if (!d.length) continue;
+    rows.push(`<span class="dtd" title="day to day: each stays in the lineup the call expects, so no figure"><span><span class="muted">${esc(T(g[side]).abbr)} day to day:</span> ${d.map(o => `<span class="who nw">${esc(o.name)}</span>`).join(', ')}</span></span>`);
   }
+  /* the rest of each club's outs on one line a club, grouped by status (out, suspended, any other, IR), most valuable first, each one's
+     figure beside his name where the card has no drawer. On a card with a drawer the figures are in Lineups, and so are the names of
+     the players on injured reserve (out for weeks, in no lineup the model has drawn since): counted at the end of the club's line, or,
+     for a club with no one else out, on one line for both clubs */
+  const restT = `Each under ${OUT_ROW.toFixed(2)} goals a game to his club by the player model, under about a point of its chance to win: ${drawer ? "named here and in Lineups, with each one's status and figure" : "named here, each one's figure beside him"}`;
+  const irN = [];
+  for (const side of sides) {
+    const rest = outOrder((pm[side].out || []).filter(o => !outRow(o))), groups = new Map(), parts = [];
+    for (const o of rest) { const k = outGroup(o.status); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); }
+    let ir = 0;
+    for (const [k, list] of [...groups].sort((a, b) => groupRank(a[0]) - groupRank(b[0]))) {
+      if (drawer && k === 'IR') { ir = list.length; continue; }
+      const head = `${parts.length ? '' : esc(T(g[side]).abbr) + ' '}${k === 'IR' ? 'on <abbr title="injured reserve">IR</abbr>' : esc(k)}:`;
+      parts.push(`<span class="muted">${head}</span> ${list.map(o => nw(`${esc(o.name)}${!drawer && typeof o.cost === 'number' ? ` <span class="fig">${figOf(o.cost)}</span>` : ''}`)).join(', ')}`);
+    }
+    if (ir && parts.length) parts.push(nw(`<span class="muted">on <abbr title="injured reserve">IR</abbr>:</span> ${ir}, in Lineups`));
+    else if (ir) irN.push(`${esc(T(g[side]).abbr)} ${ir}`);
+    if (parts.length) rows.push(`<span class="also" title="${esc(restT)}"><span>${parts.join(' · ')}</span></span>`);
+  }
+  if (irN.length) rows.push(`<span class="also ir" title="${esc(restT)}"><span><span class="muted">On <abbr title="injured reserve">IR</abbr>, named in Lineups:</span> ${irN.map(nw).join(' · ')}</span></span>`);
   for (const side of sides) { const t = pm[side]; if (t.lastBox && t.lastFinal && t.lastFinal > t.lastBox) rows.push(`<span class="muted">${esc(T(g[side]).abbr)} lineup from ${esc(t.lastBox)}: the box score of ${esc(t.lastFinal)} not read yet</span>`); }
-  const whose = `The call is the ${g.by === 'players' ? "player model's" : "team Elo's"}.`;
-  rows.push(`<span class="src">${pm.inj ? `Injury report of ${nw(esc(dateClock(pm.inj)))}${hasStarted(g) ? ', as the call was made' : ''}.` : 'No injury report was applied to this call.'} ${whose}</span>`);
+  const whose = `the ${g.by === 'players' ? "player model's" : "team Elo's"} call`;
+  rows.push(`<span class="src">${pm.inj ? `Injury report of ${nw(esc(dateClock(pm.inj)))}${hasStarted(g) ? ', as the call was made' : ''}` : 'No injury report applied'} · ${nw(whose)}</span>`);
   return `<div class="out">${rows.join('')}</div>`;
 }
 /* the Lineups drawer: who the call expects to dress, each club's goalie and its nine skaters with the most ice time, in goals a game
@@ -1147,10 +1214,13 @@ function luDrawer(g) {
     const m = parts.map(x => Math.round(x * 1e5) / 1e3), fl = m.map(Math.floor), ord = m.map((x, i) => [x - fl[i], i]).sort((a, b) => b[0] - a[0]);
     for (let k = tot - fl.reduce((a, b) => a + b, 0), j = 0; k > 0 && j < 3; k--, j++) fl[ord[j][1]]++;
     const sh = fl.reduce((a, b) => a + b, 0) === tot ? fl.map(x => x / 100) : parts;
-    return `<div><h4>${esc(T(code).abbr)} · expected</h4><ul>${gk ? li(gk.name, 'G', gk.gk) : ''}${lu.slice(0, 9).map(p => li(p.name, `${Math.round(p.share * 60)}'`, p.v)).join('')}</ul>`
-      + `<div class="coach">Strength <b>${luV(tot / 100).t}</b> goals a game: attack ${luV(sh[0]).t} · defence ${luV(sh[1]).t} · goalie ${luV(sh[2]).t} · top 9 of ${lu.length} skaters shown</div></div>`;
+    /* every player of the club out, as the card names him: his status and what he adds to his club in a game, most valuable first */
+    const outs = outOrder(pm.out || []);
+    const outL = outs.length ? `<h4 class="lu-oh">${esc(T(code).abbr)} · out</h4><ul class="lu-out">${outs.map(o => `<li><span><span class="nw">${esc(o.name)}</span> <span class="muted nw">${esc(o.status || 'Out')}</span></span><span class="v">${typeof o.cost === 'number' ? figOf(o.cost) : '—'}</span></li>`).join('')}</ul>` : '';
+    return `<div><h4>${esc(T(code).abbr)} · expected</h4><ul class="lu-in">${gk ? li(gk.name, 'G', gk.gk) : ''}${lu.slice(0, 9).map(p => li(p.name, `${Math.round(p.share * 60)}'`, p.v)).join('')}</ul>`
+      + `<div class="coach">Strength <b>${luV(tot / 100).t}</b> goals a game: attack ${luV(sh[0]).t} · defence ${luV(sh[1]).t} · goalie ${luV(sh[2]).t} · top 9 of ${lu.length} skaters shown</div>${outL}</div>`;
   };
-  return `<div class="drawer lu" id="lu-${g.id}" role="region" aria-label="Lineups, ${esc(matchup(g))}"${open ? '' : ' hidden'}><p class="lu-key">Who the call expects to dress: the last lineup less the injury report's outs. Minutes and goals a game by the player model; the Players tab shows ratings ×100.</p>${club('away')}${club('home')}</div>`;
+  return `<div class="drawer lu" id="lu-${g.id}" role="region" aria-label="Lineups, ${esc(matchup(g))}"${open ? '' : ' hidden'}><p class="lu-key">Who the call expects to dress: the last lineup less the injury report's outs. Minutes and goals a game by the player model; the Players tab shows ratings ×100. Under each club, everyone out, his status and what he adds to his club in a game.</p>${club('away')}${club('home')}</div>`;
 }
 /* the drawer and the foot: Lineups and Player props on the left, Parlay Builder → on the right, each only on a game still to come */
 function luBlock(g, started) {
@@ -2199,14 +2269,33 @@ function betBtn(g, side, kind, inB) {
   const on = inB.has(L.id);
   const call = L.pick === side, far = legFarOff(L);
   const lab = kind === 'ou' ? (side === 'over' ? 'Over' : 'Under') : kind === 'ml' ? T(g[side]).abbr : `${T(g[side]).abbr} ${fmtLine(L.num)}`;
-  /* the model's call (the button lit lime), a side far off the market flagged with its two numbers, on the button itself wherever it is
-     drawn (a phone shows no title) */
+  /* one line where it fits: the side, DraftKings' price and the model's chance, "PIT +170 · 34%"; the model's call a tag on the button's
+     top edge, "call · edge +8"; a side far off the market a tag, "far off" (or "call · far off"), and under its line its two numbers, on
+     the button itself wherever it is drawn (a phone shows no title); in the parlay, a check before the side. Every piece that cannot
+     wrap fits the narrowest button the page draws, 94px wide at 320 with 76 inside: the tag, one line on the edge, at most 84px
+     ("call · edge +99"), and the far line wraps between its words, each number whole ("market 100%", 69px); "far off the market" as
+     a tag (101px) and "left out of the levels" kept whole (108px) ran out of it in v13's first draft */
   const nw = t => `<span class="nw">${t}</span>`, both = `${nw(`model ${whole(L.p)}`)} · ${nw(`market ${whole(L.fair)}`)}`;
-  const tag = call && far ? `<span class="pb-bt far">${nw("model's call")} · far off the market: left out of the levels · ${both}</span>`
-    : call ? `<span class="pb-bt">${nw("model's call")} · ${nw(`edge +${Math.round(L.edge * 100)}`)}</span>`
-    : far ? `<span class="pb-bt far">${nw('far off the market')} · ${both}</span>` : '';
-  return `<button type="button" class="pb-bet${on ? ' on' : ''}${call ? ' call' : ''}${far ? ' far' : ''}" data-leg="${g.id}|${side}|${kind}" aria-pressed="${on}" aria-label="${esc(`${L.desc}, ${fmtOdds(L.price)}, model ${whole(L.p)}${far ? `, far off the market: model ${whole(L.p)}, market ${whole(L.fair)}` : ''}${on ? ', in your parlay' : ''}`)}"${far ? ` title="${esc(farText(L))}: left out of the suggested levels"` : ''}><span class="pb-bs">${esc(lab)}</span><span class="pb-bp">${fmtOdds(L.price)}</span><span class="pb-bc">model ${whole(L.p)}</span>${tag}${on ? '<span class="pb-bin">✓ In your parlay</span>' : ''}</button>`;
+  const edge = L.edge === null ? '' : `edge +${Math.round(L.edge * 100)}`;
+  const tag = call && far ? `<span class="pb-bt tg far">call · far off</span><span class="pb-bt far">${both} · left out of the levels</span>`
+    : call ? `<span class="pb-bt tg" title="the model's call: its chance is ${Math.round(L.edge * 100)} points above the chance DraftKings' price implies">call · ${edge}</span>`
+    : far ? `<span class="pb-bt tg far">far off</span><span class="pb-bt far">${both}</span>` : '';
+  return `<button type="button" class="pb-bet${on ? ' on' : ''}${call ? ' call' : ''}${far ? ' far' : ''}" data-leg="${g.id}|${side}|${kind}" aria-pressed="${on}" aria-label="${esc(`${L.desc}, ${fmtOdds(L.price)}, model ${whole(L.p)}${call && !far ? `, the model's call, ${edge}` : ''}${far ? `${call ? ", the model's call" : ''}, far off the market: model ${whole(L.p)}, market ${whole(L.fair)}` : ''}${on ? ', in your parlay' : ''}`)}"${far ? ` title="${esc(farText(L))}: left out of the suggested levels"` : ''}><span class="pb-bs">${on ? '<span class="pb-bin" aria-hidden="true">✓</span>' : ''}${esc(lab)}</span><span class="pb-bn"><span class="pb-bp">${fmtOdds(L.price)}</span> <span class="pb-bc">· ${whole(L.p)}</span></span>${tag}</button>`;
 }
+/* a row's two bets laid out alike: where either button's side, price and chance will not fit on one line (the browser wraps it), the
+   row is marked .st and both put the price and chance under the side; a row whose two fit stays one line. The browser decides each wrap
+   by the fonts and the width, so this reads it, all rows at once (one layout): after each draw of the Games cards and of Pick your own
+   legs, when a board's width changes (a phone turned, a tab or Pick your own legs opened: BET_RO) and once the fonts are in */
+function syncBetRows(root) {
+  const box = root || document;
+  for (const r of box.querySelectorAll('.pb-bb.st')) r.classList.remove('st');
+  const wraps = b => { const s = b.querySelector(':scope > .pb-bs'), n = b.querySelector(':scope > .pb-bn'); return !!s && !!n && n.offsetTop - s.offsetTop >= 8; };
+  const st = [...box.querySelectorAll('.pb-bb')].filter(r => [...r.querySelectorAll(':scope > .pb-bet')].some(wraps));
+  for (const r of st) r.classList.add('st');
+  return st.length;
+}
+const BET_W = new WeakMap();
+const BET_RO = typeof ResizeObserver === 'function' ? new ResizeObserver(es => { for (const e of es) { const w = Math.round(e.contentRect.width); if (BET_W.get(e.target) === w) continue; BET_W.set(e.target, w); if (w) syncBetRows(e.target); } }) : null;
 function betBlock(g) {
   const L = g.line;
   const inB = new Set(builderLegs(false).filter(B => B.game === g.id).map(B => B.id));
@@ -2362,8 +2451,9 @@ function fitNums() {
 }
 let FIT_T = null;
 window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(fitTiles, 120); });
-if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(fitTiles, () => {});
-if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => fitTiles());
+if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(() => { fitTiles(); syncBetRows(); }, () => {});
+if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => { fitTiles(); syncBetRows(); });
+if (BET_RO) for (const id of ['games', 'plLines']) BET_RO.observe($(id));
 /* a parlay as saved: its legs (each bet, price and number) and its stake. Save says Saved, and is off,
    while the builder is a parlay already in this device's list, so a reload never lets it be saved twice */
 const savedKey = (legs, stake) => legs.map(l => isProp(l) ? `${legIdOf(l)}:${+l.odds}` : `${l.game}|${l.side}|${l.kind}:${+l.odds}:${l.line === null || l.line === undefined || l.line === '' ? '' : +l.line}`).join(',') + '|' + stakeRead(stake);
@@ -2854,6 +2944,7 @@ function renderParlayLines() {
   if (!PICK_SET) { PICK_SET = true; $('pbPick').open = !(window.matchMedia && window.matchMedia('(max-width:760px)').matches); }
   $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh">${muPills(g)}<span class="pb-pgt">${esc(sl.dates.length > 1 ? when(g) : timeOf(g))}</span><span class="chip" title="the model's chance to win, overtime included">Model <b>${esc(T(g.pHome >= 0.5 ? g.home : g.away).abbr)} ${pct(Math.max(g.pHome, 1 - g.pHome))}</b></span></div>${betBlock(g)}${ppBtn(g)}</div>`).join('')
     : `<div class="empty">Nothing to bet yet: no game on ${esc(slateText(sl) || 'the schedule')} still to come has a DraftKings line. Lines come about a day before puck drop.</div>`;
+  syncBetRows($('plLines'));
 }
 let PICK_SET = false;
 

@@ -1462,12 +1462,18 @@ function oddsParity(w) {
   const pageG = w.eval(`JSON.stringify(${JSON.stringify(grid)}.map(([t, mu, d, p]) => { const G = MODEL.goals(t, mu, d, p); return [G, ${JSON.stringify(lines)}.map(l => MODEL.coverProbs(G, l)), ${JSON.stringify(tots)}.map(l => MODEL.totalProbs(G, l))]; }))`);
   const jobG = JSON.stringify(grid.map(([t, mu, d, p]) => { const G = ELO.goals(t, mu, d, p); return [G, lines.map(l => ELO.coverProbs(G, l)), tots.map(l => ELO.totalProbs(G, l))]; }));
   chk(pageG === jobG, `the page's goals layer is tools/elo.js's, number for number, on ${grid.length} games and ${lines.length + tots.length} lines each`);
-  /* and on the state: the page's goals layer gives the published chances back on every line from the row's own (rounded) total, margin and gap */
+  /* and on the state: the page's goals layer gives the published chances back on every line from the row's own total, margin and gap.
+     Those are stored to the hundredth and the chances to the thousandth, so a published chance must lie within the range the page's layer
+     gives over its inputs' rounding (each of xt, mu and diff at -0.005, 0 and +0.005), less or more half a thousandth. A flat 0.001 held
+     the player model's calls, whose total and margin are rounded before the job prices them, but failed a team Elo call (no lineup, the
+     inputs full-precision): the job's run of 17 October 2026 stopped on a made-up playoff game's over, published 0.357, given back 0.3559
+     from the rounded inputs and 0.3551 to 0.3567 over their rounding */
   const rows = S.games.filter(g => g.line && ((g.cover && g.line.homeLine !== null && g.line.homeLine !== undefined) || (g.ou && g.line.total !== null && g.line.total !== undefined)) && isFinite(g.xt) && isFinite(g.mu) && isFinite(g.diff));
   if (rows.length) {
-    const back = JSON.parse(w.eval(`JSON.stringify(${JSON.stringify(rows.map(g => [g.xt, g.mu, g.diff, g.line.homeLine, g.line.total]))}.map(([t, mu, d, hl, tot]) => { const G = MODEL.goals(t, mu, d, (S.model && S.model.pull) || 0); return [MODEL.coverProbs(G, hl), MODEL.totalProbs(G, tot)]; }))`));
-    const off = rows.filter((g, i) => (g.cover && back[i][0] && Math.max(Math.abs(back[i][0].cover - g.cover.home), Math.abs(back[i][0].lose - g.cover.away)) > 0.001) || (g.ou && back[i][1] && Math.max(Math.abs(back[i][1].over - g.ou.over), Math.abs(back[i][1].under - g.ou.under)) > 0.001));
-    chk(!off.length, `the page's goals layer gives back the published puck line and total chances within a rounding on ${rows.length} lines (${off.length} off, e.g. ${off[0] && off[0].id})`);
+    const back = JSON.parse(w.eval(`JSON.stringify(${JSON.stringify(rows.map(g => [g.xt, g.mu, g.diff, g.line.homeLine, g.line.total]))}.map(([t, mu, d, hl, tot]) => { const r = []; for (const a of [-0.005, 0, 0.005]) for (const b of [-0.005, 0, 0.005]) for (const c of [-0.005, 0, 0.005]) { const G = MODEL.goals(t + a, mu + b, d + c, (S.model && S.model.pull) || 0), cp = MODEL.coverProbs(G, hl), tp = MODEL.totalProbs(G, tot); r.push([cp.cover, cp.lose, tp.over, tp.under]); } return r; }))`));
+    const within = (box, k, v) => { const xs = box.map(x => x[k]); return v >= Math.min(...xs) - 0.0005 - 1e-9 && v <= Math.max(...xs) + 0.0005 + 1e-9; };
+    const off = rows.filter((g, i) => (g.cover && g.line.homeLine !== null && g.line.homeLine !== undefined && !(within(back[i], 0, g.cover.home) && within(back[i], 1, g.cover.away))) || (g.ou && g.line.total !== null && g.line.total !== undefined && !(within(back[i], 2, g.ou.over) && within(back[i], 3, g.ou.under))));
+    chk(!off.length, `the page's goals layer gives back the published puck line and total chances within the rounding of their inputs on ${rows.length} lines (${off.length} off, e.g. ${off[0] && off[0].id})`);
   }
 }
 

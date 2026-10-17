@@ -144,10 +144,16 @@ reads ESPN itself once on opening for a game under way), and a leg whose game ha
 builder. Tabs: Games, Parlay Builder (`#parlays`, `#parlay` too; browser only, no sync), Standings, Power
 Ratings, Playoff, Players (the player model's rankings and the sources it stands on), Record.
 
-THE LOOK (nhl v12, `index.html`; CLAUDE.md has the rules): the NBA Hub's components with ice for its orange, no image anywhere,
-each club a badge or a pill in its own colour from `TEAM_COLORS` (each club's primary colour lifted, its hue kept, to the
-contrast bars the smoke holds it to); the game card the NBA's (badges, the call filled, the win bar, chips, tags, the bets board
-as the NBA's Game lines rows, who is out a row a player with what each is worth, never cut short, the Lineups drawer opened from its
+THE LOOK (nhl v12, the card and the colours nhl v13, `index.html`; CLAUDE.md has the rules): the NBA Hub's components with ice for
+its orange, no image anywhere, each club a badge or a pill in its own colour from `TEAM_COLORS` (each club's primary colour, or its
+secondary where the primary is near-black, lifted in OKLCH, its hue kept, only to 3:1 for a badge and the win bar and 4.5:1 for a
+12px pill, then a few picked by hand: the navies a stronger blue, the Avalanche a crimson; the smoke holds the bars and keeps every two
+clubs outside one brand colour 5 apart in CIEDE2000); the game card the NBA's (badges, the call filled, the win bar, chips, tags, the
+bets board as the NBA's Game lines rows with each button one line where it fits, side, price and the model's chance, a row's two
+buttons laid out alike (`syncBetRows` reads the browser's wrap), the call a tag on its edge with its edge, said in no chip as well, a
+side far off the market a "far off" tag and its two numbers under its line, every piece that cannot wrap fitting a 320px phone's button; who is out cut to the goalies on one row and a row for each player worth
+`OUT_ROW`, 0.13 goals a game, about a point of his club's chance to win, each club's day to day and the rest of its outs a line a
+club, their figures beside them or in the Lineups drawer, which lists everyone out, never cut short; the Lineups drawer opened from its
 one toggle in the foot, the foot with Player props and Parlay Builder →; a redraw replaces only the cards that changed); every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (the Standings' four
 sharing their column widths); the Player props window the NBA's sheet with a head that stays put; the bracket a five-column grid,

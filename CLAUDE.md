@@ -91,7 +91,7 @@ The smoke test runs from the repo root or, as `node smoke.js`, from `tools/`. Da
 GitHub's runners but not every sandbox: `starters.js` failing to read it there, for that alone, is not
 a fault (it says so in `data/starters.json`, and the model chooses the goalies).
 
-The page is `index.html`, hand-written, one file, the NBA Hub's look; it fetches `state.json` on
+The page is `index.html`, hand-written, one file, the NBA Hub's look (The look, below); it fetches `state.json` on
 every load, so a page change is just an edit (bump `APP_BUILD` in it) and a data change is the
 job's. The NHL has no weeks: the unit is the day (Eastern), and the page opens on a day strip.
 `data/history.json` is fifteen seasons of results (2011-12 on, with the period count) pulled
@@ -120,6 +120,126 @@ one a scoreboard answer merely leaves out is kept with its call, line and grade 
 a score under way kept so carries the time it was read, `scoreAt`, which the card shows),
 an answer with no game on a day the last state has games on is no answer, and every game taken off is
 listed in `removed` with the feed's reason.
+
+### The look
+
+Since nhl v12 (16 October 2026, the owner's "make the NHL games look like the NBA version ... the same style as the
+NBA hub ... get rid of the icons that slow down the site and just do the regular buttons we have") the page is built from
+the NBA Hub's own components (`DEMON-X13/nba-hub`, `app/nba_hub.html`), its CSS values copied with ice (`--ice`) wherever
+the NBA has orange (`--hot`), and gold wherever the NBA uses ice for a meaning of its own (a push, a warning note, the
+Extreme level): the header, the nav pills with a count badge (Games: today's games still to come, Eastern, which a puck drop
+moves on any tab; Parlay Builder: the builder's legs), the odds bar over the day strip (Today, Tomorrow), notes, `.empty`,
+tables in `.wrap` at the body's 14.5px (`.rk`, `.big`, signed figures lime and rose; `th.on`, lit `--ice-2` as the NBA
+lights its own, marks the column a table is in order of and `#` where it is in rank order; the NHL's headers do not sort, so
+no pointer), the stat strip, `.two`, the meter, the pill segmented control, chips (wrapping between their parts, never
+inside one), tags, the panel, the suggested-parlay cards and the sheet; the NBA's 12px gutter on a phone. Every control is
+44px tall; every text is 4.5:1 on its own background (3:1 large); the rink lines sit under `main` (positioned), never
+across a panel's text; on a phone a text box or a select is 16px, so iOS never zooms the page in on it.
+
+- **Every column at every width.** Unlike the NBA's (which hides a table's lesser columns on a tablet and a phone), no
+  table here gives up a column: one wider than the screen scrolls sideways inside its own `.wrap` (or `.scroll`, the
+  players' 400 rows under a sticky head), its club or player column (`.sk`) held at the left as the figures pass under
+  it. On a phone a club in a table is its pill alone (its name kept for a screen reader, absolute inside the club's own
+  box, `.tbl .tw`, positioned: in the players' Club column, which is not the held one, 400 names once set against `main`
+  ran the tab on some 14,000px of empty page past its last table), and a few headings and the Record's months are written
+  short (`.t-wide` over `.t-narrow`: words only, never a column). The Standings' four division tables share every
+  column's width (laid out fixed on their heads' widths, each a little over its widest figure of a season, never squeezed
+  under them: a table scrolls instead), so GP, W, L and PTS run straight down the page. A column of figures keeps one
+  format: Rating and Exp. pts at one place (1553.0 beside 1600.5); in the Players tab a rating or a strength, the column a
+  table is in order of, unsigned, offence, defence and attack signed and coloured by their sign (+29.9 lime, -8.3 rose),
+  as the NBA's and the Standings' Diff. The smoke reads every rule
+  in the page's CSS that hides anything and holds every table, row and cell clear of all of them, and every table's
+  columns to the list it had before the restyle (a skater's position now beside his name).
+- **No images.** The page loads no team logo or any other image: on the table tabs ESPN's 32 logos were some 2.2 MB
+  of 2.75 MB. A club is a badge on a game card and a pill everywhere else (`pill()`, `muPills()`, `teamCell()`: the
+  short name stays as text beside it), in its own colour from `TEAM_COLORS` in the page (keyed by the state's club
+  keys; Utah is `UTAH`, shown UTA), as the NBA's `TEAMS` gives each club its own: each club's primary colour (the
+  Kings' silver, the Kraken's ice blue, Vegas's gold and Utah's mountain blue as they are; navy, forest green and
+  burgundy given the brightness of their hue), lifted in OKLCH with its hue kept only until it reads on these panels:
+  `c` (the badge's outline and text, its fill as the model's pick with `#1E2230` on it, the win bar) 3.25:1 or more on
+  every surface a badge sits on (large text, held over 3:1 so a card's glow cannot take it under), which puts `#1E2230`
+  on it at 6:1 or more; `t` (a 12px pill's) 4.5:1. Clubs whose colours are the same share it, as the NBA's Bulls and
+  Raptors do (the Atlantic's reds, the Leafs' and Canucks' blue): their letters tell them apart and the win bar splits
+  two of one colour with a line. The smoke holds every bar, and holds every club but the Kings in a hue (CIELAB chroma
+  15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
+  icons left are the drawn ones (the puck, the folds' chevrons, the players' sparklines); a level's lock is a word,
+  Lock or Locked.
+- **The game card** (`gameCard`): the top line (puck drop and date in the visitor's clock, a note after them; tags:
+  live in ice, the job's live score "as of" in gold, Final, start moved, under way, neutral ice, call right or wrong,
+  replayed); the two badges, the state's straight-up call (`g.pick`) filled and kept after the game, the name, the
+  record, the score where one is known (the loser's muted); the call's chance in the middle; the win bar and each
+  side's chance; the chips (`data-ck`): Margin (the goals layer's, "even" under 0.05: the win chance blends it with
+  the team Elo, so on a close game the two can favour different clubs, and the chip is never called Model), Goals
+  (the model's expected total), OT, the other model (Team Elo, or the player model where the team Elo makes the call),
+  the market's moneyline, puck line and over/under where the card has no bets board, each side the model took (lit
+  lime until its grade, then plain with the grade as a solid pill), else "no edge" or "no line yet" (only before a
+  result); the stale-line note; the bets board (the NBA's Game lines rows, the label beside its two buttons, or over
+  them where the board is under 328px wide, a container query: a 360px phone, Pick your own legs on a phone; a 44px
+  button a side, the model's call lit lime with "model's call · edge +N", a side far off the market flagged on its own
+  button with both numbers in view, "far off the market · model 74% · market 47%" or the call's "model's call · far
+  off the market: left out of the levels · model 74% · market 47%" (a phone shows no title), in the parlay an ice fill;
+  "Tap a bet ... Edge: ..." said once over the day's cards, and in Pick your own legs once over its list, not on each
+  board; a board on a line Refresh odds read says so, dated); a badge 22px at 380px and under, so WPG and WSH stay in
+  their column; who is out, a row each as the NBA's (each goalie and how he was chosen; each player the report has Out
+  or suspended or who is worth 0.02 goals a game or more, "-0.09 goals" at the right, what he adds to his club by the
+  player model; each player day to day, in gold with no figure, since he stays in the lineup; the rest of each club's
+  outs on one line; the source line, or "No injury report was applied to this call"; a phrase never broken across
+  lines and nothing cut: a player's club and status go under his name where a phone has no room for both beside his
+  figure, since a phone shows no title and an ellipsis there could never be read); the Lineups
+  drawer; the foot: Lineups and Player props (`.btn.ghost`: "Player props" before a press, as the NBA's, then "· 24
+  lines · 3:12 PM EDT", "· none posted yet · …" or "· not read", the whole sentence on its title) on the left,
+  Parlay Builder → on the right. A redraw replaces only the cards whose markup changed (`CARD_HTML`), so a bet tapped
+  redraws its own card (about 130ms at 4x CPU on a 14-game day, where the whole tab took about 230ms).
+- **Lineups** (`luDrawer`, on a game to come the player model lines up): each club's goalie and its nine skaters with
+  the most ice time (`S.players.teams[club].lineup`), minutes and goals a game, the club's strength line (the strength
+  is the state's own, `g.pm[side].strength`, to the hundredth, half away from zero, the figure the Players tab shows;
+  attack, defence and goalie are shown so they add up to it, largest remainder: each part's hundredths taken down and
+  the ones left given to the parts with the most cut off, so each is within a hundredth of its own value. Rounded each on
+  its own, the parts missed the total by a hundredth in about 40% of lines). Opened in place, never redrawn to open; open in this
+  page's memory alone (`LU_OPEN`), so a redraw keeps it open; never stored. One toggle, in the foot, as the NBA's: its
+  word stays Lineups, so the foot never rewraps, and `aria-expanded` and an ice outline say it is open (the drawer once
+  ended on a second Hide lineups right over the foot's); shut, the page scrolls so the toggle stands where the finger
+  was (the drawer is some 600px tall on a phone) and the keyboard stays on it.
+- **Parlay Builder →** (a game to come with a fresh line on a day the panel offers): the panel on that game's day (Both
+  days kept where chosen and holding it), the game ticked, the keyboard on its heading.
+- **The Parlay Builder tab**: Refresh odds in the tab's own odds bar over the panel, as the NBA's; the controls box with
+  its groups' labels on one line (the bet amount's note under the box); game tiles whose two pills wrap ("CAR @" over
+  "WPG") where a phone's tile is too narrow; the four levels as the NBA's `.sugg-tier`, two a row (one on a phone): the
+  name and "N legs", New legs and Reset at the right, the rule, three numbers in a row (the fair chance with the model's
+  under it, the price, what the amount pays: each stepped down to fit its third, `fitNums`, and a pays figure that will
+  not fit at 13px takes the card's width), a leg a row (its club's pill or a total's two and the bet, the price in a
+  column of its own at the row's top right at every width; the game and its puck drop, the fair and model chances;
+  Lock last), Finish filled before Add to builder, an empty level only as tall as its words. An empty builder or saved
+  list is a plain paragraph, as the NBA's. The builder's tiles are fitted to the fraction of a pixel (`tooWide`: a
+  figure 0.3px over its tile once wrapped "$158.4" over "1"). The parlay card's leg-by-leg DraftKings links are 44px
+  chips, "Leg 1", "Leg 2", on a line of their own.
+- **The Player props window**: the NBA's sheet: 900px wide, 28px from the top, as tall as the screen allows and scrolling
+  inside itself (full screen on a phone) under a head that stays put (the title, the game by its clubs' pills, the time,
+  a rose "props model on trial" tag, and Close, a word); the read said in a note with Refresh odds filled (`.btn.ice`)
+  in it; the trial folded to a line in a dashed box, as the NBA's.
+- **The Playoff tab**: a series is a row of five columns of the same widths in every row (the seed, the club, the score
+  or "vs", the club, the seed), so they line up down the box; a club is its pill beside its name with its points under
+  the name (a grid, the pill's and name's own boxes `display:contents`), so a 14-letter name (Golden Knights) keeps one
+  line and every row is one height; the middle column is as wide as "vs" until a series has a score (`.scored`, 118px),
+  and the two conferences sit side by side from 1081px (1261px once scored), one a row below; on a phone a club a line
+  with its seed, the score beside the two.
+- **The Record tab**: the stat strip's five figures step down together from 30px until each fits its tile on one line
+  (`fitRecord`, 16px the least, again on a resize), so a three-figure record never breaks at its hyphen ("179-" over
+  "145" on a 390 phone).
+- **The Players tab**: the search draws once the typing pauses (200ms); the first 60 rows at once and the rest, to 400,
+  eighty at a time between frames, so a keystroke or a press is answered at once.
+- **Headings** keep their small print beside them on a wide screen and under them on a phone, so a phrase like "wild
+  cards BOS, NJ" never breaks.
+
+A card is taller than the NBA's (whose game lines live in its props sheet): the bets board stays on the card, a tap a bet
+as before (the owner's call to make: in a drawer from the foot instead, a card to come would be about 600px on a phone).
+Measured at 390px on 16 October 2026, both cards 366px wide: 788px median with the board (915px before this round's
+compacting), 589px without one, against the NBA's 424 (its preseason cards, 506 to 667 with a long injury list). Without
+the logos every tab is 5 requests and about 520 KB where a table tab was 37 and 2.74 MB, done in about 2.7s on a
+throttled phone where it took about 14.2s (a local replay of HEAD's page and this one on the same state, Lighthouse's phone
+profile, three cold loads a tab, ESPN's API and image host aborted; the Games tab adds the one live-score read of ESPN's
+API when its day has a game under way); the Players tab's long tasks went from 2.9s in all to 1.5s, the longest from
+569ms to 267ms (a phone now lays out every column), and a keystroke in its search is answered in about 15ms at 4x CPU. The smoke's THE LOOK holds all of it (below).
 
 ### The job
 
@@ -217,7 +337,29 @@ games it plants on or clicks are taken from the day the panel shows (the Day con
 day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the props window (under The props model) on answers it makes from the state's own
-projections. Its section THE PROPS MODEL (in the state's
+projections. Its section THE LOOK (nhl v12) holds the page's look with its own code: no image (the source names none, no CSS
+`url()`, no club logo or colour read from the state; a walk of every tab, day, drawer and window finds none), `TEAM_COLORS` (every
+club, each colour at its contrast bar on every surface by its own WCAG sums, the badge's held at 3.2, every club but the Kings in a
+hue of its own by its own CIELAB sums), every game card of every day on the strip worked out from the state (badges, colours, the
+filled pick, chances, every chip by its `data-ck`, the tags, the stale line, the bets board's rows, who is out row by row: the
+goalies, each player out with his figure, each day to day with none, the rest on a line, every name's title, each name and status
+kept whole and no rule in any media query ellipsing a row; the Lineups drawer's every row and its strength line the state's own to the
+hundredth with its parts as shown adding up to it, each within a hundredth of its own value, its one toggle in the foot keeping its word and no button in the drawer,
+Parlay Builder → and the foot exactly where they belong), the tab counts and a puck drop moving them, Lineups (shut, opened in place,
+kept open through a redraw and a bet tapped, the focus kept, opened and shut from the keyboard with the foot as it was, nothing
+written, gone at the puck drop),
+Parlay Builder → (the day, the game ticked again, the slate, the focus, Both days kept), every pill its club's abbreviation in its
+colour beside its club's name, each table's marked columns (`#` and its order), every table keeping every column at every width (no
+rule in the page's CSS, in any media query, hides a table, row or cell; each scrolls sideways in its wrapper with its club or player
+column the one held; each has the columns it had before the restyle; every name a table hides for a screen reader held by a
+positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), each player's name in bold
+and his club in the Club column, the Players' figures (ratings and strengths unsigned, offence, defence and attack signed and
+coloured by the sign shown), Rating and Exp. pts at one place, the Standings' four tables laid out fixed on the same 14 widths and
+never squeezed under them on a desktop and a phone, the bracket's points under each name and its middle column widened only for a
+score, the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
+side far off the market said on its own button with both numbers exactly (on the Games cards and in Pick your own legs, Both days
+included) and in no chip, the props window's head naming its game by its pills, the Record's tiles, the lock's words, the card's
+leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE PROPS MODEL (in the state's
 reality) holds the box files' shots (no old-shape line, no `sog`, the skater shots against the goalies' at the
 column level) and starting goalies (at most one mark a side, on a goalie of that side who played, and the sides that
 used two goalies marked), the record of closing props in its shape, one line a final, the ledger by `props_check.js` against
@@ -293,7 +435,7 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   (puck drop, the matchup, the kind), ties within 1e-12 to the lower sorted leg ids. A level's card leads
   with the fair chance, the model's beside it; Add to builder (asks before replacing other legs, those kept on this device
   that the builder leaves out among them), Finish, a
-  lock on each leg and New legs (the level's rule on the legs it has not shown, the locks kept; Reset), kept
+  Lock on each leg (a word, Lock or Locked) and New legs (the level's rule on the legs it has not shown, the locks kept; Reset), kept
   outside `P` (`PB_VIEW`). Empty levels say why, worked out from the picks (tick more games, more bet types,
   or Both days, only where it would help), and under two lined games the panel says so in one line.
 - **The builder** (`#builder`): rows, never a table; every stored leg read again from the state on every
@@ -454,8 +596,8 @@ for four, and the cap at the product binds on 0-5% of tickets.
 
 The job reads DraftKings' game lines only when it runs, so a line on the page can be hours old by puck drop
 (the owner's ask, 15 October 2026: "a refresh odds button that will pull the live lines on demand ... rather
-than like a constant job"). **Refresh odds** (on the Games toolbar, under the Parlay Builder panel's
-heading and, since nhl v10, in the Player props window, 44px, with one `aria-live` status line beside each) reads
+than like a constant job"). **Refresh odds** (on the Games tab's odds bar, on the Parlay Builder tab's over its
+panel and, since nhl v10, in the Player props window, 44px, with one `aria-live` status line beside each) reads
 ESPN's free scoreboard in the browser (`?dates=YYYYMMDD&limit=100&_=<now>`, no-store, no custom header, so no
 preflight: ESPN answers with `access-control-allow-origin: *`) for every day the Games strip shows from today on
 with a game still to come, and, at the same time, DraftKings' player props for the games still to come today and
@@ -494,8 +636,8 @@ published; the store after a later save and a reload on it; a lock and New legs 
 moved and one where every price moved, by brute force; and a card open through a read.
 
 On a phone (640px or less) the Day and Build from choices share one row equally, the Bet types and the
-game tiles go two a row, and nothing on any tab is wider than the screen (the Record tables scroll inside
-their card; the playoff bracket drops its points, which the odds table shows).
+game tiles go two a row, and nothing on any tab is wider than the screen (a table scrolls inside its `.wrap`; the
+playoff bracket sets each series on two lines, a club a line, and drops its points, which the odds table shows).
 
 ### The player model
 
@@ -693,12 +835,13 @@ model's; the levels never take a prop.
   line, the model labelled on trial.
 - **The props view** (nhl v10, `index.html`, every class `pp-`; the owner's ask, 15 October 2026: DraftKings' props on the
   Refresh odds press, the model on trial beside them). Each game card still to come that the props model projects, or that
-  a press read props for, carries a 44px **Player props** button, and so does each game in Pick your own legs; it opens a
+  a press read props for, carries a 44px **Player props** button (nhl v12: "Player props", after a press "· N lines" and the read's
+  time, the whole sentence on its title), and so does each game in Pick your own legs; it opens a
   window over the page (the parlay card's: a sheet on a phone; Escape, Close or a click outside close it, Tab stays
   inside, the focus goes back to the button) with six stats (Points, Goals, Shots, Assists, Blocks, Saves), each club
   apart. **Before any press** it says to press Refresh odds for DraftKings' props and shows the props model's projection
   (the published mean) for every expected player. **The press** (any of the three Refresh odds buttons: the Games
-  toolbar, the Parlay Builder panel, the window's own) reads, at the same time as the scoreboards, ESPN's DraftKings
+  tab's odds bar, the Parlay Builder tab's, the window's own) reads, at the same time as the scoreboards, ESPN's DraftKings
   propBets for every game still to come today and tomorrow (Eastern: DraftKings posts player props on game day, and a game
   further off answers 404): `limit=1000`, one request a game (a second page only where ESPN pages the answer, at most
   three), GET, no-store, a cache-buster, no custom header (ESPN answers `access-control-allow-origin: *`, its 404s too).

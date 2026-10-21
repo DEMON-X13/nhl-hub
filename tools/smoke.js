@@ -1013,15 +1013,20 @@ async function parlayEdges() {
         /* the games any level held that have dropped the puck since, in the order the page names them */
         const held = [...new Set([...d.querySelectorAll('.pb-tier .pb-tl')].map(x => x.dataset.id.split('|')[0]))].map(id => S.games.find(g => g.id === id)).filter(g => sStarted(g, at2));
         const names = held.map(g => `${S.teams[g.away].abbr} @ ${S.teams[g.home].abbr}`), rebuilt = (names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + ` dropped the puck: the levels were rebuilt without ${names.length > 1 ? 'them' : 'it'}.`;
-        /* a puck drop that leaves the day shown no game to come moves the panel on, and it says that in place of the rebuilt
-           line: the levels are the next day's now, not these rebuilt (PHI @ BUF and FLA @ OTT, 21 October 2026, both at 7:30 PM
-           Eastern, were the whole day); with no day left to move to (the season's last, or between playoff rounds) it says neither */
-        const slA = sSlate(at), slB = sSlate(at2), emptied = slA.dates.length > 0 && slA.dates.every(dd => !slB.on(dd).length);
-        const said = !emptied ? rebuilt : slB.dates.length ? `Every game on ${slA.dates.map(dd => PBS.day(dd)).join(' and ')} has dropped the puck: the panel moved to ${slB.text}.` : null;
+        /* the rebuilt line holds only while the panel stays on the day shown. A puck drop that leaves that day no game to come
+           moves the panel on, and it says so in place of the rebuilt line: the levels are the next day's now (PHI @ BUF and
+           FLA @ OTT, 21 October 2026, both at 7:30 PM Eastern, were the whole day). With no day left to move to (the season's
+           last, or between playoff rounds), or with the day shown keeping games but no fresh line while the next day has lines
+           (the slate follows lined days), the panel is not on that day and its day is not over, so it says neither line */
+        const slA = sSlate(at), slB = sSlate(at2), same = slA.dates.join() === slB.dates.join();
+        const emptied = slA.dates.length > 0 && slA.dates.every(dd => !slB.on(dd).length);
+        const moved = !same && emptied && slB.dates.length ? `Every game on ${slA.dates.map(dd => PBS.day(dd)).join(' and ')} has dropped the puck: the panel moved to ${slB.text}.` : null;
+        const said = same ? rebuilt : moved;
         const fb = hitLv.querySelector('[data-pb-finish]'); fb.focus(); fb.click();
         chk(d.getElementById('pcWin').hidden && ![...d.querySelectorAll(`.pb-tier[data-tier="${tier}"] .pb-tl`)].some(x => sStarted(gidOf(x), at2)), `${tier}'s Finish, its game started, opens nothing and redraws the level without it`);
         const notes = txt(d.getElementById('pbNotes'));
-        chk((said === null || notes.includes(said)) && (!emptied || !notes.includes('the levels were rebuilt')) && (said !== null || !notes.includes('has dropped the puck: the panel moved')), `and the panel says why: ${said === null ? 'nothing, no day left to move to' : `"${said}"`}${emptied ? `, ${slA.text} having no game left to come` : ''} (${notes.slice(0, 160)})`);
+        chk((said === null || notes.includes(said)) && (same || !notes.includes('the levels were rebuilt')) && (moved !== null || !notes.includes('has dropped the puck: the panel moved')),
+          `and the panel says why: ${said !== null ? `"${said}"` : slB.dates.length ? `nothing, the panel on ${slB.text} while ${slA.text} keeps games with no fresh line` : 'nothing, no day left to move to'} (${notes.slice(0, 160)})`);
         const fb2 = d.querySelector(`[data-pb-finish="${tier}"]`);
         chk(fb2 ? d.activeElement === fb2 : d.activeElement === d.getElementById('pbTitle'), `the keyboard's focus stays on ${tier}'s Finish, redrawn, or with the level gone on the panel's heading (${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
       }

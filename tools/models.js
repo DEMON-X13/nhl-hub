@@ -255,8 +255,9 @@ function backtest() {
   const M = JSON.parse(fs.readFileSync(OUTF, 'utf8')), S = JSON.parse(fs.readFileSync(STATE_F, 'utf8'));
   const model = JSON.parse(fs.readFileSync(path.join(DATA, 'model.json'), 'utf8')), PJ = JSON.parse(fs.readFileSync(path.join(DATA, 'players.json'), 'utf8'));
   const { rows } = replay(M.alpha.P, model.params, finalsOf(DATA, S.season, S.games), readBox(DATA), readLines(DATA));
-  const games = {};
-  for (const f of rows.filter(f => f.season === S.season)) games[f.id] = callOf(M, f, f.pm ? { mu: f.pm.mu } : null, PJ.params.hfa);
+  /* only the finals with no call of their own: a game the job called is never backtested */
+  const own = new Set(S.games.filter(g => g.models).map(g => g.id)), games = {};
+  for (const f of rows.filter(f => f.season === S.season && !own.has(f.id))) games[f.id] = callOf(M, f, f.pm ? { mu: f.pm.mu } : null, PJ.params.hfa);
   fs.writeFileSync(BACKF, JSON.stringify({ v: M.v, made: S.published, why: 'the finals of this season played before the models existed, each called on what was known before its puck drop: the ratings and averages to the day before, the line and the player model\'s view frozen with the call', games }));
   console.log(`wrote data/models_backtest.json: ${Object.keys(games).length} finals of ${S.season}, through ${S.published}`);
 }

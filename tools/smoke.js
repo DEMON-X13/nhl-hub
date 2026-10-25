@@ -122,6 +122,7 @@ async function boot(clockMs, errors, opts = {}) {
       w.__requests = []; w.__writes = []; w.__confirm = true; w.__asked = [];
       w.confirm = q => { w.__asked.push(String(q)); return w.__confirm; };
       if (opts.store !== undefined) w.localStorage.setItem('nhl_v1', opts.store);
+      if (opts.admin !== undefined) w.localStorage.setItem('nflhub_admin_v1', opts.admin);      // the NFL hub's sign-in on this origin (nhl v21)
       const set = w.Storage.prototype.setItem;
       w.Storage.prototype.setItem = function (k, v) { w.__writes.push(String(k)); return set.call(this, k, v); };
       const body = opts.keepDk ? opts.state || STATE : noDk(opts.state || STATE);
@@ -130,6 +131,8 @@ async function boot(clockMs, errors, opts = {}) {
         if (String(url).startsWith('state.json')) return { ok: true, json: async () => JSON.parse(body) };
         if (PROPS_RX.test(String(url))) return opts.props ? opts.props(String(url)) : PROPS_404(String(url));
         if (String(url).includes('espn.com')) return opts.espn ? opts.espn(String(url)) : { ok: true, json: async () => ({ events: [] }) };
+        const fk = opts.files && Object.keys(opts.files).find(k => String(url).startsWith(k));
+        if (fk) { const v = opts.files[fk]; return typeof v === 'number' ? { ok: false, status: v } : { ok: true, json: async () => JSON.parse(JSON.stringify(v)) }; }
         return { ok: false, status: 404 };
       };
       w.addEventListener('error', e => errors.push(e.message));
@@ -4321,6 +4324,144 @@ function modelsChecks() {
     console.log(`  ${called.length} games called this run, each made again the same; beta ${M.elo.beta}; ${Object.keys(wantBt).length} finals from the backtest`);
   } else console.log(`  ${called.length} games called this run; the calls are not made again here (players.json is not the state's own, or no game was called)`);
 }
+/* ---------- X PARLAYS AND THE X BET LOG (nhl v21) ----------
+   The owner's two tabs, by rules of their own. A visitor's page (no NFL sign-in, a refused one, a junk one) has neither tab, never asks
+   for either file, and lands an X address (or a stored X tab) on Games. The admin's (the NFL hub's record under nflhub_admin_v1, which
+   the page never writes) shows both and reads both files no-store; on the committed files, and on planted ones built from the state:
+   every slip's legs graded by this section's own rules on the finals and the box scores the state carries (a team bet on the score, a
+   player's line on the box, void where he did not play), each card's state, tags, money and every leg's mark and words; a slip settled
+   two Eastern days before today, one marked cleared and one with a junk leg left off; the per-device clear and Show them again
+   (stored in nhl_v1, kept through a reload); the files unread said so; the X Bet Log's tiles, table and chart by its own sums */
+const xEt = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+const xAdd = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+function xLegWant(l, St) {
+  const g = St.games.find(x => x.id === String(l.game));
+  if (!g) return 'gone';
+  if (g.state !== 'final' || g.hs === null) return 'pending';
+  if (l.kind === 'prop') {
+    const b = St.box && St.box.games && St.box.games[String(l.game)]; if (!b) return 'pending';
+    let x;
+    if (l.stat === 'sv') { const v = b.g && b.g[String(l.pid)]; if (v === undefined) return 'void'; x = v; }
+    else { const v = b.s && b.s[String(l.pid)]; if (!Array.isArray(v)) return 'void'; x = l.stat === 'pts' ? v[0] + v[1] : v[{ g: 0, a: 1, s: 2, bs: 3 }[l.stat]]; }
+    if (l.mk === 'yes') return x >= l.k ? 'win' : 'loss';
+    return x > l.line ? (l.side === 'over' ? 'win' : 'loss') : x < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push';
+  }
+  if (l.kind === 'ou') { const t = g.hs + g.as; return t > l.line ? (l.side === 'over' ? 'win' : 'loss') : t < l.line ? (l.side === 'under' ? 'win' : 'loss') : 'push'; }
+  const m = l.side === 'home' ? g.hs - g.as : g.as - g.hs;
+  if (l.kind === 'ml') return m > 0 ? 'win' : 'loss';
+  return m + l.line > 0 ? 'win' : m + l.line < 0 ? 'loss' : 'push';
+}
+async function xParlaysChecks() {
+  console.log('X PARLAYS AND THE X BET LOG');
+  const REC = JSON.stringify({ k: 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6', at: '2026-10-01T00:00:00Z', ok: true, checked: '2026-10-01T00:00:00Z', left: 400, leftAt: '2026-10-01T00:00:00Z' });
+  const xReq = w => w.__requests.filter(r => /data\/x(parlays|bets)\.json/.test(r.url));
+  const tabsOf = d => [...d.querySelectorAll('#tabs button')].filter(b => !b.hidden).map(b => b.dataset.tab);
+  /* a visitor's page, three ways */
+  for (const [tag, admin] of [['no NFL sign-in', undefined], ['a sign-in The Odds API refused', JSON.stringify({ k: 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6', ok: false })], ['a junk record', '{"k":"short","ok":true}']]) {
+    const errs = [], w = await boot(PUB, errs, { hash: 'xparlays', admin, store: JSON.stringify({ ui: { tab: 'xbets' } }) }), d = w.document;
+    chk(!d.documentElement.getAttribute('data-admin') && !tabsOf(d).some(t => t === 'xparlays' || t === 'xbets') && !xReq(w).length, `${tag}: a visitor's page, no X tab and neither file asked for (${tabsOf(d).join(',')}; ${xReq(w).length} asked)`);
+    chk(!d.querySelector('#tab-games').hidden && d.querySelector('#tab-xparlays').hidden && d.querySelector('#tab-xbets').hidden, `${tag}: #xparlays lands on Games`);
+    w.location.hash = '#xbets'; w.dispatchEvent(new w.HashChangeEvent('hashchange')); await wait(5);
+    chk(!d.querySelector('#tab-games').hidden && d.querySelector('#tab-xbets').hidden && !xReq(w).length, `${tag}: #xbets lands on Games, nothing read`);
+    chk(!w.__writes.includes('nflhub_admin_v1') && !errs.length, `${tag}: the NFL's record never written; no runtime error: ${errs.join(' | ')}`);
+  }
+  /* the admin's page on the committed files */
+  const XP = readJSON(path.join(DATA, 'xparlays.json')), XB = readJSON(path.join(DATA, 'xbets.json'));
+  chk(!!XP && Array.isArray(XP.parlays) && !!XB && XB.weeks && typeof XB.weeks === 'object', 'data/xparlays.json and data/xbets.json in their shapes');
+  {
+    const errs = [], w = await boot(PUB, errs, { hash: 'xparlays', admin: REC, files: { 'data/xparlays.json': XP, 'data/xbets.json': XB } }), d = w.document;
+    const tabs = tabsOf(d);
+    chk(d.documentElement.getAttribute('data-admin') === 'on' && tabs.indexOf('xparlays') === tabs.indexOf('parlays') + 1 && tabs.indexOf('xbets') === tabs.indexOf('pickem') + 1 && !d.querySelector('#adminMark').hidden, `the admin's page: X Parlays after the Parlay Builder, the X Bet Log after the Pick'em Record, Admin in the header (${tabs.join(',')})`);
+    const rq = xReq(w);
+    chk(rq.length === 2 && rq.every(r => r.cache === 'no-store' && /\?t=\d+/.test(r.url) && r.method === 'GET'), `both files read once, no-store, a cache-buster each (${rq.map(r => r.url).join(', ')})`);
+    chk(!d.querySelector('#tab-xparlays').hidden && d.querySelector('#tab-games').hidden, 'the X Parlays tab opens on the admin\'s page');
+    if (!XP.parlays.length) chk(/No parlays yet/.test(txt(d.querySelector('#xpList'))), 'no slip in the file: "No parlays yet."');
+    chk(!w.__writes.includes('nflhub_admin_v1') && !errs.length, `the NFL's record never written; no runtime error: ${errs.join(' | ')}`);
+  }
+  /* planted slips, built from the state's own finals and box scores */
+  const today = xEt(PUB), boxed = S.box && S.box.games ? S.box.games : {};
+  const fin = S.games.filter(g => g.state === 'final' && g.hs !== null && g.hs !== g.as && boxed[g.id] && g.date >= xAdd(today, -2)).sort((a, b) => a.start < b.start ? -1 : 1);
+  const old = S.games.filter(g => g.state === 'final' && g.hs !== null && g.hs !== g.as && g.date < xAdd(today, -2)).pop();
+  const toCome = S.games.find(g => g.state === 'pre' && !sStarted(g, PUB));
+  if (fin.length < 2 || !old || !toCome) { console.log('  fewer than two boxed finals in the last two days, or none older, or no game to come: the planted slips are not held on this state'); }
+  else {
+    const [f1, f2] = fin, win = g => g.hs > g.as ? 'home' : 'away', lose = g => g.hs > g.as ? 'away' : 'home';
+    const b1 = boxed[f1.id], sk = Object.entries(b1.s || {}).find(([, v]) => Array.isArray(v) && v[0] >= 1) || Object.entries(b1.s || {})[0];
+    const scorer = sk ? { pid: sk[0], g: sk[1][0] } : null;
+    const nm = id => ((S.players && S.players.players && S.players.players[id]) || {}).name || `Player ${id}`;
+    const P0 = [
+      { id: 'A', placed: f1.date, stake: 5, price: 264, payout: 18.2, legs: [{ game: f1.id, kind: 'ml', side: win(f1) }].concat(scorer ? [{ game: f1.id, kind: 'prop', pid: scorer.pid, name: nm(scorer.pid), team: f1.home, stat: 'g', side: scorer.g >= 1 ? 'over' : 'under', line: 0.5 }] : []) },
+      { id: 'B', placed: f1.date, stake: 2, price: 400, payout: 10, note: 'boost', legs: [{ game: f1.id, kind: 'ml', side: lose(f1) }, { game: f2.id, kind: 'ml', side: win(f2) }] },
+      { id: 'C', placed: today, stake: 3, price: -120, payout: 5.5, legs: [{ game: toCome.id, kind: 'ml', side: 'home' }, { game: f2.id, kind: 'ou', side: 'over', line: f2.hs + f2.as - 0.5 }] },
+      { id: 'D', placed: f2.date, stake: 1, price: 150, payout: 2.5, legs: [{ game: f2.id, kind: 'prop', pid: '999999901', name: 'Nobody Played', team: f2.home, stat: 's', side: 'over', line: 1.5 }, { game: f2.id, kind: 'ml', side: win(f2) }] },
+      { id: 'E', placed: f1.date, stake: 1, price: 100, payout: 2, cleared: true, legs: [{ game: f1.id, kind: 'ml', side: win(f1) }] },
+      { id: 'F', placed: old.date, stake: 1, price: 100, payout: 2, legs: [{ game: old.id, kind: 'ml', side: win(old) }] },
+      { id: 'G', placed: f1.date, stake: 1, price: 100, payout: 2, legs: [{ game: f1.id, kind: 'zz', side: 'home' }] },
+    ].concat(scorer && scorer.g >= 1 ? [{ id: 'H', placed: f1.date, stake: 1, price: 120, payout: 2.2, legs: [{ game: f1.id, kind: 'prop', pid: scorer.pid, name: nm(scorer.pid), team: f1.home, stat: 'g', mk: 'yes', k: 1 }] }] : []);
+    const XPp = { parlays: P0 }, XBp = { season: S.season, deposit: 100, weeks: { '2026-10-05': { staked: 10, returned: 8.71 }, '2026-10-12': { staked: 11, returned: 14.66 }, junk: { staked: 1, returned: 'x' } } };
+    const want = {};
+    for (const p of P0) {
+      if (p.cleared || p.legs.some(l => !['ml', 'pl', 'ou', 'prop'].includes(l.kind))) continue;
+      const gs = p.legs.map(l => xLegWant(l, S));
+      const status = gs.includes('loss') ? 'lost' : gs.includes('pending') ? 'live' : gs.every(x => x === 'void' || x === 'push') ? 'void' : 'landed';
+      const last = p.legs.map(l => S.games.find(g => g.id === l.game)).filter(Boolean).sort((a, b) => a.start < b.start ? -1 : 1).pop();
+      if (status !== 'live' && last.date < xAdd(today, -2)) continue;
+      want[p.id] = { status, gs, voids: gs.filter(x => x === 'void').length };
+    }
+    const store = JSON.stringify({ ui: {} }), files = { 'data/xparlays.json': XPp, 'data/xbets.json': XBp };
+    const errs = [], w = await boot(PUB, errs, { hash: 'xparlays', admin: REC, files, store }), d = w.document;
+    const cards = [...d.querySelectorAll('.xp-card')], ids = cards.map(c => c.dataset.xp);
+    chk(ids.slice().sort().join() === Object.keys(want).sort().join(), `the slips drawn: every one but the cleared, the junk and the one settled before ${xAdd(today, -2)} (${ids.join(',')}; want ${Object.keys(want).join(',')})`);
+    chk(ids[0] === 'C' && /first puck drop/.test(txt(d.querySelector('.xp-day'))) && [...d.querySelectorAll('.xp-day')].some(h => /^Finished/.test(txt(h))), `the live slip first under its day, the settled under Finished (${[...d.querySelectorAll('.xp-day')].map(txt).join(' | ')})`);
+    const bad = [];
+    for (const c of cards) {
+      const p = P0.find(x => x.id === c.dataset.xp), W = want[p.id]; if (!W) continue;
+      if (c.dataset.xpState !== W.status) bad.push(`${p.id}: ${c.dataset.xpState}, want ${W.status}`);
+      const tags = [...c.querySelectorAll('.xp-head .tag')].map(txt);
+      const wantTags = ['placed'].concat(p.note ? [p.note] : [], W.status === 'lost' ? ['lost'] : W.status === 'landed' ? ['landed'] : W.status === 'void' ? ['void'] : [], W.voids && !['lost', 'void'].includes(W.status) ? [`${W.voids} void`] : []);
+      if (tags.join('|').toLowerCase() !== wantTags.join('|').toLowerCase()) bad.push(`${p.id}: tags ${tags.join(',')}, want ${wantTags.join(',')}`);
+      const money = [...c.querySelectorAll('.xp-money b')].map(txt), wm = [`$${p.stake.toFixed(2)}`, p.price > 0 ? '+' + p.price : String(p.price), `$${p.payout.toFixed(2)}`];
+      if (money.join('|') !== wm.join('|')) bad.push(`${p.id}: money ${money.join(',')}, want ${wm.join(',')}`);
+      const lis = [...c.querySelectorAll('.xp-legs li')];
+      if (lis.length !== p.legs.length) bad.push(`${p.id}: ${lis.length} legs drawn`);
+      lis.forEach((li, i) => {
+        const gw = W.gs[i], mark = gw === 'win' ? '✓' : gw === 'loss' ? '✗' : gw === 'pending' ? '○' : '–', st = txt(li.querySelector('.xp-st'));
+        const word = { win: /^won/, loss: /^lost/, push: /^push/, pending: /^(to play|under way)$/, void: /^void: did not play$/ }[gw];
+        if (li.dataset.g !== gw || txt(li.querySelector('.xp-m')) !== mark || !(word && word.test(st))) bad.push(`${p.id} leg ${i + 1}: ${li.dataset.g} "${txt(li.querySelector('.xp-m'))}" "${st}", want ${gw}`);
+        const l = p.legs[i]; if (l.kind === 'prop' && !txt(li).includes(l.name)) bad.push(`${p.id} leg ${i + 1}: the player's name is not on it`);
+      });
+      if (!c.querySelector('button.xp-x[aria-label]') || w.getComputedStyle(c.querySelector('button.xp-x')).minHeight !== '44px') bad.push(`${p.id}: no 44px clear button`);
+    }
+    chk(!bad.length, `every slip's state, tags, money and legs by this section's own rules (${cards.length} slips; ${bad.slice(0, 3).join(' | ')})`);
+    /* the clear on this device, a reload, and Show them again */
+    w.__confirm = true; const xb = d.querySelector('.xp-card[data-xp="A"] .xp-x'); xb.click(); await wait(5);
+    const stored = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}');
+    chk(!d.querySelector('.xp-card[data-xp="A"]') && /You cleared 1 parlay on this device/.test(txt(d.querySelector('.xp-here'))) && /Clear this parlay/.test(w.__asked.slice(-1)[0] || '') && JSON.stringify(stored.ui && stored.ui.xclr) === '["A"]', `the × asks, takes A off this device's tab and stores it (${JSON.stringify(stored.ui && stored.ui.xclr)})`);
+    const w2 = await boot(PUB, errs, { hash: 'xparlays', admin: REC, files, store: w.localStorage.getItem('nhl_v1') }), d2 = w2.document;
+    chk(!d2.querySelector('.xp-card[data-xp="A"]') && !!d2.querySelector('#xpShowAll'), 'a reload keeps A cleared on this device');
+    d2.querySelector('#xpShowAll').click(); await wait(5);
+    chk(!!d2.querySelector('.xp-card[data-xp="A"]') && JSON.stringify(JSON.parse(w2.localStorage.getItem('nhl_v1')).ui.xclr) === '[]', 'Show it again brings A back and forgets the clear');
+    chk(!w.__writes.includes('nflhub_admin_v1') && !w2.__writes.includes('nflhub_admin_v1') && !errs.length, `the NFL's record never written; no runtime error: ${errs.join(' | ')}`);
+    /* the X Bet Log, by its own sums */
+    d2.querySelector('#tabs button[data-tab="xbets"]').click(); await wait(5);
+    const rows = [['2026-10-05', 10, 8.71], ['2026-10-12', 11, 14.66]];
+    let cum = 0; const bal = rows.map(([, st, rt]) => (cum = Math.round((cum + rt - st) * 100) / 100, Math.round((100 + cum) * 100) / 100));
+    const net = Math.round(cum * 100) / 100, staked = 21, tiles = [...d2.querySelectorAll('#xbTiles .stat')].map(t => [txt(t.querySelector('.v')), txt(t.querySelector('.k'))]);
+    const wantT = [[`$${bal[1].toFixed(2)}`, 'Balance'], [`${net >= 0 ? '+' : '−'}$${Math.abs(net).toFixed(2)}`, 'Net'], [`${net >= 0 ? '+' : '−'}${Math.abs(100 * net / staked).toFixed(1)}%`, 'Return'], ['1 of 2', 'Winning weeks']];
+    chk(JSON.stringify(tiles) === JSON.stringify(wantT), `the X Bet Log's tiles by their own sums (${JSON.stringify(tiles)}, want ${JSON.stringify(wantT)})`);
+    const tr = [...d2.querySelectorAll('#xbTable tbody tr')].map(r => [r.dataset.k, ...[...r.cells].slice(1).map(txt)]);
+    const wantR = rows.map(([k, st, rt], i) => [k, `$${st.toFixed(2)}`, `$${rt.toFixed(2)}`, `${rt - st >= 0 ? '+' : '−'}$${Math.abs(rt - st).toFixed(2)}`, `$${bal[i].toFixed(2)}`]).reverse();
+    chk(JSON.stringify(tr) === JSON.stringify(wantR), `the table, the newest week first, the junk week left out (${JSON.stringify(tr)})`);
+    const pl = d2.querySelector('#xbChart svg.xb-chart polyline');
+    chk(!!pl && pl.getAttribute('data-bal') === bal.join(',') && pl.getAttribute('points').trim().split(/\s+/).length === 3 && d2.querySelector('#xbTable').parentElement.classList.contains('wrap') && d2.querySelector('#xbTable td.sk'), `the chart's balance week by week from the deposit (${pl && pl.getAttribute('data-bal')}), the table in its wrapper, the week held`);
+    /* no deposit: the profit; files that do not answer: said so */
+    const w3 = await boot(PUB, errs, { hash: 'xbets', admin: REC, files: { 'data/xparlays.json': 404, 'data/xbets.json': Object.assign({}, XBp, { deposit: null }) } }), d3 = w3.document;
+    chk(txt(d3.querySelector('#xbTiles .stat .k')) === 'Profit' && txt(d3.querySelector('#xbTiles .stat .v')) === `$${net.toFixed(2)}` && txt(d3.querySelector('#xbChartH')) === 'Profit', 'no deposit on file: the profit from break even');
+    d3.querySelector('#tabs button[data-tab="xparlays"]').click(); await wait(5);
+    chk(!d3.querySelector('#xpNote').hidden && /could not be read \(HTTP 404\)/.test(txt(d3.querySelector('#xpNote'))), `a file that does not answer is said so (${txt(d3.querySelector('#xpNote'))})`);
+    console.log(`  planted slips on ${f1.away}@${f1.home} and ${f2.away}@${f2.home}: ${ids.join(', ')} drawn (${ids.map(i => want[i].status).join(', ')})`);
+  }
+}
 async function pickemChecks() {
   console.log("THE PICK'EM RECORD");
   const D0 = sPkData(S);
@@ -4662,6 +4803,7 @@ async function main() {
   await parlayBuilder();
   await parlayEdges();
   try { await suggestRecord(); } catch (e) { chk(false, `THE SUGGESTED PARLAYS' RECORD stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
+  try { await xParlaysChecks(); } catch (e) { chk(false, `X PARLAYS AND THE X BET LOG stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   try { modelsChecks(); } catch (e) { chk(false, `THE PICK'EM MODELS stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   try { await pickemChecks(); } catch (e) { chk(false, `THE PICK'EM RECORD stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   await refreshOddsChecks();

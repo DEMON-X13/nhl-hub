@@ -183,6 +183,12 @@ lines while its stored legs stay as they were, an open card follows. In memory o
 reload is the published state. The same press reads DraftKings' player props for the games today and tomorrow
 (THE PROPS VIEW, below).
 
+THE PICK'EM RECORD (nhl v19, `index.html`, every class `pk-`; CLAUDE.md has the rules): the tab before the Record, every
+final straight up by each model's frozen pick (the call's `pick`, the Team Elo's `elo.pHome` or `pHome`, DraftKings'
+favourite on the frozen line), Monday-to-Sunday weeks (Eastern), DraftKings' season and favourite bands in the strip, the
+chart of each model's wins against DraftKings (`pkChart`, inline SVG), the week grid (`#pkWeeks`) and every pick of a day
+(`#pkPicks`, behind Show every pick). Nothing is stored and nothing is fetched: it reads the state alone.
+
 THE PARLAY BUILDER (nhl v7, laid out as the NFL hub's in nhl v17, `index.html`, every class `pb-` for the panel, `t30-` for
 the Top 30, `sp-` for the Suggested Parlays tab and `pc-` for the card; CLAUDE.md has the rules): on the Parlay Builder tab
 the builder (`#builder`, first, re-read from the state on every draw), the Top 30 lines (`#pbPanel`: Bet amount, Build from,

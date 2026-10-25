@@ -23,6 +23,7 @@
    carried theirs: the job keeps the last ids read for the same numbers.
    The props model's record (props.js): every final the run asked ESPN's prop feed for failed (a 404 is ESPN
    saying it has none, an answer), so the closing props and the ledger's grades wait; some failing is a note.
+   DraftKings' player lines (props.js, every game projected): every read failed; some failing is a note.
    NHL_STATE, NHL_DATA and NHL_OUT move the files (simulate.js). */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -86,6 +87,11 @@ if (soon) {
 const pr = read(path.join(DATA, 'props.json'));
 if (pr && pr.record && pr.record.asked && !(pr.record.read + pr.record.none)) problems.push(`ESPN's DraftKings props: all ${pr.record.asked} finals asked for their closing props failed (${pr.record.why || 'no answer'}): the record and the props ledger's grades wait, and the next run asks again`);
 else if (pr && pr.record && pr.record.failed) notes.push(`ESPN's DraftKings props: ${pr.record.failed} of ${pr.record.asked} finals asked for their closing props failed; asked again next run`);
+/* DraftKings' player lines on the games to come (props.js, since nhl v16: the page draws them on load): every game projected failing
+   to read is broken (the page shows the projections, and any earlier read kept, until a press); some failing is a note */
+const kept = n => n ? ` (${n} earlier read${n === 1 ? '' : 's'} kept)` : '';
+if (pr && pr.dk && pr.dk.asked && !(pr.dk.read + pr.dk.none)) problems.push(`ESPN's DraftKings player lines: all ${pr.dk.asked} games projected failed to read${kept(pr.dk.kept)}: the page shows the props model's projections${pr.dk.kept ? ' and the reads kept' : ''} until a Refresh odds press, and the next run reads again`);
+else if (pr && pr.dk && pr.dk.failed) notes.push(`ESPN's DraftKings player lines: ${pr.dk.failed} of ${pr.dk.asked} games projected could not be read${kept(pr.dk.kept)}; read again next run`);
 for (const n of notes) console.log('note: ' + n);
 for (const p of problems) { console.log('BROKEN: ' + p); if (process.env.GITHUB_ACTIONS) console.log(`::error title=nhl source broken::${p}`); }
 console.log(problems.length ? `${problems.length} source(s) broken; the state was published on what there is and the page says so` : 'every source the state stands on was read this run');

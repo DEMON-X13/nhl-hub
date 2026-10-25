@@ -634,6 +634,27 @@ async function main() {
     record: rec, games: P.games, skipped: P.skipped,
   };
   const prevOut = fs.existsSync(OUT_F) ? readJSON(OUT_F) : null;
+  /* 5. DraftKings' player lines on every game projected (today and tomorrow, Eastern), read every run from ESPN's propBets, as
+     tools/espn.js's propsOf parses them: the page draws them on load, and since the owner's call of 25 October 2026 ("use player
+     lines now") its Top 30 and suggested parlays rank them on this model; a Refresh odds press reads them again, live. A 404, or an
+     answer with nothing the parse reads, is none posted yet (DraftKings posts on game day); a read that fails keeps the last one read,
+     with its own `at`, else says it failed. `dk` on each game: { status: 200, at, main, yes } | { status: 404, at } | { status:
+     'failed', at, why } */
+  const dkQ = { asked: 0, read: 0, none: 0, failed: 0, kept: 0, lines: 0 }, AT = new Date(Date.parse(NOW)).toISOString();
+  const ids = Object.keys(out.games);
+  for (let i = 0; i < ids.length; i += 4) await Promise.all(ids.slice(i, i + 4).map(async gid => {
+    dkQ.asked++;
+    let r; try { r = await E.propBets(gid); } catch (e) { r = { status: 'failed', why: e.message }; }
+    let pr = null; if (r.status === 200) { try { pr = E.propsOf(r.items); } catch (e) { pr = null; } }
+    if (pr && (pr.main.length || pr.yes.length)) { out.games[gid].dk = { status: 200, at: AT, main: pr.main, yes: pr.yes }; dkQ.read++; dkQ.lines += pr.main.length; return; }
+    if (r.status === 404 || pr) { out.games[gid].dk = { status: 404, at: AT }; dkQ.none++; return; }
+    dkQ.failed++;
+    const was = prevOut && prevOut.games && prevOut.games[gid] && prevOut.games[gid].dk;
+    if (was && was.status === 200) { out.games[gid].dk = was; dkQ.kept++; }
+    else out.games[gid].dk = { status: 'failed', at: AT, why: r.why || 'an answer that could not be read' };
+  }));
+  out.dk = dkQ;
+  log(`DraftKings' player lines: ${dkQ.asked} games asked, ${dkQ.read} read (${dkQ.lines} main lines), ${dkQ.none} with none posted yet, ${dkQ.failed} failed${dkQ.kept ? ` (${dkQ.kept} earlier reads kept)` : ''}`);
   const same = prevOut && JSON.stringify(Object.assign({}, prevOut, { generated: null })) === JSON.stringify(Object.assign({}, out, { generated: null }));
   if (same) out.generated = prevOut.generated;
   if (!same) fs.writeFileSync(OUT_F, JSON.stringify(out));

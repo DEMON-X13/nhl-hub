@@ -192,7 +192,9 @@ today's and tomorrow's sets (`#spBody`: three levels (Safe, Medium, Aggressive) 
 of the day while it is open, the record's locked set from its first puck drop); the slip bar (`#slip`) and the card window
 (`#pcWin`). Its numbers are the state's alone: a leg is the game row's own chance, edge
 and prices, offered only on a fresh line (`line.at` is `published`) and a game not started by the visitor's
-clock. The levels take one leg a game, team bets alone, so their chance and price are products. Since nhl v11
+clock. The levels take one leg a game, so their chance and price are products; since nhl v18 (the owner's call) a leg can be a
+player's line from DraftKings' props as read (the job's at its last run, or a press's), on the props model's chance, which is on
+trial, and the Top 30 lists them beside the team bets (`propLegsOf`, `propQual`); the record grades them on the box scores. Since nhl v11
 the builder takes more than one leg of a game and DraftKings' player lines (SAME-GAME PARLAYS AND PLAYER LEGS,
 below). In the state each line may carry
 `dk: {event, homeML, awayML, homePL, awayPL, over, under}` (and `at` only on outcome ids carried from an

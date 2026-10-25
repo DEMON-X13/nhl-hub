@@ -92,6 +92,25 @@ const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before'
 /* ESPN's DraftKings propBets for one game, as the page asks for it (a cache-buster at the end), and ESPN's 404 for a game with none */
 const PROPS_RX = /^https:\/\/sports\.core\.api\.espn\.com\/v2\/sports\/hockey\/leagues\/nhl\/events\/(\d+)\/competitions\/\1\/odds\/100\/propBets\?lang=en&region=us&limit=1000&page=(\d+)&_=\d+$/;
 const PROPS_404 = url => { const m = PROPS_RX.exec(url); return { ok: false, status: 404, json: async () => ({ error: { message: `No propBets found for eventId ${m ? m[1] : '?'} and provider 100`, code: 404 } }) }; };
+/* the state without the job's read of DraftKings' player lines (props.games[id].dk, props.dk): the sections that hold a Refresh odds
+   press, the props window before one and the same-game legs boot on it, so the page they hold is the one a press starts from on a
+   state that carries no job read; THE JOB'S PLAYER LINES boots on the state as published (`keepDk`) and holds the read itself */
+const NODK_C = new Map();
+function noDk(body) {
+  if (NODK_C.has(body)) return NODK_C.get(body);
+  let out = body;
+  try {
+    const j = JSON.parse(body), pg = j && j.props && j.props.games;
+    if (pg && typeof pg === 'object' && (j.props.dk || Object.values(pg).some(x => x && x.dk))) {
+      delete j.props.dk;
+      for (const x of Object.values(pg)) if (x && typeof x === 'object') delete x.dk;
+      out = JSON.stringify(j);
+    }
+  } catch (e) { /* a junk state is booted as it is */ }
+  if (NODK_C.size > 8) NODK_C.clear();
+  NODK_C.set(body, out);
+  return out;
+}
 async function boot(clockMs, errors, opts = {}) {
   const dom = new JSDOM(HTML.replace(/<link[^>]*fonts[^>]*>/g, ''), {
     runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' + (opts.hash ? '#' + opts.hash : ''),
@@ -105,7 +124,7 @@ async function boot(clockMs, errors, opts = {}) {
       if (opts.store !== undefined) w.localStorage.setItem('nhl_v1', opts.store);
       const set = w.Storage.prototype.setItem;
       w.Storage.prototype.setItem = function (k, v) { w.__writes.push(String(k)); return set.call(this, k, v); };
-      const body = opts.state || STATE;
+      const body = opts.keepDk ? opts.state || STATE : noDk(opts.state || STATE);
       w.fetch = async (url, init) => {
         w.__requests.push({ url: String(url), method: (init && init.method) || 'GET', cache: init && init.cache });
         if (String(url).startsWith('state.json')) return { ok: true, json: async () => JSON.parse(body) };
@@ -1938,7 +1957,7 @@ function ppHold(w, g, parsed, tag) {
 /* the trial note and the ledger's running numbers, by this smoke's own wording; never "model says", "edge" or a verdict before the bar */
 function ppTrialChecks(w, tag) {
   const d = w.document, win = txt(d.getElementById('ppWin')), tr = txt(d.getElementById('ppTrial'));
-  chk(/props model on trial/.test(txt(d.getElementById('ppGame'))) && tr.startsWith("The props model is on trial. Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once Refresh odds has read it), at DraftKings' price as read; the suggested levels never use a prop."), `${tag}: the window says the props model is on trial and suggests nothing (${tr.slice(0, 120)})`);
+  chk(/props model on trial/.test(txt(d.getElementById('ppGame'))) && tr.startsWith("The props model is on trial. Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once it has been read: the job reads them on every run, Refresh odds now), at DraftKings' price as read; the suggested levels never use a prop."), `${tag}: the window says the props model is on trial and suggests nothing (${tr.slice(0, 120)})`);
   const Lg = S.props.ledger, of = (+Lg.of || 0).toLocaleString('en-US'), f4 = v => (+v).toFixed(4);
   const nums = Lg.model && Lg.market ? ` Log loss: model ${f4(Lg.model.logloss)}, DraftKings ${f4(Lg.market.logloss)}; Brier: model ${f4(Lg.model.brier)}, DraftKings ${f4(Lg.market.brier)} (lower is better).` : '';
   const want = Lg.decision === 'PASS' || Lg.decision === 'FAIL' ? `Its shadow ledger was decided at ${of} graded lines: ${Lg.decision}.${nums}`
@@ -2319,6 +2338,190 @@ function boxRuleS(b) {
     for (const x of gs) if (!sure) uns.push(x.id); else if (x === marked) gk[x.id] = typeof x.sa === 'number' && typeof x.ga === 'number' ? x.sa - x.ga : null; else rel.push(x.id);
   }
   return Object.assign({ s, g: gk }, rel.length ? { r: rel.sort() } : {}, uns.length ? { u: uns.sort() } : {});
+}
+/* ---------- THE JOB'S PLAYER LINES (nhl v16) ----------
+   props.js reads DraftKings' player lines from ESPN on every game it projects, every run; the state carries each game's read
+   (props.games[id].dk) and the run's counts (props.dk). Held here: the read's shape on the state as published; the page starting
+   from it on every load, asking ESPN for nothing (every Player props button's words, every window row for row by this smoke's own
+   sums, a price put in the parlay at the job's read and its time, and drawn so after a reload); a Refresh odds press whose reads
+   fail keeping the job's read, said, and one that answers replacing it, said; a reload the job's read again. On the state as
+   published where it carries a read, and always on a copy with a read planted on the projected games to come (an answer, none
+   posted yet, a failed read) */
+const DK_STATS = ['g', 'a', 'pts', 's', 'bs', 'sv'];
+const sN = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+function dkShapeBad(dk, g) {
+  if (!dk || typeof dk !== 'object') return 'no read';
+  const at = Date.parse(dk.at);
+  if (!isFinite(at) || new Date(at).toISOString() !== dk.at) return `read at ${dk.at}`;
+  if (at > Date.parse(S.published) + 60000) return `read at ${dk.at}, after the publish`;
+  if (g && at >= Date.parse(g.start)) return `read at ${dk.at}, at or after its puck drop`;
+  const keys = Object.keys(dk).sort().join();
+  if (dk.status === 404) return keys === 'at,status' ? null : `a 404 with ${keys}`;
+  if (dk.status === 'failed') return keys === 'at,status,why' && typeof dk.why === 'string' && dk.why ? null : `a failed read with ${keys}`;
+  if (dk.status !== 200) return `status ${dk.status}`;
+  if (keys !== 'at,main,status,yes') return `a read with ${keys}`;
+  if (!Array.isArray(dk.main) || !Array.isArray(dk.yes) || !(dk.main.length + dk.yes.length)) return 'a read with nothing in it';
+  const price = p => Number.isInteger(p) && Math.abs(p) >= 100;
+  const m = dk.main.find(r => !(Array.isArray(r) && r.length === 5 && /^\d+$/.test(r[0]) && DK_STATS.includes(r[1]) && typeof r[2] === 'number' && isFinite(r[2]) && r[2] >= 0 && price(r[3]) && price(r[4])));
+  if (m) return `a main line ${JSON.stringify(m)}`;
+  const y = dk.yes.find(r => !(Array.isArray(r) && r.length === 4 && /^\d+$/.test(r[0]) && DK_STATS.includes(r[1]) && Number.isInteger(r[2]) && r[2] >= 1 && price(r[3])));
+  if (y) return `a milestone ${JSON.stringify(y)}`;
+  const seen = new Set();
+  for (const r of dk.main) { const k = r.slice(0, 3).join('|'); if (seen.has(k)) return `two main lines ${k}`; seen.add(k); }
+  for (const r of dk.yes) { const k = 'y' + r.slice(0, 3).join('|'); if (seen.has(k)) return `two milestones ${k}`; seen.add(k); }
+  return null;
+}
+/* what the page seeds from a game's read: the read as published, its time in full, marked the job's */
+function dkSeed(dk) {
+  if (!dk || typeof dk !== 'object' || !isFinite(Date.parse(dk.at))) return null;
+  const at = new Date(Date.parse(dk.at)).toISOString();
+  return dk.status === 200 && Array.isArray(dk.main) && Array.isArray(dk.yes) ? { status: 200, at, main: dk.main, yes: dk.yes, src: 'job' }
+    : dk.status === 404 ? { status: 404, at, src: 'job' } : dk.status === 'failed' ? { status: 'failed', at, why: String(dk.why || 'no answer'), src: 'job' } : null;
+}
+/* a Player props button's words, title and light on a read, by this smoke's own wording */
+function ppBtnWant(rd) {
+  if (!rd) return ['Player props', "the model's projections (on trial) · press Refresh odds for DraftKings' props", false];
+  const T = clockOf(Date.parse(rd.at));
+  if (rd.status === 200) return [`Player props · ${rd.main.length ? sN(rd.main.length, 'line', 'lines') : sN(rd.yes.length, 'price', 'prices')} · ${T}`, `DraftKings: ${sN(rd.main.length, 'main line', 'main lines')} and ${sN(rd.yes.length, 'milestone price', 'milestone prices')}, read ${T}`, rd.main.length + rd.yes.length > 0];
+  if (rd.status === 404) return [`Player props · none posted yet · ${T}`, `DraftKings: none posted yet (read ${T})`, false];
+  return ['Player props · not read', "DraftKings' props could not be read", false];
+}
+/* the window's read line: the job's read said as the job's, a press's said as gone with a reload (the job's read back where the
+   state carries one) */
+function ppReadWant(rd, hasJob) {
+  const T = clockOf(Date.parse(rd.at)), job = rd.src === 'job';
+  if (rd.status === 200) return `DraftKings' player props from ESPN, read ${T}${job ? " at the job's last run" : ''}: ${sN(rd.main.length, 'main line', 'main lines')} and ${sN(rd.yes.length, 'milestone price', 'milestone prices')}. ${job ? 'Refresh odds reads them again now.' : hasJob ? "A reload brings back the job's read; Refresh odds reads them again." : 'Gone with a reload; Refresh odds reads them again.'}`;
+  if (rd.status === 404) return `DraftKings has posted no player props for this game yet (ESPN, read ${T}${job ? " at the job's last run" : ''}): they usually go up on game day, the goalies' saves last. Shown: the props model's projections.`;
+  return `ESPN's player props could not be read ${job ? `at the job's last run (${T}, ${rd.why})` : `at ${T} (${rd.why})`}: press Refresh odds to try again. Shown: the props model's projections.`;
+}
+async function holdJobRead(body, tag) {
+  const J = JSON.parse(body), pg = (J.props && J.props.games) || {}, AT = PUB + 60000;
+  const want = {}; for (const id of Object.keys(pg)) { const s = dkSeed(pg[id].dk); if (s) want[id] = s; }
+  const hasJob = id => !!(pg[id] && pg[id].dk);
+  const sbFn = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; };
+  let propsNow = url => ({ ok: false, status: 503, json: async () => ({}) });
+  const errs = [], w = await boot(AT, errs, { hash: 'games', keepDk: true, state: body, espn: sbFn, props: url => propsNow(url) }), d = w.document;
+  /* on load: PROPS is the job's read, game for game, and nothing asked */
+  const PR0 = JSON.parse(w.eval('JSON.stringify(PROPS.games)'));
+  chk(canon(PR0) === canon(want), `${tag}: the page starts from the job's read, every game as the state carries it (${Object.keys(want).length} games; the page holds ${Object.keys(PR0).length})`);
+  chk(!propReqs(w).length, `${tag}: and asks ESPN for no props on load (${propReqs(w).length} asked)`);
+  /* every Player props button on the strip, by the read it stands on */
+  const buttons = () => { const seen = new Map(); for (const b0 of [...d.querySelectorAll('#days .day')]) { const dd = b0.dataset.day, b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); for (const x of d.querySelectorAll('#games button[data-pp]')) seen.set(x.dataset.pp, x); } return seen; };
+  const btnBad = (seen, of) => [...seen].filter(([id, b]) => { const [word, title, has] = ppBtnWant(of(id)); return txt(b) !== word || b.title !== title || b.classList.contains('has') !== has; }).map(([id, b]) => `${id}: "${txt(b)}" | ${b.title}`);
+  {
+    const seen = buttons(), toCome = S.games.filter(g => !sStarted(g, AT) && (pg[g.id] || want[g.id])).map(g => g.id).sort();
+    chk(canon([...seen.keys()].sort()) === canon(toCome), `${tag}: a Player props button on every game still to come the props model projects or the job read, and no other (${seen.size} buttons, ${toCome.length} games)`);
+    const bad = btnBad(seen, id => want[id] || null);
+    chk(!bad.length, `${tag}: each button says what the job's read has and when, lit where DraftKings priced the game (${seen.size} buttons; ${bad.length} wrong: ${bad.slice(0, 2).join(' || ')})`);
+  }
+  /* every window on a game still to come with a read, row for row */
+  const winOn = g => { if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click(); const db = d.querySelector(`#days .day[data-day="${g.date}"]`); if (db) db.click(); const b = d.querySelector(`#games .game[data-id="${g.id}"] button[data-pp]`); if (b) b.click(); return !!b && !d.getElementById('ppWin').hidden; };
+  const read = S.games.filter(g => want[g.id] && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start) || (a.id < b.id ? -1 : 1));
+  for (const g of read) {
+    if (!winOn(g)) { chk(false, `${tag}: ${g.id}'s window opens`); continue; }
+    const rd = want[g.id];
+    chk(txt(d.getElementById('ppRead')) === ppReadWant(rd, true), `${tag}, ${g.away} @ ${g.home}: the window says it shows the job's read and when ("${txt(d.getElementById('ppRead'))}")`);
+    ppHold(w, g, rd.status === 200 ? { main: rd.main, yes: rd.yes } : null, `${tag}, ${g.away} @ ${g.home} (the job's read, ${rd.status})`);
+  }
+  if (read.length) ppTrialChecks(w, `${tag}, the job's read`);
+  /* a price put in the parlay from the job's read: at its price and the read's time, and so after a reload */
+  const G = read.find(g => want[g.id].status === 200);
+  let store = null;
+  if (G && winOn(G)) {
+    const tb = d.querySelector('#ppStats button[data-pp-tab="pts"]'); if (tb) tb.click();
+    const btn = d.querySelector('#ppBody button[data-pp-add]');
+    if (btn) {
+      const key = btn.dataset.ppAdd, [pid, stat, mk, a, b] = key.split('|'), rd = want[G.id];
+      const m = mk === 'main' ? rd.main.find(r => r[0] === pid && r[1] === stat && r[2] === +b) : rd.yes.find(r => r[0] === pid && r[1] === stat && r[2] === +a);
+      const price = mk === 'main' ? (a === 'over' ? m[3] : m[4]) : m[3];
+      btn.click();
+      const legs = JSON.parse(w.eval('JSON.stringify(P.legs)')), L = legs.find(l => l.kind === 'prop' && l.pid === pid && l.stat === stat);
+      chk(!!L && L.odds === price && L.at === rd.at && L.game === G.id, `${tag}: a price in the window's job read goes in the parlay at DraftKings' price as the job read it, dated by that read (${L ? `${L.odds} at ${L.at}` : 'none'}; the read ${price} at ${rd.at})`);
+      chk(txt(d.getElementById('ppMsg')).includes(`DraftKings as read ${clockOf(Date.parse(rd.at))}`), `${tag}: and the window says when it was read (${txt(d.getElementById('ppMsg')).slice(0, 160)})`);
+      store = w.localStorage.getItem('nhl_v1');
+      const e2 = [], w2 = await boot(AT, e2, { hash: 'parlays', keepDk: true, state: body, store });
+      const drawn = JSON.parse(w2.eval('JSON.stringify(builderLegs(false).filter(L => L.prop).map(L => [L.pid, L.stat, L.price, L.at]))'));
+      chk(drawn.some(x => x[0] === pid && x[1] === stat && x[2] === price && x[3] === rd.at), `${tag}: a reload draws it at the job's price, the same read (${JSON.stringify(drawn).slice(0, 160)})`);
+      chk(!e2.length, `${tag}: no runtime error on the reload: ${e2.join(' | ')}`);
+      d.querySelector(`#ppBody button[data-pp-add="${key}"]`).click();
+      chk(!JSON.parse(w.eval('JSON.stringify(P.legs)')).some(l => l.kind === 'prop'), `${tag}: a second tap takes it out`);
+    } else console.log(`  ${tag}: no price on ${G.id} the builder can take: the add is not tried`);
+  }
+  if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click();
+  /* a press whose every props request fails: the job's read stands wherever it read or found none, a failed read is the press's */
+  const ask = sPropsAsk(AT);
+  if (ask.length) {
+    d.getElementById('refreshOdds').click();
+    chk(await oddsDone(w), `${tag}: a press whose props reads all fail finishes`);
+    await wait(20);
+    const PR1 = JSON.parse(w.eval('JSON.stringify(PROPS.games)')), q = { asked: ask.length, failed: ask.length, kept: 0 }, bad = [];
+    let at1 = null;
+    for (const g of ask) {
+      const r = PR1[g.id], s0 = want[g.id];
+      if (s0 && s0.status !== 'failed') { q.kept++; if (canon(r) !== canon(s0)) bad.push(`${g.id}: the job's read not kept`); }
+      else { if (!r || r.status !== 'failed' || r.src || r.why !== 'HTTP 503') bad.push(`${g.id}: not the press's failed read (${JSON.stringify(r).slice(0, 80)})`); else at1 = r.at; }
+    }
+    chk(!bad.length, `${tag}: a press whose props reads fail keeps the job's read on every game it read or found none, and says the rest failed (${ask.length} asked; ${bad.slice(0, 3).join('; ')})`);
+    chk(txt(d.getElementById('oddsNote')).endsWith(sPropsText(q)), `${tag}: the status line counts the job's reads kept ("${sPropsText(q).trim()}": ${txt(d.getElementById('oddsNote')).slice(-160)})`);
+    const seen = buttons(), bb = btnBad(seen, id => PR1[id] || null);
+    chk(!bb.length, `${tag}: each button says the read it now stands on (${seen.size}; ${bb.slice(0, 2).join(' || ')})`);
+    if (G && winOn(G)) chk(txt(d.getElementById('ppRead')) === ppReadWant(want[G.id], true), `${tag}: the window still says it shows the job's read (${txt(d.getElementById('ppRead'))})`);
+    const Gf = ask.find(g => !want[g.id] || want[g.id].status === 'failed');
+    if (Gf && at1 && (pg[Gf.id] || PR1[Gf.id]) && winOn(Gf)) chk(txt(d.getElementById('ppRead')) === ppReadWant(PR1[Gf.id], hasJob(Gf.id)), `${tag}: a game the press failed on and the job did not read says the press's failure (${txt(d.getElementById('ppRead'))})`);
+    if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click();
+    /* a second press that answers: the press's read replaces the job's, said */
+    const G2 = ask.find(g => pg[g.id] && want[g.id] && want[g.id].status === 200) || ask.find(g => pg[g.id]);
+    if (G2) {
+      const A2 = propsAnswer(G2), parsed2 = E.propsOf(A2.items);
+      propsNow = url => { const mm = PROPS_RX.exec(url); return mm && mm[1] === G2.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A2.items)) }) } : PROPS_404(url); };
+      d.getElementById('refreshOdds').click();
+      chk(await oddsDone(w), `${tag}: a second press finishes`);
+      await wait(20);
+      const PR2 = JSON.parse(w.eval('JSON.stringify(PROPS.games)')), r2 = PR2[G2.id];
+      chk(!!r2 && r2.status === 200 && !r2.src && canon(r2.main) === canon(parsed2.main) && canon(r2.yes) === canon(parsed2.yes) && Date.parse(r2.at) > Date.parse(want[G2.id] ? want[G2.id].at : 0),
+        `${tag}: a press that answers replaces the job's read with its own (${G2.id}: ${r2 ? `${r2.main.length} main lines read ${r2.at}${r2.src ? ', still the job\'s' : ''}` : 'none'})`);
+      chk(ask.filter(g => g !== G2).every(g => PR2[g.id] && PR2[g.id].status === 404 && !PR2[g.id].src), `${tag}: and a 404 now is none posted yet now, the job's read gone (${ask.filter(g => g !== G2 && (!PR2[g.id] || PR2[g.id].src)).map(g => g.id).join(', ')})`);
+      if (winOn(G2)) {
+        chk(txt(d.getElementById('ppRead')) === ppReadWant(r2, hasJob(G2.id)), `${tag}: the window says the press's read and that a reload brings back the job's (${txt(d.getElementById('ppRead'))})`);
+        ppHold(w, G2, parsed2, `${tag}, ${G2.away} @ ${G2.home} after a press`);
+      }
+      const seen = buttons(), bb2 = btnBad(seen, id => PR2[id] || null);
+      chk(!bb2.length, `${tag}: each button says the press's read (${seen.size}; ${bb2.slice(0, 2).join(' || ')})`);
+    }
+  } else console.log(`  ${tag}: no game for a press to read: the presses are skipped`);
+  /* a reload: the job's read again, nothing asked */
+  const e3 = [], w3 = await boot(AT, e3, { hash: 'games', keepDk: true, state: body });
+  chk(canon(JSON.parse(w3.eval('JSON.stringify(PROPS.games)'))) === canon(want) && !propReqs(w3).length, `${tag}: a reload starts from the job's read again, asking ESPN for nothing`);
+  chk(!errs.length && !e3.length, `${tag}: no runtime error: ${errs.concat(e3).join(' | ')}`);
+}
+async function jobLinesChecks() {
+  console.log("THE JOB'S PLAYER LINES");
+  const pg = (S.props && S.props.games) || {};
+  if (!S.props || !S.props.dk) {
+    chk(!Object.values(pg).some(x => x && x.dk), "a state with no counts of the job's read carries no read");
+    console.log("  the state carries no job read of DraftKings' player lines (an older job published it): its own checks wait for one, and the page is held on a copy with one planted");
+  } else {
+    const q = S.props.dk;
+    chk(['asked', 'read', 'none', 'failed', 'kept', 'lines'].every(k => Number.isInteger(q[k]) && q[k] >= 0) && q.read + q.none + q.failed === q.asked && q.kept <= q.failed, `the job's read counts add up (${JSON.stringify(q)})`);
+    const ids = Object.keys(pg), bad = ids.map(id => [id, dkShapeBad(pg[id].dk, S.games.find(g => g.id === id))]).filter(x => x[1]);
+    chk(!bad.length, `every game the props model projects carries the job's read of DraftKings' player lines in its shape, read before its puck drop and by the publish (${ids.length} games; ${bad.length} wrong${bad[0] ? `, e.g. ${bad[0][0]}: ${bad[0][1]}` : ''})`);
+    chk(ids.length <= q.asked, `no more games carry a read than the job asked (${ids.length} of ${q.asked}; a game started since is left out)`);
+    const by = ids.reduce((o, id) => { const s = pg[id].dk && pg[id].dk.status; o[s] = (o[s] || 0) + 1; return o; }, {});
+    console.log(`  the job's read: ${q.asked} games asked, ${q.read} read (${q.lines} main lines), ${q.none} none posted, ${q.failed} failed (${q.kept} kept); the state carries ${ids.length}: ${JSON.stringify(by)}`);
+    if (ids.some(id => pg[id].dk)) await holdJobRead(STATE, 'the state as published');
+  }
+  /* a copy with a read planted on every projected game to come, by turns an answer, none posted yet and a failed read */
+  const AT = PUB + 60000, come = Object.keys(pg).map(id => S.games.find(g => g.id === id)).filter(g => g && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start) || (a.id < b.id ? -1 : 1));
+  if (!come.length) { console.log('  no projected game still to come: the page on a planted read is skipped'); return; }
+  const J = JSON.parse(STATE), at0 = new Date(PUB - 7 * 60000).toISOString(), q = { asked: come.length, read: 0, none: 0, failed: 0, kept: 0, lines: 0 };
+  for (const g of Object.keys(J.props.games)) delete J.props.games[g].dk;
+  come.forEach((g, i) => {
+    const pr = E.propsOf(propsAnswer(g).items);
+    J.props.games[g.id].dk = i % 3 === 0 ? { status: 200, at: at0, main: pr.main, yes: pr.yes } : i % 3 === 1 ? { status: 404, at: at0 } : { status: 'failed', at: at0, why: 'HTTP 503' };
+    if (i % 3 === 0) { q.read++; q.lines += pr.main.length; } else if (i % 3 === 1) q.none++; else q.failed++;
+  });
+  J.props.dk = q;
+  await holdJobRead(JSON.stringify(J), 'a planted read');
 }
 async function sameGameChecks() {
   console.log('SAME-GAME PARLAYS AND PLAYER LEGS');
@@ -3999,6 +4202,7 @@ async function main() {
   try { await suggestRecord(); } catch (e) { chk(false, `THE SUGGESTED PARLAYS' RECORD stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   await refreshOddsChecks();
   await playerPropsChecks();
+  try { await jobLinesChecks(); } catch (e) { chk(false, `THE JOB'S PLAYER LINES stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   /* a page that breaks this section's steps (a button missing, a leg not where it should be) fails it, never ends the smoke unheard */
   try { await sameGameChecks(); } catch (e) { chk(false, `SAME-GAME PARLAYS AND PLAYER LEGS stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
 

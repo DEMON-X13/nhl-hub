@@ -74,7 +74,7 @@ node tools/update.js --scores # the first pass: the season read, scores and sche
 node tools/fetch_box.js       # ESPN box scores (one a game, five seasons back) + the injury report (the id read from the player's link)
 node tools/starters.js        # the goalies DailyFaceoff announces, game by game with their dates (answers GitHub's runners only)
 node tools/players.js         # the player and goalie model: replay, report, every game to come lined up -> data/players.json ("fit" to refit)
-node tools/props.js           # the props model (on trial): new finals' closing props recorded, the shadow ledger graded, frozen and called, every game through tomorrow projected -> data/props.json
+node tools/props.js           # the props model (on trial): new finals' closing props recorded, the shadow ledger graded, frozen and called, every game through tomorrow projected and DraftKings' player lines read on it -> data/props.json
 node tools/update.js          # ESPN -> rate, call, freeze at puck drop, grade, simulate -> state.json; exit 1, nothing written, if a day with games to finish or call does not answer
 node tools/smoke.js           # the page and the state against the injury report, the box scores, DailyFaceoff, the clock and the last published state; must end "0 failures"
 node tools/sources.js         # the job's last step, after the commit: exit 1 if a source the state stands on broke
@@ -329,7 +329,7 @@ day), `fetch_box.js`, `starters.js`, `players.js`, `props.js`, `update.js`, the 
 `data/props_*.jsonl`, `data/suggest_ledger.json` and any `data/season_*.json`), and last `sources.js`, which
 fails the run after the commit when the injury report in use is over twelve hours old, has no rows or
 mostly lacks ESPN ids, or DailyFaceoff answered in a shape nothing could be read from or with games
-none of which matched the schedule, or every final asked for its closing props failed: the page still
+none of which matched the schedule, or every final asked for its closing props failed, or every game projected failed to read its DraftKings player lines: the page still
 publishes and says so on its Games tab.
 
 ### The smoke test
@@ -386,7 +386,7 @@ games it plants on or clicks are taken from the day the panel shows (the Day con
 day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the props window (under The props model) on answers it makes from the state's own
-projections. Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
+projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
 source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, drawer and window finds none),
 `TEAM_COLORS` (every club; each badge colour 3:1 or more on every surface a badge or the win bar sits on, those surfaces read from the
 page's CSS (the card's two grounds and the badge's own over each), each pill colour 4.5:1 on every ground a pill is drawn on, `#1E2230`
@@ -932,24 +932,43 @@ model's; the levels never take a prop.
   P(1+ points) is 71.8%; Sergei Bobrovsky in goal for TOR, `sv: { mu: 25.902, sd: 7.223284, lo: 0, d: [...] }`.
   The page shows them in the props view (below) as "projection 1.04 · model 65% · DraftKings 60%" beside each DraftKings
   line, the model labelled on trial.
+- **The job's read** (nhl v16, 25 October 2026, toward the owner's "use player lines now": the Top 30 and the suggested parlays
+  will rank DraftKings' player lines, so they must be in the state, not only in a visitor's press). `props.js` reads ESPN's
+  DraftKings propBets for every game it projects (today and tomorrow, Eastern), four at a time, on every run, parsed by
+  `tools/espn.js`'s `propsOf`, and writes each game's read beside its projection, `games[id].dk`: `{ status: 200, at, main, yes }`
+  (the parse's main lines and Yes ladders, as the record keeps them), `{ status: 404, at }` (a 404, or an answer with nothing the
+  parse reads: none posted yet) or `{ status: 'failed', at, why }`, where a failed read keeps the last run's read of the game if that
+  was one (with its own `at`); `dk` beside `games` counts the run's reads (`asked`, `read`, `none`, `failed`, `kept`, `lines`).
+  `at` is the run's clock in full ISO. `update.js` copies them into the state with the projections. The page starts from it on
+  every load (`ppSeed`, `src: 'job'`): the Player props buttons and the window say what the job read and when ("read 1:15 PM EDT
+  at the job's last run ... Refresh odds reads them again now."), and its prices can go in the parlay at once, at the job's
+  price, dated by its read. A press reads them again: an answer or a 404 replaces the job's read ("A reload brings back the job's
+  read"), a failed request keeps it, counted as kept. `sources.js` fails the run (after the commit) when every game projected
+  failed to read, and notes some failing. The smoke's THE JOB'S PLAYER LINES holds the read's shape on the state as published and
+  the page on it (and always on a copy with a read, none posted and a failure planted): the page's read equal to the state's,
+  nothing asked on load, every button's words, every window row for row, a price added at the job's read and drawn so after a
+  reload, a press that fails keeping it and one that answers replacing it, a reload the job's read again; the other props
+  sections boot on the state without it (`noDk`), so they hold the press as before. The simulation plants an answer, a 404 and
+  failures on the games to come and holds props.js's read, the state's copy and sources.js on both kinds of failure.
 - **The props view** (nhl v10, `index.html`, every class `pp-`; the owner's ask, 15 October 2026: DraftKings' props on the
   Refresh odds press, the model on trial beside them). Each game card still to come that the props model projects, or that
-  a press read props for, carries a 44px **Player props** button (nhl v12: "Player props", after a press "· N lines" and the read's
-  time, the whole sentence on its title), and so does each game in Pick your own legs; it opens a
+  the job or a press read props for, carries a 44px **Player props** button (nhl v12: "Player props", after a read "· N lines" and
+  the read's time, the whole sentence on its title), and so does each game in Pick your own legs; it opens a
   window over the page (the parlay card's: a sheet on a phone; Escape, Close or a click outside close it, Tab stays
   inside, the focus goes back to the button) with six stats (Points, Goals, Shots, Assists, Blocks, Saves), each club
-  apart. **Before any press** it says to press Refresh odds for DraftKings' props and shows the props model's projection
-  (the published mean) for every expected player. **The press** (any of the three Refresh odds buttons: the Games
+  apart. **Before any read** (a state with no job read of the game) it says to press Refresh odds for DraftKings' props and shows
+  the props model's projection (the published mean) for every expected player; with the job's read it shows that read as a
+  press's (below), said as the job's. **The press** (any of the three Refresh odds buttons: the Games
   tab's odds bar, the Parlay Builder tab's, the window's own) reads, at the same time as the scoreboards, ESPN's DraftKings
   propBets for every game still to come today and tomorrow (Eastern: DraftKings posts player props on game day, and a game
   further off answers 404): `limit=1000`, one request a game (a second page only where ESPN pages the answer, at most
   three), GET, no-store, a cache-buster, no custom header (ESPN answers `access-control-allow-origin: *`, its 404s too).
   `PROPS_FEED` in the page is `tools/espn.js`'s `propsOf` word for word, so the first item of a pair is the Over,
   checked with its ladder. A 404 or an answer with nothing the parse reads is none posted yet; a failed request, a body
-  that is not JSON or not the feed's shape is a failed read, which keeps the page's earlier read of that game if it had
-  one; a game whose puck drops during the read (the visitor's clock) or that ESPN's scoreboard has under way, over,
+  that is not JSON or not the feed's shape is a failed read, which keeps the page's earlier read of that game (the job's
+  or a press's) if it had one; a game whose puck drops during the read (the visitor's clock) or that ESPN's scoreboard has under way, over,
   postponed or cancelled is not kept. The status line beside each button adds what the props read gave ("DraftKings'
-  player props: 11 games read (415 main lines), 2 games with none posted yet."). **After a press** the window shows,
+  player props: 11 games read (415 main lines), 2 games with none posted yet."). **After a read** the window shows,
   for each player DraftKings prices in the stat, matched by ESPN's athlete id (the id the model projects; a player the
   model does not expect to play has no projection and says why, and an athlete no table names is shown apart by his
   id): DraftKings' main line with its Over and Under prices, then "projection 1.04 · model 65% · DraftKings 60%", the
@@ -961,14 +980,15 @@ model's; the levels never take a prop.
   (15 October 2026, BUF at TOR) that read, for example, Tage Thompson's points Over 0.5 -205, Under 0.5 +150, projection
   1.04 · model 65% · DraftKings 60%, and his anytime goal +140 · model 39% · DraftKings 36% est. **On trial**: the window
   says so on its head ("props model on trial") and in its note ("it has not been shown to beat DraftKings' own prices,
-  and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once Refresh odds has
-  read it), at DraftKings' price as read; the suggested levels never use a prop."), with the ledger's running numbers quietly (graded lines of 12,000, the model's log loss and Brier beside
+  and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once it has been read:
+  the job reads them on every run, Refresh odds now), at DraftKings' price as read; the suggested levels never use a prop."), with the ledger's running numbers quietly (graded lines of 12,000, the model's log loss and Brier beside
   DraftKings', never a verdict or a word of passing before the bar is decided). Nothing in the window, on a Player
   props button or anywhere else on a prop says "model says" or "edge", and nothing the props read touches moves a line,
   a level or the levels' cache (`ODDS.v`); it redraws only a player leg the visitor added, at the read's price or out where
   DraftKings moved or pulled its line, said once and never stored (`propNow`). **In memory only** (`PROPS`, `PP`,
   `PP_STAT`): nothing is stored but the legs a visitor adds (under The Parlay Builder), a reload is the published page with
-  the projections alone and those legs at the prices they were added at, and nothing asks ESPN for props but a press. The watch
+  the projections and the job's read and those legs at the prices they were added at (or at the job's read's, where it is newer),
+  and the page asks ESPN for props only on a press (the job reads them on every run). The watch
   (every half minute and on coming back into view) draws the window again once its game's puck drops, saying so, and
   the card's button goes.
 - **The page's tests.** The smoke's PLAYER PROPS, with rules of its own and never the real feed: the page's parse equal
@@ -1013,7 +1033,8 @@ outrank what the job published:
 - **Published data wins over anything a browser kept.** Local storage holds only what the visitor
   made: the parlay builder's legs (a player leg with DraftKings' price and the time it was read), the parlays they saved, their stake, their picks on the Parlay
   Builder and the tab they were on, under one key, `nhl_v1`. Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
-  the props model's projections and its ledger's numbers, and the record are read from `state.json` on every load. A leg whose game has started leaves the
+  the props model's projections and its ledger's numbers, DraftKings' player lines as the job read them, and the record are read
+  from `state.json` on every load. A leg whose game has started leaves the
   builder: its price is gone. The lines and player props Refresh odds reads from ESPN live in the page's memory alone,
   never in storage, so a reload is the published state again.
 - **A routine run is silent.** The job publishes up to five times a day; the page's stamp says when,

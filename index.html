@@ -758,7 +758,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v15 · 2026-10-25';
+const APP_BUILD = 'nhl v16 · 2026-10-25';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1703,8 +1703,8 @@ function propDrawn(g, l, price, other, at) {
     g, price, other: oth, fair, fairEst: l.mk === 'yes', p: propModelP(g.id, l.pid, l.stat, l.side, line), edge: null, push: 0, pick: null, dec: dec(price), at,
     who: name, bet, desc: `${name} ${bet}`, start: g.start, mu: matchup(g) };
 }
-/* a stored player leg now: at its stored price, or at a later read's (PROPS: this page's presses alone), or out where that read no
-   longer has its line (moved, pulled, or no props on the game), said */
+/* a stored player leg now: at its stored price, or at a later read's (PROPS: the job's read the page loads with, or a press's), or out
+   where that read no longer has its line (moved, pulled, or no props on the game), said */
 function propNow(l, g) {
   const rd = PROPS.games[l.game], name = l.name || `ESPN athlete ${l.pid}`, bet = propBet(l.stat, l.mk, l.side, +l.line, l.k);
   let price = +l.odds, other = l.other === null || l.other === undefined ? null : +l.other, at = l.at, re = false;
@@ -3321,7 +3321,21 @@ const PP_DAYS = 2;                                // today and tomorrow (Eastern
 const PP_PAGES = 3;                               // limit=1000 holds a whole game (the most items seen was 522): a second page only if ESPN pages it
 const PP_STATS = [['pts', 'Points'], ['g', 'Goals'], ['s', 'Shots'], ['a', 'Assists'], ['bs', 'Blocks'], ['sv', 'Saves']];
 const PP_NAME = { pts: 'points', g: 'goals', s: 'shots on goal', a: 'assists', bs: 'blocked shots', sv: 'saves' };
-const PROPS = { games: {} };                      // what the presses read, by game id: { status: 200 | 404 | 'failed', at, main, yes, why }; never stored
+const PROPS = { games: {} };                      // what was read, by game id: { status: 200 | 404 | 'failed', at, main, yes, why, src }; never stored
+/* the job's read (tools/props.js reads DraftKings' player props for every game projected, every run: the state's props.games[id].dk,
+   `src: 'job'`), which this page starts from on every load; a Refresh odds press reads them again live, its read replacing the job's */
+function ppSeed() {
+  PROPS.games = {};
+  const pg = S && S.props && isObj(S.props.games) ? S.props.games : {};
+  for (const [gid, x] of Object.entries(pg)) {
+    const dk = isObj(x) ? x.dk : null;
+    if (!isObj(dk) || !dk.at || !isFinite(Date.parse(dk.at))) continue;
+    const at = new Date(Date.parse(dk.at)).toISOString();
+    if (dk.status === 200 && Array.isArray(dk.main) && Array.isArray(dk.yes)) PROPS.games[gid] = { status: 200, at, main: dk.main, yes: dk.yes, src: 'job' };
+    else if (dk.status === 404) PROPS.games[gid] = { status: 404, at, src: 'job' };
+    else if (dk.status === 'failed') PROPS.games[gid] = { status: 'failed', at, why: String(dk.why || 'no answer'), src: 'job' };
+  }
+}
 let PP = null;                                    // the window: { gid, opener, gone }
 let PP_STAT = 'pts';                              // the stat the window shows, while the page is open; never stored
 /* tools/props.js's pOver, word for word: the chance of the Over at line L from a distribution, P(X >= floor(L) + 1) */
@@ -3474,7 +3488,7 @@ function renderProps() {
   const g = gameById()[PP.gid];
   PP.gone = !g || hasStarted(g);
   $('ppGame').innerHTML = g ? `${muPills(g)}<span>${esc(when(g))}</span><span class="tag rose" title="Not yet shown to beat DraftKings: shown beside its lines, it suggests nothing">props model on trial</span>` : '';
-  const trial = `<p><b>The props model is on trial.</b> Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once Refresh odds has read it), at DraftKings' price as read; the suggested levels never use a prop.</p>${ppLedger() ? `<p>${esc(ppLedger())}</p>` : ''}`;
+  const trial = `<p><b>The props model is on trial.</b> Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once it has been read: the job reads them on every run, Refresh odds now), at DraftKings' price as read; the suggested levels never use a prop.</p>${ppLedger() ? `<p>${esc(ppLedger())}</p>` : ''}`;
   $('ppTrial').innerHTML = S.props ? trial : `<p><b>No props model in this publish.</b> DraftKings' prices are shown alone.</p>`;
   $('ppHow').innerHTML = ppHow();
   if (PP.gone) {
@@ -3483,10 +3497,11 @@ function renderProps() {
   }
   const pr = ppProj(g.id), rd = PROPS.games[g.id], dkIn = !!rd && rd.status === 200;
   const ago2 = rd ? hhmm(rd.at) : '';
+  const job = !!rd && rd.src === 'job';
   $('ppRead').textContent = !rd ? `Press Refresh odds for DraftKings' player props on this game.${pr ? " Shown until then: the props model's projections for the expected players." : ''}`
-    : rd.status === 200 ? `DraftKings' player props from ESPN, read ${ago2}: ${plural(rd.main.length, 'main line', 'main lines')} and ${plural(rd.yes.length, 'milestone price', 'milestone prices')}. Gone with a reload; Refresh odds reads them again.`
-    : rd.status === 404 ? `DraftKings has posted no player props for this game yet (ESPN, read ${ago2}): they usually go up on game day, the goalies' saves last.${pr ? " Shown: the props model's projections." : ''}`
-    : `ESPN's player props could not be read at ${ago2} (${rd.why}): press Refresh odds to try again.${pr ? " Shown: the props model's projections." : ''}`;
+    : rd.status === 200 ? `DraftKings' player props from ESPN, read ${ago2}${job ? " at the job's last run" : ''}: ${plural(rd.main.length, 'main line', 'main lines')} and ${plural(rd.yes.length, 'milestone price', 'milestone prices')}. ${job ? 'Refresh odds reads them again now.' : pr && isObj(pr.dk) ? "A reload brings back the job's read; Refresh odds reads them again." : 'Gone with a reload; Refresh odds reads them again.'}`
+    : rd.status === 404 ? `DraftKings has posted no player props for this game yet (ESPN, read ${ago2}${job ? " at the job's last run" : ''}): they usually go up on game day, the goalies' saves last.${pr ? " Shown: the props model's projections." : ''}`
+    : `ESPN's player props could not be read ${job ? `at the job's last run (${ago2}, ${rd.why})` : `at ${ago2} (${rd.why})`}: press Refresh odds to try again.${pr ? " Shown: the props model's projections." : ''}`;
   const people = [...ppPeople(g).values()];
   if (!PP_STATS.some(([k]) => k === PP_STAT)) PP_STAT = 'pts';
   const count = k => people.filter(x => ppPriced(x, k)).length;
@@ -3611,6 +3626,7 @@ async function boot() {
     const r = await fetch(STATE_URL + '?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
     S = await r.json();
   } catch (e) { $('stamp').textContent = 'Could not read state.json (' + e.message + ')'; return; }
+  ppSeed();                     // DraftKings' player props as the job read them, the read this page starts from
   const phase = S.playoff && S.playoff.phase;
   $('stamp').innerHTML = `${S.season - 1}-${String(S.season).slice(2)} season${phase === 'postseason' ? ' · the playoffs' : phase === 'over' && S.playoff.champion ? ' · ' + esc(T(S.playoff.champion).short) + ' won the Cup' : ''} · ${S.record.su.w}-${S.record.su.l} SU, ${S.record.pl.w}-${S.record.pl.l} puck line, ${S.record.ou.w}-${S.record.ou.l} totals`;
   $('stamp').insertAdjacentHTML('afterend', `<span class="small muted">published ${esc(dateClock(S.published))} · </span>`);

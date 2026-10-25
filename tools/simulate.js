@@ -250,6 +250,24 @@ function partB() {
     const items = [].concat(...top(hb, fresh.home).concat(top(ab, fresh.away)).map(s => [it('Total Points', s.id, '+105', 0.5), it('Total Points', s.id, '-135', 0.5)]));
     fs.writeFileSync(path.join(FX, `props_${fresh.id}_p1.json`), JSON.stringify({ count: items.length, pageIndex: 1, pageSize: 1000, pageCount: 1, items }));
   }
+  /* DraftKings' player lines on the games to come (props.js reads them on every game it projects, every run, since nhl v16): the
+     first game through tomorrow answers in ESPN's shape (each club's four busiest skaters' points line, the Over first, a 2+ milestone
+     and an anytime goal; the starter's saves), the second answers ESPN's 404, the rest have no saved answer, a failed read */
+  const pref = id => ({ $ref: `http://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/seasons/${SEASON}/athletes/${id}?lang=en&region=us` });
+  const pItem = (type, id, price, total, target) => Object.assign({ type: { id: '1', name: type }, athlete: pref(id), odds: { american: { value: price }, total: total === undefined ? {} : { value: String(total) } } }, target === undefined ? {} : { current: { target: { value: target, displayValue: String(total) } } });
+  const dkGames = toCome.filter(g => g.date <= addDays(TODAY, 1) && !(freshOk && g.id === fresh.id) && lastOf(g.home) && lastOf(g.away));    // never last night's final, whose closing props are its own answer
+  const DKF = dkGames[0] || null, DK404 = dkGames[1] || null;
+  let DKF_ITEMS = null;
+  if (DKF) {
+    DKF_ITEMS = [];
+    for (const c of [DKF.away, DKF.home]) {
+      const b = lastOf(c);
+      b.skaters.filter(x => x.team === c).sort((x, y) => y.toi - x.toi).slice(0, 4).forEach((x, i) => DKF_ITEMS.push(pItem('Total Points', x.id, i % 2 ? '-130' : '+110', 0.5, 0.5), pItem('Total Points', x.id, i % 2 ? '+100' : '-140', 0.5, 0.5), pItem('Points Milestones', x.id, '+' + (260 + 20 * i), '2+', 2), pItem('Anytime Goalscorer', x.id, '+' + (190 + 30 * i))));
+      const gk = starterOf(b, c); if (gk) DKF_ITEMS.push(pItem('Total Saves', gk.id, '-115', 24.5, 24.5), pItem('Total Saves', gk.id, '-115', 24.5, 24.5));
+    }
+    fs.writeFileSync(path.join(FX, `props_${DKF.id}_p1.json`), JSON.stringify({ count: DKF_ITEMS.length, pageIndex: 1, pageSize: 1000, pageCount: 1, items: DKF_ITEMS }));
+  }
+  if (DK404) fs.writeFileSync(path.join(FX, `props_${DK404.id}_p1.json`), JSON.stringify({ error: { message: `No propBets found for eventId ${DK404.id} and provider 100`, code: 404 } }));
   /* three boxed finals held back, to be read again from summaries in ESPN's shape */
   const finals = new Set(real.games.filter(g => g.state === 'final').map(g => String(g.id)));
   const held = lines.filter(l => finals.has(JSON.parse(l).id)).slice(-3).map(l => JSON.parse(l));
@@ -389,6 +407,23 @@ function partB() {
   const readNow = SB.games.filter(g => g.state === 'pre' && g.line && g.line.at === NOW);
   const idsBad = readNow.filter(g => { const r = realById.get(g.id), want = r && r.line && r.line.dk ? idsOnly(r.line.dk) : r && r.line ? inventIds(r, r.line) : null; return !want || JSON.stringify(g.line.dk) !== JSON.stringify(want); });
   chk(!idsBad.length, `every line read in B carries the feed's DraftKings ids (${readNow.length - idsBad.length} of ${readNow.length}${idsBad[0] ? `, e.g. ${idsBad[0].id}: ${JSON.stringify(idsBad[0].line.dk)}` : ''})`);
+  /* DraftKings' player lines as props.js read them, game by game: the answer parsed as tools/espn.js parses it, the 404 none posted
+     yet, a failed read the last run's read where that was one, else failed; the state carries each game still to come as props.js
+     wrote it */
+  {
+    const PJB = readJSON(path.join(B, 'props.json')) || {}, PREVP = readJSON(path.join(REAL_DATA, 'props.json')) || {}, gs = PJB.games || {};
+    const want = id => { if (DKF && id === DKF.id) { const pr = E.propsOf(DKF_ITEMS); return { status: 200, main: pr.main, yes: pr.yes }; } if (DK404 && id === DK404.id) return { status: 404 };
+      const was = PREVP.games && PREVP.games[id] && PREVP.games[id].dk; return was && was.status === 200 ? was : { status: 'failed' }; };
+    const badDk = Object.keys(gs).filter(id => { const d = gs[id].dk, w = want(id); if (!d || d.status !== w.status) return true;
+      if (w.at) return JSON.stringify(d) !== JSON.stringify(w);
+      if (d.at !== new Date(NOW).toISOString()) return true;
+      return w.status === 200 ? JSON.stringify(d.main) !== JSON.stringify(w.main) || JSON.stringify(d.yes) !== JSON.stringify(w.yes) : w.status === 'failed' ? !/HTTP 503/.test(d.why || '') : false; });
+    const nG = Object.keys(gs).length, q = PJB.dk || {};
+    if (DKF && gs[DKF.id]) chk(E.propsOf(DKF_ITEMS).main.length >= 8 && E.propsOf(DKF_ITEMS).yes.length >= 8, `the planted answer is one the parse reads (${E.propsOf(DKF_ITEMS).main.length} main lines, ${E.propsOf(DKF_ITEMS).yes.length} milestones)`);
+    chk(nG > 0 ? !badDk.length && q.asked === nG && q.read + q.none + q.failed === q.asked : true, `props.js reads DraftKings' player lines on every game it projects: the answer as the job parses it, a 404 none posted yet, a failed read the last run's read or failed (${nG} games, ${q.read} read, ${q.none} none, ${q.failed} failed, ${q.kept || 0} kept; ${badDk.length} wrong${badDk[0] ? `, e.g. ${badDk[0]}: ${JSON.stringify(gs[badDk[0]].dk).slice(0, 160)}` : ''})`);
+    const sgs = (SB.props && SB.props.games) || {}, notCopied = Object.keys(sgs).filter(id => JSON.stringify(sgs[id].dk) !== JSON.stringify(gs[id] && gs[id].dk));
+    chk(!notCopied.length && JSON.stringify(SB.props && SB.props.dk) === JSON.stringify(PJB.dk), `the state carries each game's read as props.js wrote it (${Object.keys(sgs).length} games, ${notCopied.length} not)`);
+  }
   const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB, NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json'), NHL_PREV_SUGGEST: fs.existsSync(path.join(REAL_DATA, 'suggest_ledger.json')) ? path.join(REAL_DATA, 'suggest_ledger.json') : 'none' }, 'smoke.js over B');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the real data through the new job: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B }).status === 0, 'sources.js: every source read');
@@ -402,6 +437,13 @@ function partB() {
     fs.writeFileSync(path.join(BP, 'props.json'), JSON.stringify(Object.assign({}, pj, { record: { asked: 3, read: 1, none: 1, failed: 1, waiting: 0, why: 'HTTP 503' } })));
     const rq = run('sources.js', [], { NHL_STATE: STB, NHL_DATA: BP }, 'sources.js, one closing props request failed');
     chk(rq.status === 0 && /note: ESPN's DraftKings props/.test(rq.out), 'one failing among answers is a note');
+    /* DraftKings' player lines on the games to come: every read failing is a broken source, some failing a note */
+    fs.writeFileSync(path.join(BP, 'props.json'), JSON.stringify(Object.assign({}, pj, { dk: { asked: 5, read: 0, none: 0, failed: 5, kept: 2, lines: 0 } })));
+    const rd = run('sources.js', [], { NHL_STATE: STB, NHL_DATA: BP }, "sources.js, every player lines read failed");
+    chk(rd.status === 1 && /BROKEN: ESPN's DraftKings player lines: all 5 games/.test(rd.out), "every game's DraftKings player lines failing to read fails sources.js after the commit");
+    fs.writeFileSync(path.join(BP, 'props.json'), JSON.stringify(Object.assign({}, pj, { dk: { asked: 5, read: 3, none: 1, failed: 1, kept: 0, lines: 120 } })));
+    const re = run('sources.js', [], { NHL_STATE: STB, NHL_DATA: BP }, "sources.js, one player lines read failed");
+    chk(re.status === 0 && /note: ESPN's DraftKings player lines: 1 of 5 games/.test(re.out), 'one failing among them is a note');
   }
 
   /* the refusals */

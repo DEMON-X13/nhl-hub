@@ -33,7 +33,7 @@
        puck drop, offers no bet on it and calls the visitor's day Today
      - the playoffs: a club knocked out has no Cup or conference chance, the champion has the Cup, a
        club in a series ESPN has is in the playoffs for certain, and the field the standings mark is the
-       first round the bracket draws
+       first round of the league's bracket (the tab that drew it went in nhl v14)
      - the props model (THE PROPS MODEL): the box files' shots kept and never ESPN's SOG (shootout) column, the
        record of closing props in its shape, the shadow ledger by props_check.js against the last commit's
        (NHL_PREV_LEDGER, else git's HEAD:data/props_ledger.json), and the state's projections: games still to
@@ -46,7 +46,7 @@
        laid out alike; who is out cut to the goalies and the players worth OUT_ROW goals, the bar worked out
        again from the model, the rest named a line a club and every out player's status and figure on the card or in its Lineups), and
        every table keeping every column at every width, scrolling sideways in its wrapper with its hidden names held
-       inside it (the Standings' four on the same column widths); the figures' formats, the bracket's rows, and the Record's figures
+       inside it (the Standings' four on the same column widths); the figures' formats, no Playoff tab (nhl v14), and the Record's figures
        fitted to their tiles (jsdom lays nothing out: the rules are read, and the Record's fit is held on a made-up layout)
    NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page. */
 'use strict';
@@ -376,7 +376,7 @@ function propsReality(toCome, isOut, listedElsewhere) {
 const goalieOutAny = p => { const inj = readJSON(path.join(DATA, 'injuries.json')); if (!inj || !inj.teams) return false; return Object.values(inj.teams).some(l => (l || []).some(r => OUT.test(r.status || '') && ((r.id && String(r.id) === String(p.id)) || norm(r.name) === norm(p.name)))); };
 
 /* ================= THE PARLAY BUILDER =================
-   The panel, its four levels, the builder, the card and DraftKings' ids, each held to the state by rules
+   The panel, its three levels, the builder, the card and DraftKings' ids, each held to the state by rules
    written here again: nothing is shared with the page but the state. Every level is worked out by brute
    force (every parlay of its size, one leg a game) on the default slate and on Both days; the controls,
    the store, the card and the clock are held to their invariants on any day, a lean one and an empty one */
@@ -554,7 +554,7 @@ function sWide(sl, pool) {
   if (pool.tickable.length < 2) return `Only one game on ${sl.text} is still to come with a DraftKings line, and a parlay needs two.${otherNote}`;
   return '';
 }
-const TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12], ['xtrm', 'Extreme', 5, 0.05]];
+const TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];        // Extreme went in nhl v14
 /* the panel in a window against this smoke's own working: the slate, the Day control, the notes, every level (brute force when asked) */
 function holdPanel(w, ms, tag, brute) {
   const d = w.document, store = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), ui = (store.ui && store.ui.pb) || {};
@@ -578,8 +578,8 @@ function holdPanel(w, ms, tag, brute) {
   const farRe = /(\d+) legs? (?:are|is) left out: the model rates/;
   chk(pool.far.length ? (farRe.exec(notes) || [])[1] === String(pool.far.length) : !farRe.test(notes), `${tag}: the far-off note counts ${pool.far.length} legs (${(farRe.exec(notes) || [])[1] || 'none said'})`);
   const wide = sWide(sl, pool), wEl = d.getElementById('pbWide');
-  if (wide) { chk(wEl && txt(wEl) === wide, `${tag}: the panel says "${wide}" (${wEl ? txt(wEl) : 'four levels drawn'})`); return { sl, pool, levels: null, stake }; }
-  chk(!wEl && d.querySelectorAll('.pb-tier').length === 4, `${tag}: four levels`);
+  if (wide) { chk(wEl && txt(wEl) === wide, `${tag}: the panel says "${wide}" (${wEl ? txt(wEl) : 'three levels drawn'})`); return { sl, pool, levels: null, stake }; }
+  chk(!wEl && d.querySelectorAll('.pb-tier').length === 3 && !d.querySelector('.pb-tier[data-tier="xtrm"]'), `${tag}: three levels, Safe, Medium and Aggressive`);
   const levels = {};
   for (const [id, label, n, floor] of TIERS) {
     const el = d.querySelector(`.pb-tier[data-tier="${id}"]`); if (!el) { chk(false, `${tag}: no ${label} card`); continue; }
@@ -664,13 +664,13 @@ async function parlayBuilder() {
       chk((lit ? lit.dataset.mix : null) === mixOf, `boxes ${ks.join(',') || 'none'}: the mix lit is ${mixOf} (${lit && lit.dataset.mix})`);
       chk(kindsOf().every(x => ks.includes(x)), `boxes ${ks.join(',') || 'none'}: the levels use only those kinds`);
       const empties = [...d.querySelectorAll('.pb-tier.none .pb-empty')].map(txt);
-      chk(!ks.length === (empties.length === 4 && empties.every(t => t === 'No bet types ticked: tick at least one above.')), `boxes ${ks.join(',') || 'none'}: "No bet types ticked" shown exactly when none is ticked`);
+      chk(!ks.length === (empties.length === TIERS.length && empties.every(t => t === 'No bet types ticked: tick at least one above.')), `boxes ${ks.join(',') || 'none'}: "No bet types ticked" shown exactly when none is ticked`);
       holdPanel(w, AT, `boxes ${ks.join(',') || 'none'}`, false);
     }
     setBoxes(['ml', 'pl', 'ou']);
     d.querySelector('#pbGames button[data-gall="0"]').click();
     let empties = [...d.querySelectorAll('.pb-tier.none .pb-empty')].map(txt);
-    chk(empties.length === 4 && empties.every(t => t === 'No games ticked: tick at least one above.') && store().ui.pb.off.length === P0.pool.tickable.length, `None: every level says "No games ticked" (${empties[0]}), and the games are stored unticked`);
+    chk(empties.length === TIERS.length && empties.every(t => t === 'No games ticked: tick at least one above.') && store().ui.pb.off.length === P0.pool.tickable.length, `None: every level says "No games ticked" (${empties[0]}), and the games are stored unticked`);
     holdPanel(w, AT, 'games none', false);
     d.querySelector('#pbGames button[data-gall="1"]').click();
     chk(!d.querySelector('.pb-tier.none .pb-empty') || ![...d.querySelectorAll('.pb-tier.none .pb-empty')].some(x => /No games ticked/.test(txt(x))), 'All: the games are ticked again');
@@ -3551,16 +3551,16 @@ async function theLook() {
     }
     return wrong;
   };
-  for (const t of ['standings', 'ratings', 'playoff', 'players', 'parlays', 'games']) { d.querySelector(`#tabs button[data-tab="${t}"]`).click(); const wr = pills(); chk(!wr.length, `${t}: every pill is its club's abbreviation in its club's colour, the club's own name beside it (${wr.slice(0, 4).join('; ')})`); }
+  for (const t of ['standings', 'ratings', 'players', 'parlays', 'games']) { d.querySelector(`#tabs button[data-tab="${t}"]`).click(); const wr = pills(); chk(!wr.length, `${t}: every pill is its club's abbreviation in its club's colour, the club's own name beside it (${wr.slice(0, 4).join('; ')})`); }
   /* the tables: the column each is in order of, marked; the Standings' four */
   d.querySelector('#tabs button[data-tab="standings"]').click();
   chk([...d.querySelectorAll('#standings table')].every(t => eqA([...t.querySelectorAll('th.on')].map(txt), ['#', 'PTS'])), 'each Standings table marks # and PTS, its order');
   d.querySelector('#tabs button[data-tab="ratings"]').click();
   chk(eqA([...d.querySelectorAll('#ratTable th.on')].map(txt), ['#', 'Rating']), 'Power ratings mark # and Rating');
-  d.querySelector('#tabs button[data-tab="playoff"]').click();
-  const real = ['postseason', 'over'].includes(S.playoff.phase || 'regular');
-  chk(eqA([...d.querySelectorAll('#poTable th.on')].map(txt), [real ? 'Stanley Cup' : 'Playoff']), `the playoff odds mark ${real ? 'Stanley Cup' : 'Playoff'}, their order`);
-  chk([...d.querySelectorAll('#poTable tbody tr')].every(r => !!r.querySelector('.meter i')), 'each club\'s playoff chance has its meter');
+  /* no Playoff tab (nhl v14, the owner's call): no button, section, bracket or odds table; the Standings and Power ratings keep their
+     Playoff and Cup columns */
+  chk(!d.querySelector('#tabs button[data-tab="playoff"]') && !d.getElementById('tab-playoff') && !d.getElementById('bracket') && !d.getElementById('poTable'), 'no Playoff tab: no button, section, bracket or odds table');
+  { const eP = [], wP = await boot(PUB + 60000, eP, { hash: 'playoff' }); chk(!wP.document.getElementById('tab-standings').hidden && wP.location.hash === '#standings' && !eP.length, `an old #playoff link opens the Standings, where the playoff chances are (${wP.location.hash}${eP.length ? '; ' + eP.join(' | ') : ''})`); }
   d.querySelector('#tabs button[data-tab="players"]').click();
   if (S.players) chk(eqA([...d.querySelectorAll('#plTable th.on')].map(txt), ['#', 'Rating']) && eqA([...d.querySelectorAll('#plTeams th.on')].map(txt), ['#', 'Strength']), 'the players mark # and Rating, the clubs # and Strength');
   /* every column at every width: no rule in the page's CSS, in any media query, hides a table, a row or a cell (so a phone has every number a
@@ -3574,9 +3574,9 @@ async function theLook() {
   for (const sh of d.styleSheets) walkO(sh.cssRules);
   chk(hiders.length > 0 && scrollers.length > 0, `the page's CSS read: ${hiders.length} rules that hide, ${scrollers.length} that scroll`);
   const COLS = { standings: ['#', 'Team', 'GP', 'W', 'L', 'OTL', 'PTS', 'RW', 'ROW', 'GF', 'GA', 'Diff', 'Rating', 'Playoff'], ratTable: ['#', 'Team', 'Div', 'Rating', 'Record', 'PTS', 'GF/g', 'GA/g', 'Playoff', 'Cup'],
-    poTable: ['Team', 'Div', 'Record', 'PTS', 'Exp. pts', 'Playoff', 'Division', 'Conference', 'Stanley Cup'], plTable: ['#', 'Player', 'Rating', 'Club', 'Offence', 'Defence', 'Games', 'TOI', 'Five seasons'],
+    plTable: ['#', 'Player', 'Rating', 'Club', 'Offence', 'Defence', 'Games', 'TOI', 'Five seasons'],
     plGoalies: ['#', 'Goalie', 'Rating', 'Club', 'Starts', 'Five seasons'], plTeams: ['#', 'Club', 'Strength', 'Attack', 'Defence', 'Goalie', 'Out'], recMonth: ['When', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'], recBand: ['Model chance', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'] };
-  const STICK = { standings: 'Team', ratTable: 'Team', poTable: 'Team', plTable: 'Player', plGoalies: 'Goalie', plTeams: 'Club', recMonth: 'When', recBand: 'Model chance' };
+  const STICK = { standings: 'Team', ratTable: 'Team', plTable: 'Player', plGoalies: 'Goalie', plTeams: 'Club', recMonth: 'When', recBand: 'Model chance' };
   /* a heading as a desktop shows it: its words without the short form a phone shows instead (.t-narrow) */
   const wideTxt = th => { const c = th.cloneNode(true); for (const x of c.querySelectorAll('.t-narrow')) x.remove(); return txt(c); };
   const lost = [], seen = [];
@@ -3592,12 +3592,12 @@ async function theLook() {
       if (rows.some(r => r.cells.length !== ths.length)) lost.push(`${key}: a row with a cell missing`);
     }
   };
-  for (const t of ['standings', 'ratings', 'playoff', 'players', 'record']) {
+  for (const t of ['standings', 'ratings', 'players', 'record']) {
     d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     tablesHeld(t, tb => tb.id || 'standings');
     if (t === 'players' && S.players) { d.querySelector('#plKind button[data-kind="goalies"]').click(); tablesHeld(t, tb => tb.id === 'plTable' ? 'plGoalies' : tb.id); d.querySelector('#plKind button[data-kind="skaters"]').click(); }
   }
-  chk(!lost.length && ['standings', 'ratTable', 'poTable', 'recMonth', 'recBand'].every(k => seen.includes(k)) && (!S.players || ['plTable', 'plGoalies', 'plTeams'].every(k => seen.includes(k))), `every table keeps every column at every width, scrolling sideways in its wrapper with its club or player held (${seen.length} tables; ${lost.slice(0, 4).join(' | ')})`);
+  chk(!lost.length && ['standings', 'ratTable', 'recMonth', 'recBand'].every(k => seen.includes(k)) && (!S.players || ['plTable', 'plGoalies', 'plTeams'].every(k => seen.includes(k))), `every table keeps every column at every width, scrolling sideways in its wrapper with its club or player held (${seen.length} tables; ${lost.slice(0, 4).join(' | ')})`);
   const plRows = [...d.querySelectorAll('#plTable tbody tr')];
   if (S.players) {
     const plWrong = plRows.filter(r => { const id = r.cells[3] && r.cells[3].querySelector('.pill'), k = id && byAbbr.get(txt(id)); return !(r.cells[1] && r.cells[1].querySelector('b') && k && txt(r.cells[3].querySelector('.tn')) === S.teams[k].short); });
@@ -3643,22 +3643,14 @@ async function theLook() {
     `the Standings' four tables laid out fixed on the same 14 column widths, never squeezed under them, on a desktop and a phone (${stW[0] ? stW[0].join(',') : 'none'}; min ${stT[0] && w.getComputedStyle(stT[0]).minWidth}; phone ${phoneCols.size} columns, ${phoneW}px, min ${phoneMin}px)`);
   d.querySelector('#tabs button[data-tab="ratings"]').click();
   for (const r of d.querySelectorAll('#ratTable tbody tr')) { const k = clubOf(r.cells[1]); if (!k || txt(r.cells[3]) !== at1(S.teams[k].rating)) oneBad.push(`ratings ${k}: ${txt(r.cells[3])}`); }
-  d.querySelector('#tabs button[data-tab="playoff"]').click();
-  for (const r of d.querySelectorAll('#poTable tbody tr')) { const k = clubOf(r.cells[0]); if (!k || txt(r.cells[4]) !== at1(S.playoff.odds[k].expPts)) oneBad.push(`odds ${k}: ${txt(r.cells[4])}`); }
-  chk(!oneBad.length, `every Rating and Exp. pts at one place (${oneBad.slice(0, 4).join(' | ')})`);
-  /* the bracket: a club's points under its name (the same column, the next row), so a 14-letter name keeps its line and every series
-     row is the same height (Golden Knights once took two lines at 1280); the middle column widened for a score only where one is */
-  const series = [...d.querySelectorAll('#bracket .series')], gs = x => w.getComputedStyle(x);
-  const stackBad = series.filter(r => r.querySelectorAll('.side').length !== 2 || [...r.querySelectorAll('.side')].some(sd => { const pts = sd.querySelector('.pts'), tn = sd.querySelector('.tn'), pl = sd.querySelector('.pill'); return !(pts && tn && pl && gs(tn).gridRow === '1' && gs(pts).gridRow === '2' && gs(pts).gridColumn === gs(tn).gridColumn && gs(pl).gridColumn !== gs(tn).gridColumn && /^1 \/ 3$|^1\/3$/.test(gs(pl).gridRow.replace(/\s+/g, ' '))); }));
-  chk(series.length >= 8 && !stackBad.length, `each club in the bracket its pill beside its name, its points under the name (${series.length} series; ${stackBad.slice(0, 2).map(r => txt(r).slice(0, 40)).join(' | ')})`);
-  chk(d.getElementById('bracket').classList.contains('scored') === series.some(r => !!r.querySelector(':scope > .score')), 'the bracket\'s middle column widens for a score exactly where a series has one');
+  chk(!oneBad.length, `every Rating at one place (${oneBad.slice(0, 4).join(' | ')})`);
   /* a hidden name in a table (on a phone a club is its pill, its name absolute for a screen reader) is held by a positioned box inside its
      table, never set against the page: a club cell that was not the held (sticky) column once set the Players' 400 names against main,
      outside the table's scrolling box, and ran the tab on some 14,000px past its last table on a phone. jsdom lays nothing out, so this
      reads the rules: an element some rule sets absolute has an ancestor inside its table that a rule under the same media (or none) positions */
   const absR = cssWith(w, 'position', /^absolute$/), posR = cssWith(w, 'position', /^(relative|sticky|absolute|fixed)$/), loose = [];
   let absN = 0;
-  for (const t of ['standings', 'ratings', 'playoff', 'players', 'record']) {
+  for (const t of ['standings', 'ratings', 'players', 'record']) {
     d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     for (const kind of t === 'players' && S.players ? ['skaters', 'goalies'] : [null]) {
       if (kind) d.querySelector(`#plKind button[data-kind="${kind}"]`).click();
@@ -3817,10 +3809,8 @@ async function main() {
   $('ratConf').value = 'East'; $('ratConf').dispatchEvent(new w.Event('change'));
   chk(d.querySelectorAll('#ratTable tbody tr').length === 16, 'a conference is sixteen clubs');
 
-  /* Playoff */
-  d.querySelector('#tabs button[data-tab="playoff"]').click();
-  chk(d.querySelectorAll('#bracket .series').length >= 8, 'the bracket has eight first-round series');
-  chk(d.querySelectorAll('#poTable tbody tr').length === 32, 'playoff odds table has every club');
+  /* the playoff picture: the simulation the Standings' and Power ratings' Playoff and Cup columns read (the tab that drew the bracket
+     went in nhl v14) */
   const O = S.playoff.odds;
   const sum = k => Object.values(O).reduce((a, o) => a + o[k], 0);
   chk(Math.abs(sum('cup') - 1) < 0.02, 'Cup chances sum to one: ' + sum('cup').toFixed(3));
@@ -3834,11 +3824,7 @@ async function main() {
     chk(f.series.length === 4 && f.series.every(s => s.length === 2), `${conf} has four series`);
     chk(new Set([].concat(...f.series)).size === 8, `${conf}'s first round has each club once`);
   }
-  for (const s of S.playoff.series || []) {
-    const row = [...d.querySelectorAll('#bracket .series')].find(r => r.textContent.includes(S.teams[s.a].short) && r.textContent.includes(S.teams[s.b].short));
-    chk(!!row && /won|leads|tied/.test(txt(row.querySelector('.score'))), `the bracket shows the score of ${s.a}-${s.b} (${JSON.stringify(s.wins)})`);
-  }
-  if (S.playoff.champion) chk(!!$('champ') && !$('champ').hidden && txt($('champ')).includes(S.teams[S.playoff.champion].name), 'the champion is named');
+  if (S.playoff.champion) chk(txt($('stamp')).includes(`${S.teams[S.playoff.champion].short} won the Cup`), `the champion is named in the header (${txt($('stamp'))})`);
 
   /* Players: the rankings, the clubs, who is out and where the report and the goalies come from */
   d.querySelector('#tabs button[data-tab="players"]').click();

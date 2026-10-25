@@ -126,8 +126,7 @@ listed in `removed` with the feed's reason.
 Since nhl v12 (16 October 2026, the owner's "make the NHL games look like the NBA version ... the same style as the
 NBA hub ... get rid of the icons that slow down the site and just do the regular buttons we have") the page is built from
 the NBA Hub's own components (`DEMON-X13/nba-hub`, `app/nba_hub.html`), its CSS values copied with ice (`--ice`) wherever
-the NBA has orange (`--hot`), and gold wherever the NBA uses ice for a meaning of its own (a push, a warning note, the
-Extreme level): the header, the nav pills with a count badge (Games: today's games still to come, Eastern, which a puck drop
+the NBA has orange (`--hot`), and gold wherever the NBA uses ice for a meaning of its own (a push, a warning note): the header, the nav pills with a count badge (Games: today's games still to come, Eastern, which a puck drop
 moves on any tab; Parlay Builder: the builder's legs), the odds bar over the day strip (Today, Tomorrow), notes, `.empty`,
 tables in `.wrap` at the body's 14.5px (`.rk`, `.big`, signed figures lime and rose; `th.on`, lit `--ice-2` as the NBA
 lights its own, marks the column a table is in order of and `#` where it is in rank order; the NHL's headers do not sort, so
@@ -240,12 +239,18 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   days kept where chosen and holding it), the game ticked, the keyboard on its heading.
 - **The Parlay Builder tab**: Refresh odds in the tab's own odds bar over the panel, as the NBA's; the controls box with
   its groups' labels on one line (the bet amount's note under the box); game tiles whose two pills wrap ("CAR @" over
-  "WPG") where a phone's tile is too narrow; the four levels as the NBA's `.sugg-tier`, two a row (one on a phone): the
-  name and "N legs", New legs and Reset at the right, the rule, three numbers in a row (the fair chance with the model's
-  under it, the price, what the amount pays: each stepped down to fit its third, `fitNums`, and a pays figure that will
-  not fit at 13px takes the card's width), a leg a row (its club's pill or a total's two and the bet, the price in a
-  column of its own at the row's top right at every width; the game and its puck drop, the fair and model chances;
-  Lock last), Finish filled before Add to builder, an empty level only as tall as its words. An empty builder or saved
+  "WPG") where a phone's tile is too narrow; the three levels as the NBA's `.sugg-tier`, three a row as the NFL hub's from
+  901px and one a row at 900px and under (nhl v14, the owner's call of 25 October 2026: "can you fix the layout in
+  suggested parlays, i feel like there is a lot of blank space in that section. also can you get rid of the extreme parlay
+  and make the other three be on the same line in columns like in the nfl-hub?"), the cards of a row one height with their
+  buttons on one line at the foot, as the NFL's: the name and "N legs", New legs and Reset at the right, the rule, three
+  numbers in a row (the fair chance with the model's under it, the price, what the amount pays: each stepped down to fit
+  its third, `fitNums`, and a pays figure that will not fit at 13px takes the card's width), a leg a row (on its first line
+  its club's pill or a total's two, the bet and a thin edge's tag, the price and Lock; on its second, the full width of the
+  card, the game and its puck drop with the fair and model chances at the right, or under them at the right where a card
+  is too narrow for both, neither ever broken: the lock beside the price keeps "NYI @ DAL · 7:00 PM PDT" on one line in a
+  third of the page), a thin edge said by its tag alone (its title the why; v13 added a paragraph under the legs), Finish
+  filled before Add to builder, an empty level only as tall as its words. An empty builder or saved
   list is a plain paragraph, as the NBA's. The builder's tiles are fitted to the fraction of a pixel (`tooWide`: a
   figure 0.3px over its tile once wrapped "$158.4" over "1"). The parlay card's leg-by-leg DraftKings links are 44px
   chips, "Leg 1", "Leg 2", on a line of their own.
@@ -253,12 +258,10 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   inside itself (full screen on a phone) under a head that stays put (the title, the game by its clubs' pills, the time,
   a rose "props model on trial" tag, and Close, a word); the read said in a note with Refresh odds filled (`.btn.ice`)
   in it; the trial folded to a line in a dashed box, as the NBA's.
-- **The Playoff tab**: a series is a row of five columns of the same widths in every row (the seed, the club, the score
-  or "vs", the club, the seed), so they line up down the box; a club is its pill beside its name with its points under
-  the name (a grid, the pill's and name's own boxes `display:contents`), so a 14-letter name (Golden Knights) keeps one
-  line and every row is one height; the middle column is as wide as "vs" until a series has a score (`.scored`, 118px),
-  and the two conferences sit side by side from 1081px (1261px once scored), one a row below; on a phone a club a line
-  with its seed, the score beside the two.
+- **No Playoff tab** (nhl v14, the owner's call of 25 October 2026: "can you get rid of the playoff tab, i dont see the
+  need for it"): its bracket and its odds table (expected points, division and conference chances) went with it. The job's
+  simulation stays, read by the Standings' Playoff column and Power ratings' Playoff and Cup, and an old `#playoff` link (or
+  a stored tab) opens the Standings.
 - **The Record tab**: the stat strip's five figures step down together from 30px until each fits its tile on one line
   (`fitRecord`, 16px the least, again on a resize), so a three-figure record never breaks at its hyphen ("179-" over
   "145" on a 390 phone).
@@ -410,9 +413,8 @@ rule in the page's CSS, in any media query, hides a table, row or cell; each scr
 column the one held; each has the columns it had before the restyle; every name a table hides for a screen reader held by a
 positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), each player's name in bold
 and his club in the Club column, the Players' figures (ratings and strengths unsigned, offence, defence and attack signed and
-coloured by the sign shown), Rating and Exp. pts at one place, the Standings' four tables laid out fixed on the same 14 widths and
-never squeezed under them on a desktop and a phone, the bracket's points under each name and its middle column widened only for a
-score, the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
+coloured by the sign shown), Rating at one place, the Standings' four tables laid out fixed on the same 14 widths and
+never squeezed under them on a desktop and a phone, no Playoff tab (an old `#playoff` link opening the Standings), the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
 side far off the market said on its own button with both numbers exactly and every other part of the button (on the Games cards and
 in Pick your own legs, Both days included) and in no chip, the props window's head naming its game by its pills, the Record's tiles, the lock's words, the card's
 leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE PROPS MODEL (in the state's
@@ -426,7 +428,7 @@ tries another page in place of `index.html`. The season is the Eastern date's
 (`E.seasonOf`), nowhere else. Between seasons the first run from August closes the old one into
 `data/season_<year>.json` (read beside `history.json` by `tools/hist.js`), so its results stay in
 both models; a season in neither file nor the last state is refused. In the playoffs the field is the
-real one, each series is played on from its real score and the bracket shows it; `phase` is preseason,
+real one, each series is played on from its real score (the page draws no bracket since nhl v14); `phase` is preseason,
 regular, postseason, over (the champion named) or offseason.
 
 ### The Parlay Builder
@@ -479,9 +481,9 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   rebuilt without it."). Each holds while the panel is on the slate it was said on and its day is not over
   (Eastern), and goes at the visitor's next pick. A control the panel redraws (a game's box, a Day, a
   level's button) keeps the keyboard's focus, and Add to builder takes it to the builder's heading.
-- **The levels** (`PB_TIERS`): Safe the likeliest pair; Medium, Aggressive and Extreme the 3-, 4- and 5-leg
-  parlay with the best chance times decimal that lands 25%, 12% and 5% by the model's chance, else the
-  likeliest of that size (`likeliest`). A leg qualifies with both prices, the model at 45% to 97%, its edge 0
+- **The levels** (`PB_TIERS`): Safe the likeliest pair; Medium and Aggressive the 3- and 4-leg parlay with the
+  best chance times decimal that lands 25% and 12% by the model's chance, else the likeliest of that size
+  (`likeliest`); Extreme, the 5-leg parlay at 5%, went in nhl v14 (the owner's call, as the NFL hub's had). A leg qualifies with both prices, the model at 45% to 97%, its edge 0
   or more (the margin left in), no push (a whole-number line never goes in a level), and under 15 points over
   the fair chance (`FAR_OFF`; those are counted in the far-off note and flagged on the Games cards). It is
   preferred at the site's own bar (`S.edge`, so preferred is exactly the Games cards' call) and thin below it,
@@ -692,8 +694,8 @@ published; the store after a later save and a reload on it; a lock and New legs 
 moved and one where every price moved, by brute force; and a card open through a read.
 
 On a phone (640px or less) the Day and Build from choices share one row equally, the Bet types and the
-game tiles go two a row, and nothing on any tab is wider than the screen (a table scrolls inside its `.wrap`; the
-playoff bracket sets each series on two lines, a club a line, and drops its points, which the odds table shows).
+game tiles go two a row, the three levels one a row, and nothing on any tab is wider than the screen (a table scrolls
+inside its `.wrap`).
 
 ### The player model
 

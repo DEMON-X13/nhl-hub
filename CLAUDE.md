@@ -178,7 +178,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   asked for), the Ducks' orange and Edmonton's and Philadelphia's (7.1 to 6.9 and 7.3 to 7.1, as the oranges went
   to their own brand colours) and pairs already one colour (under 1). The smoke holds every bar, the families' distance, and every club but the Kings
   in a hue (CIELAB chroma 15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
-  icons left are the drawn ones (the puck, the folds' chevrons, the players' sparklines); a leg's Add (a suggested level's, a
+  icons left are the drawn ones (the puck, the folds' chevrons, the players' sparklines, and since nhl v19 the Pick'em chart); a leg's Add (a suggested level's, a
   Top 30 line's) is a word, Add or Added.
 - **The game card** (`gameCard`): the top line (puck drop and date in the visitor's clock, a note after them; tags:
   live in ice, the job's live score "as of" in gold, Final, start moved, under way, neutral ice, call right or wrong,
@@ -276,6 +276,19 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   need for it"): its bracket and its odds table (expected points, division and conference chances) went with it. The job's
   simulation stays, read by the Standings' Playoff column and Power ratings' Playoff and Cup, and an old `#playoff` link (or
   a stored tab) opens the Standings.
+- **The Pick'em Record tab** (`#pickem`, before the Record tab; nhl v19, the owner's ask of 25 October 2026, "i want a tab for
+  pickem record and show all the models we have and their records", the NFL hub's Pick'em Record in hockey's terms; the Record
+  tab stays beside it, the owner's "Keep both tabs"): every final with a winner, straight up, each model's pick read off the game's
+  call as frozen at puck drop, nothing worked out after a game: the call (the site's own pick, the player ratings blended with
+  the club Elo, `pick`; named for what it is, since the NFL's "ELO Model" is a model of its own, on the Joker), the Team Elo (the club ratings alone: `elo.pHome` beside a player-model call, else the call's `pHome`) and DraftKings, the baseline
+  as the NFL's Vegas (the moneyline favourite with its margin out, on the line frozen with the call, the home side where the two
+  prices are level; not a closing line). The week runs Monday to Sunday by the game's Eastern date. DraftKings' season and its
+  favourite by strength (65%+, 60-65, 55-60, 50-55) in the stat strip; the chart (`pkChart`, an inline SVG, no image, drawn at
+  its box's own width so its 11px words stay 11px on a phone, the end labels giving way to the legend under 480px) each model's
+  wins less DraftKings' on the games both picked, added up week by week; the legend; the week grid (a column a week and the
+  season, each cell its record and rate, shaded green over .500 and rose under, deeper the further off); Show every pick, a day's
+  picks with the score and a tick or a cross (the day it opens on today where today has games, else the latest played). The call's season is the state's own SU record (the Record tab's). The NFL's three (Alpha, The Joker, the ELO Model)
+  join it as they are built, each frozen at puck drop.
 - **The Record tab**: the stat strip's five figures step down together from 30px until each fits its tile on one line
   (`fitRecord`, 16px the least, again on a resize), so a three-figure record never breaks at its hyphen ("179-" over
   "145" on a 390 phone).
@@ -398,7 +411,7 @@ games it plants on or clicks are taken from the day the panel shows (the Day con
 day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the props window (under The props model) on answers it makes from the state's own
-projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
+projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM RECORD (nhl v19) works the Pick'em tab out from the state by rules of its own (the picks, the weeks, the tiles and bands, the legend, the chart's weekly sums, every cell of the week grid and its shading, every pick of the day it opens on and of a past day), on the state and on a copy planting an unlined final, a game whose two ratings part and a level price, and holds the call's season to the state's SU record. Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
 source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, drawer and window finds none),
 `TEAM_COLORS` (every club; each badge colour 3:1 or more on every surface a badge or the win bar sits on, those surfaces read from the
 page's CSS (the card's two grounds and the badge's own over each), each pill colour 4.5:1 on every ground a pill is drawn on, `#1E2230`

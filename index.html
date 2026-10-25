@@ -240,6 +240,33 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 #recordTotals .stat>b{font-family:var(--display);font-size:30px;font-weight:900;display:block;line-height:1;letter-spacing:-.02em;position:relative}
 #recordTotals .stat>b.good{color:var(--lime)} #recordTotals .stat>b.bad{color:var(--rose-ink)}
 #recordTotals .stat>span{color:var(--muted-ink);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block;margin-top:6px;position:relative}
+/* ---------- the Pick'em Record (pk-, nhl v19): DraftKings' tiles, the wins-against-DraftKings chart (drawn, no image), the week grid
+   shaded red under .500 to green over, and every pick of a day ---------- */
+#pkTiles .stat .v{font-family:var(--display);font-size:26px;font-weight:900;line-height:1.1}
+#pkTiles .stat .k{color:var(--muted-ink);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+#pkTiles .stat .s{font-size:12px;color:var(--ink-2);margin-top:2px}
+.pk-card{padding:16px}
+.pk-h{margin:0 0 8px;font:700 16px var(--display)}
+.pk-chart{display:block;width:100%;height:auto;max-height:300px}
+.pk-chart text{font:600 11px var(--body);fill:var(--ink-2)}
+.pk-chart .zero{stroke:var(--muted-ink);stroke-dasharray:4 4}
+.pk-chart .grid{stroke:var(--line)}
+.pk-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:13px;color:var(--ink-2)}
+.pk-li{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pk-li i{display:inline-block;width:14px;height:3px;border-radius:2px}
+.pk-li b{color:var(--ink)}
+.tbl td.pk-c{text-align:right;font-variant-numeric:tabular-nums}
+.tbl td.pk-c b{display:block;font-family:var(--display)}
+.tbl td.pk-c small{color:var(--ink-2);font-size:11px}
+.tbl td.g1{background:rgba(205,255,79,.07)} .tbl td.g2{background:rgba(205,255,79,.13)} .tbl td.g3{background:rgba(205,255,79,.2)}
+.tbl td.r1{background:rgba(255,61,107,.07)} .tbl td.r2{background:rgba(255,61,107,.13)} .tbl td.r3{background:rgba(255,61,107,.2)}
+.pk-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0 10px}
+.pk-day{display:inline-flex;align-items:center;gap:8px;color:var(--ink-2);font-size:13px}
+.pk-day select{min-height:44px}
+.pk-pick{display:inline-flex;align-items:center;gap:6px}
+.pk-ok{color:var(--lime);font-weight:800} .pk-no{color:var(--rose-ink);font-weight:800}
+#pkPicks td{white-space:nowrap} #pkPicks .mu{flex-wrap:nowrap} #pkPicksW{margin-bottom:12px}
+@media(max-width:640px){.pk-day select{font-size:16px}}
 /* ---------- the Parlay Builder (pb-) and the parlay card (pc-) ----------
    Every control here is at least 44px tall and shows an --ice ring when focused by keyboard. Quiet text is
    the NBA's --muted on --bg-2 (the builder's legs) and --muted-ink on --panel and --panel-2; on --panel-3
@@ -650,6 +677,7 @@ body.pp-on{overflow:hidden}
     <button data-tab="standings">Standings</button>
     <button data-tab="ratings">Power Ratings</button>
     <button data-tab="players">Players</button>
+    <button data-tab="pickem">Pick'em Record</button>
     <button data-tab="record">Record</button>
   </nav>
 </header>
@@ -752,6 +780,17 @@ body.pp-on{overflow:hidden}
     </div>
   </section>
 
+  <section id="tab-pickem" hidden>
+    <h2>Pick'em record <small>every game straight up, each model's pick frozen at puck drop</small></h2>
+    <div class="strip" id="pkTiles"></div>
+    <div class="card pk-card"><h3 class="pk-h">Wins against DraftKings</h3><div id="pkChart"></div><div class="pk-legend" id="pkLegend"></div></div>
+    <h2 style="margin-top:24px">Week by week</h2>
+    <div class="wrap"><table class="tbl" id="pkWeeks"></table></div>
+    <div class="pk-bar"><button type="button" class="btn" id="pkShow" aria-expanded="false" aria-controls="pkPicksW">Show every pick</button><label class="pk-day" id="pkDayL" hidden><span>Day</span><select id="pkDay" aria-label="Day"></select></label></div>
+    <div class="wrap" id="pkPicksW" hidden><table class="tbl" id="pkPicks"></table></div>
+    <p class="intro" id="pkNote"></p>
+  </section>
+
   <section id="tab-record" hidden>
     <h2>The model's record</h2>
     <p class="intro" id="recordNote"></p>
@@ -799,7 +838,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v18 · 2026-10-25';
+const APP_BUILD = 'nhl v19 · 2026-10-25';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -978,7 +1017,7 @@ function showTab(name) {
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   P.ui.tab = name; save();
   if (name === 'games') SHOWN = new Set();
-  ({ games: renderGames, suggest: renderSuggest, standings: renderStandings, ratings: renderRatings, players: renderPlayers, parlays: renderParlays, record: renderRecord })[name]();
+  ({ games: renderGames, suggest: renderSuggest, standings: renderStandings, ratings: renderRatings, players: renderPlayers, parlays: renderParlays, pickem: renderPickem, record: renderRecord })[name]();
   updateSlip();
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
@@ -2621,7 +2660,7 @@ function fitNums() {
   }
 }
 let FIT_T = null;
-window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(fitTiles, 120); });
+window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(() => { fitTiles(); if (typeof pkFit === 'function') pkFit(); }, 120); });
 if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(() => { fitTiles(); syncBetRows(); }, () => {});
 if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => { fitTiles(); syncBetRows(); });
 if (BET_RO) for (const id of ['games', 'plLines']) BET_RO.observe($(id));
@@ -3819,6 +3858,112 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- Record ---------- */
+/* ---------- the Pick'em Record (#pickem, nhl v19) ----------
+   The owner's ask of 25 October 2026: "i want a tab for pickem record and show all the models we have and their records", the NFL hub's
+   Pick'em Record in hockey's terms. Every final straight up (the NHL has no ties), each model's pick the one frozen at puck drop on
+   the game's row and copied after it (the job's CALL fields), so nothing here is worked out after a game: the call (the site's own
+   pick, the player ratings blended with the club Elo: `pick`), the Team Elo (the club ratings alone: `elo.pHome` beside a player-model call, else the call's
+   own chance), and DraftKings, the baseline, as the NFL's Vegas: the moneyline favourite with the margin taken out, on the line the
+   job last read before puck drop (frozen with the call; not a closing line). The unit is the week, Monday to Sunday (Eastern) */
+const PK_MODELS = [
+  { id: 'call', name: 'The call', sub: "the site's own pick: the player ratings, blended with the club Elo", c: '#CDFF4F' },
+  { id: 'elo', name: 'Team Elo', sub: 'the club ratings alone', c: '#5FD4FF' },
+];
+const PK_BASE = { id: 'dk', name: 'DraftKings' };
+const PK_BANDS = [['65+', 0.65, 1.01], ['60-65', 0.60, 0.65], ['55-60', 0.55, 0.60], ['50-55', 0.5, 0.55]];
+/* a model's chance of the home side on a game, frozen at puck drop */
+function pkHome(g, id) {
+  const num = v => typeof v === 'number' && isFinite(v) ? v : null;
+  if (id === 'call') return num(g.pHome);
+  if (id === 'elo') return g.by === 'players' ? (isObj(g.elo) ? num(g.elo.pHome) : null) : num(g.pHome);
+  if (id === 'dk') { const L = g.line; if (!isObj(L) || !priced(L.homeML) || !priced(L.awayML)) return null; const h = implied(+L.homeML), a = implied(+L.awayML); return h / (h + a); }
+  return null;
+}
+/* its pick: the call's own side, else the side its chance favours (the home side at exactly even, as the NFL's Vegas) */
+function pkPick(g, id) {
+  if (id === 'call' && (g.pick === 'home' || g.pick === 'away')) return g.pick;
+  const p = pkHome(g, id); return p === null ? null : p >= 0.5 ? 'home' : 'away';
+}
+/* the Monday (Eastern date) a day's week starts on */
+const pkWeek = d => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - (x.getUTCDay() + 6) % 7); return x.toISOString().slice(0, 10); };
+const pkShort = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const pkWinner = g => g.hs > g.as ? 'home' : g.as > g.hs ? 'away' : null;
+function pkData() {
+  const ids = PK_MODELS.map(m => m.id).concat(PK_BASE.id);
+  const fin = S.games.filter(g => g.state === 'final' && pkWinner(g)).sort(gameCmp);
+  const weeks = [...new Set(fin.map(g => pkWeek(g.date)))].sort();
+  const rec = {}; for (const id of ids) rec[id] = { w: 0, l: 0, wk: {} };
+  const vs = {}; for (const m of PK_MODELS) vs[m.id] = { wk: {}, d: 0 };
+  const bands = {}; for (const [k] of PK_BANDS) bands[k] = { w: 0, l: 0 };
+  for (const g of fin) {
+    const win = pkWinner(g), wk = pkWeek(g.date), dk = pkPick(g, 'dk');
+    for (const id of ids) { const p = pkPick(g, id); if (!p) continue; const r = rec[id], x = r.wk[wk] || (r.wk[wk] = { w: 0, l: 0 }); if (p === win) { r.w++; x.w++; } else { r.l++; x.l++; } }
+    /* against DraftKings on the same games: a game one of the two did not pick counts for neither */
+    for (const m of PK_MODELS) { const p = pkPick(g, m.id); if (!p || !dk) continue; const d = (p === win ? 1 : 0) - (dk === win ? 1 : 0); vs[m.id].wk[wk] = (vs[m.id].wk[wk] || 0) + d; vs[m.id].d += d; }
+    const ph = pkHome(g, 'dk');
+    if (ph !== null) { const c = Math.max(ph, 1 - ph), b = PK_BANDS.find(([, lo, hi]) => c >= lo && c < hi); if (b) { if (dk === win) bands[b[0]].w++; else bands[b[0]].l++; } }
+  }
+  for (const m of PK_MODELS) { let c = 0; vs[m.id].cum = weeks.map(w => (c += vs[m.id].wk[w] || 0)); }
+  return { ids, fin, weeks, rec, vs, bands };
+}
+const pkPct = r => r.w + r.l ? (100 * r.w / (r.w + r.l)).toFixed(1) + '%' : '—';
+const pkSigned = n => n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '±0';
+/* the chart: each model's wins less DraftKings' on the same games, added up week by week from the start; DraftKings the zero line.
+   Drawn as an inline SVG (no image), each line carrying its weekly sums for the smoke. It is drawn at its box's own width, so its
+   11px words are 11px on a phone too (a 640 drawing shrunk to a phone's 340 set them at 6px); under 480 the end labels give way to
+   the legend under it, which says the same */
+let PK_CW = 0;
+function pkChart(D) {
+  const box = $('pkChart'), cw = box ? Math.round(box.clientWidth || 0) : 0, W = cw ? Math.max(280, Math.min(640, cw)) : 640, narrow = W < 480;
+  const H = narrow ? 200 : 230, L = 34, R = narrow ? 24 : 118, T = 14, B = 30, n = D.weeks.length;
+  PK_CW = cw;
+  if (!n) return '<p class="pb-none">No game graded yet.</p>';
+  const all = [0].concat(...PK_MODELS.map(m => D.vs[m.id].cum)), lo = Math.min(...all) - 1, hi = Math.max(...all) + 1;
+  const x = i => L + (W - L - R) * (i / n), y = v => T + (H - T - B) * (hi - v) / (hi - lo);
+  const step = Math.max(1, Math.ceil(n / (narrow ? 4 : 6)));
+  const xl = D.weeks.map((w, i) => (i + 1) % step === 0 || i === n - 1 ? `<text x="${x(i + 1).toFixed(1)}" y="${H - 10}" text-anchor="middle">${esc(pkShort(w))}</text>` : '').join('');
+  const yt = [...new Set([Math.ceil(lo), 0, Math.floor(hi)])].map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${v > 0 ? '+' + v : v}</text>`).join('');
+  /* the end labels, nudged apart where two would overlap */
+  const ends = PK_MODELS.map(m => ({ m, v: D.vs[m.id].cum[n - 1], yy: y(D.vs[m.id].cum[n - 1]) })).sort((a, b) => a.yy - b.yy);
+  for (let i = 1; i < ends.length; i++) if (ends[i].yy - ends[i - 1].yy < 13) ends[i].yy = ends[i - 1].yy + 13;
+  const lines = PK_MODELS.map(m => { const pts = [[x(0), y(0)]].concat(D.vs[m.id].cum.map((v, i) => [x(i + 1), y(v)])); return `<polyline fill="none" stroke="${m.c}" stroke-width="2.5" stroke-linejoin="round" data-model="${m.id}" data-cum="${D.vs[m.id].cum.join(',')}" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`; }).join('');
+  const labels = narrow ? '' : ends.map(e => `<text x="${(x(n) + 6).toFixed(1)}" y="${(e.yy + 4).toFixed(1)}" style="fill:${e.m.c}">${esc(e.m.name)} ${pkSigned(e.v)}</text>`).join('');
+  return `<svg class="pk-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(PK_MODELS.map(m => `${m.name} ${pkSigned(D.vs[m.id].d)} against DraftKings`).join(', '))}">${yt}<line class="zero" x1="${L}" x2="${W - R}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>${narrow || ends.some(e => Math.abs(e.yy - y(0)) < 12) ? '' : `<text x="${(x(n) + 6).toFixed(1)}" y="${(y(0) + 4).toFixed(1)}" style="opacity:.8">= DraftKings</text>`}<text x="${x(0).toFixed(1)}" y="${H - 10}" text-anchor="middle">Start</text>${xl}${lines}${labels}</svg>`;
+}
+/* a record cell shaded by its rate: green over .500, red under, deeper the further off */
+const pkCell = r => { if (!r || !(r.w + r.l)) return '<td class="pk-c">—</td>'; const q = r.w / (r.w + r.l), c = q > 0.5 ? (q >= 0.65 ? 'g3' : q >= 0.58 ? 'g2' : 'g1') : q < 0.5 ? (q <= 0.35 ? 'r3' : q <= 0.42 ? 'r2' : 'r1') : ''; return `<td class="pk-c${c ? ' ' + c : ''}"><b>${r.w}-${r.l}</b><small>${pkPct(r)}</small></td>`; };
+let PK_SHOW = false, PK_DAY = null;
+function renderPickem() {
+  if (!S) return;
+  const D = pkData(), dk = D.rec.dk;
+  const tile = (v, k, s) => `<div class="stat"><div class="v">${v}</div><div class="k">${esc(k)}</div>${s ? `<div class="s">${esc(s)}</div>` : ''}</div>`;
+  $('pkTiles').innerHTML = tile(`${dk.w}-${dk.l}`, 'DraftKings', pkPct(dk)) + PK_BANDS.map(([k]) => { const b = D.bands[k]; return tile(`${b.w}-${b.l}`, `Favourite ${k === '65+' ? '65%+' : k.replace('-', '–') + '%'}`, pkPct(b)); }).join('');
+  $('pkChart').innerHTML = pkChart(D);
+  $('pkLegend').innerHTML = PK_MODELS.map(m => `<span class="pk-li" data-pk="${m.id}" title="${esc(m.sub)}"><i style="background:${m.c}"></i><b>${esc(m.name)}</b> ${D.rec[m.id].w}-${D.rec[m.id].l} · ${pkSigned(D.vs[m.id].d)} vs DraftKings</span>`).join('')
+    + `<span class="pk-li" data-pk="dk"><i style="background:var(--muted-ink)"></i><b>DraftKings</b> ${dk.w}-${dk.l}</span>`;
+  const rows = PK_MODELS.concat([PK_BASE]);
+  $('pkWeeks').innerHTML = `<thead><tr><th class="sk">Model</th>${D.weeks.map(w => `<th class="n">${esc(pkShort(w))}</th>`).join('')}<th class="n">Season</th></tr></thead><tbody>`
+    + rows.map(m => `<tr data-pk="${m.id}"><td class="sk"><b>${esc(m.name)}</b></td>${D.weeks.map(w => pkCell(D.rec[m.id].wk[w])).join('')}${pkCell(D.rec[m.id])}</tr>`).join('') + '</tbody>';
+  /* every pick of a day: the days with games, the latest first; today where it has games, else the latest played */
+  const days = [...new Set(S.games.map(g => g.date))].sort().reverse(), today = etToday();
+  if (!PK_DAY || !days.includes(PK_DAY)) PK_DAY = days.includes(today) ? today : (days.find(d => d <= today) || days[days.length - 1] || null);
+  $('pkShow').textContent = PK_SHOW ? 'Hide the picks' : 'Show every pick'; $('pkShow').setAttribute('aria-expanded', String(PK_SHOW));
+  $('pkDayL').hidden = !PK_SHOW; $('pkPicksW').hidden = !PK_SHOW;
+  if (PK_SHOW) {
+    $('pkDay').innerHTML = days.map(d => `<option value="${d}"${d === PK_DAY ? ' selected' : ''}>${esc(dayText(d))}</option>`).join('');
+    const gs = S.games.filter(g => g.date === PK_DAY).sort(gameCmp);
+    const cell = (g, id) => { const p = pkPick(g, id); if (!p) return '<td>—</td>'; const win = g.state === 'final' ? pkWinner(g) : null; return `<td data-pick="${p}"><span class="pk-pick">${pill(g[p])}${win ? (p === win ? '<span class="pk-ok" aria-label="right">✓</span>' : '<span class="pk-no" aria-label="wrong">✗</span>') : ''}</span></td>`; };
+    const res = g => g.state === 'final' ? `${esc(T(g.away).abbr)} ${g.as} – ${esc(T(g.home).abbr)} ${g.hs}` : hasStarted(g) ? 'under way' : esc(timeOf(g));
+    $('pkPicks').innerHTML = `<thead><tr><th class="sk">Game</th><th>Result</th>${rows.map(m => `<th>${esc(m.name)}</th>`).join('')}</tr></thead><tbody>`
+      + (gs.length ? gs.map(g => `<tr data-id="${g.id}"><td class="sk">${muPills(g)}</td><td>${res(g)}</td>${rows.map(m => cell(g, m.id)).join('')}</tr>`).join('') : `<tr><td class="sk">No games</td><td></td>${rows.map(() => '<td></td>').join('')}</tr>`) + '</tbody>';
+  }
+  $('pkNote').textContent = `Every final straight up, each pick the one frozen at puck drop and never changed after. The call: the site's own pick, the player ratings blended with the club Elo. Team Elo: the club ratings alone. DraftKings: the moneyline favourite with its margin taken out, on the line the job last read before puck drop (not the closing line). Against DraftKings: a model's wins less DraftKings' on the games both picked.`;
+}
+/* on a resize, the chart drawn again at its box's new width (only while the tab is open and the width moved) */
+function pkFit() { const box = $('pkChart'); if (!S || !box || $('tab-pickem').hidden) return; const cw = Math.round(box.clientWidth || 0); if (cw && cw !== PK_CW) box.innerHTML = pkChart(pkData()); }
+$('pkShow').addEventListener('click', () => { PK_SHOW = !PK_SHOW; renderPickem(); });
+$('pkDay').addEventListener('change', () => { PK_DAY = $('pkDay').value; renderPickem(); $('pkDay').focus(); });
+
 function renderRecord() {
   const R = S.record; const f = S.model.fitted;
   const stat = (k, v, cls) => `<div class="stat"><b${cls ? ` class="${cls}"` : ''}>${v}</b><span>${k}</span></div>`;

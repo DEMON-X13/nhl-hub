@@ -87,7 +87,7 @@ function run(script, args, env, label) {
 function dataDir(name, from = REAL_DATA) {
   const d = mkdir(name);
   /* the props model's constants (source), its ledger and the record of closing props come too, so props.js plays its part */
-  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json', 'props_model.json', 'props_ledger.json', 'props.json', 'corr.json'].concat(fs.readdirSync(from).filter(f => /^(season_\d{4}\.json|props_\d{4}\.jsonl)$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
+  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json', 'props_model.json', 'props_ledger.json', 'props.json', 'corr.json', 'suggest_ledger.json'].concat(fs.readdirSync(from).filter(f => /^(season_\d{4}\.json|props_\d{4}\.jsonl)$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
   /* this season's box scores from the folder copied (B's has last night's final boxed, which its props ledger graded) */
   for (const f of fs.readdirSync(REAL_DATA).filter(f => /^box_\d+\.jsonl$/.test(f))) {
     if (+f.slice(4, 8) >= SEASON) fs.copyFileSync(path.join(fs.existsSync(path.join(from, f)) ? from : REAL_DATA, f), path.join(d, f)); else fs.symlinkSync(path.join(REAL_DATA, f), path.join(d, f));
@@ -389,7 +389,7 @@ function partB() {
   const readNow = SB.games.filter(g => g.state === 'pre' && g.line && g.line.at === NOW);
   const idsBad = readNow.filter(g => { const r = realById.get(g.id), want = r && r.line && r.line.dk ? idsOnly(r.line.dk) : r && r.line ? inventIds(r, r.line) : null; return !want || JSON.stringify(g.line.dk) !== JSON.stringify(want); });
   chk(!idsBad.length, `every line read in B carries the feed's DraftKings ids (${readNow.length - idsBad.length} of ${readNow.length}${idsBad[0] ? `, e.g. ${idsBad[0].id}: ${JSON.stringify(idsBad[0].line.dk)}` : ''})`);
-  const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB, NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json') }, 'smoke.js over B');
+  const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB, NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json'), NHL_PREV_SUGGEST: fs.existsSync(path.join(REAL_DATA, 'suggest_ledger.json')) ? path.join(REAL_DATA, 'suggest_ledger.json') : 'none' }, 'smoke.js over B');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the real data through the new job: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B }).status === 0, 'sources.js: every source read');
   /* the props model's record: every final asked for its closing props failing is a broken source; one failing among others a note */
@@ -573,6 +573,7 @@ function partB4(b) {
   for (const { s, r } of runJob(env(T1, FX1), 'B4 run 1')) chk(r.status === 0, `B4, the call before puck drop: ${s} runs`);
   fs.copyFileSync(ST4, R1);
   const R1L = path.join(SCRATCH, 'B4-run1-ledger.json'); if (fs.existsSync(path.join(DB, 'props_ledger.json'))) fs.copyFileSync(path.join(DB, 'props_ledger.json'), R1L);
+  const R1S = path.join(SCRATCH, 'B4-run1-suggest.json'); if (fs.existsSync(path.join(DB, 'suggest_ledger.json'))) fs.copyFileSync(path.join(DB, 'suggest_ledger.json'), R1S);
   const g1 = readJSON(R1).games.find(g => g.id === G.id), gl = g1 && g1.pm && g1.pm.home && g1.pm.home.goalie;
   chk(g1 && g1.state === 'pre' && g1.frozen === T1 && g1.before === G.start && g1.pm && g1.pm.inj === pulled1 && gl, `${G.away}@${G.home} is called before its puck drop on the report of ${pulled1}: ${g1 && [g1.frozen, g1.before, g1.pm && g1.pm.inj].join(' ')}`);
   if (!gl) return;
@@ -590,7 +591,7 @@ function partB4(b) {
   const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
   const moved = g2 ? CALL.filter(k => JSON.stringify(g2[k] ?? null) !== JSON.stringify(g1[k] ?? null)) : ['missing'];
   chk(g2 && g2.state === 'pre' && g2.start === MOVED && !moved.length, `a game whose start the feed moved later after its puck drop keeps the call made before it, ${gl.name} in goal on the report of ${pulled1}: ${moved.join(', ')}`);
-  const sm = run('smoke.js', [], { NHL_STATE: ST4, NHL_DATA: DB, NHL_PREV_STATE: R1, NHL_PREV_LEDGER: fs.existsSync(R1L) ? R1L : 'none' }, 'smoke.js over the delayed game, against the run before its puck drop');
+  const sm = run('smoke.js', [], { NHL_STATE: ST4, NHL_DATA: DB, NHL_PREV_STATE: R1, NHL_PREV_LEDGER: fs.existsSync(R1L) ? R1L : 'none', NHL_PREV_SUGGEST: fs.existsSync(R1S) ? R1S : 'none' }, 'smoke.js over the delayed game, against the run before its puck drop');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over a start moved later after its puck drop, the report re-pulled since: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
 }
 
@@ -616,7 +617,8 @@ function partB5() {
 /* ---------- A. a fabricated season through update.js ---------- */
 function partA(B) {
   console.log('A. a fabricated season on the real schedule: calls made, kept at puck drop, graded');
-  const DA = dataDir('A', B), OUT = mkdir('A-sb'), STATE = path.join(SCRATCH, 'A-state.json');
+  const DA = dataDir('A', B), OUT = mkdir('A-sb'), STATE = path.join(SCRATCH, 'A-state.json'), SGA = path.join(DA, 'suggest_ledger.json');
+  if (fs.existsSync(SGA)) fs.rmSync(SGA);                  // an invented season keeps a record of its own: the real one's days are graded on real scores
   let games = real.games.filter(g => g.type === 2).map(g => ({ id: g.id, date: g.date, start: g.start, home: g.home, away: g.away, neutral: g.neutral, mu: g.mu, xt: g.xt, diff: g.diff }));
   if (games.length < 400) {
     /* the summer after the rollover, before the schedule is out: the last finished season's, a year on, stands in */
@@ -701,6 +703,9 @@ function partA(B) {
   feed(addDays(T0, -1), { lines: [T0, T1], move: true, live: g => g.date === T0 && g.start <= firstStart && g.id !== delayed.id && (!moved || g.id !== moved.id), start: g => moved && g.id === moved.id ? movedStart : null });
   chk(run('update.js', ['--offline'], env(evening), 'run 1b, the second pass after puck drop').status === 0, 'run 1b');
   const A2 = readJSON(STATE); fs.copyFileSync(STATE, path.join(SCRATCH, 'A-evening.json'));
+  /* the record's ledger as the evening left it: runs 1c and 1d are other versions of that evening, each from it, and the morning
+     after (run 2) goes on from it too, so none of them carries another's record; each is held against it as the last ledger */
+  const SGA_EVE = path.join(SCRATCH, 'A-evening-suggest.json'); fs.copyFileSync(SGA, SGA_EVE);
   for (const g of early) {
     const n = A2.games.find(x => x.id === g.id);
     chk(!same(n, g).length, `a call is kept from puck drop on (${n.state}${n.state === 'pre' ? (moved && g.id === moved.id ? ', its puck drop moved an hour later after it passed' : ', still scheduled in the feed') : ''}): ${g.id} ${same(n, g).map(k => `${k} ${JSON.stringify(g[k])} -> ${JSON.stringify(n[k])}`).join('; ').slice(0, 200)}`);
@@ -708,7 +713,7 @@ function partA(B) {
   chk(A2.pass === undefined, 'the second pass\'s state is not marked as the first\'s');
   chk(early.length < 2 || A2.games.some(g => g.id === delayed.id && g.state === 'pre'), 'a game past its puck drop that the feed still has as scheduled is in the test');
   chk(!moved || A2.games.some(g => g.id === moved.id && g.state === 'pre' && g.start === movedStart), 'a game whose puck drop the feed moved later after it passed is in the test');
-  const smE = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json'), NHL_OUT: OUT }, 'smoke.js over the evening, against the morning\'s state');
+  const smE = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json'), NHL_OUT: OUT }, 'smoke.js over the evening, against the morning\'s state');
   chk(smE.status === 0 && / 0 failures/.test(smE.out), 'smoke over the evening, the morning\'s calls the last published: ' + smE.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   chk(A2.games.some(g => g.state === 'live' && g.hs !== null), 'a game under way has a score');
   for (const g of late) { const n = A2.games.find(x => x.id === g.id); chk(n.line.at === evening && JSON.stringify(n.line) !== JSON.stringify(g.line), `a game still to come takes the moved line: ${g.id}`); }
@@ -725,7 +730,7 @@ function partA(B) {
     if (sg) {
       sg.line.dk.over = sg.line.dk.over.replace(/^0OU(\d+)O/, (m, n) => `0OU${+n + 1}O`);
       const MUT = path.join(SCRATCH, 'A-evening-mutated.json'); fs.writeFileSync(MUT, JSON.stringify(mut));
-      const sm = run('smoke.js', [], { NHL_STATE: MUT, NHL_DATA: B, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json') }, 'smoke.js over a started game\'s id changed');
+      const sm = run('smoke.js', [], { NHL_STATE: MUT, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json') }, 'smoke.js over a started game\'s id changed');
       chk(sm.status === 1 && /moved after puck drop: line/.test(sm.out), `a started game's DraftKings id changed after puck drop fails the smoke ("moved after puck drop: line"): exit ${sm.status}`);
     } else chk(false, 'no started game with an over id to mutate');
   }
@@ -740,7 +745,7 @@ function partA(B) {
   chk(rb.status === 1 && /did not answer/.test(rb.out) && fs.readFileSync(SP1, 'utf8') === fs.readFileSync(EVE, 'utf8'), `a day under way answered with no game is no answer: the run stops before writing (exit ${rb.status})`);
   /* the day answered with only the games still to come (the ones under way left out), one of those postponed,
      one game under way moved two days on (another day: a game to come again), a day weeks ahead answered blank */
-  const P2 = copyOut('A-sb-partial'), SP2 = path.join(SCRATCH, 'A-partial.json'); fs.copyFileSync(EVE, SP2);
+  const P2 = copyOut('A-sb-partial'), SP2 = path.join(SCRATCH, 'A-partial.json'); fs.copyFileSync(EVE, SP2); fs.copyFileSync(SGA_EVE, SGA);
   const far = A2.games.map(g => g.date).filter(d => d >= addDays(T0, 20)).sort()[0], farGames = A2.games.filter(g => g.date === far);
   /* the games moved or called off are ones whose clubs have no game the next day, and the day a game moves to has
      none of its clubs' games the day before, on or after, so no back to back the lineups were drawn on changes */
@@ -770,14 +775,14 @@ function partA(B) {
   chk(hn && hn.date === E.etDate(hopStart) && hn.state === 'pre' && hn.frozen === later && hn.before === hopStart, `a game under way that the feed moved to another day is a game to come again, called afresh: ${hop.id} ${hn && hn.date} ${hn && hn.frozen}`);
   chk(farGames.length > 0 && farGames.every(g => AP.games.some(x => x.id === g.id && x.date === far)), `a day weeks ahead answered blank keeps its ${farGames.length} games`);
   chk(hn && hn.line && JSON.stringify(hn.line.dk) === JSON.stringify(idsOnly(hopLine.dk)), `the game moved to another day takes its new line's DraftKings ids (${hn && hn.line && JSON.stringify(hn.line.dk)})`);
-  const smP = run('smoke.js', [], { NHL_STATE: SP2, NHL_DATA: B, NHL_PREV_STATE: EVE, NHL_OUT: P2 }, 'smoke.js over the partial answer');
+  const smP = run('smoke.js', [], { NHL_STATE: SP2, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: EVE, NHL_OUT: P2 }, 'smoke.js over the partial answer');
   chk(smP.status === 0 && / 0 failures/.test(smP.out), 'smoke over a partial answer: ' + smP.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   /* run 1d, on a copy of the evening: ESPN's prices come through as "Draft Kings" with no link at all, the same numbers but one
      total a goal higher; two games keep their links, one with an over on another number, one with an id in a shape the job does
      not read; one game's links are not URLs at all; one game's links name its DraftKings event and no outcome. The ids of the
      last state stay for the same numbers, dated by their read (beside the event, for the game whose links name only that) */
   {
-    const later3 = minute(Date.parse(evening) + 20 * 60000), P3 = copyOut('A-sb-nolink'), SP3 = path.join(SCRATCH, 'A-nolink.json'); fs.copyFileSync(EVE, SP3);
+    const later3 = minute(Date.parse(evening) + 20 * 60000), P3 = copyOut('A-sb-nolink'), SP3 = path.join(SCRATCH, 'A-nolink.json'); fs.copyFileSync(EVE, SP3); fs.copyFileSync(SGA_EVE, SGA);
     const come = A2.games.filter(g => g.state === 'pre' && Date.parse(g.start) > Date.parse(later3) && g.line && g.line.dk && g.line.at === evening).sort((a, b) => a.start < b.start ? -1 : 1);
     if (come.length < 4) chk(false, `run 1d needs four games still to come with ids (${come.length})`);
     else {
@@ -820,7 +825,7 @@ function partA(B) {
         else if (W && g.id === W.id) chk(JSON.stringify(idsOnly(dk)) === JSON.stringify(idsOnly(g.line.dk)) && dk.at === evening, `links naming the event and no outcome: the evening's outcome ids kept beside the event, dated ${evening} (${JSON.stringify(dk)})`);
         else chk(JSON.stringify(idsOnly(dk)) === JSON.stringify(idsOnly(g.line.dk)) && dk.at === evening, `${g.id}: no usable link, the same numbers: the evening's ids kept, dated ${evening} (${JSON.stringify(dk)})`);
       }
-      const sm1d = run('smoke.js', [], { NHL_STATE: SP3, NHL_DATA: B, NHL_PREV_STATE: EVE, NHL_OUT: P3 }, 'smoke.js over prices with no links');
+      const sm1d = run('smoke.js', [], { NHL_STATE: SP3, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: EVE, NHL_OUT: P3 }, 'smoke.js over prices with no links');
       chk(sm1d.status === 0 && / 0 failures/.test(sm1d.out), 'smoke over prices with no links: ' + sm1d.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
       /* sources.js: answers with no link at all are a note; answers whose every link is in a shape the job cannot read are broken */
       const DS = mkdir('A-src'); fs.copyFileSync(path.join(B, 'starters.json'), path.join(DS, 'starters.json'));
@@ -861,6 +866,7 @@ function partA(B) {
   }
   /* run 2: the next morning, T0 final */
   feed(T0, { lines: [T1] });
+  fs.copyFileSync(SGA_EVE, SGA);
   chk(run('update.js', ['--offline'], env(T1 + 'T12:00Z'), 'run 2, the next morning').status === 0, 'run 2');
   const Bs = readJSON(STATE);
   const byIdEve = Object.fromEntries(A2.games.map(g => [g.id, g]));
@@ -897,7 +903,7 @@ function partA(B) {
   const beforeC = fs.readFileSync(STATE, 'utf8');
   run('update.js', ['--offline'], env(T1 + 'T12:00Z'), 'run 3, a quiet rerun');
   chk(fs.readFileSync(STATE, 'utf8') === beforeC, 'a rerun with nothing new leaves state.json alone');
-  const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_PREV_STATE: path.join(SCRATCH, 'A-evening.json') }, 'smoke.js over A');
+  const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: path.join(SCRATCH, 'A-evening.json') }, 'smoke.js over A');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the fabricated season: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   return { games, results };
 }
@@ -905,7 +911,8 @@ function partA(B) {
 /* ---------- C. the playoffs ---------- */
 function partC(B, games, results) {
   console.log('C. the season played out, then the playoffs');
-  const DC = dataDir('C', B), OUT = mkdir('C-sb'), STATE = path.join(SCRATCH, 'C-state.json');
+  const DC = dataDir('C', B), OUT = mkdir('C-sb'), STATE = path.join(SCRATCH, 'C-state.json'), SGC = path.join(DC, 'suggest_ledger.json');
+  if (fs.existsSync(SGC)) fs.rmSync(SGC);
   const lastReg = games[games.length - 1].date;
   const byDate = {};
   for (const g of games) { results[g.id] = results[g.id] || score(g); (byDate[g.date] = byDate[g.date] || []).push(event(g, Object.assign({ state: 'post' }, results[g.id]))); }
@@ -933,7 +940,7 @@ function partC(B, games, results) {
     chk(OW[Y].playoff === 1 && OW[Y].cup > 0 && OW[Y].conf > 0, `${Y}, left out by the table but up 2-0 on ${top} in ESPN's first round, is in the playoffs for certain with a Cup chance (${JSON.stringify(OW[Y])})`);
     chk(OW[wc2].playoff === 0 && OW[wc2].cup === 0 && OW[wc2].conf === 0 && OW[wc2].div === 0, `${wc2}, the table's second wild card, is out with no chance (${JSON.stringify(OW[wc2])})`);
     chk(Object.values(OW).filter(o => o.playoff === 1).length === 16 && Object.values(OW).every(o => o.playoff === 0 || o.playoff === 1), 'sixteen clubs in for certain, the rest out');
-    const smW = run('smoke.js', [], { NHL_STATE: STW, NHL_DATA: B, NHL_PREV_STATE: 'none' }, 'smoke.js over a first round the table did not draw');
+    const smW = run('smoke.js', [], { NHL_STATE: STW, NHL_DATA: B, NHL_SUGGEST: path.join(DW, 'suggest_ledger.json'), NHL_PREV_STATE: 'none' }, 'smoke.js over a first round the table did not draw');
     chk(smW.status === 0 && / 0 failures/.test(smW.out), `smoke over a first round with ${Y}, whom the table left out: ` + smW.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   }
   /* the first round: a sweep, an upset, series under way */
@@ -962,7 +969,7 @@ function partC(B, games, results) {
   const sg = C2.games.find(g => g.id === sched.id);
   chk(sg && sg.type === 3 && sg.line && sg.frozen && sg.line.dk && sg.line.dk.homeML, 'a playoff game to come has a call and a line, with DraftKings\' ids');
   chk(C2.record.byMonth.playoffs && C2.record.byMonth.playoffs.su.w + C2.record.byMonth.playoffs.su.l === po.length, 'the playoffs are their own row of the record');
-  const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_PREV_STATE: 'none' }, 'smoke.js over the playoffs');
+  const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGC, NHL_PREV_STATE: 'none' }, 'smoke.js over the playoffs');
   chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the playoffs: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   /* every round to the Final: the higher seed 4-2, the bracket's way */
   const pts = t => C1.teams[t].pts + C1.teams[t].rw / 100;
@@ -984,7 +991,7 @@ function partC(B, games, results) {
   const C3 = readJSON(STATE);
   chk(C3.phase === 'over' && C3.playoff.champion === champ, `the season is over and ${champ} won the Cup (${C3.phase}, ${C3.playoff.champion})`);
   chk(C3.playoff.odds[champ].cup === 1 && Object.entries(C3.playoff.odds).every(([t, o]) => t === champ || o.cup === 0), 'the champion has the Cup, nobody else a chance');
-  const sm3 = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_PREV_STATE: 'none' }, 'smoke.js over a finished season');
+  const sm3 = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGC, NHL_PREV_STATE: 'none' }, 'smoke.js over a finished season');
   chk(sm3.status === 0 && / 0 failures/.test(sm3.out), 'smoke over a finished season: ' + sm3.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
   return { STATE, C3 };
 }
@@ -993,6 +1000,7 @@ function partC(B, games, results) {
 function partD(B, C) {
   console.log('D. the first run of the next season');
   const DD = dataDir('D', B), OUT = mkdir('D-sb'), STATE = path.join(SCRATCH, 'D-state.json');
+  if (fs.existsSync(path.join(DD, 'suggest_ledger.json'))) fs.rmSync(path.join(DD, 'suggest_ledger.json'));
   fs.copyFileSync(C.STATE, STATE);
   const aug = `${SEASON}-08-05`;
   const env = { NHL_TODAY: aug, NHL_NOW: aug + 'T16:00Z', NHL_STATE: STATE, NHL_OUT: OUT, NHL_TEAMS: path.join(DD, 'teams.json'), NHL_DATA: DD };

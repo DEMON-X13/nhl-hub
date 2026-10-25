@@ -570,6 +570,11 @@ async function main() {
      the feed is not a call "made after puck drop" to the smoke test */
   const state = Object.assign({ published: new Date(Date.parse(NOW)).toISOString(), season: SEASON, today: TODAY, phase: playoff.phase, model, teams, games: out, record, playoff, edge: EDGE, players, props, sgp, box },
     removedNow.length ? { removed: removedNow } : {}, kept.length ? { kept } : {}, SCORES ? { pass: 'scores' } : {});
+  /* the suggested parlays' record (tools/suggest.js): the second pass takes each day's three levels from the page itself, booted on
+     this state at this run's clock, locks a day at its first puck drop as the last run before it left it, grades the locked days
+     on the finals and writes data/suggest_ledger.json; `suggest` is its summary of the season's days, which the panel draws. The
+     first pass makes no call and carries the last state's */
+  state.suggest = SCORES ? (prev && prev.season === SEASON && prev.suggest) || null : await require('./suggest').step({ state, data: DATA, now: state.published, log });
   const before = prev ? JSON.stringify(Object.assign({}, prev, { published: null, today: null })) : null;
   const after = JSON.stringify(Object.assign({}, state, { published: null, today: null }));
   if (before === after) { log('nothing changed; state.json left alone'); return; }

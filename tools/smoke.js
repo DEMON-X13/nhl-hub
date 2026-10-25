@@ -3720,6 +3720,75 @@ async function theLook() {
   holdRequests(w, 'THE LOOK');
 }
 
+/* ---------- THE SUGGESTED PARLAYS' RECORD (nhl v15, tools/suggest.js) ----------
+   The ledger by suggest.js's own check (its rules, and against the last commit's: NHL_PREV_SUGGEST, else git's
+   HEAD:data/suggest_ledger.json); the state's record its summary; every day still to lock with a line read at the publish taken,
+   the page's own levels on it at the publish and this smoke's brute force's on its own pool; and the panel's record row worked out
+   from the state, pill by pill, title by title */
+async function suggestRecord() {
+  console.log("THE SUGGESTED PARLAYS' RECORD");
+  const SG = require('./suggest'), file = process.env.NHL_SUGGEST || path.join(DATA, 'suggest_ledger.json');      // NHL_SUGGEST: simulate.js's own
+  if (!fs.existsSync(file)) { chk(!S.suggest, `no ledger and no record in the state (${JSON.stringify(S.suggest)})`); console.log('  no ledger: its checks skipped'); return; }
+  const L = SG.readLedger(file);
+  const prev = process.env.NHL_PREV_SUGGEST ? (process.env.NHL_PREV_SUGGEST === 'none' ? null : readJSON(process.env.NHL_PREV_SUGGEST))
+    : process.env.NHL_STATE ? null : (() => { try { return JSON.parse(execFileSync('git', ['show', 'HEAD:data/suggest_ledger.json'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] })); } catch (e) { return null; } })();
+  const bad = SG.check(L, prev, S, PUB);
+  for (const b of bad) chk(false, `the record's ledger: ${b}`);
+  chk(!bad.length, `the record's ledger holds to its rules${prev ? ' and the last commit\'s' : ''} (${Object.keys(L.days).length} days)`);
+  /* a state an older job published, before the record began, carries none; once one has, every state after it does */
+  if (S.suggest === undefined) {
+    chk(!(PREV && PREV.suggest !== undefined), 'the record is in every state after the first that carried it');
+    console.log('  the state predates the record (an older job published it): the record\'s state and page checks skipped'); return;
+  }
+  chk(JSON.stringify(S.suggest) === JSON.stringify(SG.summarize(L, S.season)), `the state's record is the ledger's summary (${JSON.stringify(S.suggest && S.suggest.tiers && S.suggest.tiers.safe)})`);
+  /* the days still to lock with a line read at the publish */
+  const first = SG.daysOf(S), pubMin = Math.floor(PUB / 60000);
+  /* a day locked already is the last commit's ledger's to hold (SG.check), whatever its first puck drop reads now (a game postponed or moved) */
+  const lined = [...new Set(S.games.filter(g => g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 60000) === pubMin).map(g => g.date))].filter(d => first[d] > PUB && !(L.days[d] && Date.parse(L.days[d].lock) <= PUB)).sort();
+  const errs = [], w = await boot(PUB, errs, { hash: 'parlays' }), d = w.document;
+  for (const day of lined) {
+    const want = SG.setOf(w, day), e = L.days[day];
+    if (!want.games.length) { chk(!e, `${day}: no game to come with a fresh line in the page, no entry`); continue; }
+    chk(!!e && e.lock === new Date(first[day]).toISOString() && JSON.stringify([e.games, e.tiers]) === JSON.stringify([want.games, want.tiers]),
+      `${day}: taken, to lock at its first puck drop ${new Date(first[day]).toISOString()}, the page's own levels at the publish (${e ? e.lock : 'no entry'})`);
+    /* the brute force's levels on the day's default pool, worked out here */
+    const pool = sPool({ games: S.games.filter(g => g.date === day && !sStarted(g, PUB)) }, ['ml', 'pl', 'ou'], []);
+    for (const [id, label, n, floor] of TIERS) {
+      const b = sBrute(pool.legs, n, floor), t = e && e.tiers[id];
+      chk(b ? !!t && JSON.stringify(t.legs.map(x => x.id)) === JSON.stringify(b.legs.map(x => x.id)) && Math.abs(t.p - b.p) < 1e-4 && Math.abs(t.dec - b.d) < 1e-3 : !t,
+        `${day} ${label}: the record's legs are the brute force's (${t ? t.legs.map(x => x.id).join(', ') : 'none'}; brute ${b ? b.legs.map(x => x.id).join(', ') : 'none'})`);
+    }
+  }
+  /* an entry still to lock is a day with a line read at the publish (held above), or one with none read now whose set an earlier run took */
+  for (const [day, e] of Object.entries(L.days)) if (Date.parse(e.lock) > PUB && !lined.includes(day))
+    chk(first[day] > PUB && Date.parse(e.taken) < PUB && !S.games.some(g => g.date === day && g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 60000) === pubMin), `${day}: an entry still to lock with no line read at the publish was taken by an earlier run (${e.taken})`);
+  /* the record row, worked out here from the state */
+  const R = S.suggest, rec = d.getElementById('pbRec');
+  if (!R) chk(!!rec && rec.hidden && !rec.innerHTML, 'no record in the state: no record row');
+  else {
+    const un = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); }, f1 = v => v.toFixed(1), pl = (n, x) => `${n} ${x}${n === 1 ? '' : x === 'push' ? 'es' : 's'}`;
+    const any = TIERS.some(([id]) => R.tiers[id].graded || R.tiers[id].push);
+    const want = ['Record'].concat(any ? TIERS.map(([id, label]) => { const t = R.tiers[id]; return `${label} ${t.won}–${t.lost}${t.graded || t.push ? ` ${un(t.units)} units` : ''}`; }) : ['None graded yet']).concat(R.pending ? [`Pending ${R.pending}`] : []);
+    const got = [...rec.children].map(txt);
+    chk(!rec.hidden && rec.closest('#pbPanel') && rec.previousElementSibling && rec.previousElementSibling.classList.contains('pb-head') && JSON.stringify(got) === JSON.stringify(want),
+      `the panel's record row under its heading, pill by pill: ${got.join(' | ')} (want ${want.join(' | ')})`);
+    if (any) for (const [id, label] of TIERS) {
+      const t = R.tiers[id], el = rec.querySelector(`[data-pb-rec="${id}"]`);
+      const title = `${label}: ${t.won} won of ${t.graded} graded${R.since ? ` since ${PBS.day(R.since)}` : ''}${t.graded ? `; wins expected ${f1(t.exp_fair)} by DraftKings' fair chance${t.fair_n < t.graded ? ` (on the ${t.fair_n} with one)` : ''}, ${f1(t.exp_model)} by the model` : ''}`
+        + (t.push ? `; ${pl(t.push, 'push')}, the stake back` : '') + (t.none ? `; ${pl(t.none, 'day')} with no ${label} parlay` : '') + (t.replay ? `; ${t.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
+      chk(!!el && el.getAttribute('title') === title, `${label}'s pill says its record in its title: ${el && el.getAttribute('title')}`);
+    }
+    /* the figures by the ledger's own days, worked out here: won, lost and units on 1 a day */
+    for (const [id, label] of TIERS) {
+      let won = 0, lost = 0, units = 0;
+      for (const [day, e] of Object.entries(L.days)) { if (SG.seasonOf(day) !== S.season || !e.grade || !e.grade[id]) continue; const g = e.grade[id]; if (g.result === 'won') { won++; units += g.payout - 1; } else if (g.result === 'lost') { lost++; units -= 1; } }
+      chk(R.tiers[id].won === won && R.tiers[id].lost === lost && Math.abs(R.tiers[id].units - units) < 1e-3, `${label}: ${won}-${lost}, ${units.toFixed(2)} units by the ledger's days (${R.tiers[id].won}-${R.tiers[id].lost}, ${R.tiers[id].units})`);
+    }
+  }
+  chk(!errs.length, 'no runtime error drawing the record: ' + errs.join(' | '));
+  console.log(`  ${Object.keys(L.days).length} days in the ledger, ${lined.length} still to lock with a fresh line; ` + (R ? TIERS.map(([id, label]) => `${label} ${R.tiers[id].won}-${R.tiers[id].lost}`).join(', ') : 'no record'));
+}
+
 async function main() {
   const errors = [];
   reality();
@@ -3927,6 +3996,7 @@ async function main() {
   try { await theLook(); } catch (e) { chk(false, `THE LOOK stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   await parlayBuilder();
   await parlayEdges();
+  try { await suggestRecord(); } catch (e) { chk(false, `THE SUGGESTED PARLAYS' RECORD stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   await refreshOddsChecks();
   await playerPropsChecks();
   /* a page that breaks this section's steps (a button missing, a leg not where it should be) fails it, never ends the smoke unheard */

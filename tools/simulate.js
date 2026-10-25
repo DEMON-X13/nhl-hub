@@ -87,7 +87,7 @@ function run(script, args, env, label) {
 function dataDir(name, from = REAL_DATA) {
   const d = mkdir(name);
   /* the props model's constants (source), its ledger and the record of closing props come too, so props.js plays its part */
-  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json', 'props_model.json', 'props_ledger.json', 'props.json', 'corr.json', 'suggest_ledger.json'].concat(fs.readdirSync(from).filter(f => /^(season_\d{4}\.json|props_\d{4}\.jsonl)$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
+  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json', 'props_model.json', 'props_ledger.json', 'props.json', 'corr.json', 'suggest_ledger.json', 'models.json', 'models_backtest.json'].concat(fs.readdirSync(from).filter(f => /^(season_\d{4}\.json|props_\d{4}\.jsonl)$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
   /* this season's box scores from the folder copied (B's has last night's final boxed, which its props ledger graded) */
   for (const f of fs.readdirSync(REAL_DATA).filter(f => /^box_\d+\.jsonl$/.test(f))) {
     if (+f.slice(4, 8) >= SEASON) fs.copyFileSync(path.join(fs.existsSync(path.join(from, f)) ? from : REAL_DATA, f), path.join(d, f)); else fs.symlinkSync(path.join(REAL_DATA, f), path.join(d, f));
@@ -369,6 +369,10 @@ function partB() {
   const st = readJSON(path.join(B, 'starters.json'));
   const SB = readJSON(STB);
   chk(SB.pass === undefined, 'the state the job leaves is the second pass\'s');
+  /* the pick'em models (tools/models.js, nhl v20): every game to come the second pass called carries Alpha and the Joker, and the ELO Model
+     wherever the player model lined it up; none of the first pass's copies made one */
+  const toComeB = SB.games.filter(g => g.state === 'pre' && Date.parse(g.start) > Date.parse(NOW));
+  if (fs.existsSync(path.join(REAL_DATA, 'models.json'))) chk(toComeB.length > 0 && toComeB.every(g => g.models && g.models.alpha && g.models.joker && !!g.pm === !!g.models.elo), `every game to come carries the pick'em models, the ELO Model beside each player model view (${toComeB.filter(g => g.models).length} of ${toComeB.length})`);
   const pre = SB.games.filter(g => g.state === 'pre' && Date.parse(g.start) > Date.parse(NOW) && g.pm);
   const goalieOn = (g, c) => g.pm[g.home === c ? 'home' : 'away'].goalie;
   if (g1) {

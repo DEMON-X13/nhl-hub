@@ -81,7 +81,7 @@ const delayedAt = (call, start, ms) => !!(call && call.frozen && call.before && 
 /* a name as the report and the box scores can agree on it; written here again on purpose, not shared with the job */
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[.'’]/g, '').replace(/-/g, ' ').replace(/\b(jr|sr|ii|iii|iv)\b/g, ' ').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
 const OUT = /\bout\b|injured reserve|\bir\b|\bltir\b|suspen/i;
-const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
+const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'models', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
 
 /* boot the page with the clock at `clockMs`; resolves to the window once it has drawn. opts: state (a JSON
    string in place of the published one), store (what nhl_v1 holds before the page loads), hash, espn (a function of
@@ -4174,12 +4174,21 @@ async function theLook() {
    legend, the chart's lines week by week, the week grid with its shading, and every pick of a day (the day it opens on, a past day),
    on the state and on a copy with a final unlined, one whose two ratings part and one priced level. The call's season is the
    state's own SU record, worked out by the job */
-const PK_S = [['call', 'The call'], ['elo', 'Team Elo'], ['dk', 'DraftKings']];
+const PK_S = [['alpha', 'Alpha'], ['joker', 'The Joker'], ['elom', 'ELO Model'], ['call', 'The call'], ['elo', 'Team Elo'], ['dk', 'DraftKings']];
+const PK_MK = { alpha: 'alpha', joker: 'joker', elom: 'elo' };
+/* one of the NFL's three on a game: the call frozen with the game's own (`models`), else, with none, the state's backtest of it */
+function sPkModel(g, id, St) {
+  const k = PK_MK[id], isO = x => !!x && typeof x === 'object' && !Array.isArray(x);
+  if (isO(g.models)) return isO(g.models[k]) ? { c: g.models[k], bt: false } : null;
+  const b = St && St.models && St.models.backtest && St.models.backtest.games ? St.models.backtest.games[g.id] : null;
+  return isO(b) && isO(b[k]) ? { c: b[k], bt: true } : null;
+}
 const MON_S = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const sImp = o => o < 0 ? -o / (100 - o) : 100 / (100 + o);
 const sPkLined = L => !!L && [L.homeML, L.awayML].every(v => v !== null && v !== undefined && v !== '' && isFinite(v) && +v !== 0);
-function sPkPick(g, id) {
+function sPkPick(g, id, St = S) {
   const num = v => typeof v === 'number' && isFinite(v), side = p => num(p) ? (p >= 0.5 ? 'home' : 'away') : null;
+  if (PK_MK[id]) { const x = sPkModel(g, id, St); return x ? side(x.c.pHome) : null; }
   if (id === 'call') return g.pick === 'home' || g.pick === 'away' ? g.pick : side(g.pHome);
   if (id === 'elo') return side(g.by === 'players' ? g.elo && g.elo.pHome : g.pHome);
   return sPkLined(g.line) ? (sImp(+g.line.homeML) >= sImp(+g.line.awayML) ? 'home' : 'away') : null;
@@ -4193,16 +4202,16 @@ const sPkWin = g => g.hs > g.as ? 'home' : g.as > g.hs ? 'away' : null;
 function sPkData(St) {
   const fin = St.games.filter(g => g.state === 'final' && typeof g.hs === 'number' && typeof g.as === 'number' && g.hs !== g.as);
   const weeks = [...new Set(fin.map(g => sPkWeek(g.date)))].sort();
-  const rec = {}, vs = { call: {}, elo: {} }, bands = { '65+': [0.65, 2], '60-65': [0.60, 0.65], '55-60': [0.55, 0.60], '50-55': [0.5, 0.55] }, band = {};
-  for (const [id] of PK_S) { rec[id] = { w: 0, l: 0 }; for (const wk of weeks) rec[id][wk] = { w: 0, l: 0 }; }
+  const rec = {}, vs = {}, bands = { '65+': [0.65, 2], '60-65': [0.60, 0.65], '55-60': [0.55, 0.60], '50-55': [0.5, 0.55] }, band = {};
+  for (const [id] of PK_S) { rec[id] = { w: 0, l: 0 }; for (const wk of weeks) rec[id][wk] = { w: 0, l: 0 }; if (id !== 'dk') vs[id] = {}; }
   for (const k in bands) band[k] = { w: 0, l: 0 };
   for (const g of fin) {
     const win = sPkWin(g), wk = sPkWeek(g.date), right = {};
-    for (const [id] of PK_S) { const p = sPkPick(g, id); if (!p) continue; right[id] = p === win; const k = right[id] ? 'w' : 'l'; rec[id][k]++; rec[id][wk][k]++; }
-    for (const id of ['call', 'elo']) if (id in right && 'dk' in right) vs[id][wk] = (vs[id][wk] || 0) + right[id] - right.dk;
-    const f = sPkFav(g); if (f !== null) for (const [k, [lo, hi]] of Object.entries(bands)) if (f >= lo && f < hi) band[k][right.dk ? 'w' : 'l']++;
+    for (const [id] of PK_S) { const p = sPkPick(g, id, St); if (!p) continue; right[id] = p === win; const k = right[id] ? 'w' : 'l'; rec[id][k]++; rec[id][wk][k]++; }
+    for (const id of Object.keys(vs)) if (id in right && 'dk' in right) vs[id][wk] = (vs[id][wk] || 0) + right[id] - right.dk;
+    const f = sPkFav(g); if (f !== null && 'dk' in right) for (const [k, [lo, hi]] of Object.entries(bands)) if (f >= lo && f < hi) band[k][right.dk ? 'w' : 'l']++;
   }
-  const cum = {}; for (const id of ['call', 'elo']) { let c = 0; cum[id] = weeks.map(w => (c += vs[id][w] || 0)); }
+  const cum = {}; for (const id of Object.keys(vs)) { let c = 0; cum[id] = weeks.map(w => (c += vs[id][w] || 0)); }
   return { fin, weeks, rec, cum, band };
 }
 const sPkClass = r => { if (!(r.w + r.l)) return ''; const q = r.w / (r.w + r.l); return q >= 0.65 ? 'g3' : q >= 0.58 ? 'g2' : q > 0.5 ? 'g1' : q <= 0.35 ? 'r3' : q <= 0.42 ? 'r2' : q < 0.5 ? 'r1' : ''; };
@@ -4257,9 +4266,9 @@ async function holdPickem(St, ms, tag) {
       const fin = g.state === 'final' && sPkWin(g), res = fin ? `${abbr(g.away)} ${g.as} – ${abbr(g.home)} ${g.hs}` : null;
       if (txt(tr.cells[0]) !== `${abbr(g.away)} @ ${abbr(g.home)}` || (res && txt(tr.cells[1]) !== res)) bad.push(`${g.id}: "${txt(tr.cells[0])}" "${txt(tr.cells[1])}"`);
       PK_S.forEach(([id], j) => {
-        const c = tr.cells[2 + j], p = sPkPick(g, id), mark = !fin || !p ? '' : p === sPkWin(g) ? '✓' : '✗';
-        const want = p ? abbr(g[p]) + mark : '—';
-        if (!c || txt(c) !== want || (p && c.dataset.pick !== p)) bad.push(`${g.id} ${id}: "${txt(c)}", want "${want}"`);
+        const c = tr.cells[2 + j], p = sPkPick(g, id, St), mark = !fin || !p ? '' : p === sPkWin(g) ? '✓' : '✗', x = PK_MK[id] ? sPkModel(g, id, St) : null, bt = !!(x && x.bt);
+        const want = p ? abbr(g[p]) + mark + (bt ? 'bt' : '') : '—';
+        if (!c || txt(c) !== want || (p && c.dataset.pick !== p) || (!!c.dataset.bt) !== bt) bad.push(`${g.id} ${id}: "${txt(c)}"${c && c.dataset.bt ? ' (bt)' : ''}, want "${want}"`);
       });
     }
     chk(gs.length > 0 && !bad.length, `${tag}: every pick of ${day}, the game, the score, each model's side and whether it was right (${gs.length} games; ${bad.slice(0, 3).join(' | ')})`);
@@ -4272,6 +4281,45 @@ async function holdPickem(St, ms, tag) {
   chk(d.querySelector('#pkPicksW').hidden, `${tag}: Hide the picks shuts them`);
   chk(!errs.length, `${tag}: no runtime error on the Pick'em tab: ${errs.join(' | ')}`);
   holdRequests(w, `THE PICK'EM RECORD (${tag})`);
+}
+/* ---------- THE PICK'EM MODELS (nhl v20, tools/models.js) ----------
+   The NFL hub's three on the state: its `models` the constants' sha, fit and walk-forward table of data/models.json; its backtest the
+   finals data/models_backtest.json holds less any carrying its own frozen call; every game to come called this run carrying the three
+   with that sha, the ELO Model the Joker moved by the player model's gap (home ice out) by the registered beta, Alpha's chance the
+   logistic of its margin; and, on the data the run stood on (players.json the state's own), every call made again by tools/models.js
+   the same to the last place. A call made before puck drop and never moved after is the frozen-call check's (CALL) */
+function modelsChecks() {
+  console.log("THE PICK'EM MODELS");
+  const f = path.join(DATA, 'models.json');
+  if (!fs.existsSync(f)) { chk(!S.models, `no data/models.json and no models in the state (${JSON.stringify(S.models).slice(0, 60)})`); console.log('  no data/models.json: its checks skipped'); return; }
+  const M = readJSON(f), Mo = require('./models');
+  if (S.models === undefined) { chk(!(PREV && PREV.models), 'the models are in every state after the first that carried them'); console.log('  the state predates the models: their checks skipped'); return; }
+  chk(!!S.models && S.models.v === M.v && S.models.beta === M.elo.beta && JSON.stringify(S.models.report) === JSON.stringify(M.report) && JSON.stringify(S.models.fitted) === JSON.stringify(M.fitted), `the state's models are data/models.json's (${S.models && S.models.v}, ${M.v})`);
+  const bf = path.join(DATA, 'models_backtest.json'), B = fs.existsSync(bf) ? readJSON(bf) : null;
+  const wantBt = B ? Object.fromEntries(Object.entries(B.games).filter(([id]) => S.games.some(g => g.id === id && !g.models))) : {};
+  chk(!!S.models && JSON.stringify((S.models.backtest || {}).games || {}) === JSON.stringify(wantBt) && (S.models.backtest || {}).made === (B ? B.made : null), `the state's backtest is data/models_backtest.json's finals with no call of their own (${Object.keys(wantBt).length})`);
+  const pubMin = Math.floor(PUB / 60000), hfa = S.players && S.players.params ? S.players.params.hfa : M.elo.hfa;
+  const called = S.games.filter(g => g.state === 'pre' && g.frozen && Math.floor(Date.parse(g.frozen) / 60000) === pubMin && !sStarted(g, PUB));
+  const bad = [];
+  for (const g of called) {
+    const c = g.models;
+    if (!c || c.v !== M.v || !(c.alpha && c.alpha.pHome > 0 && c.alpha.pHome < 1) || !(c.joker && c.joker.pHome > 0 && c.joker.pHome < 1)) { bad.push(`${g.id}: ${String(JSON.stringify(c)).slice(0, 80)}`); continue; }
+    if (Math.abs(c.alpha.pHome - 1 / (1 + Math.exp(-M.alpha.k * c.alpha.mu))) > 0.003) bad.push(`${g.id}: Alpha ${c.alpha.pHome} is not the logistic of its margin ${c.alpha.mu}`);
+    if (!!g.pm !== !!c.elo) bad.push(`${g.id}: an ELO Model ${c.elo ? 'with no player model view' : 'missing beside the player model view'}`);
+    if (c.elo) {
+      const m = +(g.pm.mu - (g.neutral ? 0 : hfa)).toFixed(2), want = +Mo.eloP(M.elo.beta, c.joker.pHome, m).toFixed(4);
+      if (c.elo.m !== m || c.elo.pHome !== want) bad.push(`${g.id}: ELO Model ${c.elo.pHome} on ${c.elo.m}, want ${want} on ${m}`);
+    }
+  }
+  chk(!bad.length, `every game called this run carries Alpha, the Joker and the ELO Model, the ELO Model the Joker moved by the player model's gap (${called.length} games; ${bad.slice(0, 3).join(' | ')})`);
+  /* made again on the data the run stood on: only where players.json is the one the state was built on */
+  const PJf = path.join(DATA, 'players.json'), PJ = fs.existsSync(PJf) ? readJSON(PJf) : null;
+  if (PJ && S.players && PJ.generated === S.players.generated && called.length) {
+    const MD = Mo.prepare(DATA, S.season, S.games, S.model.params, PJ), diff = [];
+    for (const g of called) { const c = MD.call(g, g.line, PJ.upcoming && PJ.upcoming[g.id]); if (JSON.stringify(c) !== JSON.stringify(g.models)) diff.push(`${g.id}: ${String(JSON.stringify(g.models)).slice(0, 70)} -> ${String(JSON.stringify(c)).slice(0, 70)}`); }
+    chk(!diff.length, `every call made again by tools/models.js on the run's own data is the state's (${called.length} games; ${diff.slice(0, 2).join(' | ')})`);
+    console.log(`  ${called.length} games called this run, each made again the same; beta ${M.elo.beta}; ${Object.keys(wantBt).length} finals from the backtest`);
+  } else console.log(`  ${called.length} games called this run; the calls are not made again here (players.json is not the state's own, or no game was called)`);
 }
 async function pickemChecks() {
   console.log("THE PICK'EM RECORD");
@@ -4286,8 +4334,16 @@ async function pickemChecks() {
     fins[0].line = null;
     const b = fins[1]; b.by = 'players'; b.elo = Object.assign({}, b.elo || {}, { pHome: sPkPick(b, 'call') === 'home' ? 0.41 : 0.59 });
     const was2 = !!sPkPick(fins[2], 'dk'); fins[2].line = Object.assign({}, fins[2].line, { homeML: -110, awayML: -110 });
+    /* the NFL's three: a final whose own frozen call parts from its backtest (the call is the one counted), and one with neither */
+    let three = true;
+    if (fins.length >= 5) {
+      const g3 = fins[3], was = PK_S.filter(([id]) => PK_MK[id]).map(([id]) => sPkPick(g3, id, C));
+      g3.models = { v: 'planted', alpha: { pHome: was[0] === 'home' ? 0.3 : 0.7, mu: 0 }, joker: { pHome: was[1] === 'home' ? 0.3 : 0.7 }, elo: { pHome: was[2] === 'home' ? 0.3 : 0.7, m: 0 } };
+      delete fins[4].models; if (C.models && C.models.backtest && C.models.backtest.games) delete C.models.backtest.games[fins[4].id];
+      three = ['alpha', 'joker', 'elom'].every((id, i) => sPkPick(g3, id, C) !== was[i] && !sPkPick(fins[4], id, C));
+    }
     const D = sPkData(C);
-    chk(sPkPick(fins[0], 'dk') === null && sPkPick(fins[1], 'elo') !== sPkPick(fins[1], 'call') && sPkPick(fins[2], 'dk') === 'home' && D.rec.dk.w + D.rec.dk.l === lined - (was0 ? 1 : 0) + (was2 ? 0 : 1), 'the copy plants an unlined final, the two ratings parting and a level price');
+    chk(sPkPick(fins[0], 'dk') === null && sPkPick(fins[1], 'elo') !== sPkPick(fins[1], 'call') && sPkPick(fins[2], 'dk') === 'home' && D.rec.dk.w + D.rec.dk.l === lined - (was0 ? 1 : 0) + (was2 ? 0 : 1) && three, 'the copy plants an unlined final, the two ratings parting, a level price, a model\'s own call over its backtest and a final with neither');
     await holdPickem(C, PUB, 'a made-up copy');
   }
 }
@@ -4606,6 +4662,7 @@ async function main() {
   await parlayBuilder();
   await parlayEdges();
   try { await suggestRecord(); } catch (e) { chk(false, `THE SUGGESTED PARLAYS' RECORD stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
+  try { modelsChecks(); } catch (e) { chk(false, `THE PICK'EM MODELS stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   try { await pickemChecks(); } catch (e) { chk(false, `THE PICK'EM RECORD stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   await refreshOddsChecks();
   await playerPropsChecks();

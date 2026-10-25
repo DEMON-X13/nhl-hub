@@ -66,6 +66,7 @@ const fs = require('fs'), path = require('path');
 const E = require('./espn');
 const Hist = require('./hist');
 const { Elo, expected, spreadOf, goals, coverProbs, totalProbs } = require('./elo');
+const Models = require('./models');
 
 const ROOT = path.join(__dirname, '..');
 const DATA = process.env.NHL_DATA || path.join(ROOT, 'data'), OUT = process.env.NHL_OUT || path.join(__dirname, 'out');
@@ -80,7 +81,7 @@ const EDGE = 0.05;                                  // the model's chance must b
 const SIMS = 2000;
 const SHRINK = 20;                                  // games before a club's own scoring rate outweighs the league's
 /* the parts of a row that are the call: made before puck drop, copied unchanged after it */
-const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
+const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'models', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
 const CALL_V = 2;                                   // a row whose call this job made or kept whole
 
 const log = m => console.log(new Date().toISOString().slice(11, 19), m);
@@ -415,6 +416,8 @@ async function main() {
     if (view.pm) c.pm = view.pm;
     if (view.elo && view.pmMu !== undefined && view.pmMu !== null) c.elo = { pHome: +view.elo.pHome.toFixed(4), xt: +view.elo.xt.toFixed(2) };
     if (view.pmMu !== undefined && view.pmMu !== null) c.by = 'players';
+    /* the NFL hub's three pick'em models (tools/models.js), called on the same line and frozen with the rest */
+    if (view.models) c.models = view.models;
     c.line = line;
     c.pick = view.pHome >= 0.5 ? 'home' : 'away';
     if (line) {
@@ -480,6 +483,10 @@ async function main() {
      up on that state, and the second pass makes the calls, so a game whose puck drop falls between the
      two passes is graded on the call the page showed, never on one the first pass made and nobody saw */
   const SCORES = ARGS.has('--scores');
+  /* the pick'em models (tools/models.js: Alpha, the Joker, the ELO Model): every final replayed for their inputs, and each game
+     to come called on its goalies (the player model's) and the line it is called on; none where data/models.json is not there */
+  const MD = SCORES ? null : Models.prepare(DATA, SEASON, games, model.params, PM);
+  let modelCalls = 0;
   for (const g of games) {
     const p = prevGames.get(g.id);
     const row = { id: g.id, type: g.type, date: g.date, start: g.start, state: g.state, detail: g.detail, home: g.home, away: g.away, hs: g.hs, as: g.as, periods: g.periods,
@@ -496,7 +503,9 @@ async function main() {
       if (u) { view.pm = { pHome: u.pHome, mu: u.mu, xt: u.total, home: u.home, away: u.away, inj: u.inj || null }; if (usePM) { view.pHome = u.pHome; view.xt = u.total; view.pmMu = u.mu; } }
       /* the lines: taken while the game is still to come */
       view.before = g.start;
-      call = callOf(view, g.odds ? freshLine(g.odds, p) : (p && p.line) || null);
+      const line = g.odds ? freshLine(g.odds, p) : (p && p.line) || null;
+      if (MD) { view.models = MD.call(g, line, u); modelCalls++; }
+      call = callOf(view, line);
     }
     /* started with no call made before it: the replay's view for a final, the current one while live; no line, no side */
     else if (replayed[g.id]) { const v = replayed[g.id]; call = callOf({ pHome: v.pHome, diff: v.diff, rh: v.rh, ra: v.ra, xt: v.xt, frozen: null }, null); }
@@ -521,6 +530,7 @@ async function main() {
     out.push(row);
   }
   if (rebuilt) log(`${rebuilt} calls an older job recomputed after puck drop put back to the call shown before it`);
+  if (!SCORES) log(MD ? `pick'em models (${MD.M.v}): ${modelCalls} games to come called by Alpha, the Joker and the ELO Model` : "pick'em models: no data/models.json, no call");
   if (!SCORES) log(`lines: ${lineCount.games} game${lineCount.games === 1 ? '' : 's'} to come priced this run (${Object.entries(lineCount.books).map(([b, n]) => `"${b}" ${n}`).join(', ') || 'no book'}); DraftKings ids on ${lineCount.read + lineCount.carried} of them (${lineCount.read} read, ${lineCount.carried} carried from the last state; ${lineCount.full} with an id for every price${lineCount.event ? `; ${lineCount.event} more with DraftKings' event and no outcome id` : ''})`);
 
   /* the record: straight up on every game, and on the moneyline, the puck line and the total where a side was taken */
@@ -563,12 +573,23 @@ async function main() {
   const C = fs.existsSync(path.join(DATA, 'corr.json')) ? JSON.parse(fs.readFileSync(path.join(DATA, 'corr.json'), 'utf8')) : null;
   const sgp = C && C.rho && C.hold ? { rho: C.rho, hold: C.hold, measured: C.measured || null } : null;
   const box = boxWindow(out);
+  /* the pick'em models for the page: their constants' sha, the fit and its walk-forward table (data/models.json), and the finals of
+     this season played before they existed, called afterwards on what was known before each puck drop (data/models_backtest.json,
+     written once by `node tools/models.js --backtest`), which the Pick'em counts and says so */
+  const modelsOf = () => {
+    const f = path.join(DATA, 'models.json'); if (!fs.existsSync(f)) return null;
+    const M = JSON.parse(fs.readFileSync(f, 'utf8')), bf = path.join(DATA, 'models_backtest.json');
+    const B = fs.existsSync(bf) ? JSON.parse(fs.readFileSync(bf, 'utf8')) : null;
+    const back = B && B.games ? Object.fromEntries(Object.entries(B.games).filter(([id]) => out.some(r => r.id === id && !r.models))) : {};
+    return { v: M.v, fitted: M.fitted, beta: M.elo.beta, report: M.report, backtest: { made: B ? B.made : null, games: back } };
+  };
+  const pickem = modelsOf();
   /* `removed`: the games taken off the schedule since the last published state, each with the feed's
      reason, so the smoke test can hold every started call of that state to this one; `kept`: games a
      partial answer left out, kept as they were; `pass`: only on the first pass's state, never published */
   /* published at the run's own clock, the one every call was made and frozen by, so a puck drop while the run reads
      the feed is not a call "made after puck drop" to the smoke test */
-  const state = Object.assign({ published: new Date(Date.parse(NOW)).toISOString(), season: SEASON, today: TODAY, phase: playoff.phase, model, teams, games: out, record, playoff, edge: EDGE, players, props, sgp, box },
+  const state = Object.assign({ published: new Date(Date.parse(NOW)).toISOString(), season: SEASON, today: TODAY, phase: playoff.phase, model, teams, games: out, record, playoff, edge: EDGE, players, props, sgp, box, models: pickem },
     removedNow.length ? { removed: removedNow } : {}, kept.length ? { kept } : {}, SCORES ? { pass: 'scores' } : {});
   /* the suggested parlays' record (tools/suggest.js): the second pass takes each day's three levels from the page itself, booted on
      this state at this run's clock, locks a day at its first puck drop as the last run before it left it, grades the locked days

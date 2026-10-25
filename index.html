@@ -266,6 +266,7 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pk-pick{display:inline-flex;align-items:center;gap:6px}
 .pk-ok{color:var(--lime);font-weight:800} .pk-no{color:var(--rose-ink);font-weight:800}
 #pkPicks td{white-space:nowrap} #pkPicks .mu{flex-wrap:nowrap} #pkPicksW{margin-bottom:12px}
+.pk-btm{font:700 10px var(--body);color:var(--ink-2);border:1px dotted var(--muted-ink);border-radius:4px;padding:0 3px}
 @media(max-width:640px){.pk-day select{font-size:16px}}
 /* ---------- the Parlay Builder (pb-) and the parlay card (pc-) ----------
    Every control here is at least 44px tall and shows an --ice ring when focused by keyboard. Quiet text is
@@ -838,7 +839,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v19 · 2026-10-25';
+const APP_BUILD = 'nhl v20 · 2026-10-25';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -3861,19 +3862,33 @@ document.addEventListener('keydown', e => {
 /* ---------- the Pick'em Record (#pickem, nhl v19) ----------
    The owner's ask of 25 October 2026: "i want a tab for pickem record and show all the models we have and their records", the NFL hub's
    Pick'em Record in hockey's terms. Every final straight up (the NHL has no ties), each model's pick the one frozen at puck drop on
-   the game's row and copied after it (the job's CALL fields), so nothing here is worked out after a game: the call (the site's own
-   pick, the player ratings blended with the club Elo: `pick`), the Team Elo (the club ratings alone: `elo.pHome` beside a player-model call, else the call's
+   the game's row and copied after it (the job's CALL fields), so nothing here is worked out after a game: the NFL hub's three (nhl
+   v20, tools/models.js: Alpha, the Joker and the ELO Model, `models` in the call; the finals before they existed from their
+   backtest, `S.models.backtest`, called afterwards on what was known before each puck drop, as the NFL counts its own), the call
+   (the site's own pick, the player ratings blended with the club Elo: `pick`), the Team Elo (the club ratings alone: `elo.pHome` beside a player-model call, else the call's
    own chance), and DraftKings, the baseline, as the NFL's Vegas: the moneyline favourite with the margin taken out, on the line the
    job last read before puck drop (frozen with the call; not a closing line). The unit is the week, Monday to Sunday (Eastern) */
 const PK_MODELS = [
-  { id: 'call', name: 'The call', sub: "the site's own pick: the player ratings, blended with the club Elo", c: '#CDFF4F' },
+  { id: 'alpha', key: 'alpha', name: 'Alpha', sub: "the club Elo with each club's shots, goals and goalie: a margin model, as the NFL hub's Alpha", c: '#34D399' },
+  { id: 'joker', key: 'joker', name: 'The Joker', sub: "boosted trees on the market and every pre-game number, as the NFL hub's Joker", c: '#FF6B8A' },
+  { id: 'elom', key: 'elo', name: 'ELO Model', sub: "the player ratings on the Joker's baseline, as the NFL hub's ELO Model", c: '#FFA94D' },
+  { id: 'call', name: 'The call', sub: "the site's own pick: the player ratings, blended with the club Elo", c: '#EEF2FF' },
   { id: 'elo', name: 'Team Elo', sub: 'the club ratings alone', c: '#5FD4FF' },
 ];
+const PK_KEY = Object.fromEntries(PK_MODELS.filter(m => m.key).map(m => [m.id, m.key]));
+/* one of the NFL's three on a game: the call frozen with the game's own, else its backtest (a final before the models existed) */
+function pkCall(g, id) {
+  const k = PK_KEY[id]; if (!k) return null;
+  if (isObj(g.models)) return isObj(g.models[k]) ? { c: g.models[k], bt: false } : null;
+  const B = S.models && isObj(S.models.backtest) && isObj(S.models.backtest.games) ? S.models.backtest.games[g.id] : null;
+  return isObj(B) && isObj(B[k]) ? { c: B[k], bt: true } : null;
+}
 const PK_BASE = { id: 'dk', name: 'DraftKings' };
 const PK_BANDS = [['65+', 0.65, 1.01], ['60-65', 0.60, 0.65], ['55-60', 0.55, 0.60], ['50-55', 0.5, 0.55]];
 /* a model's chance of the home side on a game, frozen at puck drop */
 function pkHome(g, id) {
   const num = v => typeof v === 'number' && isFinite(v) ? v : null;
+  if (PK_KEY[id]) { const x = pkCall(g, id); return x ? num(x.c.pHome) : null; }
   if (id === 'call') return num(g.pHome);
   if (id === 'elo') return g.by === 'players' ? (isObj(g.elo) ? num(g.elo.pHome) : null) : num(g.pHome);
   if (id === 'dk') { const L = g.line; if (!isObj(L) || !priced(L.homeML) || !priced(L.awayML)) return null; const h = implied(+L.homeML), a = implied(+L.awayML); return h / (h + a); }
@@ -3952,12 +3967,13 @@ function renderPickem() {
   if (PK_SHOW) {
     $('pkDay').innerHTML = days.map(d => `<option value="${d}"${d === PK_DAY ? ' selected' : ''}>${esc(dayText(d))}</option>`).join('');
     const gs = S.games.filter(g => g.date === PK_DAY).sort(gameCmp);
-    const cell = (g, id) => { const p = pkPick(g, id); if (!p) return '<td>—</td>'; const win = g.state === 'final' ? pkWinner(g) : null; return `<td data-pick="${p}"><span class="pk-pick">${pill(g[p])}${win ? (p === win ? '<span class="pk-ok" aria-label="right">✓</span>' : '<span class="pk-no" aria-label="wrong">✗</span>') : ''}</span></td>`; };
+    const cell = (g, id) => { const p = pkPick(g, id); if (!p) return '<td>—</td>'; const win = g.state === 'final' ? pkWinner(g) : null, x = pkCall(g, id), bt = !!(x && x.bt); return `<td data-pick="${p}"${bt ? ' data-bt="1" class="pk-bt" title="backtest: called afterwards on what was known before the puck drop"' : ''}><span class="pk-pick">${pill(g[p])}${win ? (p === win ? '<span class="pk-ok" aria-label="right">✓</span>' : '<span class="pk-no" aria-label="wrong">✗</span>') : ''}${bt ? '<span class="pk-btm" aria-label="backtest">bt</span>' : ''}</span></td>`; };
     const res = g => g.state === 'final' ? `${esc(T(g.away).abbr)} ${g.as} – ${esc(T(g.home).abbr)} ${g.hs}` : hasStarted(g) ? 'under way' : esc(timeOf(g));
     $('pkPicks').innerHTML = `<thead><tr><th class="sk">Game</th><th>Result</th>${rows.map(m => `<th>${esc(m.name)}</th>`).join('')}</tr></thead><tbody>`
       + (gs.length ? gs.map(g => `<tr data-id="${g.id}"><td class="sk">${muPills(g)}</td><td>${res(g)}</td>${rows.map(m => cell(g, m.id)).join('')}</tr>`).join('') : `<tr><td class="sk">No games</td><td></td>${rows.map(() => '<td></td>').join('')}</tr>`) + '</tbody>';
   }
-  $('pkNote').textContent = `Every final straight up, each pick the one frozen at puck drop and never changed after. The call: the site's own pick, the player ratings blended with the club Elo. Team Elo: the club ratings alone. DraftKings: the moneyline favourite with its margin taken out, on the line the job last read before puck drop (not the closing line). Against DraftKings: a model's wins less DraftKings' on the games both picked.`;
+  const nBt = D.fin.filter(g => PK_MODELS.some(m => { const x = pkCall(g, m.id); return x && x.bt; })).length;
+  $('pkNote').textContent = `Every final straight up, each pick the one frozen at puck drop and never changed after. Alpha: the club Elo with each club's shots, goals and goalie, a margin model. The Joker: boosted trees on DraftKings' price and every pre-game number. ELO Model: the player ratings on the Joker's baseline. The three are the NFL hub's, rebuilt for hockey and fitted on the 2022-23 to 2025-26 seasons; ${nBt ? `the ${nBt} final${nBt === 1 ? '' : 's'} played before they existed are their backtest (marked bt), each called afterwards on what was known before its puck drop, and counted as the NFL hub counts its own. ` : ''}The call: the site's own pick, the player ratings blended with the club Elo. Team Elo: the club ratings alone. DraftKings: the moneyline favourite with its margin taken out, on the line the job last read before puck drop (not the closing line). Against DraftKings: a model's wins less DraftKings' on the games both picked.`;
 }
 /* on a resize, the chart drawn again at its box's new width (only while the tab is open and the width moved) */
 function pkFit() { const box = $('pkChart'); if (!S || !box || $('tab-pickem').hidden) return; const cw = Math.round(box.clientWidth || 0); if (cw && cw !== PK_CW) box.innerHTML = pkChart(pkData()); }

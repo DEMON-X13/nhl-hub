@@ -127,7 +127,7 @@ each market. The playoff picture, in the regular season, is two thousand simulat
 of it (overtime and its loser point from the goals layer), the league's bracket (top three a
 division, two wild cards a conference), four best-of-seven rounds with home ice to the higher seed;
 once the regular season is over the field is the real one and each series ESPN has a game in is
-played on from its real score, so a club knocked out has no chance left and the bracket shows every
+played on from its real score, so a club knocked out has no chance left and the state carries every
 series' score (`phase`: preseason, regular, postseason, over, offseason). The field is then the
 sixteen clubs of ESPN's first round, its seeds and wild cards read off the bracket: the table breaks
 ties only to goal difference, so a club it left out that ESPN has in a series is in for certain, and
@@ -142,7 +142,8 @@ has started: the Games tab's Today is the visitor's Eastern date, a game past it
 bet and says it is under way, a live score the job published says when it was read (and the page
 reads ESPN itself once on opening for a game under way), and a leg whose game has started leaves the
 builder. Tabs: Games, Parlay Builder (`#parlays`, `#parlay` too; browser only, no sync), Standings, Power
-Ratings, Playoff, Players (the player model's rankings and the sources it stands on), Record.
+Ratings, Players (the player model's rankings and the sources it stands on), Record (a Playoff tab went in nhl v14:
+the Standings and Power ratings carry the playoff chances).
 
 THE LOOK (nhl v12, the card and the colours nhl v13, `index.html`; CLAUDE.md has the rules): the NBA Hub's components with ice for
 its orange, no image anywhere, each club a badge or a pill in its own colour from `TEAM_COLORS` (each club's primary colour, or its
@@ -156,9 +157,8 @@ side far off the market a "far off" tag and its two numbers under its line, ever
 club, their figures beside them or in the Lineups drawer, which lists everyone out, never cut short; the Lineups drawer opened from its
 one toggle in the foot, the foot with Player props and Parlay Builder →; a redraw replaces only the cards that changed); every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (the Standings' four
-sharing their column widths); the Player props window the NBA's sheet with a head that stays put; the bracket a five-column grid,
-a club's points under its name; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
-tier cards. The smoke's THE LOOK section holds it with its own code.
+sharing their column widths); the Player props window the NBA's sheet with a head that stays put; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
+tier cards, three a row as the NFL hub's (nhl v14). The smoke's THE LOOK section holds it with its own code.
 
 REFRESH ODDS (nhl v9, `index.html`; CLAUDE.md has the rules): a button on the Games tab's odds bar and on the Parlay
 Builder tab's, over its panel, reads ESPN's scoreboard in the browser, on a press and never else, for the strip's days
@@ -173,8 +173,8 @@ reload is the published state. The same press reads DraftKings' player props for
 (THE PROPS VIEW, below).
 
 THE PARLAY BUILDER (nhl v7, `index.html`, every class `pb-` for the panel and `pc-` for the card; CLAUDE.md
-has the rules): the panel (`#pbPanel`: Bet amount, Build from, Bet types, Day, Games, the notes, four levels
-found by exact search and the rules folded under them), Pick your own legs (`#plLines`), the builder
+has the rules): the panel (`#pbPanel`: Bet amount, Build from, Bet types, Day, Games, the notes, three levels
+(Safe, Medium, Aggressive) found by exact search and the rules folded under them), Pick your own legs (`#plLines`), the builder
 (`#builder`, re-read from the state on every draw), the saved parlays (`#savedList`), the slip bar (`#slip`)
 and the card window (`#pcWin`). Its numbers are the state's alone: a leg is the game row's own chance, edge
 and prices, offered only on a fresh line (`line.at` is `published`) and a game not started by the visitor's

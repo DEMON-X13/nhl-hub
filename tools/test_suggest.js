@@ -137,7 +137,7 @@ const day = (d, gs, src) => ({ date: d, lock: `${d}T23:00:00.000Z`, taken: `${d}
     const e4 = SG.readLedger(path.join(dir, 'suggest_ledger.json')).days[D];
     const mine = id => { const t = e4.tiers[id]; if (!t) return null; const legs = t.legs.map(L => L.kind === 'ou' ? (5 > L.line ? (L.side === 'over' ? 'win' : 'loss') : 5 < L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push') : L.kind === 'ml' ? (L.side === 'home' ? 'win' : 'loss') : ((L.side === 'home' ? 1 : -1) + L.line > 0 ? 'win' : 'loss')); return legs; };
     chk(SG.TIERS.every(([id]) => !e4.tiers[id] || JSON.stringify(e4.grade[id].legs) === JSON.stringify(mine(id))), `every leg graded on its own number by this test's own sums (${SG.TIERS.map(([id]) => e4.tiers[id] ? `${id} ${e4.grade[id].result}` : `${id} none`).join(', ')})`);
-    chk(JSON.stringify(s4) === JSON.stringify(SG.summarize(SG.readLedger(path.join(dir, 'suggest_ledger.json')), S4.season)), 'the record returned is the ledger\'s');
+    { const L4 = SG.readLedger(path.join(dir, 'suggest_ledger.json')); chk(JSON.stringify(s4) === JSON.stringify(Object.assign(SG.summarize(L4, S4.season), { sets: SG.current(L4, Date.parse(S4.published)) })) && Object.keys(s4.sets).length > 0, 'the record returned is the ledger\'s, with its current days'); }
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 })().catch(e => { checks++; fails.push('threw: ' + (e.stack || e)); }).finally(() => {
   for (const f of fails) console.log('  FAIL ' + f);

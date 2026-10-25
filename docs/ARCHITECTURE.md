@@ -168,7 +168,8 @@ club, their figures beside them or in the Lineups drawer, which lists everyone o
 one toggle in the foot, the foot with Player props and Parlay Builder →; a redraw replaces only the cards that changed); every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (the Standings' four
 sharing their column widths); the Player props window the NBA's sheet with a head that stays put; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
-tier cards, three a row as the NFL hub's (nhl v14). The smoke's THE LOOK section holds it with its own code.
+tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
+builder first, then the Top 30 lines a line a row. The smoke's THE LOOK section holds it with its own code.
 
 REFRESH ODDS (nhl v9, `index.html`; CLAUDE.md has the rules): a button on the Games tab's odds bar and on the Parlay
 Builder tab's, over its panel, reads ESPN's scoreboard in the browser, on a press and never else, for the strip's days
@@ -177,16 +178,19 @@ is `tools/elo.js`'s goals layer, each word for word (`carryDk`, the carry rule, 
 every line through it); `oddsCall` is the line half of `update.js`'s `callOf`. A game still to come by the clock and
 by ESPN's word takes the new line (marked `refreshed`, so it is fresh) and the call's edges, sides and chances
 follow; one ESPN has under way, over, postponed or cancelled keeps its line, counted in the status line. Everything
-drawn from the prices redraws: the levels keep their locks and New legs (`pbCarry`), the builder draws on the new
+drawn from the prices redraws: the open days' suggested levels and the Top 30 are worked again on the new prices, the builder draws on the new
 lines while its stored legs stay as they were, an open card follows. In memory only: nothing is stored, and a
 reload is the published state. The same press reads DraftKings' player props for the games today and tomorrow
 (THE PROPS VIEW, below).
 
-THE PARLAY BUILDER (nhl v7, `index.html`, every class `pb-` for the panel and `pc-` for the card; CLAUDE.md
-has the rules): the panel (`#pbPanel`: Bet amount, Build from, Bet types, Day, Games, the notes, three levels
-(Safe, Medium, Aggressive) found by exact search and the rules folded under them), Pick your own legs (`#plLines`), the builder
-(`#builder`, re-read from the state on every draw), the saved parlays (`#savedList`), the slip bar (`#slip`)
-and the card window (`#pcWin`). Its numbers are the state's alone: a leg is the game row's own chance, edge
+THE PARLAY BUILDER (nhl v7, laid out as the NFL hub's in nhl v17, `index.html`, every class `pb-` for the panel, `t30-` for
+the Top 30, `sp-` for the Suggested Parlays tab and `pc-` for the card; CLAUDE.md has the rules): on the Parlay Builder tab
+the builder (`#builder`, first, re-read from the state on every draw), the Top 30 lines (`#pbPanel`: Bet amount, Build from,
+Bet types, Day, Games, the notes, the list by the expected return on $1, value picks first, and its rules folded under it), Pick
+your own legs (`#plLines`) and the saved parlays (`#savedList`); on the Suggested Parlays tab (`#tab-suggest`) the record's row and
+today's and tomorrow's sets (`#spBody`: three levels (Safe, Medium, Aggressive) found by exact search on every game and bet type
+of the day while it is open, the record's locked set from its first puck drop); the slip bar (`#slip`) and the card window
+(`#pcWin`). Its numbers are the state's alone: a leg is the game row's own chance, edge
 and prices, offered only on a fresh line (`line.at` is `published`) and a game not started by the visitor's
 clock. The levels take one leg a game, team bets alone, so their chance and price are products. Since nhl v11
 the builder takes more than one leg of a game and DraftKings' player lines (SAME-GAME PARLAYS AND PLAYER LEGS,

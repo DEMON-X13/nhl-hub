@@ -542,43 +542,54 @@ function sBrute(legs, n, floor, must) {
   for (let k = k0; k <= n; k++) { const c = pickBest(ret, k); if (c) return Object.assign(c, { fair: fairOf(c) }); }
   const c = pickBest(lik, k0); return Object.assign(c, { fair: fairOf(c), likeliest: true });
 }
+/* the Top 30 lines by this smoke's own sums (nhl v17): the value picks (5 points or more above the price, the calls) then the other
+   lines, each part by the expected return on $1 (the model's chance times the decimal, less the stake), ties to the lower leg id, 30 in all */
+const sEv = L => L.p * L.dec - 1;
+function sTop(pool) {
+  const cmp = (a, b) => (sEv(b) - sEv(a)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const value = pool.legs.filter(L => !L.thin).sort(cmp).slice(0, 30), other = pool.legs.filter(L => L.thin).sort(cmp).slice(0, 30 - value.length);
+  return { value, other, n: pool.legs.length };
+}
+/* why the list is empty, by this smoke's own wording */
 function sWhy(sl, pool, off) {
   if (!pool.kinds.length) return 'No bet types ticked: tick at least one above.';
   if (!pool.ticked.length) return 'No games ticked: tick at least one above.';
-  const m = pool.m;
   const moreGames = pool.scan(pool.tickable.filter(g => off.includes(g.id)), pool.kinds).out.length > 0;
-  const moreTypes = new Set(pool.scan(pool.ticked, PBS.KINDS).out.map(L => L.game)).size > m;
+  const moreTypes = pool.scan(pool.ticked, PBS.KINDS).out.length > 0;
   const bothHint = sl.both && sl.pick !== 'both';
   const fixes = moreGames && moreTypes ? 'tick more games or bet types' : moreGames ? 'tick more games' : moreTypes ? 'tick more bet types' : '';
   const help = fixes && bothHint ? fixes + ' or choose Both days above' : fixes || (bothHint ? 'choose Both days above' : '');
-  const head = m === 0 ? "No leg on your picks qualifies (the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market)" : `Only ${m} leg${m > 1 ? 's' : ''} on your picks (one a game)`;
+  const head = "No line on your picks qualifies (the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market)";
   if (help) return `${head}: ${help}.`;
   const last = sl.dates[sl.dates.length - 1], nx = last && PBS.nextDay(last);
   const note = sl.pick !== 'both' && nx && sl.on(nx).length && !sl.on(nx).some(sFresh) ? ` ${PBS.day(nx)}'s lines come about a day ahead.` : '';
-  if (m === 0) return `${head}.${note}`;
-  if (m === pool.tickable.length) return `Only ${m} game${m > 1 ? 's' : ''} on ${sl.text} (one leg a game).${note}`;
-  return `Only ${m} of the ${pool.tickable.length} games on ${sl.text} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).${note}`;
+  return `${head}.${note}`;
 }
 function sWide(sl, pool) {
-  const over = "No games to build from: the season is over. The panel comes back with next season's first lines.";
+  const over = "No games to build from: the season is over. The list comes back with next season's first lines.";
   if (!S.games.length || !sl.come.length) return over;
-  const other = sl.days.find(d => !sl.dates.includes(d) && sl.on(d).some(sFresh));
-  const otherNote = other ? ` ${PBS.day(other)} is in the Day choice above.` : '';
   if (!pool.tickable.length) {
+    const other = sl.days.find(d => !sl.dates.includes(d) && sl.on(d).some(sFresh));
+    const otherNote = other ? ` ${PBS.day(other)} is in the Day choice above.` : '';
     const opener = S.games[0].date;
     if (opener > sl.today && sl.dates.every(d => d <= opener)) return `The season opens ${PBS.day(opener)}. DraftKings posts the first lines about a day before.`;
     if (S.phase === 'offseason' || S.phase === 'over') return over;
     return `No DraftKings lines yet for ${sl.text}: DraftKings posts a day's lines about a day before puck drop, and the job reads them at its next run (five times a day).${otherNote}`;
   }
-  if (pool.tickable.length < 2) return `Only one game on ${sl.text} is still to come with a DraftKings line, and a parlay needs two.${otherNote}`;
   return '';
 }
 const TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];        // Extreme went in nhl v14
-/* the panel in a window against this smoke's own working: the slate, the Day control, the notes, every level (brute force when asked) */
-function holdPanel(w, ms, tag, brute) {
+const sClock = ms => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+const sDayClock = ms => new Date(ms).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+const sStakeOf = store => { const v = +store.stake; return isFinite(v) && v > 0 ? Math.round(Math.min(100000, Math.max(1, v)) * 100) / 100 : 20; };
+/* the builder's legs as the page draws them: the ids of the stored team legs still drawn (the page's own list, read once) */
+const sDrawn = w => new Set(JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => L.id))')));
+/* the Top 30 panel in a window against this smoke's own working: the slate, the Day control, the games fold, the notes, the list row by
+   row (its order, its two parts, every number) or the line that says why there is none */
+function holdPanel(w, ms, tag) {
   const d = w.document, store = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), ui = (store.ui && store.ui.pb) || {};
   const k = ui.k || {}, kinds = PBS.KINDS.filter(x => k[x] !== false), off = Array.isArray(ui.off) ? ui.off.map(String) : [];
-  const sl = sSlate(ms, ui.day), pool = sPool(sl, kinds, off), stake = (() => { const v = +store.stake; return isFinite(v) && v > 0 ? Math.round(Math.min(100000, Math.max(1, v)) * 100) / 100 : 20; })();
+  const sl = sSlate(ms, ui.day), pool = sPool(sl, kinds, off), stake = sStakeOf(store);
   chk(txt(d.getElementById('pbSlate')) === (sl.text || 'no games'), `${tag}: the slate pill names ${sl.text} (${txt(d.getElementById('pbSlate'))})`);
   chk(d.getElementById('pbDayRow').hidden === (sl.days.length < 2), `${tag}: the Day control is shown exactly when two days are offered (${sl.days.join(', ')})`);
   if (sl.days.length > 1) {
@@ -594,43 +605,162 @@ function holdPanel(w, ms, tag, brute) {
   chk(sum === (nt === pool.tickable.length ? `All ${nt}` : `${nt} of ${pool.tickable.length}`), `${tag}: the Games summary counts the tickable games (${sum})`);
   /* the far-off note */
   const notes = txt(d.getElementById('pbNotes'));
-  const farRe = /(\d+) legs? (?:are|is) left out: the model rates/;
-  chk(pool.far.length ? (farRe.exec(notes) || [])[1] === String(pool.far.length) : !farRe.test(notes), `${tag}: the far-off note counts ${pool.far.length} legs (${(farRe.exec(notes) || [])[1] || 'none said'})`);
-  const wide = sWide(sl, pool), wEl = d.getElementById('pbWide');
-  if (wide) { chk(wEl && txt(wEl) === wide, `${tag}: the panel says "${wide}" (${wEl ? txt(wEl) : 'three levels drawn'})`); return { sl, pool, levels: null, stake }; }
-  chk(!wEl && d.querySelectorAll('.pb-tier').length === 3 && !d.querySelector('.pb-tier[data-tier="xtrm"]'), `${tag}: three levels, Safe, Medium and Aggressive`);
-  const levels = {};
-  for (const [id, label, n, floor] of TIERS) {
-    const el = d.querySelector(`.pb-tier[data-tier="${id}"]`); if (!el) { chk(false, `${tag}: no ${label} card`); continue; }
-    const shown = [...el.querySelectorAll('.pb-tl')].map(x => x.dataset.id);
-    /* every leg: still to come, fresh, both prices, 45-97%, at or above the price, no push, not far off, one a game, ticked, on the slate */
-    for (const lid of shown) {
-      const [gid, side, kind] = lid.split('|'), g = S.games.find(x => x.id === gid), L = g && sLeg(g, side, kind);
-      chk(!!L && !sStarted(g, ms) && sFresh(g) && sQual(L) === 'ok' && kinds.includes(kind) && !off.includes(gid) && sl.dates.includes(g.date), `${tag}: ${label}'s leg ${lid} is one the rules allow`);
-      if (!L) continue;
-      const row = el.querySelector(`.pb-tl[data-id="${lid}"]`), rt = txt(row);
-      chk(rt.includes(PBS.odds(L.price)) && rt.includes(`fair ${PBS.pctW(L.fair)}`) && rt.includes(`model ${PBS.pctW(L.p)}`), `${tag}: ${label}'s leg ${lid} shows the state's price, fair and model chance: ${rt}`);
-      chk(/thin edge/i.test(rt) === (L.edge < S.edge), `${tag}: ${label}'s leg ${lid} is marked thin exactly when its edge ${L.edge} is under ${S.edge}`);
-    }
-    chk(new Set(shown.map(x => x.split('|')[0])).size === shown.length, `${tag}: ${label} has one leg a game`);
-    const res = el.classList.contains('none') ? null : { legs: shown };
-    levels[id] = res;
-    if (!brute) continue;
-    const b = sBrute(pool.legs, n, floor);
-    if (!b) { chk(!res && txt(el.querySelector('.pb-empty')) === sWhy(sl, pool, off), `${tag}: ${label} is empty: "${sWhy(sl, pool, off)}" (${res ? 'a parlay drawn' : txt(el.querySelector('.pb-empty'))})`); continue; }
-    chk(!!res && JSON.stringify(shown) === JSON.stringify(b.legs.map(L => L.id)), `${tag}: ${label} is the brute force's ${b.likeliest ? 'likeliest' : floor ? 'best return' : 'likeliest pair'}: ${b.legs.map(L => L.id).join(', ')} (page: ${shown.join(', ')})`);
-    if (!res) continue;
-    const rule = !floor ? 'the likeliest pair' : b.likeliest ? `the likeliest ${n} legs` : `best return that lands ${Math.round(floor * 100)}%+ by the model`;
-    chk(txt(el.querySelector('.pb-rule')) === rule, `${tag}: ${label}'s rule line reads "${rule}" (${txt(el.querySelector('.pb-rule'))})`);
-    const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x));
-    chk(b.fair === null ? v[0].startsWith(PBS.pctW(b.p)) : v[0].startsWith(PBS.pctW(b.fair)) && v[0].includes(`model says ${PBS.pctW(b.p)}`), `${tag}: ${label} leads with the fair chance ${b.fair === null ? 'none' : PBS.pctW(b.fair)}, the model's ${PBS.pctW(b.p)} beside it: ${v[0]}`);
-    chk(v[1].startsWith(PBS.toAm(b.d)), `${tag}: ${label}'s price is ${PBS.toAm(b.d)} (${v[1]})`);
-    const pay = el.querySelector('[data-pb-pay]');
-    chk(pay && txt(pay.querySelector('.v')) === PBS.money(PBS.cents(stake * b.d)) && txt(pay.querySelector('.k')) === `${PBS.short(stake)} pays`, `${tag}: ${label} pays ${PBS.money(PBS.cents(stake * b.d))} on ${PBS.short(stake)} (${pay && txt(pay)})`);
-    levels[id] = Object.assign(res, { b });
-  }
-  return { sl, pool, levels, stake, kinds, off };
+  const farRe = /(\d+) lines? (?:are|is) left out: the model rates/;
+  chk(pool.far.length ? (farRe.exec(notes) || [])[1] === String(pool.far.length) : !farRe.test(notes), `${tag}: the far-off note counts ${pool.far.length} lines (${(farRe.exec(notes) || [])[1] || 'none said'})`);
+  const wide = sWide(sl, pool), wEl = d.getElementById('pbWide'), nEl = d.getElementById('pbNone'), rows = [...d.querySelectorAll('#pbBody .t30-r')];
+  if (wide) { chk(wEl && txt(wEl) === wide && !rows.length, `${tag}: the panel says "${wide}" (${wEl ? txt(wEl) : rows.length + ' lines drawn'})`); return { sl, pool, top: null, stake, kinds, off }; }
+  if (!pool.legs.length) { const why = sWhy(sl, pool, off); chk(nEl && txt(nEl) === why && !rows.length, `${tag}: no line qualifies, and the panel says "${why}" (${nEl ? txt(nEl) : rows.length + ' lines drawn'})`); return { sl, pool, top: { value: [], other: [], n: 0 }, stake, kinds, off }; }
+  const top = sTop(pool), all = top.value.concat(top.other), both = sl.dates.length > 1, inB = sDrawn(w), bad = [];
+  chk(canon(rows.map(r => r.dataset.id)) === canon(all.map(L => L.id)), `${tag}: the Top 30 is every qualifying line on the picks, value picks first, each part by the expected return on $1, cut at 30, by this smoke's own ranking (${rows.length} drawn, ${all.length} worked out of ${pool.legs.length}; first ${all.slice(0, 3).map(L => L.id).join(', ')} vs ${rows.slice(0, 3).map(r => r.dataset.id).join(', ')})`);
+  const vRows = [...d.querySelectorAll('#pbBody .t30-v .t30-r')].map(r => r.dataset.id), oRows = [...d.querySelectorAll('#pbBody .t30-o .t30-r')].map(r => r.dataset.id);
+  chk(canon(vRows) === canon(top.value.map(L => L.id)) && canon(oRows) === canon(top.other.map(L => L.id)), `${tag}: Value picks hold the calls and Other lines the rest (${vRows.length} and ${oRows.length})`);
+  const heads = [...d.querySelectorAll('#pbBody .t30-h')].map(h => [h.closest('.t30-part').classList.contains('t30-v') ? 'v' : 'o', txt(h.querySelector('.n'))]);
+  chk(canon(heads) === canon([].concat(top.value.length ? [['v', String(top.value.length)]] : [], top.other.length ? [['o', String(top.other.length)]] : [])), `${tag}: each part's heading counts its lines (${JSON.stringify(heads)})`);
+  chk(!!d.querySelector('#pbBody .t30-nov') === !top.value.length, `${tag}: "No line on your picks is a value pick" exactly when there is none`);
+  const more = top.n - all.length, mEl = d.querySelector('#pbBody .t30-more');
+  chk(more > 0 ? !!mEl && txt(mEl) === `${more} more line${more > 1 ? 's qualify' : ' qualifies'} beyond the top 30.` : !mEl, `${tag}: the lines beyond the top 30 are counted (${more}; ${mEl ? txt(mEl) : 'none said'})`);
+  all.forEach((L, i) => {
+    const r = rows[i]; if (!r || r.dataset.id !== L.id) return;
+    const ev = sEv(L), nums = `model ${PBS.pctW(L.p)} · fair ${PBS.pctW(L.fair)} · $1 wins ${PBS.money(L.dec - 1)} · expected ${ev < 0 ? '−' : '+'}${PBS.money(Math.abs(ev))}`;
+    const when = `${L.mu} · ${both ? sDayClock(Date.parse(L.start)) : sClock(Date.parse(L.start))}`;
+    const b = r.querySelector('button.t30-add'), on = inB.has(L.id);
+    const bet = L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? PBS.line(L.num) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num}`;
+    const pills = [...r.querySelectorAll('.t30-1 .pill')].map(x => x.dataset.c || txt(x)), wantPills = L.kind === 'ou' ? [S.teams[L.g.away].abbr, S.teams[L.g.home].abbr] : [S.teams[L.g[L.side]].abbr];
+    const why = [txt(r.querySelector('.t30-rk')) !== String(i + 1) && 'rank', txt(r.querySelector('.t30-p')) !== PBS.odds(L.price) && 'price', txt(r.querySelector('.t30-n')) !== nums && `numbers "${txt(r.querySelector('.t30-n'))}" not "${nums}"`,
+      txt(r.querySelector('.t30-2 .m')) !== when && `game "${txt(r.querySelector('.t30-2 .m'))}" not "${when}"`, txt(r.querySelector('.t30-1 .pb-who b')) !== bet && 'bet', !!r.querySelector('.tag.value') === L.thin && 'Value tag',
+      canon(pills.map(x => x.replace(/[^A-Z]/g, ''))) !== canon(wantPills) && `pills ${pills.join(',')}`,
+      (!b || b.dataset.leg !== L.id || b.getAttribute('aria-pressed') !== String(on) || txt(b) !== (on ? 'Added' : 'Add')) && 'Add button'].filter(Boolean);
+    if (why.length) bad.push(`${L.id}: ${why.join(', ')}`);
+  });
+  chk(!bad.length, `${tag}: every line's row is its rank, the bet, Value where it is a call, DraftKings' price, the game and its puck drop, the model's and the fair chance, what $1 wins and its expected return, and Add (Added in the parlay) (${all.length} rows; ${bad.length} wrong: ${bad.slice(0, 3).join(' | ')})`);
+  return { sl, pool, top, stake, kinds, off };
 }
+/* the Suggested Parlays tab's days and their sets by this smoke's own working: today and tomorrow (the visitor's, Eastern) with a game,
+   else the next day with a game to come; a day open while none of its games has started, its levels by brute force on every game of the
+   day and every bet type; a locked day the record's set from the state, read only, each leg graded */
+function sSpDays(ms) {
+  const today = etDate(ms), tom = PBS.nextDay(today), has = dd => S.games.some(g => g.date === dd);
+  const days = [today, tom].filter(has);
+  if (days.length) return days;
+  const nx = S.games.filter(g => !sStarted(g, ms)).map(g => g.date).filter(dd => dd >= today).sort()[0];
+  return nx ? [nx] : [];
+}
+const sDayLock = dd => Math.min(...S.games.filter(g => g.date === dd).map(g => Math.min(Date.parse(g.start), g.frozen && g.before ? Date.parse(g.before) : Infinity)));
+/* a day locks at its first puck drop, or at the record's lock where the state carries the record's set for it (a day the record has locked
+   stays locked though its first game is postponed since) */
+const sSet = dd => S.suggest && S.suggest.sets && S.suggest.sets[dd] || null;
+const sLockAt = dd => { const e = sSet(dd); return Math.min(sDayLock(dd), e ? Date.parse(e.lock) : Infinity); };
+const sDayOpen = (dd, ms) => S.games.some(g => g.date === dd) && !S.games.some(g => g.date === dd && sStarted(g, ms)) && ms < sLockAt(dd);
+function sDayPool(dd, ms) { const games = S.games.filter(g => g.date === dd && !sStarted(g, ms)); return sPool({ games }, PBS.KINDS, []); }
+function sSpWhy(dd, pool) {
+  const m = pool.m, t = PBS.day(dd);
+  if (m === 0) return `No leg on ${t} qualifies: the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market.`;
+  if (m === pool.tickable.length) return `Only ${m} game${m > 1 ? 's' : ''} on ${t} (one leg a game).`;
+  return `Only ${m} of the ${pool.tickable.length} games on ${t} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).`;
+}
+function sSpWide(dd, pool) {
+  const t = PBS.day(dd);
+  if (!pool.tickable.length) return S.games[0] && S.games[0].date === dd && S.games.every(g => g.date >= dd) ? `The season opens ${t}. DraftKings posts the first lines about a day before.` : `No DraftKings lines yet for ${t}: DraftKings posts a day's lines about a day before puck drop, and the job reads them at its next run (five times a day).`;
+  if (pool.tickable.length < 2) return `Only one game on ${t} has a DraftKings line, and a parlay needs two.`;
+  return '';
+}
+/* a locked leg's grade: the record's where it has one, else the scores' (a game gone or moved to another day void) */
+function sSpGrade(L, i, e, id) {
+  const jg = e.grade && e.grade[id] && Array.isArray(e.grade[id].legs) ? e.grade[id].legs[i] : null;
+  if (jg) return jg;
+  const g = S.games.find(x => x.id === L.game);
+  if (!g || g.date !== e.date) return 'void';
+  if (g.state !== 'final' || g.hs === null || g.hs === undefined) return null;
+  if (L.kind === 'ou') { const tot = g.hs + g.as; return tot > L.line ? (L.side === 'over' ? 'win' : 'loss') : tot < L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push'; }
+  const margin = L.side === 'home' ? g.hs - g.as : g.as - g.hs;
+  if (L.kind === 'ml') return margin > 0 ? 'win' : 'loss';
+  const c = margin + L.line; return c > 0 ? 'win' : c < 0 ? 'loss' : 'push';
+}
+function sSpResult(t, legs) {
+  if (legs.includes('loss')) return { result: 'lost', payout: 0 };
+  if (legs.some(x => x === null)) return { result: 'pending' };
+  if (legs.every(x => x === 'push' || x === 'void')) return { result: 'push', payout: 1 };
+  const won = t.legs.filter((L, i) => legs[i] === 'win');
+  return { result: 'won', payout: won.length === t.legs.length ? t.dec : won.reduce((a, L) => a * PBS.decOf(L.price), 1) };
+}
+function holdSuggest(w, ms, tag) {
+  w.eval('renderSuggest()');
+  const d = w.document, store = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), stake = sStakeOf(store), inB = sDrawn(w);
+  const days = sSpDays(ms), secs = [...d.querySelectorAll('#spBody .sp-day')].map(x => x.dataset.spDay), out = {};
+  chk(canon(secs) === canon(days), `${tag}: the Suggested Parlays tab shows ${days.join(' and ') || 'no day'} (${secs.join(', ') || 'none'})`);
+  if (!days.length) { chk(!!d.getElementById('spWide'), `${tag}: with no day to show the tab says why (${txt(d.getElementById('spWide'))})`); return out; }
+  for (const dd of days) {
+    const sec = d.querySelector(`#spBody .sp-day[data-sp-day="${dd}"]`); if (!sec) continue;
+    const open = sDayOpen(dd, ms), lockMs = sLockAt(dd), lockEl = sec.querySelector('.sp-lock'), dt = `${tag}, ${dd}`;
+    chk((sec.dataset.spState === 'open') === open, `${dt}: the set is ${open ? 'open' : 'locked'} (${sec.dataset.spState})`);
+    if (open) {
+      chk(!!lockEl && txt(lockEl) === `Locks ${sClock(lockMs)}`, `${dt}: it says when it locks, the day's first puck drop (${txt(lockEl)})`);
+      const pool = sDayPool(dd, ms), wide = sSpWide(dd, pool), cards = [...sec.querySelectorAll('.pb-tier')];
+      if (wide) { chk(!cards.length && txt(sec.querySelector('.pb-wide')) === wide, `${dt}: no levels, and it says "${wide}" (${txt(sec.querySelector('.pb-wide'))})`); out[dd] = { open, pool, levels: null }; continue; }
+      chk(cards.length === 3 && !sec.querySelector('.pb-tier[data-tier="xtrm"]'), `${dt}: three levels, Safe, Medium and Aggressive`);
+      const levels = {};
+      for (const [id, label, n, floor] of TIERS) {
+        const el = sec.querySelector(`.pb-tier[data-tier="${id}"]`); if (!el) { chk(false, `${dt}: no ${label} card`); continue; }
+        const shown = [...el.querySelectorAll('.pb-tl')].map(x => x.dataset.id), b = sBrute(pool.legs, n, floor);
+        if (!b) { chk(el.classList.contains('none') && txt(el.querySelector('.pb-empty')) === sSpWhy(dd, pool), `${dt}: ${label} is empty: "${sSpWhy(dd, pool)}" (${txt(el.querySelector('.pb-empty')) || 'a parlay drawn'})`); levels[id] = null; continue; }
+        chk(JSON.stringify(shown) === JSON.stringify(b.legs.map(L => L.id)), `${dt}: ${label} is the brute force's ${b.likeliest ? 'likeliest' : floor ? 'best return' : 'likeliest pair'}: ${b.legs.map(L => L.id).join(', ')} (page: ${shown.join(', ')})`);
+        const rule = !floor ? 'the likeliest pair' : b.likeliest ? `the likeliest ${n} legs` : `best return that lands ${Math.round(floor * 100)}%+ by the model`;
+        chk(txt(el.querySelector('.pb-rule')) === rule, `${dt}: ${label}'s rule line reads "${rule}" (${txt(el.querySelector('.pb-rule'))})`);
+        const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x));
+        chk(b.fair === null ? v[0].startsWith(PBS.pctW(b.p)) : v[0].startsWith(PBS.pctW(b.fair)) && v[0].includes(`model says ${PBS.pctW(b.p)}`), `${dt}: ${label} leads with the fair chance ${b.fair === null ? 'none' : PBS.pctW(b.fair)}, the model's ${PBS.pctW(b.p)} beside it: ${v[0]}`);
+        chk(v[1].startsWith(PBS.toAm(b.d)), `${dt}: ${label}'s price is ${PBS.toAm(b.d)} (${v[1]})`);
+        const pay = el.querySelector('[data-pb-pay]');
+        chk(pay && txt(pay.querySelector('.v')) === PBS.money(PBS.cents(stake * b.d)) && txt(pay.querySelector('.k')) === `${PBS.short(stake)} pays`, `${dt}: ${label} pays ${PBS.money(PBS.cents(stake * b.d))} on ${PBS.short(stake)} (${pay && txt(pay)})`);
+        /* every leg: the state's price, fair and model chance, thin where it is, its puck drop in the visitor's zone, its own Add */
+        const lb = [];
+        for (const L of b.legs) {
+          const row = el.querySelector(`.pb-tl[data-id="${L.id}"]`), rt = txt(row), ab = row && row.querySelector('button.sp-add'), on = inB.has(L.id);
+          if (!(rt.includes(PBS.odds(L.price)) && rt.includes(`fair ${PBS.pctW(L.fair)}`) && rt.includes(`model ${PBS.pctW(L.p)}`) && txt(row.querySelector('.pb-l2 .m')) === `${L.mu} · ${sClock(Date.parse(L.start))}`)) lb.push(`${L.id}: ${rt}`);
+          if (/thin edge/i.test(rt) !== (L.edge < S.edge)) lb.push(`${L.id}: thin edge ${/thin edge/i.test(rt)} at edge ${L.edge}`);
+          if (!ab || ab.dataset.leg !== L.id || ab.getAttribute('aria-pressed') !== String(on) || txt(ab) !== (on ? 'Added' : 'Add') || !ab.getAttribute('aria-label').includes(`${S.teams[L.g.away].short} @ ${S.teams[L.g.home].short}`)) lb.push(`${L.id}: its Add (${ab ? txt(ab) + ' ' + ab.getAttribute('aria-pressed') : 'none'})`);
+        }
+        chk(!lb.length, `${dt}: ${label}'s every leg is the state's, in leg order, with its own Add naming its game (${lb.slice(0, 2).join(' | ')})`);
+        chk(legsSorted(shown), `${dt}: ${label}'s legs are in leg order`);
+        const all = sameIds(sDrawnList(w), shown), add = el.querySelector('[data-sp-add]'), fin = el.querySelector('[data-sp-finish]');
+        chk(!!fin && fin.dataset.spFinish === `${dd}|${id}` && !!add && add.dataset.spAdd === `${dd}|${id}` && add.disabled === all && txt(add) === (all ? 'In the builder' : 'Add to builder'), `${dt}: ${label} ends with Finish and ${all ? 'In the builder, off' : 'Add to builder'} (${txt(add)})`);
+        levels[id] = { legs: shown, b };
+      }
+      out[dd] = { open, pool, levels };
+    } else {
+      const e = sSet(dd);
+      chk(!sec.querySelector('button[data-leg], [data-sp-add], [data-sp-finish]'), `${dt}: a locked set offers no Add, Add to builder or Finish`);
+      if (!e) {
+        /* a state from before the record's sets were carried says only that the day locked */
+        const said = S.suggest && S.suggest.sets ? `No set was taken for ${PBS.day(dd)} before its first puck drop.` : `${PBS.day(dd)}'s set locked at its first puck drop: the record above grades it.`;
+        chk(txt(sec.querySelector('.pb-wide')) === said && txt(lockEl) === 'Locked', `${dt}: locked with no set of the record's in the state, it says "${said}" (${txt(sec.querySelector('.pb-wide'))})`); out[dd] = { open, entry: null }; continue;
+      }
+      const all = S.games.filter(g => g.date === dd), under = all.length && all.every(g => sStarted(g, ms));
+      const res = {}; for (const [id] of TIERS) if (e.tiers[id]) res[id] = sSpResult(e.tiers[id], e.tiers[id].legs.map((L, i) => sSpGrade(L, i, e, id)));
+      const lv = TIERS.filter(([id]) => e.tiers[id]);
+      const words = lv.length && lv.every(([id]) => res[id].result !== 'pending') ? 'Graded' : under ? 'Under way' : `Locked since ${sClock(Date.parse(e.lock))}`;
+      chk(txt(lockEl) === words, `${dt}: the locked set says "${words}" (${txt(lockEl)})`);
+      const lb = [];
+      for (const [id, label] of TIERS) {
+        const el = sec.querySelector(`.pb-tier[data-tier="${id}"]`), t = e.tiers[id]; if (!el) { lb.push(`no ${label}`); continue; }
+        if (!t) { if (!el.classList.contains('none')) lb.push(`${label} drawn though the record has none`); continue; }
+        const shown = [...el.querySelectorAll('.pb-tl')];
+        if (canon(shown.map(x => x.dataset.id)) !== canon(t.legs.map(L => L.id))) lb.push(`${label}: legs ${shown.map(x => x.dataset.id).join(',')} not the record's`);
+        t.legs.forEach((L, i) => { const gr = sSpGrade(L, i, e, id), r = shown[i]; if (r && r.dataset.grade !== (gr || 'pending')) lb.push(`${L.id}: graded ${r.dataset.grade}, not ${gr || 'pending'}`); });
+        if (el.dataset.result !== res[id].result) lb.push(`${label}: ${el.dataset.result}, not ${res[id].result}`);
+        const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x)), R = res[id];
+        if (!(v[1] || '').startsWith(PBS.toAm(t.dec)) || !(v[0] || '').startsWith(PBS.pctW(t.fair === null ? t.p : t.fair))) lb.push(`${label}: numbers ${v.join(' | ')}`);
+        /* what the bet amount paid, was lost, came back or pays */
+        const pay = R.result === 'won' ? `${PBS.money(PBS.cents(stake * R.payout))}${PBS.short(stake)} paid` : R.result === 'lost' ? `$0.00${PBS.short(stake)} lost` : R.result === 'push' ? `${PBS.money(PBS.cents(stake))}the stake back` : `${PBS.money(PBS.cents(stake * t.dec))}${PBS.short(stake)} pays`;
+        if ((v[2] || '').replace(/\s+/g, '') !== pay.replace(/\s+/g, '')) lb.push(`${label}: pays "${v[2]}" not "${pay}"`);
+      }
+      chk(!lb.length, `${dt}: the locked set is the record's, read only, each leg graded on the scores and each level's result (${lb.slice(0, 3).join(' | ')})`);
+      out[dd] = { open, entry: e };
+    }
+  }
+  return out;
+}
+const sameIds = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+const sDrawnList = w => JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => L.id))'));
 /* every level's legs by the leg order, the builder's: puck drop, then the matchup, then the kind */
 function legsSorted(ids) { const L = ids.map(x => { const [g, s, k] = x.split('|'); return sLeg(S.games.find(y => y.id === g), s, k); }); return L.slice().sort(sOrder).map(l => l.id).join(',') === ids.join(','); }
 
@@ -639,82 +769,101 @@ async function parlayBuilder() {
   const AT = PUB + 60000, errors = [];
   const w = await boot(AT, errors, { hash: 'parlay' }), d = w.document, $ = id => d.getElementById(id);
   const store = () => JSON.parse(w.localStorage.getItem('nhl_v1') || '{}');
-  /* the tab: second, #parlay opens it */
+  /* the tabs: Games, Suggested Parlays, Parlay Builder (the NFL hub's order); #parlay opens the Parlay Builder, the builder first */
   const tabs = [...d.querySelectorAll('#tabs button')];
-  chk(tabs[1] && tabs[1].dataset.tab === 'parlays' && /Parlay Builder/.test(txt(tabs[1])), `Parlay Builder is the second tab (${tabs.map(b => txt(b)).join(' | ')})`);
+  chk(tabs[1] && tabs[1].dataset.tab === 'suggest' && txt(tabs[1]) === 'Suggested Parlays' && tabs[2] && tabs[2].dataset.tab === 'parlays' && /^Parlay Builder/.test(txt(tabs[2])), `Suggested Parlays is the second tab and the Parlay Builder the third (${tabs.map(b => txt(b)).join(' | ')})`);
   chk(!$('tab-parlays').hidden && w.location.hash === '#parlays', `#parlay opens the Parlay Builder (${w.location.hash})`);
-  /* the default panel, every level by brute force */
-  const P0 = holdPanel(w, AT, 'default', true);
+  const order = [...$('tab-parlays').children].map(x => x.id || x.className.split(' ')[0]), at = id => order.indexOf(id);
+  chk(at('builder') >= 0 && at('builder') < at('pbPanel') && at('pbPanel') < at('pbPick') && at('pbPick') < at('saved'), `the Parlay Builder is the builder first, then the Top 30 lines, Pick your own legs and the saved parlays (${order.join(', ')})`);
+  chk(txt($('pbTitle')) === 'Top 30 lines' && txt($('spTitle')) === 'Suggested parlays' && !!$('tab-suggest').querySelector('#pbRec'), `the panel is the Top 30 lines, and the levels and their record are the Suggested Parlays tab's (${txt($('pbTitle'))}; ${txt($('spTitle'))})`);
+  /* the default list, and the Suggested Parlays tab's sets, every level by brute force */
+  const P0 = holdPanel(w, AT, 'default'), S0 = holdSuggest(w, AT, 'default');
   /* every clock on the page is the visitor's own and names its zone; the card's, which goes to other people, is Eastern and says ET */
   const clock = ms => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
   chk(txt($('pbRead')).includes(`as read at ${clock(PUB)}, the job's last run`), `the panel dates the prices in the visitor's zone, named (${txt($('pbRead'))})`);
   const tileTimes = [...d.querySelectorAll('#pbGrid input[data-g]')].map(x => [x.dataset.g, txt(x.closest('.pb-gt'))]);
   chk(tileTimes.every(([id, t]) => t.endsWith(clock(Date.parse(S.games.find(g => g.id === id).start)))), `every game tile's puck drop names its zone (${tileTimes.slice(0, 2).map(x => x[1]).join(' | ')})`);
-  const rowTimes = [...d.querySelectorAll('.pb-tl')].map(x => [x.dataset.id.split('|')[0], txt(x.querySelector('.pb-ll .m'))]);
-  chk(rowTimes.every(([id, t]) => t.endsWith(clock(Date.parse(S.games.find(g => g.id === id).start)))), `every level's leg names its puck drop's zone (${rowTimes.slice(0, 2).map(x => x[1]).join(' | ')})`);
-  for (const [id] of TIERS) { const r = P0.levels && P0.levels[id]; if (r && r.legs.length) chk(legsSorted(r.legs), `${id}: the legs are in leg order`); }
+  const spTimes = [...d.querySelectorAll('#spBody .sp-day[data-sp-state="open"] .pb-tl')].map(x => [x.dataset.id.split('|')[0], txt(x.querySelector('.pb-ll .m'))]);
+  chk(spTimes.every(([id, t]) => t.endsWith(clock(Date.parse(S.games.find(g => g.id === id).start)))), `every suggested level's leg names its puck drop's zone (${spTimes.slice(0, 2).map(x => x[1]).join(' | ')})`);
   /* preferred is the Games cards' call: every qualifying leg of the slate */
-  for (const L of P0.pool.legs) chk(!L.thin === (L.pick === L.side), `${L.id}: a leg 5 points above the price is exactly the card's call (edge ${L.edge}, call ${L.pick})`);
-  /* Both days, when offered: every level by brute force */
+  for (const L of P0.pool.legs) chk(!L.thin === (L.pick === L.side), `${L.id}: a line 5 points above the price is exactly the card's call (edge ${L.edge}, call ${L.pick})`);
+  /* Both days, when offered: the list on both */
   if (P0.sl.both) {
     const b = d.querySelector('#pbDay button[data-day="both"]'); b.focus(); b.click();
     chk(d.activeElement && d.activeElement.dataset && d.activeElement.dataset.day === 'both', `choosing a Day keeps the keyboard's focus on it, redrawn (${d.activeElement && (d.activeElement.dataset && d.activeElement.dataset.day || d.activeElement.tagName)})`);
-    holdPanel(w, AT, 'both days', true);
+    holdPanel(w, AT, 'both days');
     chk(store().ui.pb.day === 'both', 'Both days is kept in nhl_v1');
     d.querySelector(`#pbDay button[data-day="${P0.sl.pick}"]`).click();
-  } else console.log(`  Both days not offered (${P0.sl.days.join(', ') || 'no day'}): its brute force skipped`);
-  const levelsOn = !!P0.levels;
-  if (levelsOn) {
-    /* the controls: each mix, each box alone, none, the games All and None and one unticked; the levels follow, the reasons say why */
+  } else console.log(`  Both days not offered (${P0.sl.days.join(', ') || 'no day'}): its list skipped`);
+  const listOn = !!(P0.top && P0.top.value.length + P0.top.other.length);
+  if (listOn) {
+    /* the controls: each mix, each box alone, none, the games All and None and one unticked; the list follows, the reasons say why */
     const setBoxes = ks => { for (const b of d.querySelectorAll('#pbKinds input[data-k]')) if (b.checked !== ks.includes(b.dataset.k)) { b.checked = !b.checked; b.dispatchEvent(new w.Event('change', { bubbles: true })); } };
-    const kindsOf = () => [...new Set([...d.querySelectorAll('.pb-tl')].map(x => x.dataset.id.split('|')[2]))];
+    const kindsOf = () => [...new Set([...d.querySelectorAll('#pbBody .t30-r')].map(x => x.dataset.id.split('|')[2]))];
+    const noneSaid = () => txt($('pbNone'));
     for (const [mix, ks] of [['teams', ['ml', 'pl']], ['totals', ['ou']], ['all', ['ml', 'pl', 'ou']]]) {
       d.querySelector(`#pbMix button[data-mix="${mix}"]`).click();
       const got = [...d.querySelectorAll('#pbKinds input[data-k]')].filter(b => b.checked).map(b => b.dataset.k).join(',');
       chk(got === ks.join(','), `${mix}: the mix ticks ${ks.join(', ')} (${got})`);
-      chk(kindsOf().every(x => ks.includes(x)), `${mix}: every level's legs are of the ticked kinds (${kindsOf().join(', ')})`);
+      chk(kindsOf().every(x => ks.includes(x)), `${mix}: every line listed is of the ticked kinds (${kindsOf().join(', ')})`);
       chk(JSON.stringify(Object.entries(store().ui.pb.k).filter(([, v]) => v).map(([x]) => x)) === JSON.stringify(ks), `${mix}: ui.pb.k is stored`);
-      holdPanel(w, AT, `mix ${mix}`, false);
+      holdPanel(w, AT, `mix ${mix}`);
     }
     for (const ks of [['ml'], ['pl'], ['ou'], []]) {
       setBoxes(ks);
       const lit = d.querySelector('#pbMix button.on');
       const mixOf = ks.join() === 'ou' ? 'totals' : null;
       chk((lit ? lit.dataset.mix : null) === mixOf, `boxes ${ks.join(',') || 'none'}: the mix lit is ${mixOf} (${lit && lit.dataset.mix})`);
-      chk(kindsOf().every(x => ks.includes(x)), `boxes ${ks.join(',') || 'none'}: the levels use only those kinds`);
-      const empties = [...d.querySelectorAll('.pb-tier.none .pb-empty')].map(txt);
-      chk(!ks.length === (empties.length === TIERS.length && empties.every(t => t === 'No bet types ticked: tick at least one above.')), `boxes ${ks.join(',') || 'none'}: "No bet types ticked" shown exactly when none is ticked`);
-      holdPanel(w, AT, `boxes ${ks.join(',') || 'none'}`, false);
+      chk(kindsOf().every(x => ks.includes(x)), `boxes ${ks.join(',') || 'none'}: the list holds only those kinds`);
+      chk(!ks.length === (noneSaid() === 'No bet types ticked: tick at least one above.'), `boxes ${ks.join(',') || 'none'}: "No bet types ticked" shown exactly when none is ticked (${noneSaid()})`);
+      holdPanel(w, AT, `boxes ${ks.join(',') || 'none'}`);
     }
     setBoxes(['ml', 'pl', 'ou']);
     d.querySelector('#pbGames button[data-gall="0"]').click();
-    let empties = [...d.querySelectorAll('.pb-tier.none .pb-empty')].map(txt);
-    chk(empties.length === TIERS.length && empties.every(t => t === 'No games ticked: tick at least one above.') && store().ui.pb.off.length === P0.pool.tickable.length, `None: every level says "No games ticked" (${empties[0]}), and the games are stored unticked`);
-    holdPanel(w, AT, 'games none', false);
+    chk(noneSaid() === 'No games ticked: tick at least one above.' && store().ui.pb.off.length === P0.pool.tickable.length, `None: the list says "No games ticked" (${noneSaid()}), and the games are stored unticked`);
+    holdPanel(w, AT, 'games none');
     d.querySelector('#pbGames button[data-gall="1"]').click();
-    chk(!d.querySelector('.pb-tier.none .pb-empty') || ![...d.querySelectorAll('.pb-tier.none .pb-empty')].some(x => /No games ticked/.test(txt(x))), 'All: the games are ticked again');
+    chk(!/No games ticked/.test(noneSaid()) && d.querySelectorAll('#pbBody .t30-r').length > 0, 'All: the games are ticked again');
     const first = d.querySelector('#pbGrid input[data-g]');
     first.focus(); first.checked = false; first.dispatchEvent(new w.Event('change', { bubbles: true }));
     chk(d.activeElement && d.activeElement.dataset && d.activeElement.dataset.g === first.dataset.g && d.activeElement !== first, `unticking a game keeps the keyboard's focus on its box, redrawn (${d.activeElement && (d.activeElement.dataset && d.activeElement.dataset.g || d.activeElement.tagName)})`);
-    chk(store().ui.pb.off.includes(first.dataset.g) && ![...d.querySelectorAll('.pb-tl')].some(x => x.dataset.id.startsWith(first.dataset.g + '|')), `one game unticked (${first.dataset.g}): stored, and in no level`);
+    chk(store().ui.pb.off.includes(first.dataset.g) && ![...d.querySelectorAll('#pbBody .t30-r')].some(x => x.dataset.id.startsWith(first.dataset.g + '|')), `one game unticked (${first.dataset.g}): stored, and in no line of the list`);
     const tile = d.querySelector(`#pbGrid input[data-g="${first.dataset.g}"]`).closest('.pb-gt');
     chk(tile && tile.classList.contains('un'), 'an unticked game is drawn dashed');
-    holdPanel(w, AT, 'one game unticked', true);
+    holdPanel(w, AT, 'one game unticked');
     /* the picks come back on a second boot of the same store */
     const kept = w.localStorage.getItem('nhl_v1');
     const e2 = [], w2 = await boot(AT, e2, { store: kept, hash: 'parlays' });
     const in2 = w2.document.querySelector(`#pbGrid input[data-g="${first.dataset.g}"]`);
     chk(in2 && !in2.checked, 'a second boot on the stored nhl_v1 keeps the game unticked');
-    holdPanel(w2, AT, 'restored', false);
+    holdPanel(w2, AT, 'restored');
     chk(!e2.length, 'no runtime error on the restored boot: ' + e2.join(' | '));
     const again = d.querySelector(`#pbGrid input[data-g="${first.dataset.g}"]`);
     again.checked = true; again.dispatchEvent(new w.Event('change', { bubbles: true }));
     chk(!store().ui.pb.off.length, 'ticked again, no game is stored unticked');
+    /* a line's Add: into the builder above, Added and pressed, the keyboard's focus kept on it; a second tap takes it out */
+    const r0 = d.querySelector('#pbBody .t30-r'), id0 = r0.dataset.id, add0 = () => d.querySelector(`#pbBody .t30-r[data-id="${id0}"] button.t30-add`);
+    add0().focus(); add0().click();
+    chk(store().legs.length === 1 && `${store().legs[0].game}|${store().legs[0].side}|${store().legs[0].kind}` === id0 && add0().getAttribute('aria-pressed') === 'true' && txt(add0()) === 'Added' && !!d.querySelector(`#legs .leg[data-id="${id0}"]`), `a Top 30 line's Add puts it in the builder above, the button Added and pressed (${id0}; ${add0() && txt(add0())})`);
+    chk(d.activeElement === add0(), `the keyboard's focus stays on the line's Add, redrawn (${d.activeElement && (d.activeElement.dataset && d.activeElement.dataset.leg || d.activeElement.tagName)})`);
+    holdPanel(w, AT, 'a line added');
+    add0().click();
+    chk(!store().legs.length && add0().getAttribute('aria-pressed') === 'false' && txt(add0()) === 'Add', 'a second tap takes it out');
+  } else console.log('  no line on the default picks: the controls are held on the made-up slates below');
+  /* the Suggested Parlays tab: a level's legs, its Add to builder and Finish */
+  const openDays = Object.keys(S0).filter(dd => S0[dd].open && S0[dd].levels);
+  const levelsOn = openDays.some(dd => TIERS.some(t => S0[dd].levels[t[0]]));
+  if (levelsOn) {
+    const spTab = () => d.querySelector('#tabs button[data-tab="suggest"]').click();
+    spTab();
+    chk(!$('tab-suggest').hidden && w.location.hash === '#suggest', `the Suggested Parlays tab opens (${w.location.hash})`);
+    holdSuggest(w, AT, 'the tab shown');
     /* the Bet amount: one number, every level's pays line redrawn as it is typed */
+    d.querySelector('#tabs button[data-tab="parlays"]').click(); w.eval('renderSuggest()');
     const box = $('pbStake');
     box.value = '50'; box.dispatchEvent(new w.Event('input', { bubbles: true }));
-    const pays = [...d.querySelectorAll('[data-pb-pay]')];
-    chk(pays.every(x => txt(x.querySelector('.v')) === PBS.money(PBS.cents(50 * +x.dataset.pbPay)) && txt(x.querySelector('.k')) === '$50 pays'), `50 in the Bet amount redraws every pays line to 50 times its decimal (${pays.map(x => txt(x)).join(' / ')})`);
+    const pays = [...d.querySelectorAll('#spBody [data-pb-pay]')];
+    chk(pays.length > 0 && pays.every(x => txt(x.querySelector('.v')) === PBS.money(PBS.cents(50 * +x.dataset.pbPay)) && txt(x.querySelector('.k')) === '$50 pays'), `50 in the Bet amount redraws every suggested level's pays line to 50 times its decimal (${pays.map(x => txt(x)).join(' / ')})`);
     chk(+store().stake === 50, 'the amount is kept in nhl_v1');
     chk(w.eval("stakeRead('$1,250')") === 1250 && w.eval("stakeRead(' 7.555 ')") === 7.56 && w.eval('stakeRead(250000)') === 100000, '"$1,250" reads as 1250, cents kept, $100,000 the most');
     for (const bad of ['abc', '0', '-5', '']) { box.value = bad; box.dispatchEvent(new w.Event('input', { bubbles: true })); box.dispatchEvent(new w.Event('change', { bubbles: true })); chk(+store().stake === 50 && box.value === '50', `"${bad}" leaves the amount at 50 (${store().stake}, box ${box.value})`); }
@@ -724,39 +873,36 @@ async function parlayBuilder() {
     box.value = '20'; box.dispatchEvent(new w.Event('input', { bubbles: true })); box.dispatchEvent(new w.Event('change', { bubbles: true }));
     const e3 = [], w3 = await boot(AT, e3, { store: JSON.stringify({ stake: 'abc' }), hash: 'parlays' });
     chk(w3.document.getElementById('pbStake').value === '20' && w3.document.getElementById('stake').value === '20', 'a stored amount that is not one boots as $20');
-    /* Add to builder: asked before replacing other legs; then exactly the level's legs, priced as the level was */
-    const lv = TIERS.map(t => t[0]).find(id => P0.levels[id] && P0.levels[id].legs && P0.levels[id].legs.length >= 2);
+    /* Add to builder: asked before replacing other legs; then exactly the level's legs, priced as the level was, on the Parlay Builder */
+    const dd = openDays.find(x => TIERS.some(t => S0[x].levels[t[0]] && S0[x].levels[t[0]].legs.length >= 2));
+    const lv = dd && TIERS.map(t => t[0]).find(id => S0[dd].levels[id] && S0[dd].levels[id].legs.length >= 2);
     if (lv) {
-      const card = () => d.querySelector(`.pb-tier[data-tier="${lv}"]`);
-      const ids = [...card().querySelectorAll('.pb-tl')].map(x => x.dataset.id);
-      /* another leg in the builder first: a game of the slate shown (Pick your own legs lists only that) the level does not use */
-      const slNow = sSlate(AT, ((store().ui || {}).pb || {}).day);
-      const other = slNow.games.find(g => !sStarted(g, AT) && sFresh(g) && !ids.some(x => x.startsWith(g.id + '|')) && sLeg(g, 'home', 'ml'));
-      const ob = other && d.querySelector(`#plLines button[data-leg="${other.id}|home|ml"]`);
-      chk(!other || !!ob, `Pick your own legs offers ${other ? other.id : ''}, a game of the slate shown`);
-      if (ob) ob.click(); else console.log(`  every game with a line on ${slNow.text} is in ${lv}: the ask before replacing other legs is not reached`);
+      spTab();
+      const card = () => { w.eval('renderSuggest()'); return d.querySelector(`#spBody .sp-day[data-sp-day="${dd}"] .pb-tier[data-tier="${lv}"]`); };
+      const ids = [...card().querySelectorAll('.pb-tl')].map(x => x.dataset.id), cv = [...card().querySelectorAll('.pb-n')].map(txt);
+      /* another leg in the builder first: another level's leg on a game this level does not use */
+      const ob = [...d.querySelectorAll(`#spBody .sp-day[data-sp-day="${dd}"] button.sp-add`)].find(b => !ids.some(x => x.split('|')[0] === b.dataset.leg.split('|')[0]));
+      if (ob) ob.click(); else console.log(`  every suggested leg of ${dd} is on a game ${lv} uses: the ask before replacing other legs is not reached`);
       const before = JSON.stringify(store().legs), asked0 = w.__asked.length;
-      w.__confirm = false; card().querySelector('[data-pb-add]').click();
+      w.__confirm = false; card().querySelector('[data-sp-add]').click();
       chk(ob ? JSON.stringify(store().legs) === before && w.__asked.slice(asked0).some(q => /^Replace the \d+ legs? in the builder with the \w+ \d-leg parlay\?$/.test(q)) : w.__asked.length === asked0, `Add to builder asks before replacing other legs (and only then), and No changes nothing (${w.__asked.slice(asked0).join(' | ') || 'not asked'})`);
-      w.__confirm = true; card().querySelector('[data-pb-add]').focus(); card().querySelector('[data-pb-add]').click();
+      w.__confirm = true; card().querySelector('[data-sp-add]').focus(); card().querySelector('[data-sp-add]').click();
       chk(JSON.stringify(store().legs.map(l => `${l.game}|${l.side}|${l.kind}`)) === JSON.stringify(ids), `Add to builder puts exactly the level's legs in, in order (${store().legs.length})`);
-      chk(d.activeElement === $('bTitle'), `Add to builder takes the keyboard's focus to the builder (${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
-      const bt = [...d.querySelectorAll('#parlayTotals .stat')].map(txt), cv = [...card().querySelectorAll('.pb-n')].map(txt);
-      const lb = P0.levels[lv].b;
+      chk(!$('tab-parlays').hidden && d.activeElement === $('bTitle'), `Add to builder opens the Parlay Builder and takes the keyboard's focus to the builder (${w.location.hash}; ${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
+      const bt = [...d.querySelectorAll('#parlayTotals .stat')].map(txt), lb = S0[dd].levels[lv].b;
       chk(d.querySelectorAll('#legs .leg').length === ids.length, 'the builder shows them');
       chk([...d.querySelectorAll('#legs .leg button.x')].every((x, i) => { const L = sLeg(S.games.find(g => g.id === ids[i].split('|')[0]), ids[i].split('|')[1], ids[i].split('|')[2]); return x.getAttribute('aria-label').includes(`${S.teams[L.g.away].short} @ ${S.teams[L.g.home].short}`); }), `each Remove names its game (${[...d.querySelectorAll('#legs .leg button.x')].map(x => x.getAttribute('aria-label')).join(' | ')})`);
-      chk([...card().querySelectorAll('[data-pb-lock]')].every(x => / @ .*New legs keeps it\)$/.test(x.getAttribute('aria-label'))), 'each lock names its game and what it does');
       if (lb) {
         chk(bt[0] && bt[0].startsWith(lb.fair === null ? PBS.pct1(lb.p) : PBS.pct1(lb.fair)) && (lb.fair === null || bt[0].includes(`model says ${PBS.pct1(lb.p)}`)), `the builder's chance is the level's (${bt[0]} vs ${cv[0]})`);
         chk(bt[1] && bt[1].startsWith(PBS.toAm(lb.d)) && cv[1].startsWith(PBS.toAm(lb.d)), `the builder's price is the level's ${PBS.toAm(lb.d)} (${bt[1]})`);
         chk(bt[2] && bt[2].startsWith(PBS.money(PBS.cents(20 * lb.d))) && cv[2].startsWith(PBS.money(PBS.cents(20 * lb.d))), `the builder pays what the level said (${bt[2]} vs ${cv[2]})`);
       }
-      chk(/In the builder/.test(txt(card().querySelector('[data-pb-add]'))) && card().querySelector('[data-pb-add]').disabled, 'the level\'s button reads In the builder');
+      chk(/In the builder/.test(txt(card().querySelector('[data-sp-add]'))) && card().querySelector('[data-sp-add]').disabled && [...card().querySelectorAll('button.sp-add')].every(b => b.getAttribute('aria-pressed') === 'true' && txt(b) === 'Added'), "the level's button reads In the builder, and each leg's Added");
       /* the builder: rows, the tiles, the confidence, removing one */
       const legs = store().legs;
       chk(d.querySelectorAll('#legs .leg').length === legs.length, 'a row a leg');
       const sl2 = legs.map(l => sLeg(S.games.find(g => g.id === l.game), l.side, l.kind)).sort(sOrder);
-      let p = 1, dd = 1, f = 1; for (const L of sl2) { p *= L.p; dd *= L.dec; f = f === null || L.fair === null ? null : f * L.fair; }
+      let p = 1, f = 1; for (const L of sl2) { p *= L.p; f = f === null || L.fair === null ? null : f * L.fair; }
       const conf = c => c >= 0.7 ? 'High' : c >= 0.45 ? 'Medium' : 'Low';
       chk(bt[3] && bt[3].startsWith(conf(f === null ? p : f)) && new RegExp(`on the ${f === null ? "model's" : 'fair'} chance`, 'i').test(bt[3]), `the confidence tile is ${conf(f === null ? p : f)} on the ${f === null ? "model's" : 'fair'} chance (${bt[3]})`);
       /* the price is DraftKings' only where every leg's book is DraftKings (its name in any case and spacing), else the book's */
@@ -766,61 +912,64 @@ async function parlayBuilder() {
       /* the card from the builder: every leg and the price; Escape, the Tab order, outside click, Start over */
       await cardChecks(w, sl2, 'Your parlay');
       /* a second bet in the same slot of a game (a second side bet, the other side of the total) replaces the first, said, with the
-         rule's own words; with no same-game table in the state, one leg a game, said so */
+         rule's own words; with no same-game table in the state, one leg a game, said so (Pick your own legs on the level's day) */
+      const pd = d.querySelector(`#pbDay button[data-day="${dd}"]`); if (pd && !pd.classList.contains('on')) pd.click();
       const g0 = sl2[0].g, slotK = k => k === 'ou' ? 'tot' : 'side', k0 = sl2[0].kind;
       const alt = ['ml', 'pl', 'ou'].flatMap(k => PBS.SIDES[k].map(s => [s, k])).find(([s, k]) => `${g0.id}|${s}|${k}` !== sl2[0].id && slotK(k) === slotK(k0) && sLeg(g0, s, k));
-      if (alt) {
-        const ab = d.querySelector(`#plLines button[data-leg="${g0.id}|${alt[0]}|${alt[1]}"]`); ab.click();
+      const ab = alt && d.querySelector(`#plLines button[data-leg="${g0.id}|${alt[0]}|${alt[1]}"]`);
+      if (ab) {
+        ab.click();
         const rule = !S.sgp ? 'one leg a game here: this publish carries no same-game table.' : slotK(k0) === 'tot' ? 'one total a game.' : 'one side bet a game (the moneyline or the puck line).';
         chk(store().legs.filter(l => l.game === g0.id).length === 1 && store().legs.some(l => l.game === g0.id && l.side === alt[0] && l.kind === alt[1]), 'a second bet in the same slot of a game replaces the first');
         chk(txt($('bMsg')).includes(` on ${S.teams[g0.away].abbr} @ ${S.teams[g0.home].abbr}: ${rule}`) && /replaced/.test(txt($('bMsg'))) && txt($('slipMsg')).includes(rule), `the replace is said in the builder and the slip bar, with the rule (${txt($('bMsg'))})`);
-      }
+      } else if (alt) console.log(`  Pick your own legs does not list ${g0.id} on the panel's slate: the replace in a game's slot is held elsewhere`);
       const n0 = d.querySelectorAll('#legs .leg').length;
       d.querySelector('#legs .leg button.x').click();
       chk(d.querySelectorAll('#legs .leg').length === n0 - 1 && store().legs.length === n0 - 1, 'remove takes one leg out');
       while (d.querySelectorAll('#legs .leg').length > 1) d.querySelector('#legs .leg button.x').click();
       chk($('pFinish').disabled && /two legs or more/.test($('pFinish').title) && !$('bHint').hidden && /one more leg/.test(txt($('bHint'))), 'Finish parlay is off under two legs, and says why where a phone shows it');
-      /* the slip bar on the Games tab, and its button */
-      d.querySelector('#tabs button[data-tab="games"]').click();
-      chk(!$('slip').hidden && /1 leg ·/.test(txt($('slipText'))), `the slip bar is shown on Games with a leg (${txt($('slipText'))})`);
+      /* the slip bar on the Games tab and the Suggested Parlays tab, and its button */
+      for (const t of ['games', 'suggest']) {
+        d.querySelector(`#tabs button[data-tab="${t}"]`).click();
+        chk(!$('slip').hidden && /1 leg ·/.test(txt($('slipText'))), `the slip bar is shown on ${t} with a leg (${txt($('slipText'))})`);
+      }
       $('slipOpen').click();
       chk(!$('tab-parlays').hidden && w.location.hash === '#parlays', 'Open builder opens the Parlay Builder');
       $('clearParlay').click();
       d.querySelector('#tabs button[data-tab="games"]').click();
       chk($('slip').hidden, 'no slip bar with no legs');
+      /* a suggested leg's own Add: one leg in the builder, Added and pressed, the keyboard's focus kept; a second tap takes it out */
+      spTab();
+      const sb = () => d.querySelector(`#spBody .sp-day[data-sp-day="${dd}"] .pb-tier[data-tier="${lv}"] button.sp-add`), sid = sb().dataset.leg;
+      sb().focus(); sb().click();
+      chk(store().legs.length === 1 && `${store().legs[0].game}|${store().legs[0].side}|${store().legs[0].kind}` === sid && sb().getAttribute('aria-pressed') === 'true' && txt(sb()) === 'Added' && d.activeElement === sb() && !$('tab-suggest').hidden, `a suggested leg's own Add puts it in the builder, the tab kept and the focus on it (${sid}; ${txt(sb())})`);
+      sb().click();
+      chk(!store().legs.length && sb().getAttribute('aria-pressed') === 'false', 'a second tap takes it out');
+      /* a leg two levels share: its Add in the later level keeps the keyboard there, never on the first copy (a phone's page would jump) */
+      const shared = [...d.querySelectorAll(`#spBody .sp-day[data-sp-day="${dd}"] .pb-tier:not([data-tier="safe"]) button.sp-add`)].find(b => d.querySelectorAll(`#spBody .sp-day[data-sp-day="${dd}"] button.sp-add[data-leg="${b.dataset.leg}"]`).length > 1);
+      if (shared) {
+        const tierS = shared.closest('.pb-tier').dataset.tier, legS = shared.dataset.leg; shared.focus(); shared.click();
+        const f = d.activeElement;
+        chk(!!f && f.dataset && f.dataset.leg === legS && !!f.closest('.pb-tier') && f.closest('.pb-tier').dataset.tier === tierS && f.getAttribute('aria-pressed') === 'true', `a leg two levels share, added from ${tierS}, keeps the focus on ${tierS}'s Add (${f && f.closest('.pb-tier') ? f.closest('.pb-tier').dataset.tier : f && f.tagName})`);
+        if (f && f.dataset && f.dataset.leg === legS) f.click();
+      } else console.log(`  no leg shared by two levels of ${dd}: the focus on a shared leg's Add is not held on this state`);
       d.querySelector('#tabs button[data-tab="parlays"]').click();
     }
     /* a level's Finish: the card names the level */
-    const fin = TIERS.map(t => t[0]).find(id => P0.levels[id] && P0.levels[id].b);
+    const fd = openDays.find(x => TIERS.some(t => S0[x].levels[t[0]])), fin = fd && TIERS.map(t => t[0]).find(id => S0[fd].levels[id]);
     if (fin) {
-      d.querySelector(`.pb-tier[data-tier="${fin}"] [data-pb-finish]`).click();
+      spTab();
+      const fsel = `#spBody [data-sp-finish="${fd}|${fin}"]`;
+      d.querySelector(fsel).click();
       const lab = TIERS.find(t => t[0] === fin)[1].toUpperCase() + ' PARLAY';
       chk(!$('pcWin').hidden && txt(d.querySelector('.pc-kick')) === lab, `a level's Finish opens the card as ${lab} (${txt(d.querySelector('.pc-kick'))})`);
       chk($('pcAgain').hidden, 'Start over is the builder\'s only');
       chk(/To keep it, Add to builder, then Save on this device/.test(txt($('pcOwn'))), `a level's card says how to keep it (${txt($('pcOwn'))})`);
       $('pcClose').click();
-      const fb = d.querySelector(`.pb-tier[data-tier="${fin}"] [data-pb-finish]`);
-      chk($('pcWin').hidden && d.activeElement === fb, `Close gives the focus back to the level's Finish (${d.activeElement && (d.activeElement.id || d.activeElement.tagName + ' ' + txt(d.activeElement))})`);
+      chk($('pcWin').hidden && d.activeElement === d.querySelector(fsel), `Close gives the focus back to the level's Finish (${d.activeElement && (d.activeElement.id || d.activeElement.tagName + ' ' + txt(d.activeElement))})`);
+      d.querySelector('#tabs button[data-tab="parlays"]').click();
     }
-    /* New legs and locks: legs the level has not shown, a locked leg kept, Reset back to the panel's own; none of it stored */
-    const sc = () => d.querySelector('.pb-tier[data-tier="safe"]'), sIds = () => [...sc().querySelectorAll('.pb-tl')].map(x => x.dataset.id);
-    if (P0.levels.safe && P0.pool.m >= 2) {
-      const before = sIds(), stored = w.localStorage.getItem('nhl_v1');
-      sc().querySelector('[data-pb-new]').click();
-      const after = sIds();
-      chk(after.length === 2 && (after.every(x => !before.includes(x)) || /had its turn here: back to the first/.test(txt(sc()))), `New legs on Safe gives legs it has not shown, or says every leg has had its turn (${before.join(', ')} -> ${after.join(', ')})`);
-      chk(/^the likeliest pair left/.test(txt(sc().querySelector('.pb-rule'))), `and the rule line says so (${txt(sc().querySelector('.pb-rule'))})`);
-      const lockBtn = sc().querySelector('[data-pb-lock]'), lockedId = lockBtn.dataset.pbLock.split('|').slice(1).join('|');
-      lockBtn.click();
-      chk(sc().querySelector('[data-pb-lock]').getAttribute('aria-pressed') === 'true', 'a lock is pressed');
-      sc().querySelector('[data-pb-new]').click();
-      chk(sIds().includes(lockedId), `New legs keeps the locked leg (${lockedId} in ${sIds().join(', ')})`);
-      holdPanel(w, AT, 'Safe turned', false);
-      sc().querySelector('[data-pb-reset]').click();
-      chk(JSON.stringify(sIds()) === JSON.stringify(before), 'Reset is the panel\'s own parlay again');
-      chk(w.localStorage.getItem('nhl_v1') === stored, 'New legs and locks are not stored');
-    }
-  } else console.log('  no levels on this state (the panel says why): the controls, the builder and the card are held on the made-up slates below');
+  } else console.log('  no suggested level open on this state (the tab says why): Add to builder, Finish and the builder from a level are held on the made-up slates below');
   /* the bet block on the Games tab: a button a priced side on every fresh game to come, its price and chance, the call tagged, far off flagged */
   d.querySelector('#tabs button[data-tab="games"]').click();
   for (const day of [...new Set(S.games.filter(g => !sStarted(g, AT) && sFresh(g)).map(g => g.date))].slice(0, 2)) {
@@ -1006,7 +1155,9 @@ async function parlayEdges() {
     const errs = [], w = await boot(at, errs, { store: JSON.stringify({ legs, ui: { tab: 'parlays' } }), hash: 'parlays' }), d = w.document;
     const nowStarted = S.games.filter(g => sStarted(g, at) && !sStarted(g, PUB));
     const nowhere = (g, tag) => {
-      chk(![...d.querySelectorAll('.pb-tl')].some(x => x.dataset.id.startsWith(g.id + '|')), `${tag}: ${g.away}@${g.home}, started, is in no level`);
+      chk(![...d.querySelectorAll('#pbBody .t30-r')].some(x => x.dataset.id.startsWith(g.id + '|')), `${tag}: ${g.away}@${g.home}, started, is in no line of the Top 30`);
+      w.eval('renderSuggest()');
+      chk(!d.querySelector(`#spBody button[data-leg^="${g.id}|"]`), `${tag}: ${g.away}@${g.home}, started, offers no suggested leg to add`);
       chk(!d.querySelector(`#pbGrid [data-g="${g.id}"]`), `${tag}: ${g.away}@${g.home} is not in the Games fold`);
       chk(!d.querySelector(`#plLines .pb-pg[data-id="${g.id}"]`) && !d.querySelector(`#plLines button[data-leg^="${g.id}|"]`), `${tag}: ${g.away}@${g.home} is not in Pick your own legs`);
       chk(!JSON.parse(w.localStorage.getItem('nhl_v1')).legs.some(l => l.game === g.id), `${tag}: ${g.away}@${g.home} is out of the builder`);
@@ -1015,49 +1166,73 @@ async function parlayEdges() {
     chk(/left the builder: the puck dropped\./.test(txt(d.getElementById('bMsg'))), `a builder leg on a game that has started leaves it, said: ${txt(d.getElementById('bMsg'))}`);
     if (later) {
       const at2 = Date.parse(later.start) + 60000;
-      /* the clock past the next puck drop before the watch has looked: a level none of whose games has started still finishes at
-         once (another game's puck drop cannot change it); one holding the started game only redraws the panel */
+      const listed = [...new Set([...d.querySelectorAll('#pbBody .t30-r')].map(x => x.dataset.id.split('|')[0]))];
+      /* the clock past the next puck drop before the watch has looked. On the Suggested Parlays tab a level of a day still open finishes at
+         once (another day's puck drop cannot change it); one of the day that puck drop locked only redraws its day, locked, opening
+         nothing, the keyboard on the tab's heading */
+      d.querySelector('#tabs button[data-tab="suggest"]').click();
       w.__setClock(at2);
-      const tiers = () => [...d.querySelectorAll('.pb-tier:not(.none)')];
-      const gidOf = x => S.games.find(g => g.id === x.dataset.id.split('|')[0]);
-      const okLv = tiers().find(el => ![...el.querySelectorAll('.pb-tl')].some(x => sStarted(gidOf(x), at2)));
-      if (okLv) {
-        okLv.querySelector('[data-pb-finish]').click();
-        chk(!d.getElementById('pcWin').hidden, `${okLv.dataset.tier}'s Finish opens the card though another game has dropped the puck since the panel was drawn`);
+      const fin = f => [...d.querySelectorAll('#spBody [data-sp-finish]')].find(b => f(b.dataset.spFinish.split('|')[0]));
+      const okF = fin(dd => sDayOpen(dd, at2));
+      if (okF) {
+        okF.click();
+        chk(!d.getElementById('pcWin').hidden, `${okF.dataset.spFinish}'s Finish opens the card though a game of another day has dropped the puck since the tab was drawn`);
         d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       }
-      const hitLv = tiers().find(el => [...el.querySelectorAll('.pb-tl')].some(x => sStarted(gidOf(x), at2)));
-      if (hitLv) {
-        const tier = hitLv.dataset.tier;
-        /* the games any level held that have dropped the puck since, in the order the page names them */
-        const held = [...new Set([...d.querySelectorAll('.pb-tier .pb-tl')].map(x => x.dataset.id.split('|')[0]))].map(id => S.games.find(g => g.id === id)).filter(g => sStarted(g, at2));
-        const names = held.map(g => `${S.teams[g.away].abbr} @ ${S.teams[g.home].abbr}`), rebuilt = (names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + ` dropped the puck: the levels were rebuilt without ${names.length > 1 ? 'them' : 'it'}.`;
-        /* the rebuilt line holds only while the panel stays on the day shown. A puck drop that leaves that day no game to come
-           moves the panel on, and it says so in place of the rebuilt line: the levels are the next day's now (PHI @ BUF and
-           FLA @ OTT, 21 October 2026, both at 7:30 PM Eastern, were the whole day). With no day left to move to (the season's
-           last, or between playoff rounds), or with the day shown keeping games but no fresh line while the next day has lines
-           (the slate follows lined days), the panel is not on that day and its day is not over, so it says neither line */
-        const slA = sSlate(at), slB = sSlate(at2), same = slA.dates.join() === slB.dates.join();
-        const emptied = slA.dates.length > 0 && slA.dates.every(dd => !slB.on(dd).length);
-        const moved = !same && emptied && slB.dates.length ? `Every game on ${slA.dates.map(dd => PBS.day(dd)).join(' and ')} has dropped the puck: the panel moved to ${slB.text}.` : null;
-        const said = same ? rebuilt : moved;
-        const fb = hitLv.querySelector('[data-pb-finish]'); fb.focus(); fb.click();
-        chk(d.getElementById('pcWin').hidden && ![...d.querySelectorAll(`.pb-tier[data-tier="${tier}"] .pb-tl`)].some(x => sStarted(gidOf(x), at2)), `${tier}'s Finish, its game started, opens nothing and redraws the level without it`);
-        const notes = txt(d.getElementById('pbNotes'));
-        chk((said === null || notes.includes(said)) && (same || !notes.includes('the levels were rebuilt')) && (moved !== null || !notes.includes('has dropped the puck: the panel moved')),
-          `and the panel says why: ${said !== null ? `"${said}"` : slB.dates.length ? `nothing, the panel on ${slB.text} while ${slA.text} keeps games with no fresh line` : 'nothing, no day left to move to'} (${notes.slice(0, 160)})`);
-        const fb2 = d.querySelector(`[data-pb-finish="${tier}"]`);
-        chk(fb2 ? d.activeElement === fb2 : d.activeElement === d.getElementById('pbTitle'), `the keyboard's focus stays on ${tier}'s Finish, redrawn, or with the level gone on the panel's heading (${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
+      const hitF = fin(dd => !sDayOpen(dd, at2));
+      if (hitF) {
+        const key = hitF.dataset.spFinish, dd = key.split('|')[0]; hitF.focus(); hitF.click();
+        const sec = d.querySelector(`#spBody .sp-day[data-sp-day="${dd}"]`);
+        chk(d.getElementById('pcWin').hidden && !!sec && sec.dataset.spState !== 'open' && !d.querySelector(`#spBody [data-sp-finish="${key}"]`), `${key}'s Finish, its day's first puck drop passed, opens nothing and redraws the day locked (${sec && sec.dataset.spState})`);
+        chk(d.activeElement === d.getElementById('spTitle'), `the keyboard's focus goes to the tab's heading, the level gone (${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
       }
+      /* the Top 30, drawn again: the lines of a game that dropped the puck since it was drawn are gone, said. The line holds only while
+         the panel stays on the day shown. A puck drop that leaves that day no game to come moves the panel on, and it says so in its
+         place (PHI @ BUF and FLA @ OTT, 21 October 2026, both at 7:30 PM Eastern, were the whole day). With no day left to move to,
+         or with the day shown keeping games but no fresh line while the next day has lines, it says neither */
+      d.querySelector('#tabs button[data-tab="parlays"]').click();
+      const held = listed.map(id => S.games.find(g => g.id === id)).filter(g => g && sStarted(g, at2));
+      const names = held.map(g => `${S.teams[g.away].abbr} @ ${S.teams[g.home].abbr}`);
+      const slA = sSlate(at), slB = sSlate(at2), same = slA.dates.join() === slB.dates.join();
+      const emptied = slA.dates.length > 0 && slA.dates.every(dd => !slB.on(dd).length);
+      const gone = names.length ? (names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + ` dropped the puck: ${names.length > 1 ? 'their' : 'its'} lines left the list.` : null;
+      const moved = !same && emptied && slB.dates.length ? `Every game on ${slA.dates.map(dd => PBS.day(dd)).join(' and ')} has dropped the puck: the panel moved to ${slB.text}.` : null;
+      const said = same ? gone : moved, notes = txt(d.getElementById('pbNotes'));
+      chk((said === null || notes.includes(said)) && (same || !notes.includes('lines left the list')) && (moved !== null || !notes.includes('has dropped the puck: the panel moved')),
+        `and the panel says why: ${said !== null ? `"${said}"` : same ? 'nothing, no line of the list on a game started' : slB.dates.length ? `nothing, the panel on ${slB.text} while ${slA.text} keeps games with no fresh line` : 'nothing, no day left to move to'} (${notes.slice(0, 160)})`);
       d.dispatchEvent(new w.Event('visibilitychange'));
       for (const g of S.games.filter(g => sStarted(g, at2) && !sStarted(g, at))) nowhere(g, 'the watch, at the next puck drop');
       chk(/puck dropped/.test(txt(d.getElementById('bMsg'))), 'the watch says why the leg left');
       const sl = sSlate(at2);
       chk(txt(d.getElementById('pbSlate')) === (sl.text || 'no games'), `after the watch the slate is ${sl.text} (${txt(d.getElementById('pbSlate'))})`);
+      holdSuggest(w, at2, 'past the next puck drop');
     }
     chk(!errs.length, 'no runtime error at the puck drop: ' + errs.join(' | '));
     holdRequests(w, 'the puck-drop boot');
   } else console.log('  fewer than two fresh games to come: the puck-drop checks of the builder skipped');
+  /* a level's Finish once its day's first puck drop has passed (the tab drawn before it, the watch not yet looked): it opens nothing and
+     redraws the day locked, the keyboard on the tab's heading; a level of the next day, still open, finishes at once */
+  {
+    const T0 = PUB + 60000, open0 = sSpDays(T0).filter(dd => sDayOpen(dd, T0)), D1 = open0[0], lk = D1 ? sLockAt(D1) : Infinity;
+    if (D1 && isFinite(lk)) {
+      const errs = [], w = await boot(T0, errs, { hash: 'suggest' }), d = w.document, f1 = d.querySelector(`#spBody [data-sp-finish^="${D1}|"]`);
+      if (f1) {
+        const at = lk + 60000, key = f1.dataset.spFinish; w.__setClock(at);
+        const other = open0.slice(1).find(dd => sDayOpen(dd, at)), f2 = other && d.querySelector(`#spBody [data-sp-finish^="${other}|"]`);
+        if (f2) {
+          f2.click();
+          chk(!d.getElementById('pcWin').hidden, `${f2.dataset.spFinish}'s Finish opens the card though ${D1}'s first puck drop has passed since the tab was drawn`);
+          d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        } else console.log(`  no other day open past ${D1}'s first puck drop: a level of another day finishing at once is not held here`);
+        const b1 = d.querySelector(`#spBody [data-sp-finish="${key}"]`); b1.focus(); b1.click();
+        const sec = d.querySelector(`#spBody .sp-day[data-sp-day="${D1}"]`);
+        chk(d.getElementById('pcWin').hidden && !!sec && sec.dataset.spState !== 'open' && !d.querySelector(`#spBody [data-sp-finish="${key}"]`), `${key}'s Finish, its day's first puck drop passed, opens nothing and redraws the day locked (${sec && sec.dataset.spState})`);
+        chk(d.activeElement === d.getElementById('spTitle'), `the keyboard's focus goes to the tab's heading, the level gone (${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
+        holdSuggest(w, at, `past ${D1}'s first puck drop`);
+      } else console.log(`  no level open on ${D1}: a Finish across its lock is not held on this state`);
+      chk(!errs.length, 'no runtime error across a day\'s lock: ' + errs.join(' | '));
+    } else console.log('  no open day to lock: a Finish across its lock is not held on this state');
+  }
   /* a × pressed after a puck drop and before the watch's next look takes out the leg its row names, never the one now at its place:
      three legs, the first on the next game to drop the puck; the clock passes that puck drop with no look, and the second row's × is
      pressed. The started game's leg leaves at its puck drop, said; the third stays */
@@ -1112,12 +1287,13 @@ async function parlayEdges() {
     try {
       const errs = [], w = await boot(PUB + 60000, errs, { state: JSON.stringify(M), store: JSON.stringify({ ui: { pb: { day: D } } }), hash: 'parlays' }), d = w.document;
       chk(sSlate(PUB + 60000, D).dates.includes(D) && txt(d.getElementById('pbSlate')) === sSlate(PUB + 60000, D).text, `the Day control keeps ${D}, the day of the stale line, shown (${txt(d.getElementById('pbSlate'))})`);
-      chk(![...d.querySelectorAll('.pb-tl')].some(x => x.dataset.id.startsWith(st.id + '|')) && !d.querySelector(`#plLines button[data-leg^="${st.id}|"]`) && !d.querySelector(`#pbGrid input[data-g="${st.id}"]`), 'a stale line is offered nowhere on the Parlay Builder');
+      w.eval('renderSuggest()');
+      chk(![...d.querySelectorAll('#pbBody .t30-r, #spBody .sp-day[data-sp-state="open"] .pb-tl')].some(x => x.dataset.id.startsWith(st.id + '|')) && !d.querySelector(`#plLines button[data-leg^="${st.id}|"]`) && !d.querySelector(`#pbGrid input[data-g="${st.id}"]`), 'a stale line is offered nowhere on the Parlay Builder');
       const stTile = [...d.querySelectorAll('#pbGrid .pb-gt.no')].find(x => txt(x).startsWith(`${S.teams[st.away].abbr} @ ${S.teams[st.home].abbr}`));
       chk(!!stTile && /line not on DraftKings at the last run/.test(txt(stTile)), `its tile says its line was not on DraftKings at the last run (${stTile ? txt(stTile) : 'no tile'})`);
-      holdPanel(w, PUB + 60000, 'a stale line and a whole-number total', true);
+      holdPanel(w, PUB + 60000, 'a stale line and a whole-number total'); holdSuggest(w, PUB + 60000, 'a stale line and a whole-number total');
       if (whole) {
-        chk(![...d.querySelectorAll('.pb-tl')].some(x => x.dataset.id.startsWith(wh.id + '|') && /\|ou$/.test(x.dataset.id)), 'a whole-number total is in no level');
+        chk(![...d.querySelectorAll('#pbBody .t30-r, #spBody .sp-day[data-sp-state="open"] .pb-tl')].some(x => x.dataset.id.startsWith(wh.id + '|') && /\|ou$/.test(x.dataset.id)), 'a whole-number total is in no level and no line of the Top 30');
         const b = d.querySelector(`#plLines button[data-leg="${wh.id}|over|ou"]`), o = () => third && d.querySelector(`#plLines button[data-leg^="${third.id}|"]`);
         chk(!!b, 'a whole-number total is offered by hand');
         if (b && o()) {
@@ -1152,7 +1328,7 @@ async function parlayEdges() {
     try {
       const legs = [firstLeg(ob), firstLeg(nb)].filter(Boolean);
       const errs = [], w = await boot(PUB + 60000, errs, { state: JSON.stringify(M), store: JSON.stringify({ legs, ui: { pb: { day: D } } }), hash: 'parlays' }), d = w.document;
-      holdPanel(w, PUB + 60000, 'another book', true);
+      holdPanel(w, PUB + 60000, 'another book'); holdSuggest(w, PUB + 60000, 'another book');
       chk(d.querySelectorAll('#legs .leg').length === legs.length, `another book: its legs are in the builder (${d.querySelectorAll('#legs .leg').length} of ${legs.length})`);
       const bt = [...d.querySelectorAll('#parlayTotals .stat')].map(txt);
       chk(!!bt[1] && bt[1].includes('Book price') && !/DraftKings/.test(bt[1]), `another book: the price tile is the book's, never DraftKings' (${bt[1]})`);
@@ -1276,7 +1452,7 @@ async function parlayEdges() {
   /* the panel's empty states, on made-up copies: no games; every game started; no line; a two-game night */
   const madeUp = async (tag, M, at) => {
     S = M;
-    try { const errs = [], w = await boot(at, errs, { state: JSON.stringify(M), hash: 'parlays' }); holdPanel(w, at, tag, true); chk(!errs.length, `${tag}: no runtime error: ${errs.join(' | ')}`); }
+    try { const errs = [], w = await boot(at, errs, { state: JSON.stringify(M), hash: 'parlays' }); holdPanel(w, at, tag); holdSuggest(w, at, tag); chk(!errs.length, `${tag}: no runtime error: ${errs.join(' | ')}`); }
     finally { S = real; }
   };
   const copy = () => JSON.parse(STATE);
@@ -1507,59 +1683,6 @@ function oddsParity(w) {
   }
 }
 
-/* the visitor's place on the levels through a read: a lock on Medium and New legs on Safe, then a read where nothing moved
-   (every level, lock and Reset as they were, and the levels' cache kept) and one where every price moved (the lock kept on
-   its leg while it still qualifies, Medium the best by its rule beside it, Safe its rule on the legs it has not shown, both
-   by brute force on the new prices) */
-async function lockChecks(ms) {
-  const days = sOddsDays(ms), come = S.games.filter(g => days.includes(g.date) && !sStarted(g, ms) && g.line);
-  let shift = 0;
-  const bump = v => !PBS.ok(v) || !shift ? v : v > 0 ? v + shift : v - shift;
-  const lineOf = L => ({ homeML: bump(L.homeML), awayML: bump(L.awayML), homeLine: L.homeLine, homeSpreadOdds: bump(L.homeSpreadOdds), awaySpreadOdds: bump(L.awaySpreadOdds), total: L.total, overOdds: bump(L.overOdds), underOdds: bump(L.underOdds) });
-  const ans = () => { const a = {}; come.forEach((g, i) => { const L = g.line, ids = L.dk && L.dk.event && ['homeML', 'awayML'].every(k => typeof L.dk[k] === 'string') ? Object.assign({}, L.dk) : idsFor(L, String(60000000 + i), String(600000 + i)); delete ids.at; (a[g.date] = a[g.date] || []).push(espnEvent(g, espnOdds(lineOf(L), ids, L.book))); }); return a; };
-  let A = ans();
-  const errs = [], w = await boot(ms, errs, { hash: 'parlays', espn: async url => { const m = /dates=(\d{4})(\d{2})(\d{2})/.exec(url); return { ok: true, json: async () => ({ events: JSON.parse(JSON.stringify((m && A[`${m[1]}-${m[2]}-${m[3]}`]) || [])) }) }; } }), d = w.document;
-  const tierLegs = id => [...d.querySelectorAll(`.pb-tier[data-tier="${id}"] .pb-tl`)].map(x => x.dataset.id);
-  const med0 = tierLegs('med'), safe0 = tierLegs('safe');
-  if (med0.length < 2 || safe0.length < 2 || !come.length) { console.log('  the levels have too few legs for a lock and New legs: the lock checks are skipped'); return; }
-  const lockId = med0[0];
-  d.querySelector(`[data-pb-lock="med|${lockId}"]`).click();
-  d.querySelector('[data-pb-new="safe"]').click();
-  const med1 = tierLegs('med'), safe1 = tierLegs('safe'), v1 = w.eval('ODDS.v'), g1 = pageGames(w);
-  const locked = () => { const b = d.querySelector(`[data-pb-lock="med|${lockId}"]`); return !!b && b.getAttribute('aria-pressed') === 'true'; };
-  const reset = id => !!d.querySelector(`[data-pb-reset="${id}"]`);
-  chk(locked() && reset('med') && reset('safe') && canon(safe1) !== canon(safe0), `before a read: Medium's ${lockId} locked and Safe on New legs (${safe0.join(', ')} -> ${safe1.join(', ')})`);
-  /* a read where nothing moved */
-  d.getElementById('pbRefreshOdds').click(); await oddsDone(w);
-  const g2 = pageGames(w), same = g2.every(g => { const o = g1.find(x => x.id === g.id); return DERIVED.every(k => canon(g[k]) === canon(o && o[k])) && canon(g.line && PRICE_K.map(k => g.line[k])) === canon(o && o.line && PRICE_K.map(k => o.line[k])); });
-  chk(locked() && reset('med') && reset('safe'), `a read where nothing moved keeps Medium's lock and Safe's New legs (${locked() ? 'locked' : 'lock lost'}, ${reset('safe') ? 'Safe on New legs' : 'Safe reset'})`);
-  if (same) {
-    chk(canon(tierLegs('med')) === canon(med1) && canon(tierLegs('safe')) === canon(safe1), `and every level as it was (Medium ${tierLegs('med').join(', ')}; Safe ${tierLegs('safe').join(', ')})`);
-    chk(w.eval('ODDS.v') === v1, `and the levels' cache as it was: nothing they stand on moved (reads ${v1} -> ${w.eval('ODDS.v')})`);
-  }
-  /* a read where every price moved, the numbers held */
-  shift = 6; A = ans();
-  d.getElementById('pbRefreshOdds').click(); await oddsDone(w);
-  const g3 = pageGames(w), EXPL = JSON.parse(STATE);
-  for (const g of EXPL.games) { const n = g3.find(x => x.id === g.id); if (n && n.line && n.line.refreshed) { const dv = sCall(JSON.parse(JSON.stringify(g)), n.line); for (const k of DERIVED) delete g[k]; Object.assign(g, dv, { line: n.line }); } }
-  const real = S; S = EXPL;
-  try {
-    const wrong = g3.filter(n => n.line && n.line.refreshed).filter(n => { const g = EXPL.games.find(x => x.id === n.id); return DERIVED.some(k => canon(n[k]) !== canon(g[k])); });
-    chk(!wrong.length, `the moved prices' calls are the job's rules on them (${wrong.length} differ)`);
-    /* the lock holds while its leg qualifies and a parlay of Medium's size can be made beside it; else Medium is its default */
-    const sl = sSlate(ms), pool = sPool(sl, PBS.KINDS, []), lockL = pool.legs.find(L => L.id === lockId);
-    const withLock = lockL ? sBrute(pool.legs, 3, 0.25, lockId) : null, medB = withLock || sBrute(pool.legs, 3, 0.25);
-    chk(locked() === !!withLock, `after prices moved, Medium's lock ${withLock ? 'holds: its leg still qualifies' : lockL ? 'is gone: no parlay of its size beside it' : 'is gone: its leg no longer qualifies'} (${locked() ? 'locked' : 'not locked'})`);
-    chk(canon(tierLegs('med')) === canon(medB ? medB.legs.map(L => L.id) : []), `Medium is the best by its rule${withLock ? ' beside the lock' : ''} on the new prices: ${medB ? medB.legs.map(L => L.id).join(', ') : 'none'} (page: ${tierLegs('med').join(', ') || 'none'})`);
-    /* Safe keeps New legs: its rule on the legs it has not shown, else (none left) back to the first; with no pair at all, its default */
-    const shown = new Set(safe0), safeB = sBrute(pool.legs.filter(L => !shown.has(L.id)), 2, 0) || sBrute(pool.legs, 2, 0);
-    chk(reset('safe') === !!safeB && canon(tierLegs('safe')) === canon(safeB ? safeB.legs.map(L => L.id) : []), `Safe keeps New legs: the likeliest pair on the new prices among the legs it has not shown (${safeB ? safeB.legs.map(L => L.id).join(', ') : 'none'}; page: ${tierLegs('safe').join(', ') || 'none'})`);
-    const rows = [...d.querySelectorAll('.pb-tier[data-tier="med"] .pb-tl, .pb-tier[data-tier="safe"] .pb-tl')];
-    chk(rows.every(r => { const [g, s2, k] = r.dataset.id.split('|'), L = sLeg(EXPL.games.find(x => x.id === g), s2, k); return L && txt(r).includes(PBS.odds(L.price)); }), 'and their legs show the new prices');
-    console.log(`  the levels through a read: Medium locked on ${lockId}${lockL ? '' : ' (no longer qualifying after the prices moved)'}, Safe on New legs; nothing moved: ${same ? 'levels and cache held' : 'a rounding moved a call, levels not compared'}; prices moved: Medium ${tierLegs('med').join(', ')}, Safe ${tierLegs('safe').join(', ')}`);
-  } finally { S = real; }
-  chk(!errs.length, 'no runtime error through the lock checks: ' + errs.join(' | '));
-}
 const PRICE_K = ['book', 'homeML', 'awayML', 'homeLine', 'homeSpreadOdds', 'awaySpreadOdds', 'total', 'overOdds', 'underOdds'];
 async function refreshOddsChecks() {
   console.log('REFRESH ODDS');
@@ -1711,7 +1834,7 @@ async function refreshOddsChecks() {
   for (const g of EXP.games) if (expLine[g.id]) { const p = pub(g.id); for (const k of DERIVED) delete g[k]; Object.assign(g, sCall(p, expLine[g.id]), { line: Object.assign({}, expLine[g.id], { at: new Date(atMs).toISOString(), refreshed: true }) }); }
   const real = S; S = EXP;
   try {
-    const PN = holdPanel(w, T2, 'after Refresh odds', true);
+    const PN = holdPanel(w, T2, 'after Refresh odds'); holdSuggest(w, T2, 'after Refresh odds');
     const tick = PN.pool.tickable, rf = tick.filter(g => g.line.refreshed), pubN = tick.length - rf.length;
     if (tick.length) chk(txt(d.getElementById('pbRead')).includes(rf.length ? `as read from ESPN in this browser at ${clockOf(atMs)}${pubN ? ` (${pubN} of the ${tick.length} games as the job read ${pubN > 1 ? 'them' : 'it'} at ${clockOf(PUB)})` : ''}` : `as read at ${clockOf(PUB)}, the job's last run`), `the panel says when its prices were read (${txt(d.getElementById('pbRead'))})`);
     /* the builder: the flipped moneyline at its new price, the moved puck line out and said, the card's link on the fresh ids */
@@ -1803,7 +1926,7 @@ async function refreshOddsChecks() {
   const EXP3 = JSON.parse(JSON.stringify(EXP));
   for (const g of EXP3.games) if (exp3[g.id]) { const p = cur.find(x => x.id === g.id); for (const k of DERIVED) delete g[k]; Object.assign(g, sCall(p, exp3[g.id]), { line: Object.assign({}, exp3[g.id], { at: new Date(at3).toISOString(), refreshed: true }) }); }
   { const real3 = S; S = EXP3; try {
-    holdPanel(w, T3, 'after a second press', true);
+    holdPanel(w, T3, 'after a second press'); holdSuggest(w, T3, 'after a second press');
     if (card3) {
       const cl = [...d.querySelectorAll('#legs .leg')].map(r => { const [g, s2, k] = r.dataset.id.split('|'); return sLeg(EXP3.games.find(x => x.id === g), s2, k); }).filter(Boolean).sort(sOrder);
       const key = L => L.kind === 'ou' ? L.side : L.side + (L.kind === 'ml' ? 'ML' : 'PL'), ids = cl.map(L => L.g.line.dk && L.g.line.dk[key(L)]).filter(x => typeof x === 'string');
@@ -1816,7 +1939,6 @@ async function refreshOddsChecks() {
   } finally { S = real3; } }
   chk(!errs.length, 'no runtime error through the press: ' + errs.join(' | '));
   holdRequests(w, 'the Refresh odds boot');
-  await lockChecks(AT);
   /* reads that change nothing: ESPN failing, a junk answer, an answer of the wrong shape, a read older than the lines shown */
   const lineNow = come.some(g => g.line);
   for (const [tag, fn] of [['a failed read', async () => ({ ok: false, status: 503 })], ['a junk answer', async () => ({ ok: true, json: async () => { throw new SyntaxError('Unexpected token'); } })], ['an answer of the wrong shape', async () => ({ ok: true, json: async () => ({ events: 'x' }) })], ['a network error', async () => { throw new TypeError('Failed to fetch'); }]]) {
@@ -1966,7 +2088,7 @@ function ppTrialChecks(w, tag) {
   chk(Lg.decision || !/\bpass/i.test(tr), `${tag}: no word of passing before the bar is decided`);
   const ppBtns = [...d.querySelectorAll('button[data-pp]')];
   chk(ppBtns.length > 0 && !/model says|\bedge/i.test(win) && !ppBtns.some(b => /model says|\bedge/i.test(txt(b) + ' ' + b.title)), `${tag}: neither the window nor a Player props button says "model says" or "edge" on a prop (${ppBtns.length} buttons)`);
-  chk(!d.querySelector('#ppWin button[data-leg], #ppWin [data-pb-add], #ppWin [data-pc-finish]'), `${tag}: nothing in the window puts a level or a game's bet in a parlay`);
+  chk(!d.querySelector('#ppWin button[data-leg], #ppWin [data-sp-add], #ppWin [data-pc-finish]'), `${tag}: nothing in the window puts a level or a game's bet in a parlay`);
   const rd = w.eval('PP && PROPS.games[PP.gid] ? PROPS.games[PP.gid].status : null');
   if (rd !== 200) chk(!d.querySelector('#ppWin [data-pp-add]'), `${tag}: with no DraftKings price read, no price in the window can be added (${d.querySelectorAll('#ppWin [data-pp-add]').length})`);
 }
@@ -2087,7 +2209,7 @@ async function playerPropsChecks() {
   let propsNow = propsFn;                       // the answer the props stub gives, swapped for the second press
   const errs = [], w = await boot(AT, errs, { hash: 'parlays', espn: sbFn, props: url => propsNow(url) }), d = w.document;
   const writes0 = w.__writes.length, store0 = w.localStorage.getItem('nhl_v1'), games0 = canon(pageGames(w)), v0 = w.eval('ODDS.v');
-  const tiers0 = [...d.querySelectorAll('.pb-tier .pb-tl')].map(x => x.dataset.id), legs0 = w.eval('JSON.stringify(P.legs)');
+  const tiers0 = [...d.querySelectorAll('#pbBody .t30-r')].map(x => x.dataset.id), legs0 = w.eval('JSON.stringify(P.legs)');
   d.getElementById('pbRefreshOdds').click();
   await wait(5);
   const asked = propReqs(w).map(r => r.url);
@@ -2120,8 +2242,9 @@ async function playerPropsChecks() {
   void tiers0;
   const names = [...new Set([].concat(...Object.values(S.props.games).map(r => [...r.homeP.skaters, ...r.awayP.skaters].map(p => p.name))))].filter(n => n && n.length > 5);
   chk(d.querySelectorAll('#plLines button[data-pp]').length > 0 || !d.querySelector('#plLines .pb-pg'), 'Pick your own legs carries the Player props buttons it is held without');
-  const panelT = ['pbPanel', 'builder', 'slip', 'plLines'].map(id => { const el = d.getElementById(id); if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('button[data-pp]').forEach(x => x.remove()); return txt(c); }).join(' ');
-  chk(!names.some(n => panelT.includes(n)) && [...d.querySelectorAll('.pb-tier .pb-tl, #legs .leg')].every(x => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(x.dataset.id)), 'no player is put in a level, the builder or Pick your own legs: every leg is a game\'s');
+  w.eval('renderSuggest()');
+  const panelT = ['pbPanel', 'tab-suggest', 'builder', 'slip', 'plLines'].map(id => { const el = d.getElementById(id); if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('button[data-pp]').forEach(x => x.remove()); return txt(c); }).join(' ');
+  chk(!names.some(n => panelT.includes(n)) && [...d.querySelectorAll('#pbBody .t30-r, #spBody .pb-tl, #legs .leg')].every(x => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(x.dataset.id)), 'no player is put in a suggested level, the Top 30, the builder or Pick your own legs: every leg is a game\'s');
   chk(w.__writes.length === writes0 && w.localStorage.getItem('nhl_v1') === store0, `the press writes nothing to storage (${w.__writes.length - writes0} writes)`);
   /* the window on the game read in two pages: every number worked out here */
   d.querySelector('#tabs button[data-tab="games"]').click();
@@ -2187,11 +2310,11 @@ async function playerPropsChecks() {
   {
     const errsS = [], wS = await boot(AT, errsS, { hash: 'parlays', espn: async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; },
       props: async url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); } }), dS = wS.document;
-    const lv = () => canon([...dS.querySelectorAll('.pb-tier')].map(t => [t.dataset.tier, [...t.querySelectorAll('.pb-tl')].map(x => x.dataset.id), txt(t.querySelector('.pb-nums'))]));
+    const lv = () => { wS.eval('renderSuggest()'); return canon([[...dS.querySelectorAll('#pbBody .t30-r')].map(r => [r.dataset.id, txt(r)])].concat([...dS.querySelectorAll('#spBody .pb-tier')].map(t => [t.closest('.sp-day').dataset.spDay, t.dataset.tier, [...t.querySelectorAll('.pb-tl')].map(x => x.dataset.id), txt(t.querySelector('.pb-nums'))]))); };
     const l0 = lv(), v1 = wS.eval('ODDS.v'), g1 = canon(pageGames(wS));
     dS.getElementById('pbRefreshOdds').click(); await oddsDone(wS);
     const pool = JSON.parse(wS.eval('JSON.stringify(PB_CUR && PB_CUR.pool ? (PB_CUR.pool.legs || []).map(L => L.id) : [])'));
-    chk(wS.eval('PROPS.games[' + JSON.stringify(G.id) + '] && PROPS.games[' + JSON.stringify(G.id) + '].status') === 200 && lv() === l0 && wS.eval('ODDS.v') === v1 && canon(pageGames(wS)) === g1, `a props read changes no level, no leg of one and no number on one (${l0.slice(0, 120)})`);
+    chk(wS.eval('PROPS.games[' + JSON.stringify(G.id) + '] && PROPS.games[' + JSON.stringify(G.id) + '].status') === 200 && lv() === l0 && wS.eval('ODDS.v') === v1 && canon(pageGames(wS)) === g1, `a props read changes no level, no line of the Top 30, no leg of either and no number on one (${l0.slice(0, 120)})`);
     chk(pool.every(id => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(id)), `the panel's pool after the props read holds game legs alone (${pool.length} legs)`);
     chk(!errsS.length, 'no runtime error on the nothing-suggested press: ' + errsS.join(' | '));
   }
@@ -2702,12 +2825,10 @@ async function gameLegsMax(M, G, H, AT) {
       chk(!!nb && pin().has(inC.x.id + '|' + inC.st) && ofG().length === MAX && txt($('slipMsg')) === '', `a player's price added in the props window, without a word of its own, ends the replacement on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
       leg('over|ou').click();
       chk(ous().join() === 'over' && ofG().length === MAX && /^Over [\d.]+ replaced Under [\d.]+ on /.test(txt($('slipMsg'))), `the Over back in place of the Under at the most is said on the slip bar (${txt($('slipMsg'))})`);
-      d.querySelector('#tabs button[data-tab="parlays"]').click();
-      const lvB = () => d.querySelector('#pbBody button[data-pb-add]:not([disabled])'), pd = d.querySelector(`#pbDay button[data-day="${G.date}"]`);
-      if (!lvB() && pd) pd.click();                // the panel on G's day, which has G and H lined, where its own day has no level
-      const lv = lvB(); if (lv) lv.click();
-      if (!lv) console.log(`  no level to add on the panel's slate (${G.date}): a level's Add to builder ending a replacement on the slip bar is not held on this state`);
-      else chk(JSON.parse(w.eval('JSON.stringify(PB_CUR.levels[' + JSON.stringify(lv.dataset.pbAdd) + '].legs.map(L => L.id))')).join() === JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => L.id))')).join() && txt($('slipMsg')) === '', `a level's Add to builder ends the replacement on the slip bar (${lv.dataset.pbAdd}; "${txt($('slipMsg'))}")`);
+      d.querySelector('#tabs button[data-tab="suggest"]').click();
+      const lv = d.querySelector('#spBody button[data-sp-add]:not([disabled])'); if (lv) lv.click();
+      if (!lv) console.log('  no suggested level to add on this state: a level\'s Add to builder ending a replacement on the slip bar is not held');
+      else { const [dd, id] = lv.dataset.spAdd.split('|'); chk(JSON.parse(w.eval(`JSON.stringify(spDay(${JSON.stringify(dd)}).levels[${JSON.stringify(id)}].legs.map(L => L.id))`)).join() === JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => L.id))')).join() && txt($('slipMsg')) === '', `a suggested level's Add to builder ends the replacement on the slip bar (${lv.dataset.spAdd}; "${txt($('slipMsg'))}")`); }
     }
   }
   chk(!errs.length, 'no runtime error at the most legs of one game: ' + errs.join(' | '));
@@ -2894,17 +3015,20 @@ async function hiddenLegs(M, G, AT, o) {
     for (const [legs, n] of [[[ml, ov], 1], [[ov], 0]]) {
       const wX = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbM, props, store: JSON.stringify({ legs, ui: { tab: 'parlays' } }) });
       await press(wX); wX.document.getElementById('ppClose').click();
-      const dX = wX.document, open = () => dX.querySelector('#pbBody button[data-pb-add]:not([disabled])'); dX.querySelector('#tabs button[data-tab="parlays"]').click();
-      const pd = dX.querySelector(`#pbDay button[data-day="${G.date}"]`); if (!open() && pd) pd.click();
-      const id = wX.eval(`(() => { const id = Object.keys(PB_CUR.levels).find(k => { const r = PB_CUR.levels[k]; return r && r.legs && r.legs.length >= 2 && document.querySelector('#pbBody button[data-pb-add="' + k + '"]:not([disabled])'); }); if (!id) return null;
-        const g = gameById()[${JSON.stringify(G.id)}], L = legOf(g, 'over', 'ou'), r = PB_CUR.levels[id], rest = r.legs.filter(x => x.game !== g.id).slice(0, r.legs.length - 1);
+      const dX = wX.document;
+      /* planted through the page's own spDay, so the tab draws the level and its Add to builder takes it as drawn */
+      const id = wX.eval(`(() => { const D = spDay(${JSON.stringify(G.date)}), id = Object.keys(D.levels).find(k => { const r = D.levels[k]; return r && r.legs && r.legs.length >= 2; }); if (!id) return null;
+        const g = gameById()[${JSON.stringify(G.id)}], L = legOf(g, 'over', 'ou'), r = D.levels[id], rest = r.legs.filter(x => x.game !== g.id).slice(0, r.legs.length - 1);
         if (!L || L.num !== ${T0 + 1}) return null;
-        PB_CUR = Object.assign({}, PB_CUR, { levels: Object.assign({}, PB_CUR.levels, { [id]: Object.assign({}, r, { legs: rest.concat([L]).sort(legCmp) }) }) });
+        const planted = Object.assign({}, r, { legs: rest.concat([L]).sort(legCmp) }), real = spDay;
+        spDay = date => { const D2 = real(date); if (date === ${JSON.stringify(G.date)}) D2.levels[id] = planted; return D2; };
         return id; })()`);
-      if (!id) { console.log(`  no level to plant the Over at ${T0 + 1} on: Add to builder beside a stored leg at a moved number not held`); break; }
+      dX.querySelector('#tabs button[data-tab="suggest"]').click();
+      const addX = id && dX.querySelector(`#spBody button[data-sp-add="${G.date}|${id}"]`);
+      if (!addX) { console.log(`  no suggested level of ${G.date} to plant the Over at ${T0 + 1} on: Add to builder beside a stored leg at a moved number not held`); break; }
       const t = JSON.parse(wX.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(id)}))`)), what = `${t[1]} ${t[2]}-leg parlay`;
       const s0 = wX.localStorage.getItem('nhl_v1'), a0 = wX.__asked.length; wX.__confirm = false;
-      dX.querySelector(`#pbBody button[data-pb-add="${id}"]`).click();
+      addX.click();
       const asked = wX.__asked.slice(a0).join(' | '); wX.__confirm = true;
       const want = n ? `Replace the 1 leg in the builder, and the 1 leg kept on this device that it leaves out of the parlay, with the ${what}?` : `Replace the 1 leg kept on this device that the builder leaves out of the parlay with the ${what}?`;
       chk(asked === want && wX.localStorage.getItem('nhl_v1') === s0 && canon(inStore(wX)) === canon(legs.map(l => l.side + '|' + l.kind).sort()), `a level holding the Over at ${T0 + 1} does not keep the stored Over ${T0}: with ${n} leg${n === 1 ? '' : 's'} drawn, Add to builder asks before it goes, and No keeps the store (${asked || 'not asked'})`);
@@ -2917,11 +3041,10 @@ async function hiddenLegs(M, G, AT, o) {
     await press(wA); wA.document.getElementById('ppClose').click();
     const dA = wA.document, before = () => JSON.stringify((JSON.parse(wA.localStorage.getItem('nhl_v1') || '{}').legs || []));
     chk(ofG(wA).length === 5 && ofG(wA, 'drawn').length === 0, `a press that finds no props posted takes the 5 out of the builder and keeps them stored (${ofG(wA).length} stored, ${ofG(wA, 'drawn').length} drawn)`);
-    dA.querySelector('#tabs button[data-tab="parlays"]').click();
-    const lvB = () => dA.querySelector('#pbBody button[data-pb-add]:not([disabled])'), pd = dA.querySelector(`#pbDay button[data-day="${G.date}"]`);
-    if (!lvB() && pd) pd.click();
-    const lv = lvB(), t = lv && JSON.parse(wA.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(lv.dataset.pbAdd)}))`)), what = t && `${t[1]} ${t[2]}-leg parlay`;
-    if (!lv) console.log('  no level to add on the panel\'s slate: a level\'s Add to builder asking before the legs it leaves out go is not held on this state');
+    dA.querySelector('#tabs button[data-tab="suggest"]').click();
+    const lvB = () => dA.querySelector('#spBody button[data-sp-add]:not([disabled])');
+    const lv = lvB(), t = lv && JSON.parse(wA.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(lv.dataset.spAdd.split('|')[1])}))`)), what = t && `${t[1]} ${t[2]}-leg parlay`;
+    if (!lv) console.log('  no suggested level to add: a level\'s Add to builder asking before the legs it leaves out go is not held on this state');
     else {
       const s0 = before(), a0 = wA.__asked.length; wA.__confirm = false; lv.click();
       chk(before() === s0 && wA.__asked.slice(a0).join(' | ') === `Replace the 5 legs kept on this device that the builder leaves out of the parlay with the ${what}?`, `with none drawn and 5 stored, Add to builder asks first, and No keeps them (${wA.__asked.slice(a0).join(' | ') || 'not asked'})`);
@@ -2930,9 +3053,10 @@ async function hiddenLegs(M, G, AT, o) {
       const s1 = before(), a1 = wA.__asked.length; dA.getElementById('clearParlay').click();
       chk(before() === s1 && wA.__asked.slice(a1).join(' | ') === 'Clear the 1 leg from the builder, and the 5 legs kept on this device that it leaves out of the parlay?', `Clear all with 1 drawn and 5 left out asks first, and No keeps all 6 (${wA.__asked.slice(a1).join(' | ') || 'not asked'})`);
       const lv2 = lvB(), a2 = wA.__asked.length; if (lv2) lv2.click();
-      chk(!!lv2 && before() === s1 && wA.__asked.slice(a2).join(' | ') === `Replace the 1 leg in the builder, and the 5 legs kept on this device that it leaves out of the parlay, with the ${JSON.parse(wA.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(lv2 && lv2.dataset.pbAdd)}).slice(1, 3).join(' '))`))}-leg parlay?`, `Add to builder with 1 drawn and 5 left out asks about all 6, and No keeps them (${wA.__asked.slice(a2).join(' | ') || 'not asked'})`);
-      wA.__confirm = true; const lv3 = lvB(), id3 = lv3 && lv3.dataset.pbAdd; if (lv3) lv3.click();
-      const ids3 = id3 ? JSON.parse(wA.eval(`JSON.stringify(PB_CUR.levels[${JSON.stringify(id3)}].legs.map(L => L.id))`)) : [];
+      chk(!!lv2 && before() === s1 && wA.__asked.slice(a2).join(' | ') === `Replace the 1 leg in the builder, and the 5 legs kept on this device that it leaves out of the parlay, with the ${JSON.parse(wA.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(lv2 && lv2.dataset.spAdd.split('|')[1])}).slice(1, 3).join(' '))`))}-leg parlay?`, `Add to builder with 1 drawn and 5 left out asks about all 6, and No keeps them (${wA.__asked.slice(a2).join(' | ') || 'not asked'})`);
+      wA.__confirm = true; const lv3 = lvB(), k3 = lv3 && lv3.dataset.spAdd.split('|');
+      const ids3 = k3 ? JSON.parse(wA.eval(`JSON.stringify(spDay(${JSON.stringify(k3[0])}).levels[${JSON.stringify(k3[1])}].legs.map(L => L.id))`)) : [];
+      if (lv3) lv3.click();
       chk(!!lv3 && JSON.stringify((JSON.parse(wA.localStorage.getItem('nhl_v1') || '{}').legs || []).map(l => `${l.game}|${l.side}|${l.kind}`)) === JSON.stringify(ids3), `Yes puts exactly the level's legs in (${ids3.length})`);
     }
   }
@@ -2945,9 +3069,9 @@ async function builderPlayerLegs(M, G, H, AT) {
   let propsNow = url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); };
   const w = await boot(AT, errs, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: url => propsNow(url) }), d = w.document, $ = id => d.getElementById(id);
   const store = () => JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), mu = `${S.teams[G.away].abbr} @ ${S.teams[G.home].abbr}`;
-  const tiers = () => canon([...d.querySelectorAll('.pb-tier')].map(t => [t.dataset.tier, [...t.querySelectorAll('.pb-tl')].map(x => x.dataset.id), txt(t.querySelector('.pb-nums')), txt(t.querySelector('.pb-rule'))]));
+  const tiers = (ww = w) => { ww.eval('renderSuggest()'); return canon([...ww.document.querySelectorAll('#spBody .pb-tier')].map(t => [t.closest('.sp-day').dataset.spDay, t.dataset.tier, [...t.querySelectorAll('.pb-tl')].map(x => x.dataset.id), txt(t.querySelector('.pb-nums')), txt(t.querySelector('.pb-rule'))])); };
   const tiers0 = tiers();
-  holdPanel(w, AT, 'before any player leg', true);          // what the levels are held to below: the rules' own, by brute force
+  holdPanel(w, AT, 'before any player leg'); holdSuggest(w, AT, 'before any player leg');          // what the levels are held to below: the rules' own, by brute force
   /* before a press: no price in a window can be added */
   const dayOn = dd => { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); };
   d.querySelector('#tabs button[data-tab="games"]').click(); dayOn(G.date);
@@ -3089,7 +3213,7 @@ async function builderPlayerLegs(M, G, H, AT) {
   const bTxt = txt($('builder'));
   chk(!/\bedge\b/i.test(bTxt) && !/model says/i.test(bTxt), `with a player leg nothing in the builder claims an edge or says "model says" (${(/[^.]*\bedge\b[^.]*|[^.]*model says[^.]*/i.exec(bTxt) || [''])[0].slice(0, 120)})`);
   chk(tiers() === tiers0, 'the suggested levels are exactly as they were: team bets, one leg a game, no player and no same-game parlay');
-  holdPanel(w, AT, 'with player legs in the builder', true);
+  holdPanel(w, AT, 'with player legs in the builder'); holdSuggest(w, AT, 'with player legs in the builder');
   /* no thin edge beside a player leg: on a made-up copy where H's home moneyline is thin (its edge at or above 0 and under the site's bar),
      the builder marks it thin edge alone, and beside a player leg it marks it nothing, and nothing in the builder says edge */
   {
@@ -3153,9 +3277,9 @@ async function builderPlayerLegs(M, G, H, AT) {
     /* the levels worked out from nothing on a page that opens with player legs in the builder (the open page's levels are cached on
        the picks, the slate and the reads, so only a fresh page computes them with the player legs there): every level by brute
        force, team bets alone, one leg a game, and exactly the levels the page drew before any player leg */
-    const tiersR = canon([...dR.querySelectorAll('.pb-tier')].map(t => [t.dataset.tier, [...t.querySelectorAll('.pb-tl')].map(x => x.dataset.id), txt(t.querySelector('.pb-nums')), txt(t.querySelector('.pb-rule'))]));
-    chk(tiersR === tiers0 && ![...dR.querySelectorAll('.pb-tier .pb-tl')].some(x => x.dataset.id.includes('|p|')), `a reload with player legs in the builder works out the same levels from nothing: team bets, one leg a game, no player leg (${tiersR === tiers0 ? 'the same' : tiersR.slice(0, 160)})`);
-    holdPanel(wR, AT + 60000, 'a reload with player legs in the builder', true);
+    const tiersR = tiers(wR);
+    chk(tiersR === tiers0 && ![...dR.querySelectorAll('#spBody .pb-tl, #pbBody .t30-r')].some(x => x.dataset.id.includes('|p|')), `a reload with player legs in the builder works out the same levels from nothing: team bets, one leg a game, no player leg (${tiersR === tiers0 ? 'the same' : tiersR.slice(0, 160)})`);
+    holdPanel(wR, AT + 60000, 'a reload with player legs in the builder'); holdSuggest(wR, AT + 60000, 'a reload with player legs in the builder');
     chk(!eR.length, 'no runtime error on the reload: ' + eR.join(' | '));
   }
   /* a later press: Y's 3+ re-priced, X's points line moved, Z's saves line pulled; each said once, nothing stored */
@@ -3911,13 +4035,21 @@ async function theLook() {
   for (const b of [...d.querySelectorAll('#days .day')]) { b.click(); const l = d.querySelector('#games button[data-lu]'); if (l) l.click(); }
   const ppB = [...d.querySelectorAll('#days .day')].map(b => { b.click(); return d.querySelector('#games button[data-pp]'); }).find(Boolean);
   if (ppB) { ppB.click(); chk(!d.getElementById('ppWin').hidden && [...d.querySelectorAll('#ppBody .pp-team h3')].every(h => !h.querySelector('img')), 'the props window opens, its clubs\' headings without an image'); chk(!d.querySelectorAll('img').length, 'no image with the props window open'); d.getElementById('ppClose').click(); }
-  d.querySelector('#tabs button[data-tab="parlays"]').click();
-  const fin = d.querySelector('[data-pb-finish]');
+  d.querySelector('#tabs button[data-tab="suggest"]').click();
+  const fin = d.querySelector('[data-sp-finish]');
   if (fin) { fin.click(); chk(!d.getElementById('pcWin').hidden && !d.querySelectorAll('img').length, 'no image with the parlay card open'); d.getElementById('pcClose').click(); }
   chk(!d.querySelectorAll('img').length, `no image anywhere after every tab, day, drawer and window (${d.querySelectorAll('img').length})`);
-  /* the level's lock: a word, Lock or Locked, never an icon */
-  const lk = d.querySelector('[data-pb-lock]');
-  if (lk) { chk(txt(lk) === 'Lock' && !lk.querySelector('svg'), `a level's lock says Lock (${txt(lk)})`); lk.click(); const l2 = d.querySelector(`[data-pb-lock="${lk.dataset.pbLock}"]`); chk(!!l2 && txt(l2) === 'Locked' && l2.getAttribute('aria-pressed') === 'true', `pressed, it says Locked (${l2 && txt(l2)})`); l2.click(); }
+  /* a suggested leg's Add and a Top 30 line's: a word, Add or Added, never an icon */
+  for (const sel of ['#spBody button.sp-add', '#pbBody button.t30-add']) {
+    if (sel.startsWith('#pbBody')) d.querySelector('#tabs button[data-tab="parlays"]').click();
+    const ab = d.querySelector(sel);
+    if (!ab) continue;
+    const key = ab.dataset.leg, was = ab.getAttribute('aria-pressed') === 'true';
+    chk(txt(ab) === (was ? 'Added' : 'Add') && !ab.querySelector('svg') && w.getComputedStyle(ab).minHeight === '44px', `${sel}: says ${was ? 'Added' : 'Add'}, a word, 44px (${txt(ab)})`);
+    ab.click(); const a2 = d.querySelector(`${sel}[data-leg="${key}"]`);
+    chk(!!a2 && txt(a2) === (was ? 'Add' : 'Added') && a2.getAttribute('aria-pressed') === String(!was), `${sel}: pressed, it says ${was ? 'Add' : 'Added'} (${a2 && txt(a2)})`);
+    if (a2) a2.click();
+  }
   chk(!d.querySelector('svg:not(.spark)'), 'no icon drawn on the page but the players\' sparklines');
   chk(!errs.length, 'no runtime error in THE LOOK: ' + errs.join(' | '));
   holdRequests(w, 'THE LOOK');
@@ -3943,12 +4075,17 @@ async function suggestRecord() {
     chk(!(PREV && PREV.suggest !== undefined), 'the record is in every state after the first that carried it');
     console.log('  the state predates the record (an older job published it): the record\'s state and page checks skipped'); return;
   }
-  chk(JSON.stringify(S.suggest) === JSON.stringify(SG.summarize(L, S.season)), `the state's record is the ledger's summary (${JSON.stringify(S.suggest && S.suggest.tiers && S.suggest.tiers.safe)})`);
+  const sumOnly = Object.assign({}, S.suggest); delete sumOnly.sets;
+  chk(JSON.stringify(sumOnly) === JSON.stringify(SG.summarize(L, S.season)), `the state's record is the ledger's summary (${JSON.stringify(S.suggest && S.suggest.tiers && S.suggest.tiers.safe)})`);
+  /* the days the Suggested Parlays tab draws once they lock (nhl v17): the ledger's entries from the day before the publish's on, exactly;
+     a state an older job published carries none, and once one has, every state after it does */
+  if (S.suggest && S.suggest.sets !== undefined) chk(JSON.stringify(S.suggest.sets) === JSON.stringify(SG.current(L, PUB)), `the state's suggest.sets are the ledger's entries from the day before the publish on (${Object.keys(S.suggest.sets).join(', ')}; the ledger's ${Object.keys(SG.current(L, PUB)).join(', ')})`);
+  else chk(!(PREV && PREV.suggest && PREV.suggest.sets !== undefined), 'the record\'s sets are in every state after the first that carried them');
   /* the days still to lock with a line read at the publish */
   const first = SG.daysOf(S), pubMin = Math.floor(PUB / 60000);
   /* a day locked already is the last commit's ledger's to hold (SG.check), whatever its first puck drop reads now (a game postponed or moved) */
   const lined = [...new Set(S.games.filter(g => g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 60000) === pubMin).map(g => g.date))].filter(d => first[d] > PUB && !(L.days[d] && Date.parse(L.days[d].lock) <= PUB)).sort();
-  const errs = [], w = await boot(PUB, errs, { hash: 'parlays' }), d = w.document;
+  const errs = [], w = await boot(PUB, errs, { hash: 'suggest' }), d = w.document;
   for (const day of lined) {
     const want = SG.setOf(w, day), e = L.days[day];
     if (!want.games.length) { chk(!e, `${day}: no game to come with a fresh line in the page, no entry`); continue; }
@@ -3973,8 +4110,8 @@ async function suggestRecord() {
     const any = TIERS.some(([id]) => R.tiers[id].graded || R.tiers[id].push);
     const want = ['Record'].concat(any ? TIERS.map(([id, label]) => { const t = R.tiers[id]; return `${label} ${t.won}–${t.lost}${t.graded || t.push ? ` ${un(t.units)} units` : ''}`; }) : ['None graded yet']).concat(R.pending ? [`Pending ${R.pending}`] : []);
     const got = [...rec.children].map(txt);
-    chk(!rec.hidden && rec.closest('#pbPanel') && rec.previousElementSibling && rec.previousElementSibling.classList.contains('pb-head') && JSON.stringify(got) === JSON.stringify(want),
-      `the panel's record row under its heading, pill by pill: ${got.join(' | ')} (want ${want.join(' | ')})`);
+    chk(!rec.hidden && rec.closest('#spPanel') && rec.previousElementSibling && rec.previousElementSibling.classList.contains('pb-head') && JSON.stringify(got) === JSON.stringify(want),
+      `the Suggested Parlays tab's record row under its heading, pill by pill: ${got.join(' | ')} (want ${want.join(' | ')})`);
     if (any) for (const [id, label] of TIERS) {
       const t = R.tiers[id], el = rec.querySelector(`[data-pb-rec="${id}"]`);
       const title = `${label}: ${t.won} won of ${t.graded} graded${R.since ? ` since ${PBS.day(R.since)}` : ''}${t.graded ? `; wins expected ${f1(t.exp_fair)} by DraftKings' fair chance${t.fair_n < t.graded ? ` (on the ${t.fair_n} with one)` : ''}, ${f1(t.exp_model)} by the model` : ''}`
@@ -3989,6 +4126,42 @@ async function suggestRecord() {
     }
   }
   chk(!errs.length, 'no runtime error drawing the record: ' + errs.join(' | '));
+  /* the locked sets on the Suggested Parlays tab, on a copy carrying the ledger's current sets (the job's state does from nhl v17 on): the
+     latest day before the publish's whose games are all final, seen that evening (Graded, every leg and level graded on the scores), and
+     the publish's own day at its first puck drop (Locked since) */
+  {
+    const M = JSON.parse(STATE); if (!M.suggest) M.suggest = SG.summarize(L, S.season);
+    M.suggest.sets = SG.current(L, PUB);
+    const real = S; S = M;
+    try {
+      const today = etDate(PUB), sets = Object.keys(M.suggest.sets).sort(), clocks = [];
+      const past = sets.filter(dd => dd < today && S.games.some(g => g.date === dd) && S.games.filter(g => g.date === dd).every(g => g.state === 'final')).pop();
+      if (past) { const ms = Math.max(...S.games.filter(g => g.date === past).map(g => Date.parse(g.start))) + 60000; if (etDate(ms) === past) clocks.push([ms, `${past}, its games final`]); }
+      const tl = sDayLock(today); if (M.suggest.sets[today] && isFinite(tl) && tl > PUB) clocks.push([tl + 60000, `${today} at its first puck drop`]);
+      for (const [ms, tag] of clocks) {
+        const e2 = [], w2 = await boot(ms, e2, { state: JSON.stringify(M), hash: 'suggest' });
+        const H = holdSuggest(w2, ms, `the locked sets, ${tag}`), dd = tag.slice(0, 10);
+        chk(!!H[dd] && H[dd].open === false && !!H[dd].entry, `${tag}: the day is drawn locked from the record (${H[dd] ? (H[dd].open ? 'open' : H[dd].entry ? 'the record\'s set' : 'no set') : 'not shown'})`);
+        chk(!e2.length, `${tag}: no runtime error drawing a locked set: ${e2.join(' | ')}`);
+        console.log(`  the locked sets drawn on ${tag}: ${dd} ${H[dd] ? (H[dd].open ? 'open' : 'locked, the record\'s set') : 'not shown'}`);
+      }
+      if (!clocks.length) console.log('  no locked day to draw on this state: the locked sets are held where the record has one');
+      /* the publish's day, its first game taken off the schedule (postponed) after the record locked it: the day stays locked on the
+         record's set, never reopened on the games left with levels the record will never take */
+      if (M.suggest.sets[today] && isFinite(tl) && tl > PUB) {
+        const M2 = JSON.parse(JSON.stringify(M)), firstG = M2.games.filter(g => g.date === today).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
+        M2.games = M2.games.filter(g => g !== firstG);
+        S = M2;
+        const ms = tl + 60000;
+        if (S.games.some(g => g.date === today) && sDayLock(today) > ms) {
+          const e3 = [], w3 = await boot(ms, e3, { state: JSON.stringify(M2), hash: 'suggest' }), H3 = holdSuggest(w3, ms, `${today}, its first game postponed after the record locked it`);
+          chk(!!H3[today] && H3[today].open === false && !!H3[today].entry, `a day the record has locked stays locked when its first game is postponed after (${H3[today] ? (H3[today].open ? 'reopened' : 'locked') : 'not shown'})`);
+          chk(!e3.length, `no runtime error on a postponed opener: ${e3.join(' | ')}`);
+        } else console.log(`  ${today} has no game after its first: a postponed opener is not held here`);
+        S = M;
+      }
+    } finally { S = real; }
+  }
   console.log(`  ${Object.keys(L.days).length} days in the ledger, ${lined.length} still to lock with a fresh line; ` + (R ? TIERS.map(([id, label]) => `${label} ${R.tiers[id].won}-${R.tiers[id].lost}`).join(', ') : 'no record'));
 }
 

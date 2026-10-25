@@ -251,6 +251,13 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pb .btn,#builder .btn,.pb-pick .btn,.pc-panel .btn,.pb-slip .btn,.pb-bet,.pb-seg button,.pb-box,.pb-gt,.pb-lock,.leg .x,.pb-games>summary,.pb-rules>summary,.pb-pick>summary,.saved .btn,.pp-add,.pp-open{min-height:44px}
 .pb-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pb-head h2{margin:0}
+/* the record (nhl v15): the NFL hub's record row, a pill a level, won-lost and units on 1 a day, pending apart; on --panel-3 the
+   secondary text is --ink-2 and the figures --ink */
+.pb-rec{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+.pb-reck{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-right:2px}
+.pb-rec .rec{display:inline-flex;align-items:baseline;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
+.pb-rec .rec b{font:700 14px var(--display);letter-spacing:0;color:var(--ink);font-variant-numeric:tabular-nums}
+@media(max-width:640px){.pb-reck{flex-basis:100%}}
 .pb-sub{margin:6px 0 0;color:var(--ink-2);font-size:13px}
 /* the controls: the NBA's .bk-ctrl, a group a label over its control */
 .pb-ctl{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px 24px;background:var(--panel-3);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0 6px}
@@ -661,6 +668,7 @@ body.pp-on{overflow:hidden}
     <div class="oddsbar"><button type="button" class="btn odds-btn" id="pbRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="pbOddsNote" role="status" aria-live="polite"></span></div>
     <div class="card pb" id="pbPanel">
       <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Suggested parlays</h2><span class="tag ice" id="pbSlate"></span></div>
+      <div class="pb-rec" id="pbRec" hidden></div>
       <p class="pb-sub">Choose what to build from: every level below uses only the bet types and games ticked here.</p>
       <p class="pb-sub" id="pbRead"></p>
       <div class="pb-ctl">
@@ -750,7 +758,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v14 · 2026-10-25';
+const APP_BUILD = 'nhl v15 · 2026-10-25';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1963,6 +1971,34 @@ function pbCompute() {
   }
   return { sig, picks, sl, ui, pool, levels, why };
 }
+/* the record's levels (tools/suggest.js boots this page on the state the job has just made and reads them here): one day's slate with
+   every bet type and every game ticked, the panel's default, its levels as pbCompute's base works them, so the record of the suggested
+   parlays is exactly what the panel showed on that day */
+function pbDayLevels(date) {
+  const ui = { k: { ml: true, pl: true, ou: true }, off: [] };
+  const pool = pbPool({ games: S.games.filter(g => g.date === date && !hasStarted(g)).sort(gameCmp) }, ui), levels = {};
+  const leg = L => ({ id: L.id, game: L.game, kind: L.kind, side: L.side, num: L.num, price: L.price, other: L.other, p: L.p, fair: L.fair, edge: L.edge, thin: !!L.thin, mu: L.mu, start: L.start });
+  for (const t of PB_TIERS) { const r = pbSearch(pool.legs, t[2], t[3], [], new Set()); levels[t[0]] = r ? { legs: r.legs.map(leg), p: r.p, fair: r.fair, dec: r.dec, likeliest: !!r.likeliest } : null; }
+  return { games: pool.tickable.map(g => g.id), levels };
+}
+/* the record's row under the panel's heading (S.suggest, tools/suggest.js's summary of the season's days): the NFL hub's, a pill a
+   level, won-lost and the units on 1 a day, pending apart, "None graded yet" before any; each pill's title the graded count, the wins
+   expected by DraftKings' fair chance and by the model, pushes, days with no parlay of that level and the days replayed */
+function pbRecHtml() {
+  const R = S.suggest; if (!isObj(R) || !isObj(R.tiers)) return '';
+  const un = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); }, f1 = v => (+v || 0).toFixed(1), pl = (n, w) => `${n} ${w}${n === 1 ? '' : w.endsWith('sh') ? 'es' : 's'}`;
+  const since = R.since ? ` since ${dayText(R.since)}` : '';
+  const shown = PB_TIERS.filter(t => isObj(R.tiers[t[0]]));
+  const any = shown.some(t => R.tiers[t[0]].graded || R.tiers[t[0]].push);
+  const pills = shown.map(([id, label]) => {
+    const s = R.tiers[id];
+    const title = `${label}: ${s.won} won of ${s.graded} graded${since}${s.graded ? `; wins expected ${f1(s.exp_fair)} by DraftKings' fair chance${s.fair_n < s.graded ? ` (on the ${s.fair_n} with one)` : ''}, ${f1(s.exp_model)} by the model` : ''}`
+      + (s.push ? `; ${pl(s.push, 'push')}, the stake back` : '') + (s.none ? `; ${pl(s.none, 'day')} with no ${label} parlay` : '')
+      + (s.replay ? `; ${s.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
+    return `<span class="rec" data-pb-rec="${id}" title="${esc(title)}">${esc(label)} <b>${s.won}–${s.lost}</b>${s.graded || s.push ? ` ${un(s.units)} units` : ''}</span>`;
+  }).join('');
+  return `<span class="pb-reck">Record</span>${any ? pills : '<span class="rec" data-pb-rec="none">None graded yet</span>'}${R.pending ? `<span class="rec" data-pb-rec="pending">Pending <b>${R.pending}</b></span>` : ''}`;
+}
 /* New legs on a level: its rule on the legs it has not shown yet, the locked ones kept; once every leg has had its turn, back to the first */
 function pbTurn(id) {
   const t = PB_TIERS.find(x => x[0] === id), C = PB_CUR; if (!t || !C) return;
@@ -2047,6 +2083,7 @@ function renderPb() {
   const holds = n => !!n && sameLegs(n.to, sl.dates) && n.from.some(d => d >= sl.today);
   if (!holds(PB_NOTICE)) PB_NOTICE = null;
   if (!holds(PB_DROP)) PB_DROP = null;
+  const rh = pbRecHtml(); $('pbRec').innerHTML = rh; $('pbRec').hidden = !rh;
   $('pbSlate').textContent = slateText(sl) || 'no games';
   $('pbSlate').hidden = !sl.dates.length;
   /* the prices are DraftKings' unless ESPN carried another book for a game, which is then named */

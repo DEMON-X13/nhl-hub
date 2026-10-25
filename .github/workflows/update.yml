@@ -66,7 +66,7 @@ jobs:
           git config user.name "nhl-hub bot"
           git config user.email "bot@users.noreply.github.com"
           git add state.json data/teams.json data/box_*.jsonl data/injuries.json data/starters.json data/players.json
-          for f in data/season_*.json data/props.json data/props_ledger.json data/props_*.jsonl; do [ -e "$f" ] && git add "$f"; done
+          for f in data/season_*.json data/props.json data/props_ledger.json data/props_*.jsonl data/suggest_ledger.json; do [ -e "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "nothing changed"; else
             git commit -m "update $(date -u +'%Y-%m-%d %H:%M UTC')"
             ok=0

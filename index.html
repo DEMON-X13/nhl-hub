@@ -248,7 +248,7 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 :focus-visible,.btn:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
 /* a segmented control's ring is drawn inside its button, dark on the chosen white one */
 .seg button:focus-visible{outline-offset:-3px} .seg button.on:focus-visible{outline-color:#1E2230}
-.pb .btn,#builder .btn,.pb-pick .btn,.pc-panel .btn,.pb-slip .btn,.pb-bet,.pb-seg button,.pb-box,.pb-gt,.pb-lock,.leg .x,.pb-games>summary,.pb-rules>summary,.pb-pick>summary,.saved .btn,.pp-add,.pp-open{min-height:44px}
+.pb .btn,#builder .btn,.pb-pick .btn,.pc-panel .btn,.pb-slip .btn,.pb-bet,.pb-seg button,.pb-box,.pb-gt,.sp-add,.t30-add,.leg .x,.pb-games>summary,.pb-rules>summary,.pb-pick>summary,.saved .btn,.pp-add,.pp-open{min-height:44px}
 .pb-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pb-head h2{margin:0}
 /* the record (nhl v15): the NFL hub's record row, a pill a level, won-lost and units on 1 a day, pending apart; on --panel-3 the
@@ -314,8 +314,6 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pb-tn{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}
 .pb-tn>b{font:700 15px var(--display)}
 .pb-tc{color:var(--muted-ink);font-size:13px}
-.pb-turn{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.pb-turn .btn{padding:0 11px;font-size:12px}
 .pb-rule{font-size:12px;color:var(--ink-2);margin:-4px 0 0}
 /* the NBA's three numbers in a row: the fair chance, the price, what the amount pays; each steps down to fit (fitNums), never cut */
 .pb-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;text-align:center}
@@ -341,10 +339,42 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pb-tier .pb-l2 .m{font-size:12px;white-space:nowrap}
 .pb-tier .pb-fm{margin-left:auto;font-size:12px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .pb-tier .tag.thin{margin:0}
-/* a level's lock: a text toggle, Lock or Locked (aria-pressed) */
-.pb-lock{flex:none;min-width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink-2);cursor:pointer;padding:0 9px;font:700 12px var(--body)}
-.pb-lock:hover{border-color:var(--ink-2)}
-.pb-lock[aria-pressed=true]{border-color:var(--ice);color:var(--ice);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--bg-2)}
+/* a leg's Add (a suggested level's and a Top 30 line's): a text toggle, Add or Added (aria-pressed), lit ice in the parlay */
+.sp-add,.t30-add{flex:none;min-width:58px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink);cursor:pointer;padding:0 10px;font:700 12.5px var(--body)}
+.sp-add:hover,.t30-add:hover{border-color:var(--ink-2)}
+.sp-add[aria-pressed=true],.t30-add[aria-pressed=true]{border-color:var(--ice);color:var(--ice-2);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--bg-2)}
+/* the Suggested Parlays tab: a day's set under its heading and its lock words; a locked level's legs with their grades */
+.sp-day{margin-top:18px}
+.sp-day:first-of-type{margin-top:12px}
+.sp-dh{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;min-height:44px}
+.sp-dh h3{margin:0;font:700 17px var(--display)}
+.sp-dh h3 small{font:500 13px var(--body);color:var(--ink-2);margin-left:6px}
+.sp-day .pb-tiers{margin-top:6px}
+.pb-tier.locked .pb-th .tag{margin-left:auto}
+.sp-st{justify-self:end;display:inline-flex;align-items:center;min-height:24px;font-size:12px;color:var(--ink-2);white-space:nowrap}
+/* the Top 30 lines: two parts, each a numbered list; a line a row, its rank, the bet and the price, the game and the numbers under
+   them, Add at the right (the NFL hub's Top 30, in the NBA's rows) */
+.t30-part{margin-top:14px}
+.t30-h{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin:0 0 4px;font:700 15px var(--display)}
+.t30-h .n{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:var(--panel-3);color:var(--ink);font:700 12px var(--body)}
+.t30-v .t30-h .n{background:var(--gold-soft);color:var(--gold)}
+.t30-h small{font:500 12.5px var(--body);color:var(--ink-2);text-transform:none;letter-spacing:0}
+.t30-l{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.t30-r{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;min-width:0}
+.t30-rk{flex:none;width:24px;text-align:right;font:700 13px var(--display);color:var(--muted-ink);font-variant-numeric:tabular-nums}
+.t30-m{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.t30-1{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px;color:var(--ink)}
+.t30-1 .pb-who{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-width:0}
+.t30-1 .pb-who .pill{margin:0}
+.t30-1 b{font-size:13.5px}
+.t30-p{justify-self:end;font:700 14px var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.t30-2{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 8px}
+.t30-2 .m{font-size:12px;color:var(--muted-ink)}
+.t30-2 .m .nw{color:inherit}
+.t30-n{margin-left:auto;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right}
+.t30-n .nw,.t30-2 .nw{white-space:nowrap}
+.tag.value{background:var(--gold-soft);color:var(--gold)}
+.t30-nov,.t30-more{margin-top:8px}
 .pb-ll{min-width:0}
 .pb-ll>span{display:block;font-size:12.5px;color:var(--ink-2)}
 .pb-ll>.pb-who{color:var(--ink);font-size:inherit}
@@ -615,6 +645,7 @@ body.pp-on{overflow:hidden}
   </div>
   <nav id="tabs">
     <button data-tab="games" class="on">Games<span id="gameCount" class="n" hidden>0</span></button>
+    <button data-tab="suggest">Suggested Parlays</button>
     <button data-tab="parlays">Parlay Builder<span id="legCount" class="n" hidden>0</span></button>
     <button data-tab="standings">Standings</button>
     <button data-tab="ratings">Power Ratings</button>
@@ -664,32 +695,19 @@ body.pp-on{overflow:hidden}
     <div class="wrap"><table class="tbl" id="plTeams"></table></div>
   </section>
 
+  <section id="tab-suggest" hidden>
+    <div class="card pb sp" id="spPanel">
+      <div class="pb-head"><h2 id="spTitle" tabindex="-1">Suggested parlays</h2></div>
+      <div class="pb-rec" id="pbRec" hidden></div>
+      <p class="pb-sub">The site's own pick for each day: three parlays from every game and every bet type, one leg a game, chosen on the model's chance. A day's set locks at its first puck drop, and the record above grades it.</p>
+      <p class="pb-sub" id="spRead"></p>
+      <div id="spBody"></div>
+      <details class="pb-rules"><summary>How the levels are chosen</summary><p id="spRules"></p></details>
+    </div>
+  </section>
+
   <section id="tab-parlays" hidden>
     <div class="oddsbar"><button type="button" class="btn odds-btn" id="pbRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="pbOddsNote" role="status" aria-live="polite"></span></div>
-    <div class="card pb" id="pbPanel">
-      <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Suggested parlays</h2><span class="tag ice" id="pbSlate"></span></div>
-      <div class="pb-rec" id="pbRec" hidden></div>
-      <p class="pb-sub">Choose what to build from: every level below uses only the bet types and games ticked here.</p>
-      <p class="pb-sub" id="pbRead"></p>
-      <div class="pb-ctl">
-        <div class="pb-row pb-amt"><span class="pb-k" id="pbStakeK">Bet amount</span><div class="pb-v"><label class="pb-stake">$<input type="number" id="pbStake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="pbStakeK" aria-describedby="pbStakeH" autocomplete="off"></label></div></div>
-        <div class="pb-row"><span class="pb-k">Build from</span><div class="pb-v"><div class="seg pb-seg" id="pbMix" role="group" aria-label="Build from"><button type="button" data-mix="all" aria-pressed="false">All</button><button type="button" data-mix="teams" aria-pressed="false">Teams only</button><button type="button" data-mix="totals" aria-pressed="false">Totals only</button></div></div></div>
-        <div class="pb-row"><span class="pb-k">Bet types</span><div class="pb-v" id="pbKinds"><label class="pb-box"><input type="checkbox" data-k="ml" checked><span>Moneyline <em>straight up</em></span></label><label class="pb-box"><input type="checkbox" data-k="pl" checked><span>Puck line <em>±1.5</em></span></label><label class="pb-box"><input type="checkbox" data-k="ou" checked><span>Total <em>over/under</em></span></label></div></div>
-        <div class="pb-row" id="pbDayRow" hidden><span class="pb-k">Day</span><div class="pb-v"><div class="seg pb-seg" id="pbDay" role="group" aria-label="Day"></div></div></div>
-        <details class="pb-games" id="pbGames"><summary><span class="pb-k">Games</span><span class="pb-gsum" id="pbGsum"></span><span class="pb-tap">tap to choose</span></summary>
-          <div class="pb-gbar"><button type="button" class="btn ghost" data-gall="1">All</button><button type="button" class="btn ghost" data-gall="0">None</button><span class="pb-hint">Puck drops in your time zone; a game leaves the list when the puck drops.</span></div>
-          <div class="pb-grid" id="pbGrid"></div>
-        </details>
-      </div>
-      <p class="pb-ctlnote" id="pbStakeH">Every level pays on the bet amount, and the builder below uses it too.</p>
-      <div class="pb-notes" id="pbNotes" hidden></div>
-      <div id="pbBody"></div>
-      <details class="pb-rules"><summary>How the levels are chosen</summary><p id="pbRules"></p></details>
-    </div>
-    <details class="card pb-pick" id="pbPick"><summary><h2>Pick your own legs</h2><small id="pbPickN"></small></summary>
-      <p class="pb-sub">Tap a bet to add it to your parlay. Edge: the model's chance less the price's, in points.</p>
-      <div id="plLines" class="pb-list"></div>
-    </details>
     <div class="card" id="builder">
       <h2 id="bTitle" tabindex="-1">Your parlay <small id="bHead"></small></h2>
       <div class="pb-msg" id="bMsg" aria-live="polite"></div>
@@ -704,6 +722,29 @@ body.pp-on{overflow:hidden}
       </div>
       <p class="pb-bnotes" id="bHint" hidden>Add one more leg to finish a parlay.</p>
     </div>
+    <div class="card pb" id="pbPanel">
+      <div class="pb-head"><h2 id="pbTitle" tabindex="-1">Top 30 lines</h2><span class="tag ice" id="pbSlate"></span></div>
+      <p class="pb-sub">The lines on your picks the model rates at or above DraftKings' price, the best expected return first. Tap Add to put one in your parlay above.</p>
+      <p class="pb-sub" id="pbRead"></p>
+      <div class="pb-ctl">
+        <div class="pb-row pb-amt"><span class="pb-k" id="pbStakeK">Bet amount</span><div class="pb-v"><label class="pb-stake">$<input type="number" id="pbStake" inputmode="decimal" min="1" max="100000" step="1" aria-labelledby="pbStakeK" aria-describedby="pbStakeH" autocomplete="off"></label></div></div>
+        <div class="pb-row"><span class="pb-k">Build from</span><div class="pb-v"><div class="seg pb-seg" id="pbMix" role="group" aria-label="Build from"><button type="button" data-mix="all" aria-pressed="false">All</button><button type="button" data-mix="teams" aria-pressed="false">Teams only</button><button type="button" data-mix="totals" aria-pressed="false">Totals only</button></div></div></div>
+        <div class="pb-row"><span class="pb-k">Bet types</span><div class="pb-v" id="pbKinds"><label class="pb-box"><input type="checkbox" data-k="ml" checked><span>Moneyline <em>straight up</em></span></label><label class="pb-box"><input type="checkbox" data-k="pl" checked><span>Puck line <em>±1.5</em></span></label><label class="pb-box"><input type="checkbox" data-k="ou" checked><span>Total <em>over/under</em></span></label></div></div>
+        <div class="pb-row" id="pbDayRow" hidden><span class="pb-k">Day</span><div class="pb-v"><div class="seg pb-seg" id="pbDay" role="group" aria-label="Day"></div></div></div>
+        <details class="pb-games" id="pbGames"><summary><span class="pb-k">Games</span><span class="pb-gsum" id="pbGsum"></span><span class="pb-tap">tap to choose</span></summary>
+          <div class="pb-gbar"><button type="button" class="btn ghost" data-gall="1">All</button><button type="button" class="btn ghost" data-gall="0">None</button><span class="pb-hint">Puck drops in your time zone; a game leaves the list when the puck drops.</span></div>
+          <div class="pb-grid" id="pbGrid"></div>
+        </details>
+      </div>
+      <p class="pb-ctlnote" id="pbStakeH">Your parlay above pays on the bet amount, and so do the suggested parlays.</p>
+      <div class="pb-notes" id="pbNotes" hidden></div>
+      <div id="pbBody"></div>
+      <details class="pb-rules"><summary>How the list is chosen</summary><p id="pbRules"></p></details>
+    </div>
+    <details class="card pb-pick" id="pbPick"><summary><h2>Pick your own legs</h2><small id="pbPickN"></small></summary>
+      <p class="pb-sub">Tap a bet to add it to your parlay. Edge: the model's chance less the price's, in points.</p>
+      <div id="plLines" class="pb-list"></div>
+    </details>
     <div class="card" id="saved">
       <h2>Your saved parlays</h2>
       <p class="pb-sub" style="margin:-6px 0 12px">Kept in this browser only. Graded from the scores the job publishes.</p>
@@ -758,7 +799,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v16 · 2026-10-25';
+const APP_BUILD = 'nhl v17 · 2026-10-25';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -937,7 +978,7 @@ function showTab(name) {
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   P.ui.tab = name; save();
   if (name === 'games') SHOWN = new Set();
-  ({ games: renderGames, standings: renderStandings, ratings: renderRatings, players: renderPlayers, parlays: renderParlays, record: renderRecord })[name]();
+  ({ games: renderGames, suggest: renderSuggest, standings: renderStandings, ratings: renderRatings, players: renderPlayers, parlays: renderParlays, record: renderRecord })[name]();
   updateSlip();
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
@@ -1339,12 +1380,13 @@ let PL_RUN = 0;
    number DraftKings has dropped is never put on a slip. The suggested levels take one leg a game, team bets
    alone; the builder takes more than one leg of a game (a same-game parlay, priced below by tools/sgp.js's
    rule, an estimate) and DraftKings' player lines from the props window: the same-game rule is placeLeg's. */
-const PB_TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
 const PB_PMIN = 0.45, PB_PMAX = 0.97;   // a leg the model gives 45% to 97%
 const FAR_OFF = 0.15;                   // 15 points or more above DraftKings' fair chance: more likely the model's error than the book's
 const SITE = 'demon-x13.github.io/nhl-hub';
 const DK_SLIP = 'https://sportsbook.draftkings.com/?outcomes=', DK_EVENT = 'https://sportsbook.draftkings.com/event/', DK_NHL = 'https://sportsbook.draftkings.com/leagues/hockey/nhl';
 const ETZ = { timeZone: 'America/New_York' };
+/* the suggested levels: Safe, the likeliest pair; Medium and Aggressive, the best return of 3 and 4 legs that lands 25% and 12% */
+const PB_TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
 const money = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const stakeShort = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(+v) ? 0 : 2, maximumFractionDigits: 2 });
 const whole = p => Math.round(p * 100) + '%';
@@ -1807,25 +1849,28 @@ const confOf = c => c >= 0.7 ? 'High' : c >= 0.45 ? 'Medium' : 'Low';
 const tierBet = L => L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? fmtLine(L.num) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num}`;
 const legPills = L => L.kind === 'ou' ? pill(L.g.away, true) + pill(L.g.home, true) : pill(L.prop ? L.team : L.g[L.side], true);
 
-/* ---------- the Parlay Builder's suggested parlays (#pbPanel) ----------
-   The slate is one Eastern day: today or tomorrow by the visitor's clock (each offered while it has a
-   game still to come), Both days when both have a fresh line, else the next day with a game to come.
-   From the bet types and games ticked, three levels, each on its own: Safe, the likeliest pair; Medium
-   and Aggressive, the 3- and 4-leg parlay with the best return (chance times payout) that lands at least
-   25% and 12% of the time by the model's chance, or the likeliest of that size where none does (an
-   Extreme level of 5 legs at 5% went in nhl v14, the owner's call, as the NFL hub's had). A leg 5 points (S.edge) or more above DraftKings' price is the model's call, the one
-   the Games cards show; a leg above it by less is thin and is used only where the calls cannot make a
-   level, the fewest first. The search is exact: branch and bound over every parlay of the level's size,
-   one leg a game, pruning only what cannot reach the floor or the best already found, and every number
-   is worked in leg order, the builder's, so Add to builder shows exactly what the level did */
-let PB_CUR = null;                          // the panel as last drawn: { sig, sl, pool, levels, why }
-const PB_CACHE = new Map();                 // the default levels by signature (the picks, the slate, the publish, the Refresh odds reads)
-let PB_VIEW = { place: null, ov: 0, t: {} };   // New legs and locks, per level, while the page is open; never saved. Its place is the
-                                            // signature less the reads: a Refresh odds read keeps it, its levels worked again on the new prices (pbCarry)
-/* the lines said when the clock changes the panel under the visitor: the slate moved on (every game of the
-   day shown has dropped the puck), or a level rebuilt because one of its own games dropped the puck. Each
-   holds while the panel is on the slate it was said on and its day is still today (Eastern), and goes at
-   the visitor's next pick; the days last drawn tell the first */
+/* ---------- the Parlay Builder's Top 30 lines (#pbPanel) and the Suggested Parlays tab (#tab-suggest) ----------
+   nhl v17 (the owner's ask, 25 October 2026: the NFL hub's Parlay Builder and its Suggested Parlays tab, "the content to exactly
+   match"). The Parlay Builder is the visitor's: the builder first, then the Top 30 lines on the visitor's picks (the bet types, the
+   games and the day ticked here), then Pick your own legs and the saved parlays. The Suggested Parlays tab is the site's: each day's
+   three levels from every game and every bet type, locked at the day's first puck drop and graded in the record (tools/suggest.js).
+
+   The slate of the Top 30 is one Eastern day: today or tomorrow by the visitor's clock (each offered while it has a game still to
+   come), Both days when both have a fresh line, else the next day with a game to come. A line qualifies as a level's leg does
+   (pbQual: both of DraftKings' prices, the model at 45% to 97%, at or above the price with the margin left in, no push, not far off the
+   market). Value picks are 5 points (S.edge) or more above the price, the model's calls the Games cards show; Other lines are above it
+   by less. Each part is ranked by the expected return on $1 (the model's chance times the decimal price, less the stake), ties to the
+   lower leg id, and the list stops at 30.
+
+   A day's levels: Safe, the likeliest pair; Medium and Aggressive, the 3- and 4-leg parlay with the best return (chance times payout)
+   that lands at least 25% and 12% of the time by the model's chance, or the likeliest of that size where none does. A call is
+   preferred; a thin leg is used only where the calls cannot make a level, the fewest first. The search is exact: branch and bound over
+   every parlay of the level's size, one leg a game, pruning only what cannot reach the floor or the best already found, and every
+   number is worked in leg order, the builder's, so Add to builder shows exactly what the level did */
+let PB_CUR = null;                          // the Top 30 as last drawn: { sl, ui, pool, top }
+/* the lines said when the clock changes the list under the visitor: the slate moved on (every game of the day shown has dropped the
+   puck), or a game the list showed dropped the puck. Each holds while the panel is on the slate it was said on and its day is still
+   today (Eastern), and goes at the visitor's next pick; the days last drawn tell the first */
 let PB_NOTICE = null, PB_DROP = null, PB_DATES = null;
 const andList = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join('');
 const pbQuiet = () => { PB_NOTICE = PB_DROP = null; };
@@ -1910,180 +1955,77 @@ function pbSearch(legs, n, floor, locks, exclude) {
   for (let k = k0; k <= n; k++) { const r = run(k, 'ret'); if (r) return Object.assign(r, { k }); }
   const r = run(k0, 'p'); return r && Object.assign(r, { k: k0, likeliest: true });
 }
-/* why a level is empty: nothing ticked, no leg at or above the price, or too few games, with what would help */
-function pbWhy(n, sl, pool, ui) {
+
+/* ---------- the Top 30 lines ---------- */
+const TOP_N = 30;
+const legEv = L => L.p * L.dec - 1;                       // the expected return on $1: the model's chance times the decimal price, less the stake
+function topList(pool) {
+  const cmp = (a, b) => (legEv(b) - legEv(a)) || strCmp(a.id, b.id);
+  const value = pool.legs.filter(L => !L.thin).sort(cmp).slice(0, TOP_N), other = pool.legs.filter(L => L.thin).sort(cmp).slice(0, TOP_N - value.length);
+  return { value, other, n: pool.legs.length };
+}
+/* why the list is empty: nothing ticked, or no line on the picks qualifies, with what would help */
+function pbWhy(sl, pool, ui) {
   if (!pool.kinds.length) return 'No bet types ticked: tick at least one above.';
   if (!pool.ticked.length) return 'No games ticked: tick at least one above.';
-  const m = pool.games, off = new Set(ui.off);
+  const off = new Set(ui.off);
   const moreGames = pool.scan(pool.tickable.filter(g => off.has(g.id)), pool.kinds).ok.length > 0;
-  const moreTypes = new Set(pool.scan(pool.ticked, KINDS).ok.map(L => L.game)).size > m;
+  const moreTypes = pool.scan(pool.ticked, KINDS).ok.length > 0;
   const bothHint = sl.both && sl.pick !== 'both';
   const fixes = moreGames && moreTypes ? 'tick more games or bet types' : moreGames ? 'tick more games' : moreTypes ? 'tick more bet types' : '';
   const help = fixes && bothHint ? `${fixes} or choose Both days above` : fixes || (bothHint ? 'choose Both days above' : '');
-  const head = m === 0 ? "No leg on your picks qualifies (the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market)" : `Only ${m} leg${m > 1 ? 's' : ''} on your picks (one a game)`;
+  const head = "No line on your picks qualifies (the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market)";
   if (help) return `${head}: ${help}.`;
   const last = sl.dates[sl.dates.length - 1], next = last && addDays(last, 1);
   const nextNote = sl.pick !== 'both' && next && sl.on(next).length && !sl.on(next).some(freshLine) ? ` ${dayText(next)}'s lines come about a day ahead.` : '';
-  if (m === 0) return `${head}.${nextNote}`;
-  if (m === pool.tickable.length) return `Only ${m} game${m > 1 ? 's' : ''} on ${slateText(sl)} (one leg a game).${nextNote}`;
-  return `Only ${m} of the ${pool.tickable.length} games on ${slateText(sl)} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).${nextNote}`;
+  return `${head}.${nextNote}`;
 }
-/* the picks (the days, the bet types, the games unticked) and the publish; the signature adds the games still to come */
-const pbChoice = (sl, ui) => [sl.dates.join(','), KINDS.map(k => ui.k[k] ? 1 : 0).join(''), ui.off.slice().sort().join(','), S.published];
-function pbPicks(sl, ui) { return pbChoice(sl, ui).concat(ODDS.v).join('|'); }
-function pbSig(sl, ui) { return pbPicks(sl, ui) + '|' + sl.games.map(g => g.id).join(','); }
-/* the visitor's place on the levels: the signature less the Refresh odds reads, which change prices, not the picks */
-function pbPlace(sl, ui) { return pbChoice(sl, ui).join('|') + '|' + sl.games.map(g => g.id).join(','); }
-/* after a Refresh odds read, each level's New legs and locks hold: a lock stays while its leg still qualifies at the number it
-   was locked on, and the level is worked again on the new prices by its own rule (the legs it has shown left out after New
-   legs; back to the first when none is left, as New legs does), since what it showed was priced before the read. A level
-   left with nothing of the visitor's goes back to the default */
-function pbCarry(pool) {
-  const by = new Map(pool.legs.map(L => [L.id, L]));
-  for (const t of PB_TIERS) {
-    const id = t[0], v = PB_VIEW.t[id]; if (!v) continue;
-    const was = new Map((v.res ? v.res.legs : []).map(L => [L.id, L]));
-    for (const lid of [...v.locks]) { const L = by.get(lid), o = was.get(lid); if (!L || (o && o.num !== L.num)) v.locks.delete(lid); }
-    if (!v.turned && !v.locks.size) { delete PB_VIEW.t[id]; continue; }
-    const locks = [...v.locks].map(lid => by.get(lid)).sort(legCmp);
-    let res = pbSearch(pool.legs, t[2], t[3], locks, v.turned ? v.shown : new Set());
-    if (!res && v.turned) { v.shown = new Set(); v.wrapped = true; res = pbSearch(pool.legs, t[2], t[3], locks, new Set()); }
-    if (!res) { delete PB_VIEW.t[id]; continue; }
-    v.res = res;
-  }
-}
-/* the panel as it stands: the slate, the pool and the three levels (each card's New legs and locks applied) */
+/* the panel as it stands: the slate, the pool and the list */
 function pbCompute() {
-  const sl = pbSlate(), ui = pbUi(), sig = pbSig(sl, ui), picks = pbPicks(sl, ui), pool = pbPool(sl, ui), place = pbPlace(sl, ui);
-  if (PB_VIEW.place !== place) PB_VIEW = { place, ov: ODDS.v, t: {} };
-  else if (PB_VIEW.ov !== ODDS.v) { pbCarry(pool); PB_VIEW.ov = ODDS.v; }
-  let base = PB_CACHE.get(sig);
-  if (!base) {
-    base = {};
-    for (const t of PB_TIERS) base[t[0]] = pbSearch(pool.legs, t[2], t[3], [], new Set());
-    PB_CACHE.set(sig, base); if (PB_CACHE.size > 24) PB_CACHE.delete(PB_CACHE.keys().next().value);
-  }
-  const levels = {}, why = {};
-  for (const t of PB_TIERS) {
-    const v = PB_VIEW.t[t[0]];
-    levels[t[0]] = v && v.res !== undefined ? v.res : base[t[0]];
-    if (!levels[t[0]]) why[t[0]] = pbWhy(t[2], sl, pool, ui);
-  }
-  return { sig, picks, sl, ui, pool, levels, why };
+  const sl = pbSlate(), ui = pbUi(), pool = pbPool(sl, ui);
+  return { sl, ui, pool, top: topList(pool) };
 }
-/* the record's levels (tools/suggest.js boots this page on the state the job has just made and reads them here): one day's slate with
-   every bet type and every game ticked, the panel's default, its levels as pbCompute's base works them, so the record of the suggested
-   parlays is exactly what the panel showed on that day */
-function pbDayLevels(date) {
-  const ui = { k: { ml: true, pl: true, ou: true }, off: [] };
-  const pool = pbPool({ games: S.games.filter(g => g.date === date && !hasStarted(g)).sort(gameCmp) }, ui), levels = {};
-  const leg = L => ({ id: L.id, game: L.game, kind: L.kind, side: L.side, num: L.num, price: L.price, other: L.other, p: L.p, fair: L.fair, edge: L.edge, thin: !!L.thin, mu: L.mu, start: L.start });
-  for (const t of PB_TIERS) { const r = pbSearch(pool.legs, t[2], t[3], [], new Set()); levels[t[0]] = r ? { legs: r.legs.map(leg), p: r.p, fair: r.fair, dec: r.dec, likeliest: !!r.likeliest } : null; }
-  return { games: pool.tickable.map(g => g.id), levels };
-}
-/* the record's row under the panel's heading (S.suggest, tools/suggest.js's summary of the season's days): the NFL hub's, a pill a
-   level, won-lost and the units on 1 a day, pending apart, "None graded yet" before any; each pill's title the graded count, the wins
-   expected by DraftKings' fair chance and by the model, pushes, days with no parlay of that level and the days replayed */
-function pbRecHtml() {
-  const R = S.suggest; if (!isObj(R) || !isObj(R.tiers)) return '';
-  const un = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); }, f1 = v => (+v || 0).toFixed(1), pl = (n, w) => `${n} ${w}${n === 1 ? '' : w.endsWith('sh') ? 'es' : 's'}`;
-  const since = R.since ? ` since ${dayText(R.since)}` : '';
-  const shown = PB_TIERS.filter(t => isObj(R.tiers[t[0]]));
-  const any = shown.some(t => R.tiers[t[0]].graded || R.tiers[t[0]].push);
-  const pills = shown.map(([id, label]) => {
-    const s = R.tiers[id];
-    const title = `${label}: ${s.won} won of ${s.graded} graded${since}${s.graded ? `; wins expected ${f1(s.exp_fair)} by DraftKings' fair chance${s.fair_n < s.graded ? ` (on the ${s.fair_n} with one)` : ''}, ${f1(s.exp_model)} by the model` : ''}`
-      + (s.push ? `; ${pl(s.push, 'push')}, the stake back` : '') + (s.none ? `; ${pl(s.none, 'day')} with no ${label} parlay` : '')
-      + (s.replay ? `; ${s.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
-    return `<span class="rec" data-pb-rec="${id}" title="${esc(title)}">${esc(label)} <b>${s.won}–${s.lost}</b>${s.graded || s.push ? ` ${un(s.units)} units` : ''}</span>`;
-  }).join('');
-  return `<span class="pb-reck">Record</span>${any ? pills : '<span class="rec" data-pb-rec="none">None graded yet</span>'}${R.pending ? `<span class="rec" data-pb-rec="pending">Pending <b>${R.pending}</b></span>` : ''}`;
-}
-/* New legs on a level: its rule on the legs it has not shown yet, the locked ones kept; once every leg has had its turn, back to the first */
-function pbTurn(id) {
-  const t = PB_TIERS.find(x => x[0] === id), C = PB_CUR; if (!t || !C) return;
-  const v = PB_VIEW.t[id] || (PB_VIEW.t[id] = { shown: new Set(), locks: new Set() });
-  const cur = C.levels[id]; if (!cur) return;
-  for (const L of cur.legs) if (!v.locks.has(L.id)) v.shown.add(L.id);
-  const locks = cur.legs.filter(L => v.locks.has(L.id));
-  let res = pbSearch(C.pool.legs, t[2], t[3], locks, v.shown);
-  v.wrapped = false;
-  if (!res) { v.shown = new Set(); v.wrapped = true; res = pbSearch(C.pool.legs, t[2], t[3], locks, new Set()) || cur; }
-  v.res = res; v.turned = true;
-}
-function pbLock(id, legId) {
-  const v = PB_VIEW.t[id] || (PB_VIEW.t[id] = { shown: new Set(), locks: new Set() });
-  if (v.locks.has(legId)) v.locks.delete(legId); else v.locks.add(legId);
-  if (v.res === undefined && PB_CUR) v.res = PB_CUR.levels[id];
-}
-function pbRule(t, res, v) {
-  const [, , n, floor] = t, left = v && v.turned, locked = v && res ? res.legs.filter(L => v.locks.has(L.id)).length : 0;
-  const tail = (left ? ' left' : '') + (locked ? ` beside your lock${locked > 1 ? 's' : ''}` : '');
-  if (!floor) return `the likeliest pair${tail}`;
-  if (res.likeliest) return `the likeliest ${n} legs${tail}`;
-  return `best return${left ? ' left' : ''} that lands ${Math.round(floor * 100)}%+ by the model${locked ? ` beside your lock${locked > 1 ? 's' : ''}` : ''}`;
-}
-const sameLegs = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
-function pbTierCard(t, res, why, sl) {
-  const [id, label, n] = t;
-  if (!res) return `<div class="pb-tier none" data-tier="${id}"><div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="pb-tc">${n} legs</span></span></div><p class="pb-empty">${esc(why)}</p></div>`;
-  const v = PB_VIEW.t[id], stake = pbStake();
-  const inB = sameLegs(builderLegs(false).map(L => L.id), res.legs.map(L => L.id));          // the builder as drawn (a leg a Refresh odds read moved out stays stored, unseen)
-  const allLocked = v && res.legs.every(L => v.locks.has(L.id));
-  const both = sl.dates.length > 1;
-  /* a leg a row, as the NBA's: its club's pill (a total's two), the bet and a thin edge's tag, the price and the lock; under them the
-     game and its puck drop, the fair and model chances, the full width of the card (nhl v14: the lock beside the price, so a level a
-     third of the page wide keeps "NYI @ DAL · 7:00 PM PDT" on one line) */
-  const thinT = `thin edge: the model rates it at or above DraftKings' price, but not ${Math.round(S.edge * 100)} points above it`;
-  const rows = res.legs.map(L => { const lk = !!(v && v.locks.has(L.id)); return `<div class="pb-tl" data-id="${esc(L.id)}">
-      <div class="pb-ll"><span class="pb-l1"><span class="pb-who">${L.kind === 'ou' ? pill(L.g.away) + pill(L.g.home) : pill(L.g[L.side])}<b>${esc(tierBet(L))}</b>${L.thin ? `<span class="tag thin" title="${esc(thinT)}">thin edge</span>` : ''}</span><b class="pb-lp">${fmtOdds(L.price)}</b><button type="button" class="pb-lock" data-pb-lock="${id}|${esc(L.id)}" aria-pressed="${lk}" aria-label="${lk ? 'Locked' : 'Lock'} ${esc(legName(L))} (${lk ? 'press to unlock; ' : ''}New legs keeps it)" title="${lk ? 'Locked: New legs keeps it; press to unlock' : 'Lock it: New legs keeps it'}">${lk ? 'Locked' : 'Lock'}</button></span>
-        <span class="pb-l2"><span class="m">${esc(L.mu)} · <span class="nw">${esc(both ? dayClock(L.start) : timeOf(L.g))}</span></span><span class="pb-fm">fair ${whole(L.fair)} · model ${whole(L.p)}</span></span></div></div>`; }).join('');
-  return `<div class="pb-tier" data-tier="${id}">
-    <div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="pb-tc">${n} legs</span></span><span class="pb-turn"><button type="button" class="btn ghost" data-pb-new="${id}"${allLocked ? ' disabled' : ''} title="Other legs on your picks, by this level's rule; a locked leg stays">New legs</button>${v && (v.turned || v.locks.size) ? `<button type="button" class="btn ghost" data-pb-reset="${id}">Reset</button>` : ''}</span></div>
-    <div class="pb-rule">${esc(pbRule(t, res, v))}</div>
-    ${v && v.wrapped ? '<p class="pb-why">Every other leg on your picks has had its turn here: back to the first.</p>' : ''}
-    <div class="pb-nums">
-      <div class="pb-n"><div class="v">${res.fair === null ? whole(res.p) : whole(res.fair)}</div><div class="k">${res.fair === null ? "model's chance" : 'fair chance'}</div><div class="s">${res.fair === null ? 'no fair chance' : `model says ${whole(res.p)}`}</div></div>
-      <div class="pb-n"><div class="v">${toAm(res.dec)}</div><div class="k">price</div></div>
-      <div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>
-    </div>
-    <div class="pb-tlegs">${rows}</div>
-    <div class="pb-acts"><button type="button" class="btn ice" data-pb-finish="${id}">Finish</button><button type="button" class="btn" data-pb-add="${id}"${inB ? ' disabled' : ''}>${inB ? 'In the builder' : 'Add to builder'}</button></div>
-  </div>`;
-}
-/* the panel-wide line in place of the three levels: no season left, before the opener, no line yet, one game */
+/* the panel-wide line in place of the list: no season left, before the opener, no line yet */
 function pbWide(sl, pool) {
   const phase = S.phase || (S.playoff && S.playoff.phase);
-  if (!S.games.length || !sl.come.length) return 'No games to build from: the season is over. The panel comes back with next season\'s first lines.';
-  const other = sl.days.find(d => !sl.dates.includes(d) && sl.lined(d));
-  const otherNote = other ? ` ${dayText(other)} is in the Day choice above.` : '';
+  if (!S.games.length || !sl.come.length) return 'No games to build from: the season is over. The list comes back with next season\'s first lines.';
   if (!pool.tickable.length) {
+    const other = sl.days.find(d => !sl.dates.includes(d) && sl.lined(d));
+    const otherNote = other ? ` ${dayText(other)} is in the Day choice above.` : '';
     const opener = S.games[0] && S.games[0].date;
     if (opener && opener > sl.today && sl.dates.every(d => d <= opener)) return `The season opens ${dayText(opener)}. DraftKings posts the first lines about a day before.`;
-    if (phase === 'offseason' || phase === 'over') return 'No games to build from: the season is over. The panel comes back with next season\'s first lines.';
+    if (phase === 'offseason' || phase === 'over') return 'No games to build from: the season is over. The list comes back with next season\'s first lines.';
     return `No DraftKings lines yet for ${slateText(sl)}: DraftKings posts a day's lines about a day before puck drop, and the job reads them at its next run (five times a day).${otherNote}`;
   }
-  if (pool.tickable.length < 2) return `Only one game on ${slateText(sl)} is still to come with a DraftKings line, and a parlay needs two.${otherNote}`;
   return '';
 }
+/* a line's row: its rank, its club's pill (a total's two) and the bet, Value where it is a call, the price; the game and its puck
+   drop, the model's chance and DraftKings' fair chance, what $1 wins and its expected return; Add (Added in the parlay) */
+const VALUE_T = () => `a value pick: the model rates it ${Math.round(S.edge * 100)} points or more above DraftKings' price, the call the Games cards show`;
+function topRow(L, rank, inB, both) {
+  const on = inB.has(L.id), ev = legEv(L);
+  return `<li class="t30-r${on ? ' on' : ''}" data-id="${esc(L.id)}"><span class="t30-rk">${rank}</span>
+    <div class="t30-m"><div class="t30-1"><span class="pb-who">${L.kind === 'ou' ? pill(L.g.away) + pill(L.g.home) : pill(L.g[L.side])}<b>${esc(tierBet(L))}</b>${L.thin ? '' : `<span class="tag value" title="${esc(VALUE_T())}">Value</span>`}</span><b class="t30-p">${fmtOdds(L.price)}</b></div>
+    <div class="t30-2"><span class="m"><span class="nw">${esc(L.mu)}</span> · <span class="nw">${esc(both ? dayClock(L.start) : timeOf(L.g))}</span></span><span class="t30-n"><span class="nw">model ${whole(L.p)} · fair ${whole(L.fair)}</span> <span class="nw">· $1 wins ${money(L.dec - 1)}</span> <span class="nw">· expected ${ev < 0 ? '−' : '+'}${money(Math.abs(ev))}</span></span></div></div>
+    <button type="button" class="t30-add" data-leg="${esc(L.id)}" aria-pressed="${on}" aria-label="${esc(`${on ? 'In your parlay: take out' : 'Add'} ${legName(L)}, ${fmtOdds(L.price)}, model ${whole(L.p)}`)}">${on ? 'Added' : 'Add'}</button></li>`;
+}
 function renderPb() {
-  const prev = PB_CUR, C = PB_CUR = pbCompute(), { sl, ui, pool } = C;
+  const prev = PB_CUR, C = PB_CUR = pbCompute(), { sl, ui, pool, top } = C;
   /* the watch moved the slate on: the day shown before has every game under way */
   if (PB_DATES && PB_DATES.length && !PB_DATES.every(d => sl.dates.includes(d)) && PB_DATES.every(d => !sl.on(d).length) && sl.dates.length) {
     PB_NOTICE = { text: `Every game on ${PB_DATES.map(dayText).join(' and ')} has dropped the puck: the panel moved to ${slateText(sl)}.`, from: PB_DATES.slice(), to: sl.dates.slice() };
     PB_DROP = null;
   } else if (prev && sameLegs(prev.sl.dates, sl.dates)) {
-    /* a level drawn before, on this same slate, held a game that has dropped the puck since: say so, as the builder does */
+    /* a line shown before, on this same slate, on a game that has dropped the puck since: say so, as the builder does */
     const gb = gameById(), was = new Map();
-    for (const t of PB_TIERS) for (const L of (prev.levels[t[0]] ? prev.levels[t[0]].legs : [])) was.set(L.game, L.mu);
+    for (const L of prev.top.value.concat(prev.top.other)) was.set(L.game, L.mu);
     const gone = [...was.keys()].filter(id => !gb[id] || hasStarted(gb[id]));
-    if (gone.length) PB_DROP = { text: `${andList(gone.map(id => was.get(id)))} dropped the puck: the levels were rebuilt without ${gone.length > 1 ? 'them' : 'it'}.`, from: sl.dates.slice(), to: sl.dates.slice() };
+    if (gone.length) PB_DROP = { text: `${andList(gone.map(id => was.get(id)))} dropped the puck: ${gone.length > 1 ? 'their' : 'its'} lines left the list.`, from: sl.dates.slice(), to: sl.dates.slice() };
   }
   PB_DATES = sl.dates.slice();
   const holds = n => !!n && sameLegs(n.to, sl.dates) && n.from.some(d => d >= sl.today);
   if (!holds(PB_NOTICE)) PB_NOTICE = null;
   if (!holds(PB_DROP)) PB_DROP = null;
-  const rh = pbRecHtml(); $('pbRec').innerHTML = rh; $('pbRec').hidden = !rh;
   $('pbSlate').textContent = slateText(sl) || 'no games';
   $('pbSlate').hidden = !sl.dates.length;
   /* the prices are DraftKings' unless ESPN carried another book for a game, which is then named */
@@ -2111,25 +2053,28 @@ function renderPb() {
   const notes = [];
   for (const n of [PB_NOTICE, PB_DROP]) if (n) notes.push(`<p class="pb-said"><b>${esc(n.text)}</b></p>`);
   const far = pool.far.length;
-  if (far) notes.push(`<p>${far} leg${far > 1 ? 's are' : ' is'} left out: the model rates ${far > 1 ? 'each' : 'it'} 15 points or more above DraftKings' fair chance (its two prices with the margin taken out), and edges that large are more likely the model's error than the book's. ${far > 1 ? 'They are' : 'It is'} still on the Games cards, flagged far off the market.</p>`);
+  if (far) notes.push(`<p>${far} line${far > 1 ? 's are' : ' is'} left out: the model rates ${far > 1 ? 'each' : 'it'} 15 points or more above DraftKings' fair chance (its two prices with the margin taken out), and edges that large are more likely the model's error than the book's. ${far > 1 ? 'They are' : 'It is'} still on the Games cards, flagged far off the market.</p>`);
   const noLine = sl.games.filter(g => !g.line).length, stale = sl.games.filter(g => g.line && !freshLine(g)).length;
   const whose = sl.dates.length > 1 ? 'these days\'' : sl.pick === sl.today ? "today's" : sl.pick === sl.tom ? "tomorrow's" : `${dayText(sl.pick || '')}'s`;
   if (noLine && pool.tickable.length) notes.push(`<p>${noLine} of ${whose} games ${noLine > 1 ? 'have' : 'has'} no DraftKings line yet: DraftKings posts a day's lines about a day ahead, and the job reads them at its next run.</p>`);
   if (stale) notes.push(`<p>${stale} game${stale > 1 ? "s' lines were" : "'s line was"} not on DraftKings at the job's last run: ${stale > 1 ? 'they are' : 'it is'} offered nowhere until DraftKings lists ${stale > 1 ? 'them' : 'it'} again.</p>`);
   $('pbNotes').innerHTML = notes.join(''); $('pbNotes').hidden = !notes.length;
-  const w = pbWide(sl, pool);
-  $('pbBody').innerHTML = w ? `<div class="empty pb-wide" id="pbWide">${esc(w)}</div>` : `<div class="pb-tiers">${PB_TIERS.map(t => pbTierCard(t, C.levels[t[0]], C.why[t[0]], sl)).join('')}</div>`;
-  fitNums();
-  $('pbRules').textContent = `Each level is built only from the bet types and games ticked above, one leg a game. A leg qualifies when DraftKings prices both sides of it, the model gives it 45% to 97%, and its chance is at or above the chance DraftKings' price implies (the book's margin left in). Legs ${Math.round(S.edge * 100)} points or more above it are the model's calls, the ones the Games cards show; legs above it by less are used only where the calls cannot make a level, the fewest first, and are marked thin edge. A leg the model rates 15 points or more above DraftKings' fair chance (its two prices with the margin taken out) is left out. Safe is the likeliest pair; Medium and Aggressive are the 3- and 4-leg parlays with the best return (chance times payout) that land at least 25% and 12% of the time by the model's chance, or, where none does, the likeliest of that size. Each leads with DraftKings' fair chance, the model's beside it; the levels are chosen on the model's. The price is DraftKings' parlay price: the legs' prices multiplied, as it pays a parlay of different games. The levels never take a player leg or two legs of one game; the builder below does, a same-game parlay's price an estimate.`;
+  const w = pbWide(sl, pool), both = sl.dates.length > 1;
+  if (w) $('pbBody').innerHTML = `<div class="empty pb-wide" id="pbWide">${esc(w)}</div>`;
+  else if (!pool.legs.length) $('pbBody').innerHTML = `<div class="empty pb-wide" id="pbNone">${esc(pbWhy(sl, pool, ui))}</div>`;
+  else {
+    const inB = new Set(builderLegs(false).map(L => L.id)), more = top.n - top.value.length - top.other.length;
+    const part = (cls, title, sub, legs, start) => legs.length ? `<section class="t30-part ${cls}"><h3 class="t30-h">${title} <span class="n">${legs.length}</span><small>${esc(sub)}</small></h3><ol class="t30-l" start="${start}">${legs.map((L, i) => topRow(L, start + i, inB, both)).join('')}</ol></section>` : '';
+    const e = Math.round(S.edge * 100);
+    $('pbBody').innerHTML = `<div class="t30" id="t30">${part('t30-v', 'Value picks', `${e} points or more above DraftKings' price: the model's calls`, top.value, 1)}`
+      + (top.value.length ? '' : `<p class="pb-empty t30-nov">No line on your picks is a value pick right now (${e} points or more above DraftKings' price).</p>`)
+      + `${part('t30-o', 'Other lines', `at or above the price by less than ${e} points`, top.other, top.value.length + 1)}`
+      + (more > 0 ? `<p class="pb-empty t30-more">${more} more line${more > 1 ? 's qualify' : ' qualifies'} beyond the top ${TOP_N}.</p>` : '') + '</div>';
+  }
+  $('pbRules').textContent = `Every line on your picks (the bet types and games ticked above, on the day chosen) that DraftKings prices on both sides, that the model gives 45% to 97% and rates at or above the chance DraftKings' price implies (the book's margin left in), with no push (a whole-number line is left out) and not 15 points or more above DraftKings' fair chance (its two prices with the margin taken out). Value picks are ${Math.round(S.edge * 100)} points or more above the price: the model's calls, the ones the Games cards show. Other lines are above it by less. Each part is ranked by the expected return on $1, the model's chance times the decimal price less the stake, and the list stops at ${TOP_N}. Fair is DraftKings' own chance of the line; the model's beside it. Add puts a line in your parlay above; a second side bet on a game takes the first's place, as the other side of a total does.`;
   for (const g of sl.games) SHOWN.add(g.id);
 }
 let PB_GX_QUIET = false;
-/* every level's pays line, redrawn in place as the amount is typed */
-function pbPays() {
-  const stake = pbStake();
-  for (const el of document.querySelectorAll('[data-pb-pay]')) { const d = +el.dataset.pbPay; el.querySelector('.v').textContent = money(cents(stake * d)); el.querySelector('.k').textContent = `${stakeShort(stake)} pays`; }
-  fitNums();
-}
 let PB_STAKE_T = null;
 $('pbStake').addEventListener('input', () => {
   const v = stakeRead($('pbStake').value); if (v === null) return;
@@ -2149,19 +2094,19 @@ $('pbMix').addEventListener('click', e => {
   pbQuiet(); save(); renderPb();
 });
 /* a control the panel redraws keeps the keyboard's focus: the same Day, the same game's box */
-const refocus = (sel, had, ...rest) => { if (!had) return; for (const q of [sel, ...rest, '#pbTitle']) { const nb = document.querySelector(q); if (nb && nb.focus && !nb.disabled) { nb.focus(); return; } } };
+const refocus = (sel, had, ...rest) => { if (!had) return; for (const q of [sel, ...rest]) { const nb = document.querySelector(q); if (nb && nb.focus && !nb.disabled) { nb.focus(); return; } } };
 $('pbDay').addEventListener('click', e => {
   const b = e.target.closest('button[data-day]'); if (!b) return;
   const had = document.activeElement === b, v = b.dataset.day;
   pbUi().day = v; pbQuiet(); save(); renderPb(); renderParlayLines();
-  refocus(`#pbDay button[data-day="${v}"]`, had);
+  refocus(`#pbDay button[data-day="${v}"]`, had, '#pbTitle');
 });
 $('pbGames').addEventListener('toggle', () => { if (PB_GX_QUIET) { PB_GX_QUIET = false; return; } pbUi().gx = $('pbGames').open; save(); });
 $('pbGames').addEventListener('change', e => {
   const b = e.target.closest('input[data-g]'); if (!b) return;
   const ui = pbUi(), off = new Set(ui.off), had = document.activeElement === b, gid = b.dataset.g; if (b.checked) off.delete(gid); else off.add(gid);
   ui.off = [...off].slice(-64); pbQuiet(); save(); renderPb();
-  refocus(`#pbGrid input[data-g="${gid}"]`, had);
+  refocus(`#pbGrid input[data-g="${gid}"]`, had, '#pbTitle');
 });
 $('pbGames').addEventListener('click', e => {
   const b = e.target.closest('button[data-gall]'); if (!b) return;
@@ -2169,37 +2114,229 @@ $('pbGames').addEventListener('click', e => {
   const off = new Set(ui.off); for (const id of ids) { if (b.dataset.gall === '1') off.delete(id); else off.add(id); }
   ui.off = [...off].slice(-64); pbQuiet(); save(); renderPb();
 });
-/* a level's buttons: on a level the clock has overtaken (one of its own games started or its line gone, the job published
-   since, or the picks changed) they only redraw the panel. Another game dropping the puck leaves a level as it is: the
-   parlay chosen is still among the parlays of its kind, and every other has only fewer to choose from. New legs, which
-   searches the pool again, wants the panel exactly as it stands (strict) */
-function pbStale(res, strict) {
-  if (!PB_CUR || !res) return true;
-  const sl = pbSlate(), ui = pbUi();
-  if (strict ? PB_CUR.sig !== pbSig(sl, ui) : PB_CUR.picks !== pbPicks(sl, ui)) return true;
-  const gb = gameById();
-  return res.legs.some(L => !gb[L.game] || hasStarted(gb[L.game]) || !freshLine(gb[L.game]));
+
+/* ---------- the Suggested Parlays tab ----------
+   Today's set and tomorrow's (Eastern, by the visitor's clock), each day with a game: while no game of the day has dropped the puck,
+   its three levels worked here on every game of the day and every bet type (spDay: exactly what tools/suggest.js takes for the record,
+   by pbDayLevels below), "Locks 7:00 PM EDT"; from the day's first puck drop the set the record locked (the state's suggest.sets),
+   read only, each leg graded as the scores come in: "Locked since", "Under way" once every game has started, "Graded" once every
+   level is settled. Each open level: DraftKings' fair chance with the model's beside it, the price, what the bet amount pays, each leg
+   with its own Add, then Finish and Add to builder. The record's row heads the tab */
+let SP_CUR = {};                            // the open levels as last drawn, by day: { [date]: { safe, med, aggr } }
+const sameLegs = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+/* a day's levels on every game of the day still to come and every bet type: the record's, and the tab's while the day is open */
+function spDay(date) {
+  const games = S.games.filter(g => g.date === date && !hasStarted(g)).sort(gameCmp);
+  const pool = pbPool({ games }, { k: { ml: true, pl: true, ou: true }, off: [] }), levels = {};
+  for (const t of PB_TIERS) levels[t[0]] = pbSearch(pool.legs, t[2], t[3], [], new Set());
+  return { date, games, pool, levels };
 }
-$('pbBody').addEventListener('click', e => {
+/* the record's levels (tools/suggest.js boots this page on the state the job has just made and reads them here): one day's set as the
+   Suggested Parlays tab draws it, so the record is exactly what the tab showed on that day */
+function pbDayLevels(date) {
+  const D = spDay(date), levels = {};
+  const leg = L => ({ id: L.id, game: L.game, kind: L.kind, side: L.side, num: L.num, price: L.price, other: L.other, p: L.p, fair: L.fair, edge: L.edge, thin: !!L.thin, mu: L.mu, start: L.start });
+  for (const t of PB_TIERS) { const r = D.levels[t[0]]; levels[t[0]] = r ? { legs: r.legs.map(leg), p: r.p, fair: r.fair, dec: r.dec, likeliest: !!r.likeliest } : null; }
+  return { games: D.pool.tickable.map(g => g.id), levels };
+}
+/* a day's first puck drop: its earliest start, a game's being the earlier of its start and the puck drop its frozen call was made
+   before (tools/suggest.js's daysOf); open while no game of the day has dropped the puck by the visitor's clock */
+function dayLock(date) { let t = Infinity; for (const g of S.games) if (g.date === date) t = Math.min(t, Date.parse(g.start), g.frozen && g.before ? Date.parse(g.before) : Infinity); return t; }
+/* the record's set for a day, where this publish carries the record's sets (nhl v17 on): its lock is the job's, so a day the record has
+   locked stays locked here though its first game has since been postponed or moved */
+const spSet = date => S.suggest && isObj(S.suggest.sets) && isObj(S.suggest.sets[date]) ? S.suggest.sets[date] : null;
+const spLockAt = date => { const e = spSet(date), t = e ? Date.parse(e.lock) : NaN; return Math.min(dayLock(date), isFinite(t) ? t : Infinity); };
+const spOpen = date => S.games.some(g => g.date === date) && !S.games.some(g => g.date === date && hasStarted(g)) && Date.now() < spLockAt(date);
+/* the days the tab shows: today and tomorrow with a game, else the next day with a game to come */
+function spDays() {
+  const today = etToday(), tom = addDays(today, 1), has = d => S.games.some(g => g.date === d);
+  const days = [today, tom].filter(has);
+  if (days.length) return days;
+  const nx = S.games.filter(g => !hasStarted(g)).map(g => g.date).filter(d => d >= today).sort()[0];
+  return nx ? [nx] : [];
+}
+const spDayName = d => { const t = etToday(); return d === t ? 'Today' : d === addDays(t, 1) ? 'Tomorrow' : dayText(d); };
+/* why a level of an open day is empty, worked out from the day's lines */
+function spWhy(date, pool) {
+  const m = pool.games, txt = dayText(date);
+  if (m === 0) return `No leg on ${txt} qualifies: the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market.`;
+  if (m === pool.tickable.length) return `Only ${m} game${m > 1 ? 's' : ''} on ${txt} (one leg a game).`;
+  return `Only ${m} of the ${pool.tickable.length} games on ${txt} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).`;
+}
+/* the day-wide line in place of an open day's levels: no line yet, or one lined game */
+function spWide(D) {
+  const txt = dayText(D.date);
+  if (!D.pool.tickable.length) {
+    const opener = S.games[0] && S.games[0].date;
+    if (opener === D.date && S.games.every(g => g.date >= D.date)) return `The season opens ${txt}. DraftKings posts the first lines about a day before.`;
+    return `No DraftKings lines yet for ${txt}: DraftKings posts a day's lines about a day before puck drop, and the job reads them at its next run (five times a day).`;
+  }
+  if (D.pool.tickable.length < 2) return `Only one game on ${txt} has a DraftKings line, and a parlay needs two.`;
+  return '';
+}
+const legRuleText = (t, res) => { const [, , n, floor] = t; return !floor ? 'the likeliest pair' : res.likeliest ? `the likeliest ${n} legs` : `best return that lands ${Math.round(floor * 100)}%+ by the model`; };
+const thinT = () => `thin edge: the model rates it at or above DraftKings' price, but not ${Math.round(S.edge * 100)} points above it`;
+/* the three numbers of a level: the fair chance (the model's beside it), the price, what the bet amount pays */
+const spNums = (p, fair, dec, pays) => `<div class="pb-nums">
+      <div class="pb-n"><div class="v">${fair === null ? whole(p) : whole(fair)}</div><div class="k">${fair === null ? "model's chance" : 'fair chance'}</div><div class="s">${fair === null ? 'no fair chance' : `model says ${whole(p)}`}</div></div>
+      <div class="pb-n"><div class="v">${toAm(dec)}</div><div class="k">price</div></div>
+      ${pays}
+    </div>`;
+const spHead = (id, label, n, tag) => `<div class="pb-th"><span class="pb-tn"><b>${label}</b><span class="pb-tc">${n} legs</span></span>${tag || ''}</div>`;
+/* an open level's card: each leg a row with its own Add, then Finish and Add to builder */
+function spCard(t, res, D, inB, drawnIds) {
+  const [id, label, n] = t, key = `${D.date}|${id}`;
+  if (!res) return `<div class="pb-tier none" data-tier="${id}">${spHead(id, label, n)}<p class="pb-empty">${esc(spWhy(D.date, D.pool))}</p></div>`;
+  const stake = pbStake(), all = sameLegs(drawnIds, res.legs.map(L => L.id));
+  const rows = res.legs.map(L => { const on = inB.has(L.id); return `<div class="pb-tl" data-id="${esc(L.id)}">
+      <div class="pb-ll"><span class="pb-l1"><span class="pb-who">${L.kind === 'ou' ? pill(L.g.away) + pill(L.g.home) : pill(L.g[L.side])}<b>${esc(tierBet(L))}</b>${L.thin ? `<span class="tag thin" title="${esc(thinT())}">thin edge</span>` : ''}</span><b class="pb-lp">${fmtOdds(L.price)}</b><button type="button" class="sp-add" data-leg="${esc(L.id)}" aria-pressed="${on}" aria-label="${esc(`${on ? 'In your parlay: take out' : 'Add'} ${legName(L)}, ${fmtOdds(L.price)}`)}" title="${on ? 'In your parlay: tap to take it out' : 'Add this leg to your parlay'}">${on ? 'Added' : 'Add'}</button></span>
+        <span class="pb-l2"><span class="m">${esc(L.mu)} · <span class="nw">${esc(timeOf(L.g))}</span></span><span class="pb-fm">fair ${whole(L.fair)} · model ${whole(L.p)}</span></span></div></div>`; }).join('');
+  return `<div class="pb-tier" data-tier="${id}">
+    ${spHead(id, label, n)}
+    <div class="pb-rule">${esc(legRuleText(t, res))}</div>
+    ${spNums(res.p, res.fair, res.dec, `<div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`)}
+    <div class="pb-tlegs">${rows}</div>
+    <div class="pb-acts"><button type="button" class="btn ice" data-sp-finish="${key}">Finish</button><button type="button" class="btn" data-sp-add="${key}"${all ? ' disabled' : ''}>${all ? 'In the builder' : 'Add to builder'}</button></div>
+  </div>`;
+}
+/* a leg of a locked set as the scores grade it: the record's grade where the job has made it, else the page's own (gradeLeg) */
+const SP_GRADE = { win: ['won', 'win'], loss: ['lost', 'loss'], push: ['push', 'push'], void: ['void', 'void'] };
+function spLegNow(L, i, e, id) {
+  const jg = e.grade && e.grade[id] && Array.isArray(e.grade[id].legs) ? e.grade[id].legs[i] : null;
+  if (jg) return jg;
+  const g = gameById()[L.game];
+  if (!g) return 'void';                                       // postponed, cancelled or gone from the schedule: off the books, as the record has it
+  if (g.date !== e.date) return 'void';                        // moved to another day
+  const r = gradeLeg({ game: L.game, side: L.side, kind: L.kind, line: L.line });
+  return /^(win|loss|push|void)$/.test(r) ? r : null;
+}
+/* a locked level: lost at any leg lost, to settle while any is, a push where every leg pushed or was void, else won (paying the legs
+   won multiplied, as the record pays it) */
+function spResult(t, legs) {
+  if (legs.includes('loss')) return { result: 'lost', payout: 0 };
+  if (legs.some(x => x === null)) return { result: 'pending' };
+  if (legs.every(x => x === 'push' || x === 'void')) return { result: 'push', payout: 1 };
+  const won = t.legs.filter((L, i) => legs[i] === 'win');
+  return { result: 'won', payout: won.length === t.legs.length ? t.dec : won.reduce((a, L) => a * dec(L.price), 1) };
+}
+function spLockedCard(t, e) {
+  const [id, label, n] = t, tt = e.tiers && e.tiers[id];
+  if (!tt) return `<div class="pb-tier none" data-tier="${id}">${spHead(id, label, n)}<p class="pb-empty">No ${label} parlay was in the set: too few legs qualified on ${esc(dayText(e.date))}.</p></div>`;
+  const grades = tt.legs.map((L, i) => spLegNow(L, i, e, id)), R = spResult(tt, grades), stake = pbStake(), gb = gameById();
+  const rows = tt.legs.map((L, i) => {
+    const g = gb[L.game], gr = grades[i], mu = L.mu || '', bet = L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? fmtLine(L.line) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.line}`;
+    /* a game gone from the schedule keeps its clubs by the matchup the record wrote, "NYI @ DAL" */
+    const ab = mu.split(' @ '), club = x => Object.keys(S.teams || {}).find(k => T(k).abbr === x) || null;
+    const away = g ? g.away : club(ab[0]), home = g ? g.home : club(ab[1]), side = L.side === 'home' ? home : L.side === 'away' ? away : null;
+    const who = L.kind === 'ou' ? (away && home ? pill(away) + pill(home) : '') : side ? pill(side) : '';
+    const st = gr ? `<span class="tag ${SP_GRADE[gr][1]}">${SP_GRADE[gr][0]}</span>` : g && hasStarted(g) ? '<span class="tag ice">under way</span>' : `<span class="nw">${esc(L.start ? hhmm(L.start) : '')}</span>`;
+    return `<div class="pb-tl" data-id="${esc(L.id)}" data-grade="${gr || 'pending'}">
+      <div class="pb-ll"><span class="pb-l1"><span class="pb-who">${who}<b>${esc(bet)}</b></span><b class="pb-lp">${fmtOdds(L.price)}</b><span class="sp-st">${st}</span></span>
+        <span class="pb-l2"><span class="m">${esc(mu)}</span><span class="pb-fm">fair ${L.fair === null ? '—' : whole(L.fair)} · model ${whole(L.p)}</span></span></div></div>`;
+  }).join('');
+  const res = R.result === 'won' ? `<span class="tag win">won</span>` : R.result === 'lost' ? '<span class="tag loss">lost</span>' : R.result === 'push' ? '<span class="tag push">push</span>' : '';
+  const pay = R.result === 'won' ? `<div class="pb-n pay"><div class="v">${money(cents(stake * R.payout))}</div><div class="k">${stakeShort(stake)} paid</div></div>`
+    : R.result === 'lost' ? `<div class="pb-n pay"><div class="v">$0.00</div><div class="k">${stakeShort(stake)} lost</div></div>`
+    : R.result === 'push' ? `<div class="pb-n pay"><div class="v">${money(cents(stake))}</div><div class="k">the stake back</div></div>`
+    : `<div class="pb-n pay" data-pb-pay="${tt.dec}"><div class="v">${money(cents(stake * tt.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`;
+  return `<div class="pb-tier locked" data-tier="${id}" data-result="${R.result}">
+    ${spHead(id, label, n, res)}
+    ${spNums(tt.p, tt.fair, tt.dec, pay)}
+    <div class="pb-tlegs">${rows}</div>
+  </div>`;
+}
+/* a day's set: its heading and lock words, then its three levels (or why there are none) */
+function spSetHtml(date, inB, drawnIds) {
+  const name = spDayName(date), lock = spLockAt(date), sub = name === dayText(date) ? '' : `<small>${esc(dayText(date))}</small>`;
+  if (spOpen(date)) {
+    const D = spDay(date), w = spWide(D);
+    SP_CUR[date] = D.levels;
+    const lk = isFinite(lock) ? `<span class="tag ice sp-lock" title="The set locks at the day's first puck drop: the record grades the set the job took at its last run before then">Locks ${esc(hhmm(new Date(lock).toISOString()))}</span>` : '';
+    return `<section class="sp-day" data-sp-day="${date}" data-sp-state="open"><div class="sp-dh"><h3>${esc(name)} ${sub}</h3>${lk}</div>`
+      + (w ? `<div class="empty pb-wide">${esc(w)}</div>` : `<div class="pb-tiers">${PB_TIERS.map(t => spCard(t, D.levels[t[0]], D, inB, drawnIds)).join('')}</div>`) + '</section>';
+  }
+  delete SP_CUR[date];
+  const e = spSet(date), carries = !!(S.suggest && isObj(S.suggest.sets));
+  const all = S.games.filter(g => g.date === date), under = all.length && all.every(g => hasStarted(g));
+  let words = 'Locked', state = 'locked';
+  if (e) {
+    const lv = PB_TIERS.filter(t => e.tiers[t[0]]);
+    const settled = lv.length && lv.every(t => spResult(e.tiers[t[0]], e.tiers[t[0]].legs.map((L, i) => spLegNow(L, i, e, t[0]))).result !== 'pending');
+    if (settled) { words = 'Graded'; state = 'graded'; } else if (under) { words = 'Under way'; state = 'under'; } else words = `Locked since ${hhmm(e.lock)}`;
+  }
+  /* a publish from before the record's sets were carried (nhl v16 and older) says only that the day locked, never that no set was taken */
+  const none = !carries ? `${dayText(date)}'s set locked at its first puck drop: the record above grades it.` : `No set was taken for ${dayText(date)} before its first puck drop.`;
+  return `<section class="sp-day" data-sp-day="${date}" data-sp-state="${state}"><div class="sp-dh"><h3>${esc(name)} ${sub}</h3><span class="tag gold sp-lock">${esc(words)}</span></div>`
+    + (e ? `<div class="pb-tiers">${PB_TIERS.map(t => spLockedCard(t, e)).join('')}</div>` : `<div class="empty pb-wide">${esc(none)}</div>`) + '</section>';
+}
+/* the tab-wide line in place of every set: no season left, or before the opener */
+function spNone() {
+  if (!S.games.length || S.phase === 'offseason' || S.phase === 'over') return "No games to suggest from: the season is over. The suggested parlays come back with next season's first lines.";
+  return 'No games today or tomorrow, and none to come on the schedule.';
+}
+function renderSuggest() {
+  if (!S) return;
+  const rh = pbRecHtml(); $('pbRec').innerHTML = rh; $('pbRec').hidden = !rh;
+  const days = spDays(), drawn = builderLegs(false), inB = new Set(drawn.map(L => L.id)), ids = drawn.map(L => L.id);
+  SP_CUR = {};
+  const open = days.filter(spOpen), lined = S.games.filter(g => open.includes(g.date) && !hasStarted(g) && freshLine(g));
+  const other = lined.filter(g => !isDK(g.line)), others = [...new Set(other.map(g => g.line.book ? String(g.line.book) : 'a book ESPN did not name'))].join(' and ');
+  $('spRead').textContent = !lined.length ? '' : other.length ? `Prices ${readText(lined)}: ${other.length} of the ${lined.length} games ${other.length > 1 ? 'are' : 'is'} priced at ${others}, not DraftKings.` : `DraftKings' prices ${readText(lined)}.`;
+  $('spRead').hidden = !lined.length;
+  $('spBody').innerHTML = days.length ? days.map(d => spSetHtml(d, inB, ids)).join('') : `<div class="empty pb-wide" id="spWide">${esc(spNone())}</div>`;
+  fitNums();
+  $('spRules').textContent = `Each day's three levels are built from every game of the day and every bet type, one leg a game. A leg qualifies when DraftKings prices both sides of it, the model gives it 45% to 97%, and its chance is at or above the chance DraftKings' price implies (the book's margin left in). Legs ${Math.round(S.edge * 100)} points or more above it are the model's calls, the ones the Games cards show; legs above it by less are used only where the calls cannot make a level, the fewest first, and are marked thin edge. A leg the model rates 15 points or more above DraftKings' fair chance (its two prices with the margin taken out) is left out. Safe is the likeliest pair; Medium and Aggressive are the 3- and 4-leg parlays with the best return (chance times payout) that land at least 25% and 12% of the time by the model's chance, or, where none does, the likeliest of that size. Each leads with DraftKings' fair chance, the model's beside it; the levels are chosen on the model's. The price is DraftKings' parlay price: the legs' prices multiplied, as it pays a parlay of different games. A day's set locks at its first puck drop: the record grades the set the job took at its last run before then, each leg on its own number, a game called off void. The levels never take a player leg or two legs of one game; the Parlay Builder does, a same-game parlay's price an estimate.`;
+  for (const d of days) for (const g of S.games) if (g.date === d && !hasStarted(g)) SHOWN.add(g.id);
+}
+/* the record's row under the tab's heading (S.suggest, tools/suggest.js's summary of the season's days): the NFL hub's, a pill a
+   level, won-lost and the units on 1 a day, pending apart, "None graded yet" before any; each pill's title the graded count, the wins
+   expected by DraftKings' fair chance and by the model, pushes, days with no parlay of that level and the days replayed */
+function pbRecHtml() {
+  const R = S.suggest; if (!isObj(R) || !isObj(R.tiers)) return '';
+  const un = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); }, f1 = v => (+v || 0).toFixed(1), pl = (n, w) => `${n} ${w}${n === 1 ? '' : w.endsWith('sh') ? 'es' : 's'}`;
+  const since = R.since ? ` since ${dayText(R.since)}` : '';
+  const shown = PB_TIERS.filter(t => isObj(R.tiers[t[0]]));
+  const any = shown.some(t => R.tiers[t[0]].graded || R.tiers[t[0]].push);
+  const pills = shown.map(([id, label]) => {
+    const s = R.tiers[id];
+    const title = `${label}: ${s.won} won of ${s.graded} graded${since}${s.graded ? `; wins expected ${f1(s.exp_fair)} by DraftKings' fair chance${s.fair_n < s.graded ? ` (on the ${s.fair_n} with one)` : ''}, ${f1(s.exp_model)} by the model` : ''}`
+      + (s.push ? `; ${pl(s.push, 'push')}, the stake back` : '') + (s.none ? `; ${pl(s.none, 'day')} with no ${label} parlay` : '')
+      + (s.replay ? `; ${s.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
+    return `<span class="rec" data-pb-rec="${id}" title="${esc(title)}">${esc(label)} <b>${s.won}–${s.lost}</b>${s.graded || s.push ? ` ${un(s.units)} units` : ''}</span>`;
+  }).join('');
+  return `<span class="pb-reck">Record</span>${any ? pills : '<span class="rec" data-pb-rec="none">None graded yet</span>'}${R.pending ? `<span class="rec" data-pb-rec="pending">Pending <b>${R.pending}</b></span>` : ''}`;
+}
+/* every level's pays line, redrawn in place as the amount is typed */
+function pbPays() {
+  const stake = pbStake();
+  for (const el of document.querySelectorAll('[data-pb-pay]')) { const d = +el.dataset.pbPay; el.querySelector('.v').textContent = money(cents(stake * d)); el.querySelector('.k').textContent = `${stakeShort(stake)} pays`; }
+  fitNums();
+}
+/* a level's Finish and Add to builder: on a day the clock has locked since the tab was drawn (a game of it dropped the puck), or a level
+   that is no longer the one drawn (a Refresh odds read moved it), they only redraw the tab */
+function spStale(date, id) {
+  if (!spOpen(date)) return true;
+  const was = SP_CUR[date] && SP_CUR[date][id], now = spDay(date).levels[id];
+  return !was || !now || !sameLegs(was.legs.map(L => L.id), now.legs.map(L => L.id)) || was.dec !== now.dec;
+}
+$('spBody').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
-  if (b.dataset.pbLock) { const key = b.dataset.pbLock, [id, ...rest] = key.split('|'); pbLock(id, rest.join('|')); renderPb(); const nb = [...document.querySelectorAll('[data-pb-lock]')].find(x => x.dataset.pbLock === key); if (nb) nb.focus(); return; }
-  if (b.dataset.pbNew) { if (pbStale(PB_CUR && PB_CUR.levels[b.dataset.pbNew], true)) { renderParlays(); return; } pbTurn(b.dataset.pbNew); renderPb(); const nb = document.querySelector(`[data-pb-new="${b.dataset.pbNew}"]`); if (nb) nb.focus(); return; }
-  if (b.dataset.pbReset) { delete PB_VIEW.t[b.dataset.pbReset]; renderPb(); return; }
-  const id = b.dataset.pbAdd || b.dataset.pbFinish; if (!id) return;
-  const res = PB_CUR && PB_CUR.levels[id], t = PB_TIERS.find(x => x[0] === id);
-  if (pbStale(res)) { const sel = b.dataset.pbFinish ? `[data-pb-finish="${id}"]` : `[data-pb-add="${id}"]`, had = document.activeElement === b; renderParlays(); refocus(sel, had, `[data-pb-finish="${id}"]`); return; }
-  if (b.dataset.pbFinish) { openCard(res.legs, `${t[1]} parlay`, b, false); return; }
+  const key = b.dataset.spAdd || b.dataset.spFinish; if (!key) return;
+  const [date, id] = key.split('|'), t = PB_TIERS.find(x => x[0] === id);
+  if (!t) return;
+  if (spStale(date, id)) { const sel = b.dataset.spFinish ? `[data-sp-finish="${key}"]` : `[data-sp-add="${key}"]`, had = document.activeElement === b; renderSuggest(); refocus(sel, had, `[data-sp-finish="${key}"]`, '#spTitle'); return; }
+  const res = SP_CUR[date][id];
+  if (b.dataset.spFinish) { openCard(res.legs, `${t[1]} parlay`, b, false); return; }
   /* asked before any leg kept on this device would go: the builder's, and those it leaves out of the parlay (a read moved or pulled
-     their lines, or keeps their game to one leg), which a reload could bring back */
-  /* a leg left out is kept only where the level holds that very bet at its number: the same side at a number a read has moved it to
-     is another bet, and the stored one goes (sameBet) */
+     their lines, or keeps their game to one leg), which a reload could bring back. A leg left out is kept only where the level holds
+     that very bet at its number: the same side at a number a read has moved it to is another bet, and the stored one goes (sameBet) */
   const drawn = builderLegs(false), have = drawn.length, held = heldOut(drawn), lv = res.legs.map(storeLeg);
   const lose = held.filter(l => !lv.some(nl => sameBet(l, nl))).length, what = `${t[1]} ${t[2]}-leg parlay`;
   const ask = !lose ? `Replace the ${legsN(have)} in the builder with the ${what}?` : !have ? `Replace the ${legsN(lose)} kept on this device that the builder leaves out of the parlay with the ${what}?`
     : `Replace the ${legsN(have)} in the builder, and the ${legsN(lose)} kept on this device that it leaves out of the parlay, with the ${what}?`;
   if (((have && !sameLegs(drawn.map(L => L.id), res.legs.map(L => L.id))) || lose) && !confirm(ask)) return;
   P.legs = res.legs.map(storeLeg); BMSG = []; slipQuiet(); save();      // a refusal or a replacement said before no longer stands
-  renderParlays();
+  showTab('parlays');
   scrollToEl($('builder'));
   try { $('bTitle').focus({ preventScroll: true }); } catch (err) { $('bTitle').focus(); }   // the keyboard follows the legs to the builder
 });
@@ -2256,6 +2393,9 @@ function betBlock(g) {
    the same-game rule, a stored leg at a number moved since replaced and one the builder leaves out (a game kept to one leg) put in */
 document.addEventListener('click', e => {
   const b = e.target.closest('button[data-leg]'); if (!b || !S) return;
+  /* on the Parlay Builder tab the builder is above the list: a leg it gains or loses moves the list, so the page is scrolled back by as
+     much and the button pressed stays under the finger (the NFL hub's pbLegClick) */
+  const box = b.closest('#pbBody, #plLines'), top0 = box && typeof b.getBoundingClientRect === 'function' ? b.getBoundingClientRect().top : null, leg0 = b.dataset.leg;
   const [gid, side, kind] = b.dataset.leg.split('|'), id = `${gid}|${side}|${kind}`; const g = gameById()[gid];
   const cur = g && legOf(g, side, kind);
   if (builderLegs(false).some(B => B.id === id)) takeOut(gid, l => legIdOf(l) !== id);   // a refusal or a replacement said before no longer stands
@@ -2268,6 +2408,7 @@ document.addEventListener('click', e => {
     if (msg) { BMSG.unshift(msg); slipSay(msg, 0, false, true); } else slipQuiet();
   }
   save(); rerender();
+  if (top0 !== null) { const nb = [...document.querySelectorAll(`#${box.id} button[data-leg]`)].find(x => x.dataset.leg === leg0), dy = nb ? nb.getBoundingClientRect().top - top0 : 0; if (dy && typeof window.scrollBy === 'function') window.scrollBy(0, dy); }
 });
 
 /* ---------- the builder (#builder) ----------
@@ -2390,7 +2531,7 @@ function fitRecord() {
 /* a level's three numbers, each stepped down to fit its third of the card (13px the least); a pays figure that will not fit at 13px
    (a $100,000 amount on a phone) takes the card's width and is fitted again there, as the builder's tiles do; never cut */
 function fitNums() {
-  for (const n of document.querySelectorAll('#pbBody .pb-n')) {
+  for (const n of document.querySelectorAll('#spBody .pb-n')) {
     const v = n.querySelector('.v'); if (!v) continue;
     n.classList.remove('pb-span');
     if (fitOne(v, 13)) continue;
@@ -2414,7 +2555,7 @@ function renderBuilder(legs) {
   const sgGames = new Set(Object.keys(per).filter(id => per[id] > 1)), withProps = legs.some(L => L.prop);
   $('bHead').textContent = n ? `${n}-leg parlay` : '';
   $('bMsg').innerHTML = BMSG.map(esc).join('<br>');
-  $('legs').innerHTML = n ? legs.map(L => legRow(L, sgGames, withProps)).join('') : `<p class="pb-none">No legs yet. Add a level's legs above, tap a bet in Pick your own legs or on the Games tab, or add a DraftKings player line from a game's Player props once Refresh odds has read it. A game takes one side bet (the moneyline or the puck line), one total and one leg a player a stat; legs of one game are priced as a same-game parlay, an estimate.</p>`;
+  $('legs').innerHTML = n ? legs.map(L => legRow(L, sgGames, withProps)).join('') : `<p class="pb-none">No legs yet. Add a line from the Top 30 below or a suggested parlay's legs, tap a bet in Pick your own legs or on the Games tab, or add a DraftKings player line from a game's Player props. A game takes one side bet (the moneyline or the puck line), one total and one leg a player a stat; legs of one game are priced as a same-game parlay, an estimate.</p>`;
   if (document.activeElement !== $('stake')) $('stake').value = String(pbStake());
   for (const c of document.querySelectorAll('#chips [data-chip]')) c.classList.toggle('on', +c.dataset.chip === pbStake());
   const all = n === 1 ? 'it lands' : `all ${n} land`;
@@ -2908,11 +3049,14 @@ function renderParlays() {
 }
 function rerender() {
   const t = curTab(), a = document.activeElement, ds = a && a.dataset ? a.dataset : null;
-  const key = ds ? ['leg', 'lu', 'pp', 'pbgo'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#games, #plLines');
-  if (t === 'parlays') renderParlays(); else if (t === 'games') { SHOWN = new Set(); renderGames(); }
+  const key = ds ? ['leg', 'lu', 'pp', 'pbgo'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#games, #plLines, #pbBody, #spBody');
+  /* a suggested leg's Add: the levels of a day share legs, so it is found again in its own day and level, never the first copy */
+  const tier = box && box.id === 'spBody' && a.closest('.pb-tier'), day = tier && a.closest('.sp-day');
+  const scope = tier && day ? `#spBody .sp-day[data-sp-day="${day.dataset.spDay}"] .pb-tier[data-tier="${tier.dataset.tier}"]` : null;
+  if (t === 'parlays') renderParlays(); else if (t === 'games') { SHOWN = new Set(); renderGames(); } else if (t === 'suggest') { SHOWN = new Set(); renderSuggest(); }
   updateSlip();
   /* a bet button, a card's Lineups, Player props or Parlay Builder → redrawn under the visitor's finger keeps the focus, where it is still offered */
-  if (key && box && !document.contains(a)) { const nb = [...box.querySelectorAll(`button[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}]`)].find(x => x.dataset[key] === val); if (nb) nb.focus(); }
+  if (key && box && !document.contains(a)) { const nb = [...document.querySelectorAll(`${scope || '#' + box.id} button[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}]`)].find(x => x.dataset[key] === val); if (nb) nb.focus(); }
 }
 /* every half minute, and when the page comes back into view: a game shown as still to come that has
    started leaves every level, the lists and the builder (said there), and an emptied slate moves on */

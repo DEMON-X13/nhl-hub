@@ -13,7 +13,8 @@
      A leg settles once and holds: a game postponed, cancelled, moved to another day or gone from the schedule is void.
      A level: any leg lost, lost (pays 0); every leg pushed or void, a push (the stake back); else won, paying the legs won
      multiplied (the level's price when every leg won); any leg not settled, pending.
-   - The record (`summary`, the state's `suggest`): each level over the season's days, won and lost, pushes and pending apart,
+   - The record (`summary`, the state's `suggest`, with `sets`, the entries from the day before the run's on, which the Suggested
+     Parlays tab draws once a day has locked): each level over the season's days, won and lost, pushes and pending apart,
      units on 1 a day (a win the payout less 1, a loss -1), and the wins expected by the model's chance and by DraftKings' fair
      chance, as the NFL's titles say them.
    - `--replay` (by hand, never by the job): the days before the record began, each from the last state the site published on
@@ -145,6 +146,15 @@ function summarize(ledger, season) {
   return { season, since, days, pending, tiers };
 }
 
+/* the days the Suggested Parlays tab draws from the record (nhl v17): every entry from the day before the run's own (Eastern) on, as
+   taken, locked and graded, so the tab shows a locked day's set as the record has it, read only. An entry still open at the run becomes
+   the locked set at its first puck drop unless a later run rewrites it */
+function current(ledger, nowMs) {
+  const d0 = new Date(Date.parse(etDate(nowMs) + 'T12:00:00Z') - 86400000).toISOString().slice(0, 10), out = {};
+  for (const [d, e] of Object.entries(ledger.days).sort()) if (d >= d0) out[d] = { date: e.date, lock: e.lock, taken: e.taken, src: e.src, tiers: e.tiers, grade: e.grade || null };
+  return out;
+}
+
 const HOW = 'The record of the suggested parlays (the Parlay Builder\'s Safe, Medium and Aggressive), written by tools/suggest.js in update.js\'s second pass, never by hand: each Eastern day\'s set as the page drew it by default at the last run before the day\'s first puck drop, locked then, graded on the final scores; src "replay" for the days before the record began, rebuilt by node tools/suggest.js --replay from the state the site published then.';
 const blank = () => ({ v: 1, how: HOW, tiers: TIERS, days: {} });
 function readLedger(file) { try { const L = JSON.parse(fs.readFileSync(file, 'utf8')); if (L && L.v === 1 && L.days && typeof L.days === 'object') return L; } catch (e) { /* none yet */ } return blank(); }
@@ -180,7 +190,7 @@ async function step({ state, data, now, html, log = () => {} }) {
   }
   gradeAll(L, state, nowMs);
   if (!Object.keys(L.days).length && !fs.existsSync(file)) { log("suggested parlays' record: no day taken yet"); return null; }
-  const summary = summarize(L, state.season);
+  const summary = Object.assign(summarize(L, state.season), { sets: current(L, nowMs) });
   if (JSON.stringify(L) !== before) write(file, L);
   const locked = Object.values(L.days).filter(e => Date.parse(e.lock) <= nowMs).length;
   log(`suggested parlays' record: ${Object.keys(L.days).length} days (${locked} locked), this run ${took} taken, ${rewrote} rewritten, ${dropped} dropped; ` +
@@ -238,7 +248,7 @@ function check(L, prev, state, nowMs) {
   return bad;
 }
 
-module.exports = { TIERS, step, check, summarize, gradeLeg, levelOf, gradeAll, bootPage, setOf, daysOf, readLedger, blank, write, seasonOf };
+module.exports = { TIERS, step, check, summarize, current, gradeLeg, levelOf, gradeAll, bootPage, setOf, daysOf, readLedger, blank, write, seasonOf };
 
 /* ---------- by hand: the replay of the days before the record ---------- */
 async function replay() {

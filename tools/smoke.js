@@ -490,7 +490,56 @@ function sLeg(g, side, kind) {
     start: g.start, mu: `${T(g.away).abbr} @ ${T(g.home).abbr}`, who: kind === 'ou' ? `${T(g.away).short} @ ${T(g.home).short}` : T(g[side]).short,
     bet: kind === 'ml' ? 'To win' : kind === 'pl' ? `Puck line ${PBS.line(num)}` : `${side === 'over' ? 'Over' : 'Under'} ${num} goals` };
 }
-const sOrder = (a, b) => (Date.parse(a.start) - Date.parse(b.start)) || (a.mu < b.mu ? -1 : a.mu > b.mu ? 1 : 0) || (PBS.KINDS.indexOf(a.kind) - PBS.KINDS.indexOf(b.kind));
+const S_KIND_RANK = { ml: 0, pl: 1, ou: 2, prop: 3 }, S_PROP_STATS = ['pts', 'g', 'a', 's', 'bs', 'sv'];
+const sStr = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+const sOrder = (a, b) => (Date.parse(a.start) - Date.parse(b.start)) || sStr(a.mu, b.mu) || ((S_KIND_RANK[a.kind] ?? 9) - (S_KIND_RANK[b.kind] ?? 9))
+  || (a.kind === 'prop' && b.kind === 'prop' ? sStr(String(a.who), String(b.who)) || sStr(String(a.pid), String(b.pid)) || (S_PROP_STATS.indexOf(a.stat) - S_PROP_STATS.indexOf(b.stat)) || sStr(a.id, b.id) : 0);
+/* the Top 30's and the levels' bet types: the team markets and (nhl v18) the player lines, Overs (the anytime goal among them) and Unders */
+const S_KINDS = ['ml', 'pl', 'ou', 'po', 'pu'];
+/* a game's player lines as legs by this smoke's own sums (nhl v18): on the read the page holds for the game (`reads`, its PROPS.games:
+   the job's, fresh within 15 minutes of the publish, or a press's), DraftKings' main lines Over and Under and the anytime goal (not where
+   it is the goals line's Over), each on a player the props model projects for one of the game's clubs, in a stat of his group; the
+   model's chance from the published distribution, DraftKings' fair chance, the edge the chance less the price's */
+const sGrp = pos => pos === 'G' ? 'G' : pos === 'D' ? 'D' : /^(C|LW|RW|F|W|L|R)$/.test(String(pos || '')) ? 'F' : null;
+const S_STAT_NAME = { pts: 'points', g: 'goals', s: 'shots on goal', a: 'assists', bs: 'blocked shots', sv: 'saves' };
+function sPropLegs(g, reads, over, under) {
+  const rd = reads && reads[g.id]; if (!rd || rd.status !== 200) return [];
+  if (rd.src === 'job' && !(Date.parse(rd.at) >= PUB - 15 * 60000)) return [];
+  const pr = S.props && S.props.games && S.props.games[g.id]; if (!pr) return [];
+  const who = new Map();
+  for (const side of ['away', 'home']) { const Q = pr[side + 'P']; if (!Q) continue; for (const p of Q.skaters || []) who.set(String(p.id), { name: p.name, pos: p.pos, team: g[side], D: p }); if (Q.goalie) who.set(String(Q.goalie.id), { name: Q.goalie.name, pos: 'G', team: g[side], D: { sv: Q.goalie.sv } }); }
+  const main = new Map(), yes = new Map();
+  for (const [a, st, L, po, pu] of rd.main || []) main.set(a + '|' + st, { L, po, pu });
+  for (const [a, st, k, price] of rd.yes || []) if (st === 'g' && k === 1 && !yes.has(a)) yes.set(a, price);
+  const T = id => S.teams[id], mu = `${T(g.away).abbr} @ ${T(g.home).abbr}`, out = [];
+  const leg = (x, pid, st, mk, side, line, k, price, other) => {
+    const D = x.D[st]; if (!D || !Array.isArray(D.d)) return;
+    const p = mk === 'yes' ? atLeastS(D, 1) : side === 'over' ? atLeastS(D, Math.floor(line) + 1) : 1 - atLeastS(D, Math.floor(Math.ceil(line) - 0.5) + 1);
+    const fair = mk === 'yes' ? fairYesS('g', 1, price) : side === 'over' ? (PBS.ok(other) ? 1 - PBS.imp(other) : null) : PBS.imp(price);
+    const bet = mk === 'yes' ? 'Anytime goal' : `${side === 'over' ? 'Over' : 'Under'} ${line} ${S_STAT_NAME[st]}`;
+    out.push({ id: `${g.id}|p|${pid}|${st}|${mk === 'yes' ? 'k1' : side + line}`, game: g.id, g, kind: 'prop', prop: true, pid, name: x.name, team: x.team, grp: sGrp(x.pos), stat: st, mk, side, line, num: line, k,
+      price, other: PBS.ok(other) ? other : null, p, fair, fairEst: mk === 'yes', edge: p - PBS.imp(price), dec: PBS.decOf(price), start: g.start, mu, who: x.name, bet });
+  };
+  for (const [pid, x] of who) {
+    const grp = sGrp(x.pos); if (!grp || !x.name) continue;
+    for (const st of S_PROP_STATS) {
+      if ((grp === 'G') !== (st === 'sv')) continue;
+      const M = main.get(pid + '|' + st);
+      if (M) for (const side of ['over', 'under']) if (side === 'over' ? over : under) leg(x, pid, st, 'main', side, M.L, null, side === 'over' ? M.po : M.pu, side === 'over' ? M.pu : M.po);
+      if (st === 'g' && over && yes.has(pid) && !(M && Math.floor(M.L) + 1 === 1)) leg(x, pid, st, 'yes', 'over', 0.5, 1, yes.get(pid), null);
+    }
+  }
+  return out.sort(sOrder);
+}
+/* a player leg qualifies as a team leg does: a chance and a fair chance, both prices on a main line, 45% to 97%, at or above the price,
+   no push, under 15 points over the fair chance */
+function sPropQual(L) {
+  if (L.p === null || L.fair === null || (L.mk === 'main' && L.other === null)) return null;
+  if (!(L.p >= 0.45 && L.p < 0.97) || !(L.edge >= 0) || (L.mk === 'main' && Number.isInteger(+L.line))) return null;
+  return L.p - L.fair < 0.15 ? 'ok' : 'far';
+}
+/* the reads the page holds now (its PROPS.games), which the smoke's own player legs stand on */
+const sReads = w => JSON.parse(w.eval('JSON.stringify(PROPS.games)'));
 /* fresh: read at the job's last run; or, on the copy REFRESH ODDS below makes of what a press should leave, read by the press */
 const sFresh = g => !!g.line && (g.line.refreshed === true || Math.floor(Date.parse(g.line.at) / 60000) === Math.floor(PUB / 60000));
 const sStarted = (g, ms) => startedAt(g, ms) || delayedAt(g, g.start, ms);
@@ -514,8 +563,15 @@ function sSlate(ms, uiDay) {
   const games = come.filter(g => dates.includes(g.date));
   return { today, tom, days, both, pick, dates, on, come, games, text: dates.length > 1 ? `${PBS.day(dates[0])} – ${PBS.day(dates[dates.length - 1])}` : dates.length ? PBS.day(dates[0]) : '' };
 }
-function sPool(sl, kinds, off) {
-  const scan = (gs, ks) => { const out = [], far = []; for (const g of gs) for (const k of ks) for (const s of PBS.SIDES[k]) { const L = sLeg(g, s, k), q = sQual(L); if (q === 'ok') out.push(L); else if (q === 'far') far.push(L); } return { out, far }; };
+function sPool(sl, kinds, off, reads) {
+  const scan = (gs, ks) => {
+    const out = [], far = [], put = (L, q) => { if (q === 'ok') out.push(L); else if (q === 'far') far.push(L); };
+    for (const g of gs) {
+      for (const k of PBS.KINDS) if (ks.includes(k)) for (const s of PBS.SIDES[k]) { const L = sLeg(g, s, k); put(L, sQual(L)); }
+      if (ks.includes('po') || ks.includes('pu')) for (const L of sPropLegs(g, reads, ks.includes('po'), ks.includes('pu'))) put(L, sPropQual(L));
+    }
+    return { out, far };
+  };
   const tickable = sl.games.filter(sFresh), ticked = tickable.filter(g => !off.includes(g.id));
   const { out, far } = scan(ticked, kinds);
   for (const L of out) L.thin = !(L.edge >= S.edge);
@@ -525,7 +581,12 @@ function sPool(sl, kinds, off) {
 /* every parlay of n legs, one a game, in leg order; per count of thin legs, the best return over the floor and the likeliest
    (`must`: a leg id every parlay holds, as a level's lock does) */
 function sBrute(legs, n, floor, must) {
-  const games = []; for (const L of legs) { const last = games[games.length - 1]; if (last && last[0].game === L.game) last.push(L); else games.push([L]); }
+  const games0 = []; for (const L of legs) { const last = games0[games0.length - 1]; if (last && last[0].game === L.game) last.push(L); else games0.push([L]); }
+  /* with a game's player lines (nhl v18) a game can hold scores of legs: a leg another leg of its game beats strictly on both the chance
+     and the return, at no more thin legs, is in no best parlay of either rule (the same parlay with the other in its place lands more
+     often, pays more and still makes the floor), so it is left out of the enumeration; a tie is never left out */
+  const rOf = L => L.p * L.dec;
+  const games = games0.map(gl => gl.filter(B => B.id === must || !gl.some(A => A !== B && (A.thin ? 1 : 0) <= (B.thin ? 1 : 0) && A.p > B.p && rOf(A) > rOf(B))));
   const EPS = 1e-12, ret = [], lik = [];
   const keep = (box, t, v, legs2, p, d) => { const b = box[t] || (box[t] = { v: -1, c: [] }); if (v < b.v - EPS) return; if (v > b.v) { b.v = v; b.c = b.c.filter(c => c.v >= v - EPS); } b.c.push({ v, legs: legs2.slice(), p, d, key: legs2.map(L => L.id).sort().join(',') }); };
   const chosen = [];
@@ -555,7 +616,7 @@ function sWhy(sl, pool, off) {
   if (!pool.kinds.length) return 'No bet types ticked: tick at least one above.';
   if (!pool.ticked.length) return 'No games ticked: tick at least one above.';
   const moreGames = pool.scan(pool.tickable.filter(g => off.includes(g.id)), pool.kinds).out.length > 0;
-  const moreTypes = pool.scan(pool.ticked, PBS.KINDS).out.length > 0;
+  const moreTypes = pool.scan(pool.ticked, S_KINDS).out.length > 0;
   const bothHint = sl.both && sl.pick !== 'both';
   const fixes = moreGames && moreTypes ? 'tick more games or bet types' : moreGames ? 'tick more games' : moreTypes ? 'tick more bet types' : '';
   const help = fixes && bothHint ? fixes + ' or choose Both days above' : fixes || (bothHint ? 'choose Both days above' : '');
@@ -588,8 +649,8 @@ const sDrawn = w => new Set(JSON.parse(w.eval('JSON.stringify(builderLegs(false)
    row (its order, its two parts, every number) or the line that says why there is none */
 function holdPanel(w, ms, tag) {
   const d = w.document, store = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), ui = (store.ui && store.ui.pb) || {};
-  const k = ui.k || {}, kinds = PBS.KINDS.filter(x => k[x] !== false), off = Array.isArray(ui.off) ? ui.off.map(String) : [];
-  const sl = sSlate(ms, ui.day), pool = sPool(sl, kinds, off), stake = sStakeOf(store);
+  const k = ui.k || {}, kinds = S_KINDS.filter(x => k[x] !== false), off = Array.isArray(ui.off) ? ui.off.map(String) : [];
+  const sl = sSlate(ms, ui.day), pool = sPool(sl, kinds, off, sReads(w)), stake = sStakeOf(store);
   chk(txt(d.getElementById('pbSlate')) === (sl.text || 'no games'), `${tag}: the slate pill names ${sl.text} (${txt(d.getElementById('pbSlate'))})`);
   chk(d.getElementById('pbDayRow').hidden === (sl.days.length < 2), `${tag}: the Day control is shown exactly when two days are offered (${sl.days.join(', ')})`);
   if (sl.days.length > 1) {
@@ -605,8 +666,10 @@ function holdPanel(w, ms, tag) {
   chk(sum === (nt === pool.tickable.length ? `All ${nt}` : `${nt} of ${pool.tickable.length}`), `${tag}: the Games summary counts the tickable games (${sum})`);
   /* the far-off note */
   const notes = txt(d.getElementById('pbNotes'));
-  const farRe = /(\d+) lines? (?:are|is) left out: the model rates/;
-  chk(pool.far.length ? (farRe.exec(notes) || [])[1] === String(pool.far.length) : !farRe.test(notes), `${tag}: the far-off note counts ${pool.far.length} lines (${(farRe.exec(notes) || [])[1] || 'none said'})`);
+  const farRe = /(\d+) lines? (?:are|is) left out: the model rates/, farPRe = /(\d+) player lines? (?:are|is) left out the same way/;
+  const farT = pool.far.filter(L => !L.prop).length, farP = pool.far.length - farT;
+  chk(farT ? (farRe.exec(notes) || [])[1] === String(farT) : !farRe.test(notes), `${tag}: the far-off note counts ${farT} team lines (${(farRe.exec(notes) || [])[1] || 'none said'})`);
+  chk(farP ? (farPRe.exec(notes) || [])[1] === String(farP) : !farPRe.test(notes), `${tag}: and apart ${farP} player lines (${(farPRe.exec(notes) || [])[1] || 'none said'})`);
   const wide = sWide(sl, pool), wEl = d.getElementById('pbWide'), nEl = d.getElementById('pbNone'), rows = [...d.querySelectorAll('#pbBody .t30-r')];
   if (wide) { chk(wEl && txt(wEl) === wide && !rows.length, `${tag}: the panel says "${wide}" (${wEl ? txt(wEl) : rows.length + ' lines drawn'})`); return { sl, pool, top: null, stake, kinds, off }; }
   if (!pool.legs.length) { const why = sWhy(sl, pool, off); chk(nEl && txt(nEl) === why && !rows.length, `${tag}: no line qualifies, and the panel says "${why}" (${nEl ? txt(nEl) : rows.length + ' lines drawn'})`); return { sl, pool, top: { value: [], other: [], n: 0 }, stake, kinds, off }; }
@@ -621,11 +684,11 @@ function holdPanel(w, ms, tag) {
   chk(more > 0 ? !!mEl && txt(mEl) === `${more} more line${more > 1 ? 's qualify' : ' qualifies'} beyond the top 30.` : !mEl, `${tag}: the lines beyond the top 30 are counted (${more}; ${mEl ? txt(mEl) : 'none said'})`);
   all.forEach((L, i) => {
     const r = rows[i]; if (!r || r.dataset.id !== L.id) return;
-    const ev = sEv(L), nums = `model ${PBS.pctW(L.p)} · fair ${PBS.pctW(L.fair)} · $1 wins ${PBS.money(L.dec - 1)} · expected ${ev < 0 ? '−' : '+'}${PBS.money(Math.abs(ev))}`;
+    const ev = sEv(L), nums = `${L.prop ? 'props model' : 'model'} ${PBS.pctW(L.p)} · fair ${PBS.pctW(L.fair)}${L.fairEst ? ' est.' : ''} · $1 wins ${PBS.money(L.dec - 1)} · expected ${ev < 0 ? '−' : '+'}${PBS.money(Math.abs(ev))}`;
     const when = `${L.mu} · ${both ? sDayClock(Date.parse(L.start)) : sClock(Date.parse(L.start))}`;
     const b = r.querySelector('button.t30-add'), on = inB.has(L.id);
-    const bet = L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? PBS.line(L.num) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num}`;
-    const pills = [...r.querySelectorAll('.t30-1 .pill')].map(x => x.dataset.c || txt(x)), wantPills = L.kind === 'ou' ? [S.teams[L.g.away].abbr, S.teams[L.g.home].abbr] : [S.teams[L.g[L.side]].abbr];
+    const bet = L.prop ? `${L.name} ${L.bet}` : L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? PBS.line(L.num) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num}`;
+    const pills = [...r.querySelectorAll('.t30-1 .pill')].map(x => x.dataset.c || txt(x)), wantPills = L.prop ? [S.teams[L.team].abbr] : L.kind === 'ou' ? [S.teams[L.g.away].abbr, S.teams[L.g.home].abbr] : [S.teams[L.g[L.side]].abbr];
     const why = [txt(r.querySelector('.t30-rk')) !== String(i + 1) && 'rank', txt(r.querySelector('.t30-p')) !== PBS.odds(L.price) && 'price', txt(r.querySelector('.t30-n')) !== nums && `numbers "${txt(r.querySelector('.t30-n'))}" not "${nums}"`,
       txt(r.querySelector('.t30-2 .m')) !== when && `game "${txt(r.querySelector('.t30-2 .m'))}" not "${when}"`, txt(r.querySelector('.t30-1 .pb-who b')) !== bet && 'bet', !!r.querySelector('.tag.value') === L.thin && 'Value tag',
       canon(pills.map(x => x.replace(/[^A-Z]/g, ''))) !== canon(wantPills) && `pills ${pills.join(',')}`,
@@ -651,7 +714,7 @@ const sDayLock = dd => Math.min(...S.games.filter(g => g.date === dd).map(g => M
 const sSet = dd => S.suggest && S.suggest.sets && S.suggest.sets[dd] || null;
 const sLockAt = dd => { const e = sSet(dd); return Math.min(sDayLock(dd), e ? Date.parse(e.lock) : Infinity); };
 const sDayOpen = (dd, ms) => S.games.some(g => g.date === dd) && !S.games.some(g => g.date === dd && sStarted(g, ms)) && ms < sLockAt(dd);
-function sDayPool(dd, ms) { const games = S.games.filter(g => g.date === dd && !sStarted(g, ms)); return sPool({ games }, PBS.KINDS, []); }
+function sDayPool(dd, ms, reads) { const games = S.games.filter(g => g.date === dd && !sStarted(g, ms)); return sPool({ games }, S_KINDS, [], reads); }
 function sSpWhy(dd, pool) {
   const m = pool.m, t = PBS.day(dd);
   if (m === 0) return `No leg on ${t} qualifies: the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market.`;
@@ -671,6 +734,15 @@ function sSpGrade(L, i, e, id) {
   const g = S.games.find(x => x.id === L.game);
   if (!g || g.date !== e.date) return 'void';
   if (g.state !== 'final' || g.hs === null || g.hs === undefined) return null;
+  if (L.kind === 'prop') {
+    /* a player's line on the box the state carries: not on the ice void, a goalie's saves void unless he started */
+    const b = S.box && S.box.games && S.box.games[L.game]; if (!b) return null;
+    let x;
+    if (L.stat === 'sv') { const v = b.g ? b.g[String(L.pid)] : undefined; if (v === undefined) return 'void'; x = v; }
+    else { const v = b.s ? b.s[String(L.pid)] : undefined; if (!Array.isArray(v)) return 'void'; x = L.stat === 'pts' ? (typeof v[0] === 'number' && typeof v[1] === 'number' ? v[0] + v[1] : null) : v[{ g: 0, a: 1, s: 2, bs: 3 }[L.stat]]; }
+    if (typeof x !== 'number') return null;
+    return L.mk === 'yes' ? (x >= L.k ? 'win' : 'loss') : x > +L.line ? (L.side === 'over' ? 'win' : 'loss') : x < +L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push';
+  }
   if (L.kind === 'ou') { const tot = g.hs + g.as; return tot > L.line ? (L.side === 'over' ? 'win' : 'loss') : tot < L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push'; }
   const margin = L.side === 'home' ? g.hs - g.as : g.as - g.hs;
   if (L.kind === 'ml') return margin > 0 ? 'win' : 'loss';
@@ -695,7 +767,7 @@ function holdSuggest(w, ms, tag) {
     chk((sec.dataset.spState === 'open') === open, `${dt}: the set is ${open ? 'open' : 'locked'} (${sec.dataset.spState})`);
     if (open) {
       chk(!!lockEl && txt(lockEl) === `Locks ${sClock(lockMs)}`, `${dt}: it says when it locks, the day's first puck drop (${txt(lockEl)})`);
-      const pool = sDayPool(dd, ms), wide = sSpWide(dd, pool), cards = [...sec.querySelectorAll('.pb-tier')];
+      const pool = sDayPool(dd, ms, sReads(w)), wide = sSpWide(dd, pool), cards = [...sec.querySelectorAll('.pb-tier')];
       if (wide) { chk(!cards.length && txt(sec.querySelector('.pb-wide')) === wide, `${dt}: no levels, and it says "${wide}" (${txt(sec.querySelector('.pb-wide'))})`); out[dd] = { open, pool, levels: null }; continue; }
       chk(cards.length === 3 && !sec.querySelector('.pb-tier[data-tier="xtrm"]'), `${dt}: three levels, Safe, Medium and Aggressive`);
       const levels = {};
@@ -707,7 +779,8 @@ function holdSuggest(w, ms, tag) {
         const rule = !floor ? 'the likeliest pair' : b.likeliest ? `the likeliest ${n} legs` : `best return that lands ${Math.round(floor * 100)}%+ by the model`;
         chk(txt(el.querySelector('.pb-rule')) === rule, `${dt}: ${label}'s rule line reads "${rule}" (${txt(el.querySelector('.pb-rule'))})`);
         const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x));
-        chk(b.fair === null ? v[0].startsWith(PBS.pctW(b.p)) : v[0].startsWith(PBS.pctW(b.fair)) && v[0].includes(`model says ${PBS.pctW(b.p)}`), `${dt}: ${label} leads with the fair chance ${b.fair === null ? 'none' : PBS.pctW(b.fair)}, the model's ${PBS.pctW(b.p)} beside it: ${v[0]}`);
+        const hasP = b.legs.some(L => L.prop);      // a level holding a player line: its chance partly the props model's, on trial, never "model says"
+        chk(b.fair === null ? v[0].startsWith(PBS.pctW(b.p)) : v[0].startsWith(PBS.pctW(b.fair)) && (hasP ? v[0].includes(`model ${PBS.pctW(b.p)}, props on trial`) && !/model says/.test(v[0]) : v[0].includes(`model says ${PBS.pctW(b.p)}`)), `${dt}: ${label} leads with the fair chance ${b.fair === null ? 'none' : PBS.pctW(b.fair)}, the model's ${PBS.pctW(b.p)} beside it${hasP ? ', marked props on trial' : ''}: ${v[0]}`);
         chk(v[1].startsWith(PBS.toAm(b.d)), `${dt}: ${label}'s price is ${PBS.toAm(b.d)} (${v[1]})`);
         const pay = el.querySelector('[data-pb-pay]');
         chk(pay && txt(pay.querySelector('.v')) === PBS.money(PBS.cents(stake * b.d)) && txt(pay.querySelector('.k')) === `${PBS.short(stake)} pays`, `${dt}: ${label} pays ${PBS.money(PBS.cents(stake * b.d))} on ${PBS.short(stake)} (${pay && txt(pay)})`);
@@ -720,7 +793,7 @@ function holdSuggest(w, ms, tag) {
           if (!ab || ab.dataset.leg !== L.id || ab.getAttribute('aria-pressed') !== String(on) || txt(ab) !== (on ? 'Added' : 'Add') || !ab.getAttribute('aria-label').includes(`${S.teams[L.g.away].short} @ ${S.teams[L.g.home].short}`)) lb.push(`${L.id}: its Add (${ab ? txt(ab) + ' ' + ab.getAttribute('aria-pressed') : 'none'})`);
         }
         chk(!lb.length, `${dt}: ${label}'s every leg is the state's, in leg order, with its own Add naming its game (${lb.slice(0, 2).join(' | ')})`);
-        chk(legsSorted(shown), `${dt}: ${label}'s legs are in leg order`);
+        { const byId = new Map(pool.legs.map(L => [L.id, L])), ls = shown.map(id => byId.get(id)); chk(ls.every(Boolean) && JSON.stringify(ls.slice().sort(sOrder).map(L => L.id)) === JSON.stringify(shown), `${dt}: ${label}'s legs are in leg order`); }
         const all = sameIds(sDrawnList(w), shown), add = el.querySelector('[data-sp-add]'), fin = el.querySelector('[data-sp-finish]');
         chk(!!fin && fin.dataset.spFinish === `${dd}|${id}` && !!add && add.dataset.spAdd === `${dd}|${id}` && add.disabled === all && txt(add) === (all ? 'In the builder' : 'Add to builder'), `${dt}: ${label} ends with Finish and ${all ? 'In the builder, off' : 'Add to builder'} (${txt(add)})`);
         levels[id] = { legs: shown, b };
@@ -799,9 +872,9 @@ async function parlayBuilder() {
   if (listOn) {
     /* the controls: each mix, each box alone, none, the games All and None and one unticked; the list follows, the reasons say why */
     const setBoxes = ks => { for (const b of d.querySelectorAll('#pbKinds input[data-k]')) if (b.checked !== ks.includes(b.dataset.k)) { b.checked = !b.checked; b.dispatchEvent(new w.Event('change', { bubbles: true })); } };
-    const kindsOf = () => [...new Set([...d.querySelectorAll('#pbBody .t30-r')].map(x => x.dataset.id.split('|')[2]))];
+    const kindsOf = () => [...new Set([...d.querySelectorAll('#pbBody .t30-r')].map(x => x.dataset.id.includes('|p|') ? (/\|(under)[\d.]+$/.test(x.dataset.id) ? 'pu' : 'po') : x.dataset.id.split('|')[2]))];
     const noneSaid = () => txt($('pbNone'));
-    for (const [mix, ks] of [['teams', ['ml', 'pl']], ['totals', ['ou']], ['all', ['ml', 'pl', 'ou']]]) {
+    for (const [mix, ks] of [['teams', ['ml', 'pl', 'ou']], ['players', ['po', 'pu']], ['all', ['ml', 'pl', 'ou', 'po', 'pu']]]) {
       d.querySelector(`#pbMix button[data-mix="${mix}"]`).click();
       const got = [...d.querySelectorAll('#pbKinds input[data-k]')].filter(b => b.checked).map(b => b.dataset.k).join(',');
       chk(got === ks.join(','), `${mix}: the mix ticks ${ks.join(', ')} (${got})`);
@@ -809,16 +882,16 @@ async function parlayBuilder() {
       chk(JSON.stringify(Object.entries(store().ui.pb.k).filter(([, v]) => v).map(([x]) => x)) === JSON.stringify(ks), `${mix}: ui.pb.k is stored`);
       holdPanel(w, AT, `mix ${mix}`);
     }
-    for (const ks of [['ml'], ['pl'], ['ou'], []]) {
+    for (const ks of [['ml'], ['pl'], ['ou'], ['po'], ['pu'], ['po', 'pu'], []]) {
       setBoxes(ks);
       const lit = d.querySelector('#pbMix button.on');
-      const mixOf = ks.join() === 'ou' ? 'totals' : null;
+      const mixOf = ks.join() === 'po,pu' ? 'players' : null;
       chk((lit ? lit.dataset.mix : null) === mixOf, `boxes ${ks.join(',') || 'none'}: the mix lit is ${mixOf} (${lit && lit.dataset.mix})`);
       chk(kindsOf().every(x => ks.includes(x)), `boxes ${ks.join(',') || 'none'}: the list holds only those kinds`);
       chk(!ks.length === (noneSaid() === 'No bet types ticked: tick at least one above.'), `boxes ${ks.join(',') || 'none'}: "No bet types ticked" shown exactly when none is ticked (${noneSaid()})`);
       holdPanel(w, AT, `boxes ${ks.join(',') || 'none'}`);
     }
-    setBoxes(['ml', 'pl', 'ou']);
+    setBoxes(['ml', 'pl', 'ou', 'po', 'pu']);
     d.querySelector('#pbGames button[data-gall="0"]').click();
     chk(noneSaid() === 'No games ticked: tick at least one above.' && store().ui.pb.off.length === P0.pool.tickable.length, `None: the list says "No games ticked" (${noneSaid()}), and the games are stored unticked`);
     holdPanel(w, AT, 'games none');
@@ -2079,7 +2152,7 @@ function ppHold(w, g, parsed, tag) {
 /* the trial note and the ledger's running numbers, by this smoke's own wording; never "model says", "edge" or a verdict before the bar */
 function ppTrialChecks(w, tag) {
   const d = w.document, win = txt(d.getElementById('ppWin')), tr = txt(d.getElementById('ppTrial'));
-  chk(/props model on trial/.test(txt(d.getElementById('ppGame'))) && tr.startsWith("The props model is on trial. Its projection and its chance sit beside DraftKings' line to be compared, not followed: it has not been shown to beat DraftKings' own prices, and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once it has been read: the job reads them on every run, Refresh odds now), at DraftKings' price as read; the suggested levels never use a prop."), `${tag}: the window says the props model is on trial and suggests nothing (${tr.slice(0, 120)})`);
+  chk(/props model on trial/.test(txt(d.getElementById('ppGame'))) && tr.startsWith("The props model is on trial. Its projection and its chance sit beside DraftKings' line to be compared: it has not been shown to beat DraftKings' own prices. Since 25 October 2026, the owner's call, the Top 30 lines and the suggested parlays rank DraftKings' player lines on its chance too, marked props model wherever they show it. A DraftKings price can go in your parlay (tap it once it has been read: the job reads them on every run, Refresh odds now), at DraftKings' price as read."), `${tag}: the window says the props model is on trial, not shown to beat DraftKings, and that the Top 30 and the suggested parlays rank player lines on it (${tr.slice(0, 120)})`);
   const Lg = S.props.ledger, of = (+Lg.of || 0).toLocaleString('en-US'), f4 = v => (+v).toFixed(4);
   const nums = Lg.model && Lg.market ? ` Log loss: model ${f4(Lg.model.logloss)}, DraftKings ${f4(Lg.market.logloss)}; Brier: model ${f4(Lg.model.brier)}, DraftKings ${f4(Lg.market.brier)} (lower is better).` : '';
   const want = Lg.decision === 'PASS' || Lg.decision === 'FAIL' ? `Its shadow ledger was decided at ${of} graded lines: ${Lg.decision}.${nums}`
@@ -2237,14 +2310,15 @@ async function playerPropsChecks() {
   else console.log('  too few projected games to come for a postponed and a cancelled one: those cases are skipped');
   chk(Object.keys(PR).every(id => ask.some(g => g.id === id)), 'no props kept for a game the press did not ask for');
   chk(txt(d.getElementById('pbOddsNote')).endsWith(sPropsText(q)) && txt(d.getElementById('oddsNote')).endsWith(sPropsText(q)), `the status line says what the props read gave ("${sPropsText(q).trim()}": ${txt(d.getElementById('pbOddsNote')).slice(-200)})`);
-  /* nothing suggested from the model, nothing stored: the lines, the levels' cache, every level and the builder as before, no player anywhere in the panel or the builder */
-  chk(canon(pageGames(w)) === games0 && w.eval('ODDS.v') === v0 && w.eval('JSON.stringify(P.legs)') === legs0, 'the props read moves nothing the levels or the builder stand on: every game, line and leg as before, the levels\' cache unmoved');
+  /* nothing stored, no line moved: every game, line and builder leg as before; the Top 30 and the suggested levels rank the player lines
+     the read gave (nhl v18, the owner's call), held by this smoke's own sums on the page's reads; no player in the builder or Pick your own legs */
+  chk(canon(pageGames(w)) === games0 && w.eval('ODDS.v') === v0 && w.eval('JSON.stringify(P.legs)') === legs0, 'the props read moves no game, line or builder leg: every one as before');
+  holdPanel(w, T2, 'the Top 30 after a props press'); holdSuggest(w, T2, 'the suggested levels after a props press');
   void tiers0;
   const names = [...new Set([].concat(...Object.values(S.props.games).map(r => [...r.homeP.skaters, ...r.awayP.skaters].map(p => p.name))))].filter(n => n && n.length > 5);
   chk(d.querySelectorAll('#plLines button[data-pp]').length > 0 || !d.querySelector('#plLines .pb-pg'), 'Pick your own legs carries the Player props buttons it is held without');
-  w.eval('renderSuggest()');
-  const panelT = ['pbPanel', 'tab-suggest', 'builder', 'slip', 'plLines'].map(id => { const el = d.getElementById(id); if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('button[data-pp]').forEach(x => x.remove()); return txt(c); }).join(' ');
-  chk(!names.some(n => panelT.includes(n)) && [...d.querySelectorAll('#pbBody .t30-r, #spBody .pb-tl, #legs .leg')].every(x => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(x.dataset.id)), 'no player is put in a suggested level, the Top 30, the builder or Pick your own legs: every leg is a game\'s');
+  const panelT = ['builder', 'slip', 'plLines'].map(id => { const el = d.getElementById(id); if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('button[data-pp]').forEach(x => x.remove()); return txt(c); }).join(' ');
+  chk(!names.some(n => panelT.includes(n)) && [...d.querySelectorAll('#legs .leg')].every(x => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(x.dataset.id)), 'no player is put in the builder or Pick your own legs by a press: every leg there is a game\'s');
   chk(w.__writes.length === writes0 && w.localStorage.getItem('nhl_v1') === store0, `the press writes nothing to storage (${w.__writes.length - writes0} writes)`);
   /* the window on the game read in two pages: every number worked out here */
   d.querySelector('#tabs button[data-tab="games"]').click();
@@ -2305,8 +2379,8 @@ async function playerPropsChecks() {
   chk(w.__writes.length === writesA, `nothing in all of it is stored (${w.__writes.length - writesA} writes)`);
   holdRequests(w, 'the props press');
   chk(!errs.length, 'no runtime error through the props press: ' + errs.join(' | '));
-  /* nothing suggested: a press whose props answer prices a projected game in full and whose scoreboard moves no line leaves every
-     level, its legs and its cache exactly as they were, and the panel's pool holds game legs alone */
+  /* a press whose props answer prices a projected game in full and whose scoreboard moves no line: no line moves, and the Top 30 and
+     the suggested levels are worked again with that game's player lines (nhl v18), each by this smoke's own sums on the read */
   {
     const errsS = [], wS = await boot(AT, errsS, { hash: 'parlays', espn: async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; },
       props: async url => { const m = PROPS_RX.exec(url); return m && m[1] === G.id ? { ok: true, status: 200, json: async () => ({ pageCount: 1, items: JSON.parse(JSON.stringify(A.items)) }) } : PROPS_404(url); } }), dS = wS.document;
@@ -2314,8 +2388,11 @@ async function playerPropsChecks() {
     const l0 = lv(), v1 = wS.eval('ODDS.v'), g1 = canon(pageGames(wS));
     dS.getElementById('pbRefreshOdds').click(); await oddsDone(wS);
     const pool = JSON.parse(wS.eval('JSON.stringify(PB_CUR && PB_CUR.pool ? (PB_CUR.pool.legs || []).map(L => L.id) : [])'));
-    chk(wS.eval('PROPS.games[' + JSON.stringify(G.id) + '] && PROPS.games[' + JSON.stringify(G.id) + '].status') === 200 && lv() === l0 && wS.eval('ODDS.v') === v1 && canon(pageGames(wS)) === g1, `a props read changes no level, no line of the Top 30, no leg of either and no number on one (${l0.slice(0, 120)})`);
-    chk(pool.every(id => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(id)), `the panel's pool after the props read holds game legs alone (${pool.length} legs)`);
+    chk(wS.eval('PROPS.games[' + JSON.stringify(G.id) + '] && PROPS.games[' + JSON.stringify(G.id) + '].status') === 200 && wS.eval('ODDS.v') === v1 && canon(pageGames(wS)) === g1, 'a props read moves no line');
+    const PN = holdPanel(wS, AT, 'the Top 30 on a props read'); holdSuggest(wS, AT, 'the suggested levels on a props read');
+    const mine = PN.pool ? PN.pool.legs.filter(L => L.prop && L.game === G.id).map(L => L.id).sort() : [];
+    chk(canon(pool.filter(id => id.includes('|p|')).sort()) === canon(mine) && pool.filter(id => id.includes('|p|')).every(id => id.startsWith(G.id + '|p|')), `the pool holds exactly the read game's qualifying player lines, by this smoke's own sums (${mine.length}; the page ${pool.filter(id => id.includes('|p|')).length})`);
+    void l0;
     chk(!errsS.length, 'no runtime error on the nothing-suggested press: ' + errsS.join(' | '));
   }
   /* a reload: the published page again, the projections alone */
@@ -2612,6 +2689,30 @@ async function holdJobRead(body, tag) {
       chk(!bb2.length, `${tag}: each button says the press's read (${seen.size}; ${bb2.slice(0, 2).join(' || ')})`);
     }
   } else console.log(`  ${tag}: no game for a press to read: the presses are skipped`);
+  /* the Top 30 and the suggested levels rank the job's player lines (nhl v18, the owner's call), each held by this smoke's own sums on the
+     page's reads; a player line's Add from the Top 30 and a level's Add to builder put exactly those legs in, at the read's price */
+  {
+    const e4 = [], w4 = await boot(AT, e4, { hash: 'parlays', keepDk: true, state: body }), d4 = w4.document, ids = () => JSON.parse(w4.eval('JSON.stringify(P.legs.map(legIdOf))'));
+    const PN = holdPanel(w4, AT, `${tag}: the Top 30 with the job's player lines`); holdSuggest(w4, AT, `${tag}: the suggested levels with the job's player lines`);
+    const nP = PN.top ? PN.top.value.concat(PN.top.other).filter(L => L.prop).length : 0;
+    console.log(`  ${tag}: ${nP} player lines in the Top 30, ${PN.pool ? PN.pool.legs.filter(L => L.prop).length : 0} qualifying`);
+    const pr0 = d4.querySelector('#pbBody .t30-r[data-id*="|p|"] button.t30-add');
+    if (pr0) {
+      const id = pr0.dataset.leg, L = PN.pool.legs.find(x => x.id === id); pr0.click();
+      const st = JSON.parse(w4.eval('JSON.stringify(P.legs)')), l = st.find(x => x.kind === 'prop');
+      chk(canon(ids()) === canon([id]) && !!l && l.odds === L.price && Date.parse(l.at) === Date.parse(want[L.game].at) && !!d4.querySelector(`#legs .leg[data-id="${id}"]`), `${tag}: a player line's Add in the Top 30 puts it in the builder at the read's price, dated by the read (${id}; ${l ? l.odds + ' at ' + l.at : 'none'})`);
+      d4.querySelector(`#pbBody .t30-r[data-id="${id}"] button.t30-add`).click();
+      chk(!ids().length, `${tag}: and a second tap takes it out`);
+    } else if (nP) chk(false, `${tag}: a player line in the Top 30 has no Add`);
+    w4.eval('renderSuggest()');
+    const lv = [...d4.querySelectorAll('#spBody .sp-day[data-sp-state="open"] .pb-tier')].find(t => t.querySelector('.pb-tl[data-id*="|p|"]'));
+    if (lv) {
+      const want2 = [...lv.querySelectorAll('.pb-tl')].map(x => x.dataset.id); lv.querySelector('[data-sp-add]').click();
+      chk(canon(ids()) === canon(want2), `${tag}: a level holding a player line goes in the builder whole (${want2.join(', ')}; the builder ${ids().join(', ')})`);
+      d4.getElementById('clearParlay').click();
+    } else console.log(`  ${tag}: no suggested level holds a player line on this read`);
+    chk(!e4.length, `${tag}: no runtime error ranking the job's player lines: ${e4.join(' | ')}`);
+  }
   /* a reload: the job's read again, nothing asked */
   const e3 = [], w3 = await boot(AT, e3, { hash: 'games', keepDk: true, state: body });
   chk(canon(JSON.parse(w3.eval('JSON.stringify(PROPS.games)'))) === canon(want) && !propReqs(w3).length, `${tag}: a reload starts from the job's read again, asking ESPN for nothing`);
@@ -3208,11 +3309,11 @@ async function builderPlayerLegs(M, G, H, AT) {
   chk(bt[0].startsWith(PBS.pct1(q.fair)) && bt[0].includes(`Fair chance all ${n} land, est.`) && (q.p === null ? bt[0].includes('no model chance on every leg') : bt[0].includes(`model ${PBS.pct1(q.p)}, props model on trial`)), `the summary leads with DraftKings' fair chance of the parlay, est., the model's beside it on trial (${bt[0]})`);
   chk(bt[1].startsWith(`${PBS.toAm(q.dec)} est.`) && bt[1].includes('DraftKings price, estimated') && bt[1].includes(`the legs multiplied ${PBS.toAm(q.product)}`), `the price tile says est., and the plain product beside it (${bt[1]})`);
   chk(bt[2].startsWith(PBS.money(PBS.cents(20 * q.dec))) && /profit, est\./.test(bt[2]) && bt[3].includes('on the fair chance, est.'), `what it pays and the confidence, est. (${bt[2]} | ${bt[3]})`);
-  chk(notes.includes(why) && notes.includes(`never more than the legs' prices multiplied (${PBS.toAm(q.product)})`) && notes.includes('on trial and suggests nothing'), `the builder's notes give the one-line why (${notes.slice(0, 260)})`);
+  chk(notes.includes(why) && notes.includes(`never more than the legs' prices multiplied (${PBS.toAm(q.product)})`) && notes.includes("on trial: it has not been shown to beat DraftKings' prices"), `the builder's notes give the one-line why (${notes.slice(0, 260)})`);
   chk(txt($('slipText')).includes(`${PBS.toAm(q.dec)} est.`) || $('slip').hidden, `the slip bar marks the price est. (${txt($('slipText'))})`);
   const bTxt = txt($('builder'));
   chk(!/\bedge\b/i.test(bTxt) && !/model says/i.test(bTxt), `with a player leg nothing in the builder claims an edge or says "model says" (${(/[^.]*\bedge\b[^.]*|[^.]*model says[^.]*/i.exec(bTxt) || [''])[0].slice(0, 120)})`);
-  chk(tiers() === tiers0, 'the suggested levels are exactly as they were: team bets, one leg a game, no player and no same-game parlay');
+  /* the suggested levels: one leg a game, by brute force on the reads the page holds now (the press put G's player lines among them) */
   holdPanel(w, AT, 'with player legs in the builder'); holdSuggest(w, AT, 'with player legs in the builder');
   /* no thin edge beside a player leg: on a made-up copy where H's home moneyline is thin (its edge at or above 0 and under the site's bar),
      the builder marks it thin edge alone, and beside a player leg it marks it nothing, and nothing in the builder says edge */
@@ -3278,7 +3379,7 @@ async function builderPlayerLegs(M, G, H, AT) {
        the picks, the slate and the reads, so only a fresh page computes them with the player legs there): every level by brute
        force, team bets alone, one leg a game, and exactly the levels the page drew before any player leg */
     const tiersR = tiers(wR);
-    chk(tiersR === tiers0 && ![...dR.querySelectorAll('#spBody .pb-tl, #pbBody .t30-r')].some(x => x.dataset.id.includes('|p|')), `a reload with player legs in the builder works out the same levels from nothing: team bets, one leg a game, no player leg (${tiersR === tiers0 ? 'the same' : tiersR.slice(0, 160)})`);
+    chk(tiersR === tiers0, `a reload with player legs in the builder works out the same levels as before the press, the page holding no read of player lines (${tiersR === tiers0 ? 'the same' : tiersR.slice(0, 160)})`);
     holdPanel(wR, AT + 60000, 'a reload with player legs in the builder'); holdSuggest(wR, AT + 60000, 'a reload with player legs in the builder');
     chk(!eR.length, 'no runtime error on the reload: ' + eR.join(' | '));
   }
@@ -4085,14 +4186,15 @@ async function suggestRecord() {
   const first = SG.daysOf(S), pubMin = Math.floor(PUB / 60000);
   /* a day locked already is the last commit's ledger's to hold (SG.check), whatever its first puck drop reads now (a game postponed or moved) */
   const lined = [...new Set(S.games.filter(g => g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 60000) === pubMin).map(g => g.date))].filter(d => first[d] > PUB && !(L.days[d] && Date.parse(L.days[d].lock) <= PUB)).sort();
-  const errs = [], w = await boot(PUB, errs, { hash: 'suggest' }), d = w.document;
+  const errs = [], w = await boot(PUB, errs, { hash: 'suggest', keepDk: true }), d = w.document;      // as the job's page boots: the state as published, its player lines read
   for (const day of lined) {
     const want = SG.setOf(w, day), e = L.days[day];
     if (!want.games.length) { chk(!e, `${day}: no game to come with a fresh line in the page, no entry`); continue; }
     chk(!!e && e.lock === new Date(first[day]).toISOString() && JSON.stringify([e.games, e.tiers]) === JSON.stringify([want.games, want.tiers]),
       `${day}: taken, to lock at its first puck drop ${new Date(first[day]).toISOString()}, the page's own levels at the publish (${e ? e.lock : 'no entry'})`);
     /* the brute force's levels on the day's default pool, worked out here */
-    const pool = sPool({ games: S.games.filter(g => g.date === day && !sStarted(g, PUB)) }, ['ml', 'pl', 'ou'], []);
+    const readsS = {}; for (const [gid, x] of Object.entries((S.props && S.props.games) || {})) { const r = dkSeed(x && x.dk); if (r) readsS[gid] = r; }      // what the job's page booted on
+    const pool = sPool({ games: S.games.filter(g => g.date === day && !sStarted(g, PUB)) }, S_KINDS, [], readsS);
     for (const [id, label, n, floor] of TIERS) {
       const b = sBrute(pool.legs, n, floor), t = e && e.tiers[id];
       chk(b ? !!t && JSON.stringify(t.legs.map(x => x.id)) === JSON.stringify(b.legs.map(x => x.id)) && Math.abs(t.p - b.p) < 1e-4 && Math.abs(t.dec - b.d) < 1e-3 : !t,

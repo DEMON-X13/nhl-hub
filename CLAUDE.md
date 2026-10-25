@@ -459,7 +459,7 @@ then the Top 30 lines on the visitor's picks, then Pick your own legs and the sa
 Suggested Parlays tab's, the site's own pick each day on every game and bet type, locked and graded in the record.
 Three bet kinds (moneyline, puck line, total) and, since nhl v11 (15 October 2026, the owner's "go for it"),
 DraftKings' player lines from the props window; one Eastern day as the slate. **The suggested levels keep one leg a
-game, team bets alone**, exactly as before. **The builder takes more than one leg of a game**: one side bet a game (the
+game**, and since nhl v18 (below) a leg can be a player's line. **The builder takes more than one leg of a game**: one side bet a game (the
 moneyline or the puck line, either club), its total, and player legs, one a player a stat (two stats of one player
 allowed). A second side bet on a game replaces the first, as the other side of the total does and a player's second
 line in the same stat does, each said in the builder and on the slip bar (a player's in the props window too); a player's
@@ -495,7 +495,8 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   margin-free share is DraftKings' **fair chance** (`legFair`; none without the other price).
 - **The Top 30 lines** (`#pbPanel`, nhl v17, the NFL hub's pbTopBuild in hockey's terms): Bet amount (`#pbStake`, `P.stake`,
   the builder's stake too and what the suggested levels pay on, $20 to start, `stakeRead` as the NFL's), Build from (All, Teams
-  only, Totals only) over three Bet types boxes, Day (today and tomorrow, Eastern, each offered while it has a game to come;
+  only, Players only, the NFL hub's; Totals only went in nhl v18) over five Bet types boxes (Moneyline, Puck line, Total, and
+  since nhl v18 Player overs, the anytime goal among them, and Player unders: `PB_KINDS`, `PB_MIX`), Day (today and tomorrow, Eastern, each offered while it has a game to come;
   Both days when both have a fresh line; else the next day with a game), and a Games fold (a game with no fresh line shown but
   not tickable). The list: every line on the picks that qualifies as a level's leg does (below), Value picks (5 points or more
   above the price, `S.edge`: the Games cards' calls) then Other lines (0 to 5 points), each part ranked by the expected return
@@ -580,7 +581,7 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   saved leg's game there it writes the void into the leg (`void: {why, at}`), which holds from then on; a
   game called off while this browser never opened the page reads "not on the schedule".
 
-`nhl_v1` now also holds `stake`, `ui.pb` (`k` the three boxes, `off` the games unticked, `gx` the
+`nhl_v1` now also holds `stake`, `ui.pb` (`k` the five boxes, a store from before nhl v18 opening with the two player boxes ticked, `off` the games unticked, `gx` the
 games fold, `day`) and, until the builder is next drawn, `ui.bmsg`; a saved parlay keeps `dec` and `fair`
 and, once settled, `graded`, and a saved leg on a game called off `void`. A player leg in `legs` (and in a saved
 parlay) is `{game, kind: 'prop', pid, name, team, grp, stat, mk, side, line, k, odds, other, at, p, fair, label, text,
@@ -603,6 +604,10 @@ nhl v15 on the NFL hub's (`props/build/suggest_ledger.js`), with hockey's unit, 
   no entry; a day whose lines all went before its lock is dropped. On a matinee day the evening games are on the lines read before
   the matinee, as the panel showed them then.
 - **Grading.** A leg on its own number, as the page grades a saved leg (`gradeLeg`): the final score with the shootout goal in it.
+  A player's line (nhl v18, `gradeProp`) on the final's box score as the state carries it (`state.box`): his stat over or under
+  the line (a whole line pushes), the anytime goal at a goal or more; a player not on the ice void, a goalie's saves void unless he
+  started and void where the box cannot tell who started (the record cannot leave a leg ungraded); to settle while the box is to
+  come.
   A leg settles once and holds; a game postponed, cancelled, moved to another day or gone from the schedule is void. A level: a leg
   lost, lost; every leg pushed or void, a push; else won, paying the legs won multiplied (the level's price when every leg won);
   a leg to settle and none lost, pending.
@@ -794,11 +799,26 @@ each, and which report and goalies the clubs stand on.
 The owner's go-ahead, 15 October 2026 ("yeah do props model for NHL"). `tools/props.js` projects every expected skater's
 goals, assists, points, shots on goal and blocked shots and every expected goalie's saves for each game still to come
 through tomorrow (Eastern), a mean and a whole distribution each, and puts itself on trial against DraftKings' own
-player prices. **It suggests nothing**: no prop goes into a level, a pick, a Safe or Medium parlay or anything else
-because of it, and the page never says "model says" or "edge" on a prop until the shadow ledger's bar (below) is passed,
-and then only by a change of its own. Since nhl v11 a visitor can put DraftKings' own player lines in the Parlay Builder
-(under The Parlay Builder, Same-game parlays and player legs), at DraftKings' price as read: the visitor's pick, never the
-model's; the levels never take a prop.
+player prices. Until nhl v18 it suggested nothing. **The owner's call of 25 October 2026 ("Use player lines now", asked
+whether player lines should wait for the trial's bar) puts DraftKings' player lines in the Top 30 and the suggested parlays,
+ranked on this model's chance**, though its trial has not shown it beats DraftKings' own prices (on the archive it is the
+worse probability on log loss and Brier; its Unders at 5 points or more above the closing price were up, its Overs not):
+- **Player lines as legs** (`propLegsOf` in the page): DraftKings' main lines, the Over and the Under, and the anytime goal
+  (not where it is the goals line's Over; no k+ ladders, as the NFL hub's Top 30 lists none), on a read of the game's props
+  that is fresh (`propRead`: the job's within 15 minutes of the publish, `PROP_FRESH`, or a Refresh odds press's; a read an
+  earlier run kept is shown in the window and never ranked), each on a player the model projects for one of the game's clubs,
+  in a stat of his group. A line qualifies as a team leg does (`propQual`: the model's chance 45% to 97%, at or above the
+  price's implied chance, a main line with both prices, no whole-number line, under 15 points over DraftKings' fair chance,
+  the anytime goal's fair chance its price over DraftKings' measured margin, est.); a value pick at 5 points or more. The
+  Top 30 and a level show it by the player's club and name, and its chance as "props model 65%", never just "model".
+- **The levels** still take one leg a game, chosen on every qualifying leg of the game, team bet or player line, by the same
+  exact search; their price is the legs' prices multiplied. The record takes them as the tab draws them and grades a player
+  leg on the box score the state carries (under The suggested parlays' record).
+- **What stays**: the window's numbers and the ledger's bar are as they were; nothing says "edge" on a prop, and the props
+  window says the model is on trial and has not been shown to beat DraftKings, and that the Top 30 and the suggested parlays
+  rank player lines on it.
+Since nhl v11 a visitor can put DraftKings' own player lines in the Parlay Builder (under The Parlay Builder, Same-game parlays
+and player legs), at DraftKings' price as read.
 
 - **The box files first.** `fetch_box.js` stored ESPN's "SOG" column as `sog`; in ESPN's summary that is SHOOTOUT goals
   (`shootoutGoals`), 0 in every stored game and read by nothing. Shots on goal are "S" (`shotsTotal`). Each column is
@@ -974,7 +994,8 @@ model's; the levels never take a prop.
   failed to read, and notes some failing. The smoke's THE JOB'S PLAYER LINES holds the read's shape on the state as published and
   the page on it (and always on a copy with a read, none posted and a failure planted): the page's read equal to the state's,
   nothing asked on load, every button's words, every window row for row, a price added at the job's read and drawn so after a
-  reload, a press that fails keeping it and one that answers replacing it, a reload the job's read again; the other props
+  reload, a press that fails keeping it and one that answers replacing it, a reload the job's read again, and (nhl v18) the Top
+  30 and the suggested levels on it by the smoke's own sums with a player line's Add and a level's Add to builder; the other props
   sections boot on the state without it (`noDk`), so they hold the press as before. The simulation plants an answer, a 404 and
   failures on the games to come and holds props.js's read, the state's copy and sources.js on both kinds of failure.
 - **The props view** (nhl v10, `index.html`, every class `pp-`; the owner's ask, 15 October 2026: DraftKings' props on the
@@ -1006,9 +1027,9 @@ model's; the levels never take a prop.
   Expected players DraftKings does not price fold under their club with their projection alone. On the live feed
   (15 October 2026, BUF at TOR) that read, for example, Tage Thompson's points Over 0.5 -205, Under 0.5 +150, projection
   1.04 · model 65% · DraftKings 60%, and his anytime goal +140 · model 39% · DraftKings 36% est. **On trial**: the window
-  says so on its head ("props model on trial") and in its note ("it has not been shown to beat DraftKings' own prices,
-  and nothing on this site is suggested from it. A DraftKings price can go in your parlay (tap it once it has been read:
-  the job reads them on every run, Refresh odds now), at DraftKings' price as read; the suggested levels never use a prop."), with the ledger's running numbers quietly (graded lines of 12,000, the model's log loss and Brier beside
+  says so on its head ("props model on trial") and in its note ("it has not been shown to beat DraftKings' own prices.
+  Since 25 October 2026, the owner's call, the Top 30 lines and the suggested parlays rank DraftKings' player lines on its
+  chance too, marked props model wherever they show it. A DraftKings price can go in your parlay ..."), with the ledger's running numbers quietly (graded lines of 12,000, the model's log loss and Brier beside
   DraftKings', never a verdict or a word of passing before the bar is decided). Nothing in the window, on a Player
   props button or anywhere else on a prop says "model says" or "edge", and nothing the props read touches moves a line,
   a level or the levels' cache (`ODDS.v`); it redraws only a player leg the visitor added, at the read's price or out where
@@ -1032,8 +1053,8 @@ model's; the levels never take a prop.
   otherwise be kept) and the clock passing the first puck drop during the read: one request a game
   today and tomorrow, GET, no-store, a cache-buster each, a second page only where paged, each game keeping what its
   answer gave, the status line, every row of the window number for number by its own sums, each button's words, the
-  failed and none-posted windows, a press that changes no level, leg or number on one with the panel's pool game legs
-  alone, no player in the panel, the builder or Pick your own legs, the postponed and cancelled games not kept, counted
+  failed and none-posted windows, a press that moves no line and re-ranks the Top 30 and the levels with the read game's
+  player lines (by its own sums, the pool exactly that game's qualifying lines), no player in the builder or Pick your own legs, the postponed and cancelled games not kept, counted
   as called off in the status line and their windows the projections alone, a second press from the window's own button
   where the game's read fails keeping the earlier read and a game ESPN postponed since the first press losing its
   earlier read, the watch at the puck drop, nothing stored, and a reload that is the published page again. REFRESH ODDS holds the props sentence in every status line it words.

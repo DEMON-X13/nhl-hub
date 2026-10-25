@@ -32,7 +32,8 @@ const { execFileSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
 const IDS = TIERS.map(t => t[0]);
-const LEG = /^\d{4,12}\|(home|away|over|under)\|(ml|pl|ou)$/;
+/* a leg's id: a team bet "gid|side|kind", or (nhl v18) a player's line "gid|p|pid|stat|over0.5" and the anytime goal "gid|p|pid|g|k1" */
+const LEG = /^\d{4,12}\|((home|away|over|under)\|(ml|pl|ou)|p\|\d{1,12}\|((pts|g|a|s|bs|sv)\|(over|under)\d+(\.\d+)?|g\|k1))$/;
 const r4 = x => Math.round(x * 1e4) / 1e4;
 const etDate = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
 /* the season of an Eastern date: a season starts in August (espn.js's seasonOf, written again so this file reads no feed code) */
@@ -79,7 +80,8 @@ function setOf(w, date) {
   const tiers = {};
   for (const id of IDS) {
     const t = r.levels[id];
-    tiers[id] = t ? { legs: t.legs.map(L => ({ id: L.id, game: L.game, kind: L.kind, side: L.side, line: L.num, price: L.price, other: L.other, p: r4(L.p), fair: L.fair === null ? null : r4(L.fair), edge: L.edge, thin: !!L.thin, mu: L.mu, start: L.start })),
+    tiers[id] = t ? { legs: t.legs.map(L => Object.assign({ id: L.id, game: L.game, kind: L.kind, side: L.side, line: L.num, price: L.price, other: L.other, p: r4(L.p), fair: L.fair === null ? null : r4(L.fair), edge: L.edge === null ? null : r4(L.edge), thin: !!L.thin, mu: L.mu, start: L.start },
+      L.kind === 'prop' ? { pid: String(L.pid), name: L.name, team: L.team, grp: L.grp, stat: L.stat, mk: L.mk, k: L.k } : {})),
       p: r4(t.p), fair: t.fair === null ? null : r4(t.fair), dec: r4(t.dec), likeliest: !!t.likeliest } : null;
   }
   return { games: r.games, tiers };
@@ -93,10 +95,25 @@ function gradeLeg(L, state, date) {
   if (!g) return 'void';                                         // postponed, cancelled or gone from the schedule: off the books
   if (g.date !== date) return 'void';                            // moved to another day: off the books, as a postponed game is
   if (g.state !== 'final' || g.hs === null || g.hs === undefined) return null;
+  if (L.kind === 'prop') return gradeProp(L, state);
   if (L.kind === 'ou') { const tot = g.hs + g.as; return tot > L.line ? (L.side === 'over' ? 'win' : 'loss') : tot < L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push'; }
   const margin = L.side === 'home' ? g.hs - g.as : g.as - g.hs;
   if (L.kind === 'ml') return margin > 0 ? 'win' : 'loss';
   const c = margin + L.line; return c > 0 ? 'win' : c < 0 ? 'loss' : 'push';
+}
+/* a player's line (nhl v18) on the final's box score as the state carries it (state.box, update.js's boxWindow): his stat over or under
+   the line (a whole line pushes), the anytime goal at one goal or more; a player not on the ice void, as DraftKings voids him; a goalie's
+   saves void unless he started, pulled or not, and void where the box cannot tell who started (the page's rule for a saved leg, except
+   that the record cannot leave a leg ungraded); to settle while the final's box is to come */
+function gradeProp(L, state) {
+  const B = state.box && state.box.games, b = B && B[L.game];
+  if (!b || typeof b !== 'object') return null;
+  let x;
+  if (L.stat === 'sv') { const v = b.g && typeof b.g === 'object' ? b.g[String(L.pid)] : undefined; if (v === undefined) return 'void'; x = v; }
+  else { const v = b.s && typeof b.s === 'object' ? b.s[String(L.pid)] : undefined; if (!Array.isArray(v)) return 'void'; x = L.stat === 'pts' ? (typeof v[0] === 'number' && typeof v[1] === 'number' ? v[0] + v[1] : null) : v[{ g: 0, a: 1, s: 2, bs: 3 }[L.stat]]; }
+  if (typeof x !== 'number' || !isFinite(x)) return null;
+  const line = +L.line;
+  return L.mk === 'yes' ? (x >= L.k ? 'win' : 'loss') : x > line ? (L.side === 'over' ? 'win' : 'loss') : x < line ? (L.side === 'under' ? 'win' : 'loss') : 'push';
 }
 const decOf = am => am > 0 ? 1 + am / 100 : 1 + 100 / -am;
 /* a level from its legs' grades */
@@ -248,7 +265,7 @@ function check(L, prev, state, nowMs) {
   return bad;
 }
 
-module.exports = { TIERS, step, check, summarize, current, gradeLeg, levelOf, gradeAll, bootPage, setOf, daysOf, readLedger, blank, write, seasonOf };
+module.exports = { TIERS, step, check, summarize, current, gradeLeg, gradeProp, levelOf, gradeAll, bootPage, setOf, daysOf, readLedger, blank, write, seasonOf };
 
 /* ---------- by hand: the replay of the days before the record ---------- */
 async function replay() {

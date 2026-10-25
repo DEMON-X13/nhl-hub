@@ -27,6 +27,18 @@ const clone = x => JSON.parse(JSON.stringify(x));
   chk(g('3', 'ml', 'home') === null, 'a game under way is to settle');
   chk(g('4', 'ml', 'home') === 'void' && g('9', 'ml', 'home') === 'void', 'a game moved to another day or gone from the schedule is void');
 }
+/* ---------- a player's line (nhl v18), on the box the state carries ---------- */
+{
+  const st = { season: 2027, games: [{ id: '5', date: '2026-10-20', state: 'final', hs: 3, as: 2 }, { id: '6', date: '2026-10-20', state: 'final', hs: 1, as: 0 }, { id: '7', date: '2026-10-20', state: 'live', hs: 1, as: 1 }],
+    box: { from: '2026-10-11', games: { '5': { s: { '11': [1, 1, 4, 0], '12': [0, 0, 2, 3] }, g: { '21': 28 }, r: ['22'] } } } };
+  const p = (pid, stat, mk, side, line, k, game) => SG.gradeLeg({ game: game || '5', kind: 'prop', pid, stat, mk, side, line, k }, st, '2026-10-20');
+  chk(p('11', 'pts', 'main', 'over', 1.5) === 'win' && p('11', 'pts', 'main', 'under', 1.5) === 'loss' && p('12', 'pts', 'main', 'under', 0.5) === 'win', 'points are goals plus assists, over or under the line');
+  chk(p('11', 's', 'main', 'over', 3.5) === 'win' && p('12', 'bs', 'main', 'under', 2.5) === 'loss' && p('11', 'a', 'main', 'over', 1) === 'push', 'shots, blocks, a whole line pushing');
+  chk(p('11', 'g', 'yes', 'over', 0.5, 1) === 'win' && p('12', 'g', 'yes', 'over', 0.5, 1) === 'loss', 'the anytime goal at one goal or more');
+  chk(p('21', 'sv', 'main', 'over', 24.5) === 'win' && p('22', 'sv', 'main', 'over', 24.5) === 'void' && p('23', 'sv', 'main', 'over', 24.5) === 'void', "a starter's saves; a reliever's, or a goalie who did not play, void");
+  chk(p('99', 'pts', 'main', 'over', 0.5) === 'void', 'a player not on the ice: void, as DraftKings voids him');
+  chk(p('11', 'pts', 'main', 'over', 0.5, null, '6') === null && p('11', 'pts', 'main', 'over', 0.5, null, '7') === null, 'a final whose box is not carried yet, or a game under way, is to settle');
+}
 /* ---------- a level ---------- */
 {
   const t = { legs: [{ price: -150 }, { price: 120 }, { price: 100 }], dec: 1.6667 * 2.2 * 2 };
@@ -118,8 +130,11 @@ const day = (d, gs, src) => ({ date: d, lock: `${d}T23:00:00.000Z`, taken: `${d}
     /* a later run before the lock with a price moved: rewritten */
     const S2 = clone(S0), pub2 = new Date(Math.min(first - 60000, PUB + 3600000)).toISOString().slice(0, 16) + ':00.000Z'; S2.published = pub2;
     for (const g of S2.games) if (g.line && Math.floor(Date.parse(g.line.at) / 6e4) === Math.floor(PUB / 6e4)) g.line.at = pub2;
-    const mv = e1 && e1.tiers.safe && S2.games.find(g => g.id === e1.tiers.safe.legs[0].game);
-    if (mv) { const L0 = e1.tiers.safe.legs[0], k = { ml: { home: 'homeML', away: 'awayML' }, pl: { home: 'homeSpreadOdds', away: 'awaySpreadOdds' }, ou: { over: 'overOdds', under: 'underOdds' } }[L0.kind][L0.side]; mv.line[k] += 5; }
+    for (const x of Object.values((S2.props && S2.props.games) || {})) if (x && x.dk) x.dk.at = pub2;          // the run reads the player lines again too
+    /* a team leg of a level (nhl v18: a level can hold player lines) has its price moved */
+    const L0 = e1 ? [].concat(...Object.values(e1.tiers).filter(Boolean).map(t => t.legs)).find(x => x.kind !== 'prop') : null;
+    const mv = L0 && S2.games.find(g => g.id === L0.game);
+    if (mv) { const k = { ml: { home: 'homeML', away: 'awayML' }, pl: { home: 'homeSpreadOdds', away: 'awaySpreadOdds' }, ou: { over: 'overOdds', under: 'underOdds' } }[L0.kind][L0.side]; mv.line[k] += 5; }
     await SG.step({ state: S2, data: dir, now: pub2 });
     const e2 = SG.readLedger(path.join(dir, 'suggest_ledger.json')).days[D];
     chk(!!e2 && (mv ? e2.taken === pub2 && JSON.stringify(e2.tiers) !== JSON.stringify(e1.tiers) : true), `a run before the lock with a price moved rewrites the day (${e2 && e2.taken})`);
@@ -133,9 +148,13 @@ const day = (d, gs, src) => ({ date: d, lock: `${d}T23:00:00.000Z`, taken: `${d}
     /* made-up finals: every game of the day 3-2 to the home side in regulation */
     const S4 = clone(S3), pub4 = new Date(first + 30 * 3600000).toISOString(); S4.published = pub4;
     for (const g of S4.games) if (g.date === D) Object.assign(g, { state: 'final', hs: 3, as: 2, periods: 3 });
+    /* and their box scores for the levels' player lines (nhl v18): every skater blanked, every goalie 20 saves */
+    S4.box = { from: D, games: {} };
+    for (const t of Object.values(e3.tiers).filter(Boolean)) for (const L of t.legs) if (L.kind === 'prop') { const b = S4.box.games[L.game] || (S4.box.games[L.game] = { s: {}, g: {} }); if (L.stat === 'sv') b.g[L.pid] = 20; else b.s[L.pid] = [0, 0, 0, 0]; }
     const s4 = await SG.step({ state: S4, data: dir, now: pub4 });
     const e4 = SG.readLedger(path.join(dir, 'suggest_ledger.json')).days[D];
-    const mine = id => { const t = e4.tiers[id]; if (!t) return null; const legs = t.legs.map(L => L.kind === 'ou' ? (5 > L.line ? (L.side === 'over' ? 'win' : 'loss') : 5 < L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push') : L.kind === 'ml' ? (L.side === 'home' ? 'win' : 'loss') : ((L.side === 'home' ? 1 : -1) + L.line > 0 ? 'win' : 'loss')); return legs; };
+    const propMine = L => { const x = L.stat === 'sv' ? 20 : 0; return L.mk === 'yes' ? (x >= L.k ? 'win' : 'loss') : x > L.line ? (L.side === 'over' ? 'win' : 'loss') : x < L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push'; };
+    const mine = id => { const t = e4.tiers[id]; if (!t) return null; const legs = t.legs.map(L => L.kind === 'prop' ? propMine(L) : L.kind === 'ou' ? (5 > L.line ? (L.side === 'over' ? 'win' : 'loss') : 5 < L.line ? (L.side === 'under' ? 'win' : 'loss') : 'push') : L.kind === 'ml' ? (L.side === 'home' ? 'win' : 'loss') : ((L.side === 'home' ? 1 : -1) + L.line > 0 ? 'win' : 'loss')); return legs; };
     chk(SG.TIERS.every(([id]) => !e4.tiers[id] || JSON.stringify(e4.grade[id].legs) === JSON.stringify(mine(id))), `every leg graded on its own number by this test's own sums (${SG.TIERS.map(([id]) => e4.tiers[id] ? `${id} ${e4.grade[id].result}` : `${id} none`).join(', ')})`);
     { const L4 = SG.readLedger(path.join(dir, 'suggest_ledger.json')); chk(JSON.stringify(s4) === JSON.stringify(Object.assign(SG.summarize(L4, S4.season), { sets: SG.current(L4, Date.parse(S4.published)) })) && Object.keys(s4.sets).length > 0, 'the record returned is the ledger\'s, with its current days'); }
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }

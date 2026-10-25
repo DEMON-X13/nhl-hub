@@ -1,0 +1,7 @@
+{
+ "how": "The X Bet Log: X's betting week by week, which the X Bet Log tab shows, read only, on the site owner's devices (as X Parlays: the NFL hub's admin link on this origin; no one else's page has the tab or reads this file). Claude keeps this file from the weekly totals the owner sends in chat; the page only reads it. season is the NHL season the weeks belong to (by the year it ends: 2027 is 2026-27). deposit is what X put in the account, in dollars (null for none: the tab then shows X's profit from break even). weeks holds one entry for each week X bet, keyed by the Monday that starts it (the Eastern date, YYYY-MM-DD; a week runs Monday to Sunday), each {staked, returned}: what X staked that week and what came back, stakes included. A week with no bets is left out. updated is when this file last changed.",
+ "season": 2027,
+ "updated": null,
+ "deposit": null,
+ "weeks": {}
+}

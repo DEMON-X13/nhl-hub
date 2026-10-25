@@ -87,7 +87,7 @@ function run(script, args, env, label) {
 function dataDir(name, from = REAL_DATA) {
   const d = mkdir(name);
   /* the props model's constants (source), its ledger and the record of closing props come too, so props.js plays its part */
-  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json', 'props_model.json', 'props_ledger.json', 'props.json', 'corr.json', 'suggest_ledger.json', 'models.json', 'models_backtest.json'].concat(fs.readdirSync(from).filter(f => /^(season_\d{4}\.json|props_\d{4}\.jsonl)$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
+  for (const f of ['history.json', 'model.json', 'teams.json', 'players.json', 'props_model.json', 'props_ledger.json', 'props.json', 'corr.json', 'suggest_ledger.json', 'models.json', 'models_backtest.json', 'xparlays.json', 'xbets.json'].concat(fs.readdirSync(from).filter(f => /^(season_\d{4}\.json|props_\d{4}\.jsonl)$/.test(f)))) if (fs.existsSync(path.join(from, f))) fs.copyFileSync(path.join(from, f), path.join(d, f));
   /* this season's box scores from the folder copied (B's has last night's final boxed, which its props ledger graded) */
   for (const f of fs.readdirSync(REAL_DATA).filter(f => /^box_\d+\.jsonl$/.test(f))) {
     if (+f.slice(4, 8) >= SEASON) fs.copyFileSync(path.join(fs.existsSync(path.join(from, f)) ? from : REAL_DATA, f), path.join(d, f)); else fs.symlinkSync(path.join(REAL_DATA, f), path.join(d, f));

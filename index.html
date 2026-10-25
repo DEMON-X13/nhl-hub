@@ -266,6 +266,29 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pk-pick{display:inline-flex;align-items:center;gap:6px}
 .pk-ok{color:var(--lime);font-weight:800} .pk-no{color:var(--rose-ink);font-weight:800}
 #pkPicks td{white-space:nowrap} #pkPicks .mu{flex-wrap:nowrap} #pkPicksW{margin-bottom:12px}
+/* ---------- X Parlays and the X Bet Log (xp-, xb-, nhl v21): the owner's placed parlays and his week-by-week log ---------- */
+.xp-day{display:flex;align-items:baseline;gap:10px;margin:18px 0 8px;font:700 15px var(--display)}
+.xp-day span{font:500 12.5px var(--body);color:var(--ink-2)}
+.xp-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;max-width:760px}
+.xp-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding-right:48px}
+.xp-head b{font:700 16px var(--display)}
+.xp-x{position:absolute;top:6px;right:6px;min-width:44px;min-height:44px;border:0;background:none;color:var(--ink-2);font:700 20px var(--body);border-radius:10px;cursor:pointer}
+.xp-x:hover,.xp-x:focus-visible{color:var(--ink);background:var(--panel-2)}
+.xp-money{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.xp-money div{background:var(--panel-2);border-radius:10px;padding:8px 10px}
+.xp-money b{display:block;font:700 17px var(--display);font-variant-numeric:tabular-nums}
+.xp-money span{font-size:11.5px;color:var(--ink-2)}
+.xp-legs{list-style:none;margin:0;padding:0}
+.xp-legs li{display:grid;grid-template-columns:22px 1fr auto;gap:2px 8px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.xp-m{font-weight:800;text-align:center;color:var(--ink-2)} .xp-m.win{color:var(--lime)} .xp-m.loss{color:var(--rose-ink)}
+.xp-what{display:flex;flex-direction:column;gap:2px;min-width:0}
+.xp-what b{font-weight:700}
+.xp-what .m{font-size:12px;color:var(--ink-2)}
+.xp-st{font-size:12px;color:var(--ink-2);text-align:right;white-space:nowrap}
+.xp-st.win{color:var(--lime)} .xp-st.loss{color:var(--rose-ink)}
+.xp-here{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0;color:var(--ink-2);font-size:13px}
+#xbTable td.n,#xbTable th.n{text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.xp-money b{font-size:15px}}
 .pk-btm{font:700 10px var(--body);color:var(--ink-2);border:1px dotted var(--muted-ink);border-radius:4px;padding:0 3px}
 @media(max-width:640px){.pk-day select{font-size:16px}}
 /* ---------- the Parlay Builder (pb-) and the parlay card (pc-) ----------
@@ -660,6 +683,18 @@ body.pp-on{overflow:hidden}
      name against main, outside the table's scrolling box, and the 400 of them ran the page on some 14,000px past the last table */
   .tbl .tw{position:relative}}
 </style>
+<script>
+/* the owner's devices (nhl v21): X Parlays and the X Bet Log are his alone. Whose browser this is comes from the NFL hub's sign-in
+   (DEMON-X13/nfl-hub's admin link keeps its record under nflhub_admin_v1 on this same origin, demon-x13.github.io): a record in its
+   shape that The Odds API has not refused marks the page the admin's before the body is parsed, so the first paint is the admin's
+   or the visitor's, never one then the other. Only read: this page never writes, removes or sends that record or the key in it */
+(function () {
+  try {
+    var v = JSON.parse(localStorage.getItem('nflhub_admin_v1') || 'null');
+    if (v && typeof v === 'object' && !Array.isArray(v) && typeof v.k === 'string' && /^[A-Za-z0-9]{16,64}$/.test(v.k) && (v.ok === true || v.ok === null)) document.documentElement.setAttribute('data-admin', 'on');
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 <div class="rink"></div>
@@ -669,16 +704,18 @@ body.pp-on{overflow:hidden}
       <h1 class="wordmark">X <em>NHL</em> Bets<span class="puck"></span></h1>
       <p class="tagline">A rating model's call on every game: the moneyline, the puck line and the total against DraftKings' numbers, frozen before puck drop and graded after.</p>
     </div>
-    <div class="stamp"><b id="stamp">Loading…</b><span id="buildTag"></span></div>
+    <div class="stamp"><b id="stamp">Loading…</b><span id="buildTag"></span><span class="tag ice" id="adminMark" hidden title="Signed in on this device through the NFL hub's admin link: X Parlays and the X Bet Log show">Admin</span></div>
   </div>
   <nav id="tabs">
     <button data-tab="games" class="on">Games<span id="gameCount" class="n" hidden>0</span></button>
     <button data-tab="suggest">Suggested Parlays</button>
     <button data-tab="parlays">Parlay Builder<span id="legCount" class="n" hidden>0</span></button>
+    <button data-tab="xparlays" data-admin-only hidden>X Parlays</button>
     <button data-tab="standings">Standings</button>
     <button data-tab="ratings">Power Ratings</button>
     <button data-tab="players">Players</button>
     <button data-tab="pickem">Pick'em Record</button>
+    <button data-tab="xbets" data-admin-only hidden>X Bet Log</button>
     <button data-tab="record">Record</button>
   </nav>
 </header>
@@ -781,6 +818,20 @@ body.pp-on{overflow:hidden}
     </div>
   </section>
 
+  <section id="tab-xparlays" hidden>
+    <h2>X Parlays</h2>
+    <p class="note" id="xpNote" hidden></p>
+    <div id="xpList"></div>
+  </section>
+
+  <section id="tab-xbets" hidden>
+    <h2>X Bet Log</h2>
+    <p class="note" id="xbNote" hidden></p>
+    <div class="strip" id="xbTiles"></div>
+    <div class="card pk-card" id="xbChartC"><h3 class="pk-h" id="xbChartH">Balance</h3><div id="xbChart"></div></div>
+    <div class="wrap"><table class="tbl" id="xbTable"></table></div>
+  </section>
+
   <section id="tab-pickem" hidden>
     <h2>Pick'em record <small>every game straight up, each model's pick frozen at puck drop</small></h2>
     <div class="strip" id="pkTiles"></div>
@@ -839,7 +890,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v20 · 2026-10-25';
+const APP_BUILD = 'nhl v21 · 2026-10-25';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1012,17 +1063,20 @@ function navTo(b) {
   if (typeof nav.scrollTo === 'function') nav.scrollTo({ left, behavior: 'auto' }); else nav.scrollLeft = left;
 }
 function showTab(name) {
-  name = tabName(name); if (!$('tab-' + name)) name = 'games';
+  name = tabName(name); if (!$('tab-' + name) || (!ADMIN && X_TABS.includes(name))) name = 'games';
   for (const b of $('tabs').querySelectorAll('button')) { const on = b.dataset.tab === name; b.classList.toggle('on', on); if (on) { b.setAttribute('aria-current', 'page'); navTo(b); } else b.removeAttribute('aria-current'); }
   for (const s of document.querySelectorAll('main > section')) s.hidden = s.id !== 'tab-' + name;
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   P.ui.tab = name; save();
   if (name === 'games') SHOWN = new Set();
-  ({ games: renderGames, suggest: renderSuggest, standings: renderStandings, ratings: renderRatings, players: renderPlayers, parlays: renderParlays, pickem: renderPickem, record: renderRecord })[name]();
+  ({ games: renderGames, suggest: renderSuggest, standings: renderStandings, ratings: renderRatings, players: renderPlayers, parlays: renderParlays, xparlays: renderXParlays, pickem: renderPickem, xbets: renderXBets, record: renderRecord })[name]();
   updateSlip();
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
 window.addEventListener('hashchange', () => { const n = tabName(location.hash.slice(1)); if (n && $('tab-' + n)) showTab(n); });
+/* the owner's two tabs, and whether this page is his (the head's script read the NFL hub's sign-in) */
+const X_TABS = ['xparlays', 'xbets'];
+const ADMIN = document.documentElement.getAttribute('data-admin') === 'on';
 
 /* ---------- Games: a day strip from yesterday to ten days out, or the season's first days before it opens ---------- */
 /* the strip's days: yesterday to ten days out, or the season's first week before it opens, or its last week once it is over */
@@ -2661,7 +2715,7 @@ function fitNums() {
   }
 }
 let FIT_T = null;
-window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(() => { fitTiles(); if (typeof pkFit === 'function') pkFit(); }, 120); });
+window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(() => { fitTiles(); if (typeof pkFit === 'function') pkFit(); if (ADMIN && S && !$('tab-xbets').hidden) renderXBets(); }, 120); });
 if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(() => { fitTiles(); syncBetRows(); }, () => {});
 if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => { fitTiles(); syncBetRows(); });
 if (BET_RO) for (const id of ['games', 'plLines']) BET_RO.observe($(id));
@@ -3980,6 +4034,153 @@ function pkFit() { const box = $('pkChart'); if (!S || !box || $('tab-pickem').h
 $('pkShow').addEventListener('click', () => { PK_SHOW = !PK_SHOW; renderPickem(); });
 $('pkDay').addEventListener('change', () => { PK_DAY = $('pkDay').value; renderPickem(); $('pkDay').focus(); });
 
+/* ---------- X Parlays and the X Bet Log (nhl v21) ----------
+   The owner's ask of 25 October 2026: "section for X Parlays", the NFL hub's X Parlays and X Bet Log in hockey's terms, on his devices
+   alone (the owner's "Reuse my NFL sign-in": ADMIN, from the head's script). Two files Claude keeps from what the owner sends in chat,
+   data/xparlays.json (the slips he placed) and data/xbets.json (his week-by-week money), each read no-store on the admin's load and
+   never on a visitor's; the page only reads them. A slip's legs are graded as a saved parlay's are (gradeLeg: a team bet on the final's
+   score, a player's line on the box score the state carries, void where he did not play or a goalie did not start), on a copy, so
+   nothing of it is stored. A slip settled two Eastern days before today leaves the tab (as the NFL's autoclear), one marked cleared
+   in the file never shows, and the × on a card takes it off this device's tab alone (P.ui.xclr), Show them again bringing them back */
+const XF = { xp: null, xb: null, err: {} };
+async function xRead() {
+  const get = async f => { try { const r = await fetch(`data/${f}.json?t=${Date.now()}`, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); if (!isObj(j)) throw new Error('not the file\'s shape'); return j; } catch (e) { XF.err[f] = e.message; return null; } };
+  [XF.xp, XF.xb] = await Promise.all([get('xparlays'), get('xbets')]);
+}
+const XP_STATS = ['pts', 'g', 'a', 's', 'bs', 'sv'];
+/* a leg in the file: a game's ESPN event id and a team bet (kind ml, pl or ou, its side and line) or a player's line (kind prop: his
+   ESPN athlete id, name, club, the stat, an Over or Under at a line, or a Yes milestone mk "yes" at k) */
+function xLegOk(l) {
+  if (!isObj(l) || !/^\d{4,12}$/.test(String(l.game))) return false;
+  if (l.kind === 'prop') return /^\d+$/.test(String(l.pid)) && XP_STATS.includes(l.stat) && typeof l.name === 'string' && (l.mk === 'yes' ? Number.isInteger(l.k) && l.k >= 1 : (l.side === 'over' || l.side === 'under') && typeof l.line === 'number' && isFinite(l.line));
+  return !!SIDES[l.kind] && SIDES[l.kind].includes(l.side) && (l.kind === 'ml' || (typeof l.line === 'number' && isFinite(l.line)));
+}
+const xpOk = p => isObj(p) && typeof p.id === 'string' && !!p.id && Array.isArray(p.legs) && p.legs.length > 0 && p.legs.every(xLegOk) && isFinite(+p.stake) && +p.stake > 0;
+/* a leg graded on a copy: the page's own rule, nothing written to the file's leg or to this device's store */
+function xGrade(l) {
+  const was = SAVED_DIRTY, c = JSON.parse(JSON.stringify(l));
+  c.game = String(c.game);
+  if (c.kind === 'prop') { if (c.mk === 'yes') { c.side = 'over'; c.line = c.k - 0.5; } else c.mk = 'main'; }
+  const g = gradeLeg(c); SAVED_DIRTY = was;
+  return { g, res: isObj(c.res) ? c.res : null };
+}
+/* a slip's state: lost once a leg has lost; landed (or void, every leg void or pushed) once every leg has settled; else live */
+function xpState(p) {
+  const legs = p.legs.map(xGrade), gs = legs.map(x => x.g);
+  const status = gs.includes('loss') ? 'lost' : gs.some(x => GONE_LEG.has(x)) ? 'unsure' : gs.includes('pending') ? 'live' : gs.every(x => x === 'void' || x === 'push') ? 'void' : 'landed';
+  return { legs, status, voids: gs.filter(x => x === 'void').length };
+}
+const xGames = p => p.legs.map(l => gameById()[String(l.game)]).filter(Boolean);
+/* the Eastern day a slip runs on: its first game's; and the day it settles, its last game's */
+const xpFirst = p => { const gs = xGames(p).sort(gameCmp); return gs[0] || null; };
+const xpLast = p => { const gs = xGames(p).sort(gameCmp); return gs[gs.length - 1] || null; };
+const etAddDays = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+function xpShown() {
+  const ps = XF.xp && Array.isArray(XF.xp.parlays) ? XF.xp.parlays.filter(xpOk).filter(p => p.cleared !== true) : [];
+  const today = etToday(), cleared = new Set(Array.isArray(P.ui.xclr) ? P.ui.xclr.map(String) : []);
+  const live = [], here = [];
+  for (const p of ps) {
+    const st = xpState(p), last = xpLast(p);
+    /* settled two Eastern days before today: off the tab, as the NFL's autoclear takes it off */
+    if (st.status !== 'live' && last && last.date < etAddDays(today, -2)) continue;
+    (cleared.has(p.id) ? here : live).push({ p, st });
+  }
+  return { live, here };
+}
+const xpLegHtml = (l, x) => {
+  const g = gameById()[String(l.game)], gl = x.g, res = x.res;
+  const word = gl === 'void' && res && res.why ? `void: ${res.why}` : { win: 'won', loss: 'lost', push: 'push', pending: g && g.state === 'live' ? 'under way' : 'to play', void: 'void: called off', gone: 'not on the schedule', unboxed: 'box score no longer carried', nostat: 'not in the box score', unsure: 'who started is not certain' }[gl] || gl;
+  const shown = res && typeof res.x === 'number' && /^(win|loss|push)$/.test(gl) ? `${word} (${res.x})` : word;
+  const mark = gl === 'win' ? '✓' : gl === 'loss' ? '✗' : gl === 'pending' ? '○' : '–';
+  const who = l.kind === 'prop' ? `<b>${esc(l.name)}</b>` : !g ? '' : l.kind === 'ou' ? `<b>${esc(T(g.away).short)} @ ${esc(T(g.home).short)}</b>` : `<b>${esc(T(g[l.side]).short)}</b>`;
+  const what = l.kind === 'prop' ? propBet(l.stat, l.mk === 'yes' ? 'yes' : 'main', l.side || 'over', +l.line, l.k) : g ? descOf(l.kind, l.side, l.line === undefined ? null : +l.line, g) : '';
+  const game = g ? `${muPills(g)} · ${g.state !== 'pre' && g.hs !== null && g.hs !== undefined ? `${esc(T(g.away).abbr)} ${g.as} – ${esc(T(g.home).abbr)} ${g.hs}${g.state === 'final' ? ', final' : ''}` : esc(dayClock(g.start))}` : `game ${esc(String(l.game))}`;
+  return `<li data-g="${esc(gl)}"><span class="xp-m ${gl === 'win' ? 'win' : gl === 'loss' ? 'loss' : ''}" aria-hidden="true">${mark}</span><span class="xp-what">${who}<span>${esc(what)}</span><span class="m">${game}</span></span><span class="xp-st ${gl === 'win' ? 'win' : gl === 'loss' ? 'loss' : ''}">${esc(shown)}</span></li>`;
+};
+function xpCard(p, st) {
+  const tag = st.status === 'lost' ? '<span class="tag loss">lost</span>' : st.status === 'landed' ? '<span class="tag win">landed</span>' : st.status === 'void' ? '<span class="tag">void</span>' : st.status === 'unsure' ? '<span class="tag">can\'t be graded here</span>' : '';
+  const voids = st.voids && !['lost', 'void'].includes(st.status) ? `<span class="tag">${st.voids} void</span>` : '';
+  const price = p.price === null || p.price === undefined || !isFinite(+p.price) ? '—' : fmtOdds(+p.price);
+  const pays = isFinite(+p.payout) && +p.payout > 0 ? money(+p.payout) : '—';
+  return `<div class="xp-card" data-xp="${esc(p.id)}" data-xp-state="${st.status}"><button type="button" class="xp-x" data-xp-clear="${esc(p.id)}" aria-label="Clear this parlay from this device" title="Clear this parlay from this device">×</button>
+    <div class="xp-head"><b>${p.legs.length}-leg parlay</b><span class="tag ice">placed</span>${p.note ? `<span class="tag">${esc(String(p.note))}</span>` : ''}${tag}${voids}</div>
+    <div class="xp-money"><div><b>${money(+p.stake)}</b><span>staked</span></div><div><b>${esc(price)}</b><span>price</span></div><div><b>${pays}</b><span>pays</span></div></div>
+    <ul class="xp-legs">${p.legs.map((l, i) => xpLegHtml(l, st.legs[i])).join('')}</ul></div>`;
+}
+let XP_ALL = false;            // Show them again: the slips cleared on this device drawn again, until the next load
+function renderXParlays() {
+  if (!ADMIN) return;
+  $('xpNote').hidden = !XF.err.xparlays; $('xpNote').textContent = XF.err.xparlays ? `X's parlays could not be read (${XF.err.xparlays}).` : '';
+  const { live, here } = xpShown(), list = XP_ALL ? live.concat(here) : live;
+  const day = x => { const f = xpFirst(x.p); return f ? f.date : '9999'; };
+  const settled = x => x.st.status !== 'live';
+  list.sort((a, b) => (settled(a) - settled(b)) || (day(a) < day(b) ? -1 : day(a) > day(b) ? 1 : 0) || String(a.p.id).localeCompare(String(b.p.id)));
+  let html = '', last = null;
+  for (const x of list) {
+    const key = settled(x) ? 'done' : day(x);
+    if (key !== last) {
+      last = key;
+      const f = xpFirst(x.p);
+      html += key === 'done' ? `<div class="xp-day">Finished<span>${list.filter(settled).length}</span></div>` : key === '9999' ? '<div class="xp-day">Puck drop not known</div>' : `<div class="xp-day">${esc(dayText(key))}<span>first puck drop ${esc(hhmm(f.start))}</span></div>`;
+    }
+    html += xpCard(x.p, x.st);
+  }
+  if (!list.length && !here.length) html = '<p class="pb-none">No parlays yet.</p>';
+  if (here.length) html += XP_ALL ? '' : `<div class="xp-here"><span>You cleared ${here.length} parlay${here.length === 1 ? '' : 's'} on this device</span><button type="button" class="btn" id="xpShowAll">Show ${here.length === 1 ? 'it' : 'them'} again</button></div>`;
+  $('xpList').innerHTML = html;
+}
+$('xpList').addEventListener('click', e => {
+  const x = e.target.closest('button[data-xp-clear]');
+  if (x) {
+    if (!confirm('Clear this parlay from X Parlays on this device?')) return;
+    const id = x.dataset.xpClear, next = x.closest('.xp-card') && x.closest('.xp-card').nextElementSibling;
+    P.ui.xclr = [...new Set((Array.isArray(P.ui.xclr) ? P.ui.xclr.map(String) : []).concat(id))].slice(-200); save();
+    const nid = next && next.dataset ? next.dataset.xp : null;
+    renderXParlays();
+    const to = (nid && [...$('xpList').querySelectorAll('[data-xp-clear]')].find(b => b.dataset.xpClear === nid)) || $('xpShowAll'); if (to) to.focus();
+    return;
+  }
+  if (e.target.closest('#xpShowAll')) { P.ui.xclr = []; save(); XP_ALL = false; renderXParlays(); }
+});
+/* the X Bet Log: the file's weeks (Monday to Sunday, Eastern, keyed by the Monday's date), each what X staked and what came back
+   (stakes included); the balance from the deposit (or, with none, the profit from break even) week by week */
+function xbData() {
+  const X = XF.xb; if (!X) return null;
+  const W = isObj(X.weeks) ? X.weeks : {}, dep = X.deposit === null || X.deposit === undefined || !isFinite(+X.deposit) ? null : +X.deposit;
+  const weeks = Object.keys(W).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && isObj(W[k]) && isFinite(+W[k].staked) && isFinite(+W[k].returned)).sort();
+  let cum = 0;
+  const rows = weeks.map(k => { const st = +W[k].staked, rt = +W[k].returned, net = cents(rt - st); cum = cents(cum + net); return { k, st, rt, net, cum, bal: dep === null ? cum : cents(dep + cum) }; });
+  const staked = cents(rows.reduce((a, r) => a + r.st, 0));
+  return { dep, rows, staked, net: cum, bal: dep === null ? cum : cents(dep + cum), won: rows.filter(r => r.net > 0).length };
+}
+const sMoney = v => (v < 0 ? '−' : v > 0 ? '+' : '') + money(Math.abs(v));
+function xbChart(D) {
+  /* drawn at its box's own width, as the Pick'em chart is, so its words stay 11px on a phone */
+  const box = $('xbChart'), cw = box ? Math.round(box.clientWidth || 0) : 0, W = cw ? Math.max(280, Math.min(640, cw)) : 640, H = W < 480 ? 190 : 220, L = 50, R = 18, T0 = 14, B = 30, n = D.rows.length;
+  const base = D.dep === null ? 0 : D.dep, vals = [base].concat(D.rows.map(r => r.bal)), lo = Math.min(...vals), hi = Math.max(...vals), pad = Math.max(1, (hi - lo) * 0.12);
+  const x = i => L + (W - L - R) * (n ? i / n : 0), y = v => T0 + (H - T0 - B) * (hi + pad - v) / (hi - lo + 2 * pad);
+  const pts = vals.map((v, i) => [x(i), y(v)]);
+  const ticks = [...new Set([lo, base, hi].map(v => Math.round(v)))].map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">$${v}</text>`).join('');
+  const most = W < 480 ? 4 : 8;
+  const labels = D.rows.map((r, i) => (n <= most || (i + 1) % Math.ceil(n / most) === 0 || i === n - 1) ? `<text x="${x(i + 1).toFixed(1)}" y="${H - 10}" text-anchor="middle">${esc(pkShort(r.k))}</text>` : '').join('');
+  const dots = pts.slice(1).map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="${D.rows[i].net >= 0 ? 'var(--lime)' : 'var(--rose-ink)'}"/>`).join('');
+  return `<svg class="xb-chart pk-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${D.dep === null ? 'Profit' : 'Balance'} week by week: ${D.rows.map(r => `${pkShort(r.k)} ${money(r.bal)}`).join(', ')}`)}">${ticks}<line class="zero" x1="${L}" x2="${W - R}" y1="${y(base).toFixed(1)}" y2="${y(base).toFixed(1)}"/><text x="${x(0).toFixed(1)}" y="${H - 10}" text-anchor="middle">Start</text>${labels}<polyline fill="none" stroke="var(--ice)" stroke-width="2.5" stroke-linejoin="round" data-bal="${D.rows.map(r => r.bal).join(',')}" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>${dots}</svg>`;
+}
+function renderXBets() {
+  if (!ADMIN) return;
+  $('xbNote').hidden = !XF.err.xbets; $('xbNote').textContent = XF.err.xbets ? `The X Bet Log could not be read (${XF.err.xbets}).` : '';
+  const D = xbData();
+  const tile = (v, k, s2) => `<div class="stat"><div class="v">${v}</div><div class="k">${esc(k)}</div>${s2 ? `<div class="s">${esc(s2)}</div>` : ''}</div>`;
+  if (!D || !D.rows.length) { $('xbTiles').innerHTML = ''; $('xbChartC').hidden = true; $('xbTable').innerHTML = ''; $('xbTiles').insertAdjacentHTML('afterbegin', '<p class="pb-none">No weeks yet.</p>'); return; }
+  $('xbChartC').hidden = false; $('xbChartH').textContent = D.dep === null ? 'Profit' : 'Balance';
+  $('xbTiles').innerHTML = tile(money(D.bal), D.dep === null ? 'Profit' : 'Balance', D.dep === null ? 'no deposit on file' : `from ${money(D.dep)} deposited`)
+    + tile(sMoney(D.net), 'Net', `on ${money(D.staked)} staked`) + tile(D.staked ? `${D.net >= 0 ? '+' : '−'}${Math.abs(100 * D.net / D.staked).toFixed(1)}%` : '—', 'Return', 'net on staked')
+    + tile(`${D.won} of ${D.rows.length}`, 'Winning weeks', '');
+  $('xbChart').innerHTML = xbChart(D);
+  $('xbTable').innerHTML = `<thead><tr><th class="sk">Week of</th><th class="n">Staked</th><th class="n">Returned</th><th class="n">Net</th><th class="n">${D.dep === null ? 'Profit' : 'Balance'}</th></tr></thead><tbody>`
+    + D.rows.slice().reverse().map(r => `<tr data-k="${r.k}"><td class="sk">${esc(dayText(r.k))}</td><td class="n">${money(r.st)}</td><td class="n">${money(r.rt)}</td><td class="n ${r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : ''}">${sMoney(r.net)}</td><td class="n">${money(r.bal)}</td></tr>`).join('') + '</tbody>';
+}
+
 function renderRecord() {
   const R = S.record; const f = S.model.fitted;
   const stat = (k, v, cls) => `<div class="stat"><b${cls ? ` class="${cls}"` : ''}>${v}</b><span>${k}</span></div>`;
@@ -4016,6 +4217,7 @@ async function boot() {
   const phase = S.playoff && S.playoff.phase;
   $('stamp').innerHTML = `${S.season - 1}-${String(S.season).slice(2)} season${phase === 'postseason' ? ' · the playoffs' : phase === 'over' && S.playoff.champion ? ' · ' + esc(T(S.playoff.champion).short) + ' won the Cup' : ''} · ${S.record.su.w}-${S.record.su.l} SU, ${S.record.pl.w}-${S.record.pl.l} puck line, ${S.record.ou.w}-${S.record.ou.l} totals`;
   $('stamp').insertAdjacentHTML('afterend', `<span class="small muted">published ${esc(dateClock(S.published))} · </span>`);
+  if (ADMIN) { for (const b of $('tabs').querySelectorAll('[data-admin-only]')) b.hidden = false; $('adminMark').hidden = false; await xRead(); }
   pruneLegs();                  // the builder as this state allows it, on whichever tab opens: no leg on a game started, gone or moved
   oddsIdle();                   // Refresh odds' status line: when the lines shown were published, until a press
   const h = tabName(location.hash.slice(1));

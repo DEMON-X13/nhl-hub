@@ -52,6 +52,8 @@ data/models.json    the pick'em models' constants (Alpha's weights, the Joker's 
                     walk-forward table: SOURCE, written by `node tools/models.js fit` on the finished seasons only
 data/models_backtest.json  the finals of 2026-27 played before the pick'em models existed, each called afterwards on what was
                     known before its puck drop: SOURCE, written once by `node tools/models.js --backtest`
+data/xparlays.json  X's placed parlays (the owner's), kept by Claude from the slips he sends; the page reads it on his devices alone
+data/xbets.json     the X Bet Log (the owner's money week by week), kept by Claude from his weekly totals; read on his devices alone
 data/props_model.json  the props model's constants and its report (walk-forward, the market test, the fair-chance
                     methods): SOURCE, written by `node tools/props.js fit` on the finished seasons only
 data/corr.json      the same-game table and hold: SOURCE, written by `node tools/corr.js` from the finished seasons' box

@@ -297,17 +297,22 @@ function partB() {
      ISO stamp, the day it names), a goalie with no NHL game, an unconfirmed one (dated by a zone-less GMT
      stamp when its game is past midnight GMT), and a stale entry from the day before */
   const g1 = D && (onD.find(g => ![X, Y].includes(g.home) && starts(g.home).length >= 2) || onD[0]);
-  const g2 = D && onD.slice().reverse().find(g => g !== g1 && ![X, Y].includes(g.home) && starts(g.home).length >= 1);     // the latest: past midnight GMT, when there is one
+  /* the unconfirmed goalie: one who has started for the club and is not on its injury report, since players.js takes an
+     unconfirmed name only for a goalie who is not out (a Confirmed one it takes even so). Its top starter was planted until
+     26 October 2026, when Edmonton's, Devon Levi, had gone on injured reserve two days before and the check failed the job */
+  const freeG = c => starts(c).find(s => !listed(c, s.name));
+  const g2 = D && onD.slice().reverse().find(g => g !== g1 && ![X, Y].includes(g.home) && freeG(g.home));     // the latest: past midnight GMT, when there is one
+  const g2g = g2 && freeG(g2.home);
   const g3 = D && onD.find(g => g !== g1 && g !== g2 && ![X, Y].includes(g.home) && starts(g.home).length >= 1);
   const backup = g1 && (starts(g1.home)[1] || starts(g1.home)[0]);
   const dfo = [];
   if (g1 && backup) dfo.push({ date: `${D}T00:00:00.000Z`, time: '7:00 PM', homeTeamName: E.CLUBS[g1.home].name, awayTeamName: E.CLUBS[g1.away].name, homeGoalieName: backup.name, homeNewsStrengthName: 'Confirmed', awayGoalieName: 'Zed Newman', awayNewsStrengthName: 'Likely' });
-  if (g2) dfo.push(Object.assign({ homeTeamName: E.CLUBS[g2.home].name, awayTeamName: E.CLUBS[g2.away].name, homeGoalieName: starts(g2.home)[0].name, homeNewsStrengthName: 'Unconfirmed', awayGoalieName: null },
+  if (g2) dfo.push(Object.assign({ homeTeamName: E.CLUBS[g2.home].name, awayTeamName: E.CLUBS[g2.away].name, homeGoalieName: g2g.name, homeNewsStrengthName: 'Unconfirmed', awayGoalieName: null },
     g2.start.slice(0, 10) > D ? { dateGmt: g2.start.replace(/Z$/, '').replace(/(:\d\d)$/, '$1:00') } : D === TODAY ? {} : { date: D }));
   const staleOn = g3 || g1;
   if (staleOn) dfo.push({ date: addDays(D, -1), homeTeamName: E.CLUBS[staleOn.home].name, awayTeamName: E.CLUBS[staleOn.away].name, homeGoalieName: 'Stale Entry', homeNewsStrengthName: 'Confirmed' });
   fs.writeFileSync(path.join(FX, 'dailyfaceoff.html'), dfoPage(dfo));
-  if (g1) console.log(`  DailyFaceoff on ${D}: ${backup.name} confirmed for ${g1.home}, Zed Newman likely for ${g1.away}${g2 ? `, ${starts(g2.home)[0].name} unconfirmed for ${g2.home}${g2.start.slice(0, 10) > D ? ' (dated by dateGmt)' : ''}` : ''}, and a stale entry for ${staleOn.home} on ${addDays(D, -1)}`);
+  if (g1) console.log(`  DailyFaceoff on ${D}: ${backup.name} confirmed for ${g1.home}, Zed Newman likely for ${g1.away}${g2 ? `, ${g2g.name} unconfirmed for ${g2.home}${g2.start.slice(0, 10) > D ? ' (dated by dateGmt)' : ''}` : ''}, and a stale entry for ${staleOn.home} on ${addDays(D, -1)}`);
   /* a game the feed has postponed, the first night of a back to back for a club (after the DailyFaceoff day, clubs
      planted above left alone): the job reads every day in both passes, so the night after is no back to back */
   const sched = {}; for (const g of real.games.slice().sort((a, b) => a.start < b.start ? -1 : 1)) for (const t of [g.home, g.away]) (sched[t] = sched[t] || []).push(g);

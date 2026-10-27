@@ -598,13 +598,14 @@ function partB() {
   }
   /* ESPN moves a projected game's start between the job's two passes: props.js projected it on the first pass's start, so the
      second pass leaves its projection out for the run (props.js projects it again on its new start next run), and the page and
-     the smoke stand on a game to come that has no projection. The game moved is the last of a day with an earlier one, an hour
-     on within its own day, so the day's first puck drop and the suggested parlays' lock stay where they were */
+     the smoke stand on a game to come that has no projection. The game moved is one of a day with an earlier one (the latest
+     such, the planted cases' games aside), an hour on within its own day, so the day's first puck drop and the suggested
+     parlays' lock stay where they were */
   {
     const SBP = readJSON(STB), pj = new Set(Object.keys((SBP.props && SBP.props.games) || {}));
     const mv = SBP.games.filter(g => pj.has(g.id) && g.state === 'pre' && Date.parse(g.start) > Date.parse(NOW) && ![g1, g2, g3, DKF, DK404].some(x => x && x.id === g.id)
-      && SBP.games.some(o => o.date === g.date && o.start < g.start) && !SBP.games.some(o => o.date === g.date && o.start > g.start) && E.etDate(minute(Date.parse(g.start) + 3600000)) === g.date)[0];
-    if (!mv) console.log('  no projected game to come, last of a day with an earlier one, to move between the passes: skipped');
+      && SBP.games.some(o => o.date === g.date && o.start < g.start) && E.etDate(minute(Date.parse(g.start) + 3600000)) === g.date).sort((a, b) => a.start < b.start ? 1 : -1)[0];
+    if (!mv) console.log('  no projected game to come after another of its day, the planted cases\' games aside, to move between the passes: skipped');
     else {
       const ns = minute(Date.parse(mv.start) + 3600000), BM = dataDir('B-moved', B), OUTM = mkdir('B-sb-moved'), STM = path.join(SCRATCH, 'B-moved.json');
       for (const f of ['injuries.json', 'starters.json']) fs.copyFileSync(path.join(B, f), path.join(BM, f));

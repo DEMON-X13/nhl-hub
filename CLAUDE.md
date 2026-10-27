@@ -336,26 +336,36 @@ this repo's own is not measured yet.) The simulation first: `tools/simulate.js` 
 offline on fixtures in the feeds' own shapes. Today's real state, box scores and injury report go through the job in its order (the steps read from
 `update.yml`, so a step moved there is a step moved in the simulation) with planted cases (an injured
 top goalie, a skater out by name only, a goalie on another club's report, DailyFaceoff confirming a
-backup with its date written as midnight GMT, naming a debut and an unconfirmed goalie dated by a GMT
-stamp, a stale entry, the first night of a back to back postponed, last night's final boxed with its home starter
-pulled before his first save as 401803043's was, so the plays mark his reliever and the state grades neither goalie's
-saves), then the refusals (a scoreboard
+backup with its date written as midnight GMT, naming a debut, and an unconfirmed goalie on the day's last game (the
+next game day's where the day has no other for one, never the confirmed backup's club's) dated by a GMT stamp, a stale
+entry, the first night of a back to back postponed, last night's final boxed with its home starter pulled before his
+first save as 401803043's was, so the plays mark his reliever and the state grades neither goalie's saves, and a
+projected game's start moved between the job's two passes; the cases are planted only on games still to come in the run,
+never on last night's final, which the feed has over, nor on a game the published state holds as delayed, and every
+other final the committed files lack is answered, its box score made up from its clubs' last box lines (the shots
+column kept) and its closing props ESPN's 404, so no step stands on those files being whole), then the refusals (a scoreboard
 day unanswered, the injury report silent or empty, DailyFaceoff silent, in a new shape, or naming games
 that match nothing on the schedule); the first evening after a change (games under way and not boxed,
 the published calls an older job's, the night after a back to back to call) and rows an older job
-rewrote after puck drop put back exactly; a fabricated season whose evening runs the two passes either
-side of a puck drop and finds games under way, one still "scheduled" past its puck drop and one whose
+rewrote after puck drop put back exactly; a fabricated season (on a day about six weeks in with four games or more
+under way by its first puck drop and four to come after it, and none of the real day's props reads) whose evening runs
+the two passes either side of a puck drop and finds games under way, one still "scheduled" past its puck drop and one whose
 start moved an hour, then a scoreboard answer that is blank or leaves games out (one postponed, one
 moved to another day); DraftKings' ids throughout (every invented line carries ids in ESPN's real gateway
-wrapping: read whole, moved with a moved line, a flipped favourite's N and P swapped, kept by the games
+wrapping: read whole, moved with a moved line, a favourite flipped on purpose and its N and P swapped, kept by the games
 under way, taken afresh by a game moved to another day; answers as "Draft Kings" with no link, an over on
 another number, an id in an unknown shape, links that are not URLs and links naming the event alone, then
 sources.js on answers with no link, on links it cannot read, on links naming no outcome, on the totals' links alone in a shape it cannot read (broken, by market) and on run 1d's own answers (the link-less games named beside the linked ones); the same run on link-less answers changing no call field but
 `line.dk`; and a started game's id changed after puck drop, which the smoke must fail); the season played out and the playoffs (a sweep, an upset, the Final); and the
 rollover. On opening night, in the summer and before a schedule is out it plays what there is (last
-season's starters, last season's schedule a year on) and skips what needs a game to come. `NHL_TODAY`,
-`NHL_NOW`, `NHL_STATE`, `NHL_OUT`, `NHL_TEAMS`, `NHL_DATA` and `NHL_FIXTURES` are the hooks; the real
-files are never touched. The job then runs `update.js --scores` (so last night's finals are boxed in
+season's starters, last season's schedule a whole number of weeks on, at least a year, so its opening night falls on or
+after 1 October, where update.js starts reading) and skips, said, what needs a game to come. Every check of it is an
+invariant of the day's data, never a guess about it: an audit after a failed run on 26 October 2026 found 19 checks that
+the real data of some later day would have failed with the job right (Devon Levi's injury had made the planted
+unconfirmed goalie one players.js rightly refused), and they plant only what the job's own rules accept that day.
+`NHL_TODAY`, `NHL_NOW`, `NHL_STATE`, `NHL_OUT`, `NHL_TEAMS`, `NHL_DATA`, `NHL_FIXTURES`, `NHL_SEASON` and
+`NHL_PROPS_ASK` are the hooks; the real files are never touched (a box file the job appends to is a scratch copy, and the
+simulation fails itself if any file of `data/` or `state.json` changed). The job then runs `update.js --scores` (so last night's finals are boxed in
 the same run, and players.js lines up on the schedule the calls are made on: both passes read every
 day), `fetch_box.js`, `starters.js`, `players.js`, `props.js`, `update.js`, the smoke test, the commit (straight to
 `main`, as "nhl-hub bot": `state.json`, `data/teams.json`, `data/box_*.jsonl`, `data/injuries.json`,
@@ -370,8 +380,11 @@ publishes and says so on its Games tab.
 
 The smoke test holds the published state to reality, each source read on its own terms: nobody the
 injury report has out, on injured reserve or suspended is in a lineup or in goal (a goalie DailyFaceoff
-confirms excepted), no goalie listed on another club's report is named for his old one, a goalie named
-by the rule has played for the club and, once it has three games, started one of them, a back to back
+confirms excepted; a report row with an ESPN id is that player alone, one without the rated player of its club and
+name, as players.js reads the report, and an id no rated player has is held by the club and name), no goalie the
+model's own rule names is listed on another club's report (a goalie DailyFaceoff names is taken on its word, as
+players.js takes him), a goalie named by the rule has played for the club and, once it has three games and one of
+their starters is still the club's own and not out, started one of them, a back to back
 is one and its goalie is not the one who started the night before (the box score) or is named for it
 (a game still to come; one under way or over and not yet boxed is not compared), DailyFaceoff's names
 reach their games, no call was made after its puck drop or moved since (the last published state,
@@ -888,7 +901,8 @@ suspended and anyone listed by another club or whose latest game was for one; th
 the ESPN id `fetch_box.js` reads from the player's link (the feed has no id field: before October 2026
 every id was "undefined" and nobody was ever taken out), else by club and name, else by a name only one
 rated player has. Day-to-day players stay in, flagged. The goalie is chosen game by game: the one
-DailyFaceoff names for that game and date (Confirmed, Likely or Unconfirmed, said exactly), else the
+DailyFaceoff names for that game and date (Confirmed, Likely or Unconfirmed, said exactly; a goalie it names with no NHL
+game on a rookie's rating, unless his club's report has him out by name and he is not confirmed), else the
 club's goalie with the most starts in its last ten games this season (then last season's starts for the
 club), never one who is out or elsewhere; on the second night of a back to back (the club's previous
 game, played or not, the day before) the other goalie from the one who started that game (its box
@@ -1057,7 +1071,8 @@ and player legs), at DraftKings' price as read.
   a grade the last commit had never changed, no verdict before 12,000 and the one the calls give after by the bar's own
   registered numbers, the summary the calls'. Any failure holds the run back before its commit.
 - **What the state carries for the page** (`state.props`, `update.js` copying `data/props.json` and keeping only the
-  games still to come by its own clock, delays out):
+  games still to come by its own clock, delays out, whose start and clubs are still the ones props.js read: a game ESPN
+  moved between the job's two passes waits for the next run to be projected on its new start):
 
   ```
   props: { v: 1, label: 'on trial', generated, model: { sha, fitted, through, warm },

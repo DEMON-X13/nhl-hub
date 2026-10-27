@@ -81,6 +81,18 @@ const delayedAt = (call, start, ms) => !!(call && call.frozen && call.before && 
 /* a name as the report and the box scores can agree on it; written here again on purpose, not shared with the job */
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[.'’]/g, '').replace(/-/g, ' ').replace(/\b(jr|sr|ii|iii|iv)\b/g, ' ').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
 const OUT = /\bout\b|injured reserve|\bir\b|\bltir\b|suspen/i;
+/* a row of the injury report is a player as players.js's readInjuries reads it: a row with an ESPN id is that player and no
+   other (no name guess past it), a row with none the rated player of its club by that name, else the one rated player of the
+   name. Matched by name alone, two goalies of one name (two Matt Murrays) once made one's injury the other's */
+const hasId = r => !!r.id && /^\d+$/.test(String(r.id));
+const rowIs = (r, p) => {
+  if (hasId(r)) return String(r.id) === String(p.id);
+  const n = norm(r.name); if (!n || n !== norm(p.name)) return false;
+  const rated = S.players && S.players.players; if (!rated) return true;
+  const of = club => Object.entries(rated).filter(([, x]) => norm(x.name) === n && (!club || x.team === club)).map(([id]) => id);
+  const own = of(r.club), any = of(null);
+  return own.length === 1 ? own[0] === String(p.id) : !own.length && any.length === 1 ? any[0] === String(p.id) : false;
+};
 const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'models', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
 
 /* boot the page with the clock at `clockMs`; resolves to the window once it has drawn. opts: state (a JSON
@@ -158,9 +170,9 @@ function reality() {
     chk(!bad.length, `every lineup still to play was built on the injury report of ${inj.pulled} (${bad.length} were not, e.g. ${bad[0] && bad[0].id}: ${bad[0] && bad[0].pm.inj})`);
   }
   const outRows = rows.filter(r => OUT.test(r.status || ''));
-  const isOut = (club, p) => outRows.find(r => (r.id && String(r.id) === String(p.id)) || (r.club === club && norm(r.name) === norm(p.name)));
-  const goalieOut = p => outRows.find(r => (r.id && String(r.id) === String(p.id)) || norm(r.name) === norm(p.name));
-  const listedElsewhere = (club, p, byName) => rows.find(r => r.club !== club && ((r.id && String(r.id) === String(p.id)) || (byName && norm(r.name) === norm(p.name))));
+  const isOut = (club, p) => outRows.find(r => hasId(r) ? String(r.id) === String(p.id) : r.club === club && norm(r.name) === norm(p.name));
+  const goalieOut = p => outRows.find(r => rowIs(r, p));
+  const listedElsewhere = (club, p, byName) => rows.find(r => r.club !== club && (hasId(r) ? String(r.id) === String(p.id) : byName && rowIs(r, p)));
   if (PL && PL.teams && inj) for (const [club, t] of Object.entries(PL.teams)) {
     for (const p of t.lineup || []) {
       const o = isOut(club, p); chk(!o, `${p.name} is ${o && o.status} on the injury report and still in ${club}'s lineup`);
@@ -173,6 +185,9 @@ function reality() {
   if (inj) for (const { g, club, gl } of named) {
     if (gl.announced === 'Confirmed') continue;
     const o = goalieOut(gl); chk(!o, `${gl.name} is named in goal for ${club} on ${g.date} (${g.away}@${g.home}) but is ${o && o.status} on ${o && o.club}'s injury report`);
+    /* a goalie DailyFaceoff names for a club is that club's by DailyFaceoff's word, as players.js takes him (only out stops it): a
+       trade the report has not caught up with lists him under his old club, day to day, the day he is named for the new one */
+    if (gl.announced) continue;
     const e = listedElsewhere(club, gl, true); chk(!e, `${gl.name} is named in goal for ${club} on ${g.date} but is on ${e && e.club}'s injury report`);
   }
   /* the box scores: who has played in goal for whom */
@@ -185,8 +200,10 @@ function reality() {
       for (const x of b.goalies) { nameOf[x.id] = x.name; if (x.team === club && x.toi > 0) played.add(club + '|' + x.id); }
       if (b.season === S.season) { gamesNow[club] = (gamesNow[club] || 0) + 1; const s = starterOf(b, club); if (s) (startsNow[club] = startsNow[club] || new Set()).add(s); }
     }
-    /* a starter is unavailable when the report has him out (by id, or by name under his club) or lists him under another club */
-    const available = (club, id) => { const p = { id, name: nameOf[id] }; return !isOut(club, p) && !outRows.find(r => r.id && String(r.id) === String(id)) && !listedElsewhere(club, p, true); };
+    /* a starter is unavailable when the report has him out (by id, or by name under his club), lists him under another club, or
+       his latest game was for another club (traded or claimed: players.js ranks only the club's own goalies) */
+    const gone = (club, id) => !!(PL && PL.players && PL.players[id] && PL.players[id].team !== club);
+    const available = (club, id) => { const p = { id, name: nameOf[id] }; return !gone(club, id) && !isOut(club, p) && !outRows.find(r => hasId(r) && String(r.id) === String(id)) && !listedElsewhere(club, p, true); };
     const byStart = {}; for (const b of box) byStart[b.id] = b;
     const ownReport = (club, gl) => rows.some(r => r.club === club && ((r.id && String(r.id) === String(gl.id)) || norm(r.name) === norm(gl.name)));
     for (const { g, club, gl } of named) {
@@ -395,7 +412,7 @@ function propsReality(toCome, isOut, listedElsewhere) {
     chk(!/pass/i.test(ls.standing || '') || !!L.decision, 'the ledger is never said to be passing before its bar is decided');
   }
 }
-const goalieOutAny = p => { const inj = readJSON(path.join(DATA, 'injuries.json')); if (!inj || !inj.teams) return false; return Object.values(inj.teams).some(l => (l || []).some(r => OUT.test(r.status || '') && ((r.id && String(r.id) === String(p.id)) || norm(r.name) === norm(p.name)))); };
+const goalieOutAny = p => { const inj = readJSON(path.join(DATA, 'injuries.json')); if (!inj || !inj.teams) return false; return Object.entries(inj.teams).some(([club, l]) => (l || []).some(r => OUT.test(r.status || '') && rowIs(Object.assign({ club }, r), p))); };
 
 /* ================= THE PARLAY BUILDER =================
    The panel, its three levels, the builder, the card and DraftKings' ids, each held to the state by rules

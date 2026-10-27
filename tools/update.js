@@ -557,10 +557,12 @@ async function main() {
   const players = PM ? { asOf: PM.asOf, generated: PM.generated, use: usePM, report: PM.report, params: PM.params, players: PM.players, teams: PM.teams, injuries: PM.injuries || null, starters: PM.starters || null } : null;
   /* the props model (props.js, ON TRIAL: shown beside DraftKings' lines, never suggested): its projections for each game still to
      come by this run's clock, and the shadow ledger's running numbers. Copied as props.js wrote them; a game that has started
-     since it ran is left out (its call is in the ledger, frozen) */
+     since it ran is left out (its call is in the ledger, frozen), and so is one whose start or clubs the feed has changed since the
+     first pass props.js read (ESPN can move a puck drop between the two passes): it is projected again on its new start next run */
   const PR = fs.existsSync(path.join(DATA, 'props.json')) ? JSON.parse(fs.readFileSync(path.join(DATA, 'props.json'), 'utf8')) : null;
   const toComeNow = r => r && r.state === 'pre' && Date.parse(r.start) > Date.parse(NOW) && !(r.before && Date.parse(r.before) <= Date.parse(NOW) && Date.parse(r.start) - Date.parse(r.before) < DELAY);
-  const props = PR ? Object.assign({}, PR, { games: Object.fromEntries(Object.entries(PR.games || {}).filter(([id, g]) => toComeNow(out.find(x => x.id === id)) && Date.parse(g.start) > Date.parse(NOW))) }) : null;
+  const sameGame = (r, g) => r.start === g.start && r.home === g.home && r.away === g.away;
+  const props = PR ? Object.assign({}, PR, { games: Object.fromEntries(Object.entries(PR.games || {}).filter(([id, g]) => { const r = out.find(x => x.id === id); return toComeNow(r) && sameGame(r, g) && Date.parse(g.start) > Date.parse(NOW); })) }) : null;
   /* the Parlay Builder's same-game legs: the table of how legs of one game move together and the same-game hold, copied from
      data/corr.json (tools/corr.js wrote it from the finished seasons' box scores; tools/sgp.js is the rule the page copies), and
      what the page needs to grade a saved player leg: the box score of every final from BOX_DAYS days ago through today, each player who

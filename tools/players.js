@@ -317,8 +317,11 @@ function lineups(m, games, S, injuries, starters) {
       const ann = announcedFor(starters, code, g);
       if (ann) {
         let id = nameToGoalie(code, ann.name);
-        if (!id && (ann.status === 'Confirmed' || ann.status === 'Likely')) {
-          id = 'new:' + E.normName(ann.name).replace(/ /g, '-');                       // a first NHL start: a rookie's rating
+        /* a first NHL start: a rookie's rating. He is no rated player, so the report's rows never resolve to him (an id row is
+           its own player's alone): one his club's report has out by his name is refused as a rated goalie out is, unless confirmed */
+        const outHere = !id && rep.some(r => r.out && E.normName(r.name) === E.normName(ann.name));
+        if (!id && (ann.status === 'Confirmed' || (ann.status === 'Likely' && !outHere))) {
+          id = 'new:' + E.normName(ann.name).replace(/ /g, '-');
           if (!m.r[id]) m.r[id] = { name: ann.name, pos: 'G', team: code, o: 0, d: 0, gk: m.p.rookieG, gp: 0, toi: [], seasons: {}, debut: true };
         }
         if (id && (!inj.outIds.has(id) || ann.status === 'Confirmed')) { announcedUsed++; return { id, how: HOW[ann.status] || `named by DailyFaceoff (${ann.status || 'no status'})`, announced: ann.status || 'named' }; }

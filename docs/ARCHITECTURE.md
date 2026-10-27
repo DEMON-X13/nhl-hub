@@ -252,7 +252,8 @@ started rule, delays included), grades each frozen call once its game is final, 
 for each game projected (rewritten while it changes, never after its puck drop); (4, since nhl v16) reads DraftKings'
 player lines from ESPN's propBets for every game projected, four at a time, a failed read keeping the last run's (the page
 starts from them on load; a Refresh odds press reads them again); (5) writes `data/props.json`, which
-`update.js` copies into the state as `props` for the games still to come by its own clock. The constants are
+`update.js` copies into the state as `props` for the games still to come by its own clock whose start and clubs are still
+the ones props.js read (a game ESPN moved between the job's two passes waits for the next run). The constants are
 `data/props_model.json`'s (source), never refitted by the job; the verdict is judged by the numbers of the bar the
 ledger registered (its edge, resamples, seed, percentiles and clip, held to `BAR`). The smoke's THE PROPS MODEL section
 holds the box files' new columns and starter marks, the record's shape, every distribution and projected player, the state's projections against the

@@ -86,7 +86,8 @@ const OUT = /\bout\b|injured reserve|\bir\b|\bltir\b|suspen/i;
    name. Matched by name alone, two goalies of one name (two Matt Murrays) once made one's injury the other's */
 const hasId = r => !!r.id && /^\d+$/.test(String(r.id));
 const rowIs = (r, p) => {
-  if (hasId(r)) return String(r.id) === String(p.id);
+  /* a goalie DailyFaceoff names with no NHL game has no ESPN id here ('new:<name>'): a row of his club by his name is his */
+  if (hasId(r)) return String(r.id) === String(p.id) || (!/^\d+$/.test(String(p.id)) && !!p.club && r.club === p.club && norm(r.name) === norm(p.name));
   const n = norm(r.name); if (!n || n !== norm(p.name)) return false;
   const rated = S.players && S.players.players; if (!rated) return true;
   const of = club => Object.entries(rated).filter(([, x]) => norm(x.name) === n && (!club || x.team === club)).map(([id]) => id);
@@ -170,8 +171,10 @@ function reality() {
     chk(!bad.length, `every lineup still to play was built on the injury report of ${inj.pulled} (${bad.length} were not, e.g. ${bad[0] && bad[0].id}: ${bad[0] && bad[0].pm.inj})`);
   }
   const outRows = rows.filter(r => OUT.test(r.status || ''));
-  const isOut = (club, p) => outRows.find(r => hasId(r) ? String(r.id) === String(p.id) : r.club === club && norm(r.name) === norm(p.name));
-  const goalieOut = p => outRows.find(r => rowIs(r, p));
+  /* out by id, or by club and name where the row's id is no other rated player's (an id ESPN gave wrong, which players.js
+     resolves to nobody, is still caught) */
+  const isOut = (club, p) => outRows.find(r => (hasId(r) && String(r.id) === String(p.id)) || (r.club === club && norm(r.name) === norm(p.name) && !(hasId(r) && PL && PL.players && PL.players[r.id])));
+  const goalieOut = (p, club) => outRows.find(r => rowIs(r, Object.assign({ club }, p)));
   const listedElsewhere = (club, p, byName) => rows.find(r => r.club !== club && (hasId(r) ? String(r.id) === String(p.id) : byName && rowIs(r, p)));
   if (PL && PL.teams && inj) for (const [club, t] of Object.entries(PL.teams)) {
     for (const p of t.lineup || []) {
@@ -184,7 +187,7 @@ function reality() {
   for (const g of withPm) for (const side of ['home', 'away']) { const t = g.pm[side]; if (t && t.goalie) named.push({ g, club: g[side], gl: t.goalie }); }
   if (inj) for (const { g, club, gl } of named) {
     if (gl.announced === 'Confirmed') continue;
-    const o = goalieOut(gl); chk(!o, `${gl.name} is named in goal for ${club} on ${g.date} (${g.away}@${g.home}) but is ${o && o.status} on ${o && o.club}'s injury report`);
+    const o = goalieOut(gl, club); chk(!o, `${gl.name} is named in goal for ${club} on ${g.date} (${g.away}@${g.home}) but is ${o && o.status} on ${o && o.club}'s injury report`);
     /* a goalie DailyFaceoff names for a club is that club's by DailyFaceoff's word, as players.js takes him (only out stops it): a
        trade the report has not caught up with lists him under his old club, day to day, the day he is named for the new one */
     if (gl.announced) continue;
@@ -202,7 +205,8 @@ function reality() {
     }
     /* a starter is unavailable when the report has him out (by id, or by name under his club), lists him under another club, or
        his latest game was for another club (traded or claimed: players.js ranks only the club's own goalies) */
-    const gone = (club, id) => !!(PL && PL.players && PL.players[id] && PL.players[id].team !== club);
+    const lastClub = {}, lastDate = {}; for (const b of box) for (const x of b.goalies) if (!lastDate[x.id] || lastDate[x.id] <= b.date) { lastDate[x.id] = b.date; lastClub[x.id] = x.team; }
+    const gone = (club, id) => { const t = PL && PL.players && PL.players[id] ? PL.players[id].team : lastClub[id]; return !!t && t !== club; };
     const available = (club, id) => { const p = { id, name: nameOf[id] }; return !gone(club, id) && !isOut(club, p) && !outRows.find(r => hasId(r) && String(r.id) === String(id)) && !listedElsewhere(club, p, true); };
     const byStart = {}; for (const b of box) byStart[b.id] = b;
     const ownReport = (club, gl) => rows.some(r => r.club === club && ((r.id && String(r.id) === String(gl.id)) || norm(r.name) === norm(gl.name)));
@@ -388,7 +392,7 @@ function propsReality(toCome, isOut, listedElsewhere) {
         else { const mean = D.d.reduce((a, x, i) => a + (D.lo + i) * x, 0) / 10000; if (Math.abs(mean - D.mu) > 0.05) bad.push(`${P.goalie.name} saves: mean ${mean.toFixed(2)} not ${D.mu}`); }
         const pm = g.pm && g.pm[side] && g.pm[side].goalie;
         if (pm && g.frozen && Date.parse(g.frozen) === PUB && pm.id !== P.goalie.id) bad.push(`${club} on ${gid}: the props model has ${P.goalie.name} in goal, the game's call ${pm.name}`);
-        if (goalieOutAny(P.goalie) && !(pm && pm.announced === 'Confirmed')) bad.push(`${P.goalie.name} projected in goal but out on the injury report`);
+        if (goalieOutAny(Object.assign({ club }, P.goalie)) && !(pm && pm.announced === 'Confirmed')) bad.push(`${P.goalie.name} projected in goal but out on the injury report`);
       }
     }
   }
@@ -2608,11 +2612,11 @@ function ppBtnWant(rd) {
 }
 /* the window's read line: the job's read said as the job's, a press's said as gone with a reload (the job's read back where the
    state carries one) */
-function ppReadWant(rd, hasJob) {
+function ppReadWant(rd, hasJob, proj = true) {      // proj: the game has the props model's projection (one ESPN moved between the job's passes has none that run)
   const T = clockOf(Date.parse(rd.at)), job = rd.src === 'job';
   if (rd.status === 200) return `DraftKings' player props from ESPN, read ${T}${job ? " at the job's last run" : ''}: ${sN(rd.main.length, 'main line', 'main lines')} and ${sN(rd.yes.length, 'milestone price', 'milestone prices')}. ${job ? 'Refresh odds reads them again now.' : hasJob ? "A reload brings back the job's read; Refresh odds reads them again." : 'Gone with a reload; Refresh odds reads them again.'}`;
-  if (rd.status === 404) return `DraftKings has posted no player props for this game yet (ESPN, read ${T}${job ? " at the job's last run" : ''}): they usually go up on game day, the goalies' saves last. Shown: the props model's projections.`;
-  return `ESPN's player props could not be read ${job ? `at the job's last run (${T}, ${rd.why})` : `at ${T} (${rd.why})`}: press Refresh odds to try again. Shown: the props model's projections.`;
+  if (rd.status === 404) return `DraftKings has posted no player props for this game yet (ESPN, read ${T}${job ? " at the job's last run" : ''}): they usually go up on game day, the goalies' saves last.${proj ? " Shown: the props model's projections." : ''}`;
+  return `ESPN's player props could not be read ${job ? `at the job's last run (${T}, ${rd.why})` : `at ${T} (${rd.why})`}: press Refresh odds to try again.${proj ? " Shown: the props model's projections." : ''}`;
 }
 async function holdJobRead(body, tag) {
   const J = JSON.parse(body), pg = (J.props && J.props.games) || {}, AT = PUB + 60000;
@@ -2687,7 +2691,7 @@ async function holdJobRead(body, tag) {
     chk(!bb.length, `${tag}: each button says the read it now stands on (${seen.size}; ${bb.slice(0, 2).join(' || ')})`);
     if (G && winOn(G)) chk(txt(d.getElementById('ppRead')) === ppReadWant(want[G.id], true), `${tag}: the window still says it shows the job's read (${txt(d.getElementById('ppRead'))})`);
     const Gf = ask.find(g => !want[g.id] || want[g.id].status === 'failed');
-    if (Gf && at1 && (pg[Gf.id] || PR1[Gf.id]) && winOn(Gf)) chk(txt(d.getElementById('ppRead')) === ppReadWant(PR1[Gf.id], hasJob(Gf.id)), `${tag}: a game the press failed on and the job did not read says the press's failure (${txt(d.getElementById('ppRead'))})`);
+    if (Gf && at1 && (pg[Gf.id] || PR1[Gf.id]) && winOn(Gf)) chk(txt(d.getElementById('ppRead')) === ppReadWant(PR1[Gf.id], hasJob(Gf.id), !!pg[Gf.id]), `${tag}: a game the press failed on and the job did not read says the press's failure (${txt(d.getElementById('ppRead'))})`);
     if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click();
     /* a second press that answers: the press's read replaces the job's, said */
     const G2 = ask.find(g => pg[g.id] && want[g.id] && want[g.id].status === 200) || ask.find(g => pg[g.id]);

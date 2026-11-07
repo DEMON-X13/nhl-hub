@@ -262,7 +262,9 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   day's heading, "Today, 3 games" with its date in a pill and its first and last puck drops, its lock words on a line under it
   ("Locks 7:00 PM EDT"; a locked day's the NFL's, a gold-outlined Locked and a sentence, "Locked since 7:00 PM EDT. Under way." or
   "... Graded."); the three
-  levels three a row from 1101px, two from 641px to 1100px (Aggressive under the two) and one on a phone, the cards of a row one
+  levels three a row from 1101px, two from 760px to 1100px (Aggressive under the two) and one below (the NFL's two from 641px left a
+  leg's game and puck drop no room on one line; on the narrowest phones, 380px and under, the cards' padding and a leg's small type
+  a little tighter so they keep it), the cards of a row one
   height with their buttons at the foot (nhl v14 first put the three on one line: "can you get rid of the extreme parlay and make
   the other three be on the same line in columns like in the nfl-hub?"). A card, the NFL's: its top edge lime, gold or rose by the
   level; the head at the right, the level's name in capitals beside "N legs" in a pill, the rule under them in small capitals

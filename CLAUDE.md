@@ -255,20 +255,27 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
 - **Parlay Builder →** (a game to come with a fresh line on a day the panel offers): the panel on that game's day (Both
   days kept where chosen and holding it), the game ticked, the keyboard on its heading.
 - **The Suggested Parlays tab** (`#suggest`, the second tab since nhl v17, the owner's ask of 25 October 2026 to build the NFL
-  hub's Parlay Builder and its Suggested Parlays tab here): the record's row under its heading; today's set and tomorrow's
-  (Eastern), each under the day's name with its lock words in a tag ("Locks 7:00 PM EDT", "Locked since 7:00 PM EDT", "Under
-  way", "Graded"); the three levels as the NBA's `.sugg-tier`, three a row as the NFL hub's from 901px and one a row at 900px and
-  under (nhl v14, the owner's call: "can you fix the layout in suggested parlays, i feel like there is a lot of blank space in
-  that section. also can you get rid of the extreme parlay and make the other three be on the same line in columns like in the
-  nfl-hub?"), the cards of a row one height with their buttons on one line at the foot, as the NFL's: the name and "N legs",
-  the rule, three numbers in a row (the fair chance with the model's under it, the price, what the amount pays: each stepped down
-  to fit its third, `fitNums`, and a pays figure that will not fit at 13px takes the card's width), a leg a row (on its first
-  line its club's pill or a total's two, the bet and a thin edge's tag, the price and the leg's own Add, Added once in the
-  parlay; on its second, the full width of the card, the game and its puck drop with the fair and model chances at the right),
-  a thin edge said by its tag alone (its title the why), Finish filled before Add to builder, an empty level only as tall as
-  its words. A locked day's levels are the record's, read only: each leg its grade in a tag (won, lost, push, void) or its
-  puck drop or "under way", each level its result in the head and what it paid. Lock and New legs went with nhl v17, as the
-  NFL hub's went in its v116.
+  hub's Parlay Builder and its Suggested Parlays tab here), drawn since nhl v22 (7 November 2026, the owner's "i feel like the
+  suggested parlays are really hard to read. i want it to match the visuals of the nfl one") as the NFL hub's own, its values
+  copied from its computed styles: under the heading the odds bar ("Odds", its own Refresh odds, `#spRefreshOdds`, and status line,
+  `#spOddsNote`), then the record ("Record" over its pills), then today's set and tomorrow's (Eastern), a rule between each: the
+  day's heading, "Today, 3 games" with its date in a pill and its first and last puck drops, its lock words on a line under it
+  ("Locks 7:00 PM EDT"; a locked day's "Locked since 7:00 PM EDT", "Under way" or "Graded" in a gold-outlined mark); the three
+  levels three a row from 1101px, two from 641px to 1100px (Aggressive under the two) and one on a phone, the cards of a row one
+  height with their buttons at the foot (nhl v14 first put the three on one line: "can you get rid of the extreme parlay and make
+  the other three be on the same line in columns like in the nfl-hub?"). A card, the NFL's: its top edge lime, gold or rose by the
+  level; the head at the right, the level's name in capitals beside "N legs" in a pill, the rule under them in small capitals
+  ("likeliest pair", "best return · lands 25%+", "likeliest 3 legs", the long reading on its title); the numbers in boxes, the fair
+  chance (the model's under it, "model says 42%", or "model 49%, props on trial" on a level holding a player line) beside the price,
+  what the amount pays across the card under them, all three a row from 1100px down and on the narrowest phones (380px and under)
+  the chance across the card over the other two, each figure stepped down to fit its box (`fitNums`); a leg a row (its club's pill
+  or a total's two and, bold, the club, the player or the total's bet, with a thin edge's tag; under it in small type the bet, the
+  game and its puck drop; at the right DraftKings' price with the model's chance under it, the NFL's; then the leg's own Add, Added
+  once in the parlay; DraftKings' fair chance and the model's, named, a player's "props model ... (on trial)", on the row's title and
+  in its Add's name); Add to builder, then Finish filled lime; an empty level only as tall as its words. A locked day's levels are
+  the record's, read only, in the same rows: each leg its grade in a tag (won, lost, push, void) or its puck drop or "under way"
+  where the Add was, each level its result at the left of its head and what it paid in its third box. Lock and New legs went with
+  nhl v17, as the NFL hub's went in its v116.
 - **The Parlay Builder tab**: Refresh odds in the tab's own odds bar, as the NBA's; then the builder (nhl v17: first, as the
   NFL hub's); then the Top 30 lines with the controls box (its groups' labels on one line, the bet amount's note under the
   box; game tiles whose two pills wrap, "CAR @" over "WPG", where a phone's tile is too narrow) and the list: Value picks and
@@ -848,7 +855,7 @@ for four, and the cap at the product binds on 0-5% of tickets.
 The job reads DraftKings' game lines only when it runs, so a line on the page can be hours old by puck drop
 (the owner's ask, 15 October 2026: "a refresh odds button that will pull the live lines on demand ... rather
 than like a constant job"). **Refresh odds** (on the Games tab's odds bar, on the Parlay Builder tab's over its
-panel and, since nhl v10, in the Player props window, 44px, with one `aria-live` status line beside each) reads
+panel, since nhl v22 on the Suggested Parlays tab's under its heading, and, since nhl v10, in the Player props window, 44px, with one `aria-live` status line beside each) reads
 ESPN's free scoreboard in the browser (`?dates=YYYYMMDD&limit=100&_=<now>`, no-store, no custom header, so no
 preflight: ESPN answers with `access-control-allow-origin: *`) for every day the Games strip shows from today on
 with a game still to come, and, at the same time, DraftKings' player props for the games still to come today and
@@ -928,7 +935,9 @@ worse probability on log loss and Brier; its Unders at 5 points or more above th
   in a stat of his group. A line qualifies as a team leg does (`propQual`: the model's chance 45% to 97%, at or above the
   price's implied chance, a main line with both prices, no whole-number line, under 15 points over DraftKings' fair chance,
   the anytime goal's fair chance its price over DraftKings' measured margin, est.); a value pick at 5 points or more. The
-  Top 30 and a level show it by the player's club and name, and its chance as "props model 65%", never just "model".
+  Top 30 shows it by the player's club and name, and its chance as "props model 65%", never just "model"; a level (nhl v22, the
+  NFL's rows) shows the chance under the price as the team legs' is, the card's chance box saying "props on trial" and the row's
+  title and its Add's name "props model 65% (on trial)".
 - **The levels** still take one leg a game, chosen on every qualifying leg of the game, team bet or player line, by the same
   exact search; their price is the legs' prices multiplied. The record takes them as the tab draws them and grades a player
   leg on the box score the state carries (under The suggested parlays' record).

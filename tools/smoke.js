@@ -800,7 +800,7 @@ function holdSuggest(w, ms, tag) {
         const shown = [...el.querySelectorAll('.pb-tl')].map(x => x.dataset.id), b = sBrute(pool.legs, n, floor);
         if (!b) { chk(el.classList.contains('none') && txt(el.querySelector('.pb-empty')) === sSpWhy(dd, pool), `${dt}: ${label} is empty: "${sSpWhy(dd, pool)}" (${txt(el.querySelector('.pb-empty')) || 'a parlay drawn'})`); levels[id] = null; continue; }
         chk(JSON.stringify(shown) === JSON.stringify(b.legs.map(L => L.id)), `${dt}: ${label} is the brute force's ${b.likeliest ? 'likeliest' : floor ? 'best return' : 'likeliest pair'}: ${b.legs.map(L => L.id).join(', ')} (page: ${shown.join(', ')})`);
-        const rule = !floor ? 'the likeliest pair' : b.likeliest ? `the likeliest ${n} legs` : `best return that lands ${Math.round(floor * 100)}%+ by the model`;
+        const rule = !floor ? 'likeliest pair' : b.likeliest ? `likeliest ${n} legs` : `best return · lands ${Math.round(floor * 100)}%+`;
         chk(txt(el.querySelector('.pb-rule')) === rule, `${dt}: ${label}'s rule line reads "${rule}" (${txt(el.querySelector('.pb-rule'))})`);
         const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x));
         const hasP = b.legs.some(L => L.prop);      // a level holding a player line: its chance partly the props model's, on trial, never "model says"
@@ -812,7 +812,9 @@ function holdSuggest(w, ms, tag) {
         const lb = [];
         for (const L of b.legs) {
           const row = el.querySelector(`.pb-tl[data-id="${L.id}"]`), rt = txt(row), ab = row && row.querySelector('button.sp-add'), on = inB.has(L.id);
-          if (!(rt.includes(PBS.odds(L.price)) && rt.includes(`fair ${PBS.pctW(L.fair)}`) && rt.includes(`model ${PBS.pctW(L.p)}`) && txt(row.querySelector('.pb-l2 .m')) === `${L.mu} · ${sClock(Date.parse(L.start))}`)) lb.push(`${L.id}: ${rt}`);
+          const ttl = row ? row.getAttribute('title') || '' : '', pr = row && row.querySelector('.pr'), em = pr && pr.querySelector('em'), mdl = `${L.prop ? 'props model' : 'model'} ${PBS.pctW(L.p)}`;
+          if (!(pr && txt(pr) === `${PBS.odds(L.price)}${PBS.pctW(L.p)}` && txt(em) === PBS.pctW(L.p) && ttl.includes(`fair ${PBS.pctW(L.fair)}`) && ttl.includes(mdl) && (!L.prop || /on trial/.test(ttl))
+            && txt(row.querySelector('.nm .m')) === `${L.mu} · ${sClock(Date.parse(L.start))}` && ab && ab.getAttribute('aria-label').includes(mdl))) lb.push(`${L.id}: ${rt} [${ttl}]`);
           if (/thin edge/i.test(rt) !== (L.edge < S.edge)) lb.push(`${L.id}: thin edge ${/thin edge/i.test(rt)} at edge ${L.edge}`);
           if (!ab || ab.dataset.leg !== L.id || ab.getAttribute('aria-pressed') !== String(on) || txt(ab) !== (on ? 'Added' : 'Add') || !ab.getAttribute('aria-label').includes(`${S.teams[L.g.away].short} @ ${S.teams[L.g.home].short}`)) lb.push(`${L.id}: its Add (${ab ? txt(ab) + ' ' + ab.getAttribute('aria-pressed') : 'none'})`);
         }
@@ -872,7 +874,7 @@ async function parlayBuilder() {
   chk(!$('tab-parlays').hidden && w.location.hash === '#parlays', `#parlay opens the Parlay Builder (${w.location.hash})`);
   const order = [...$('tab-parlays').children].map(x => x.id || x.className.split(' ')[0]), at = id => order.indexOf(id);
   chk(at('builder') >= 0 && at('builder') < at('pbPanel') && at('pbPanel') < at('pbPick') && at('pbPick') < at('saved'), `the Parlay Builder is the builder first, then the Top 30 lines, Pick your own legs and the saved parlays (${order.join(', ')})`);
-  chk(txt($('pbTitle')) === 'Top 30 lines' && txt($('spTitle')) === 'Suggested parlays' && !!$('tab-suggest').querySelector('#pbRec'), `the panel is the Top 30 lines, and the levels and their record are the Suggested Parlays tab's (${txt($('pbTitle'))}; ${txt($('spTitle'))})`);
+  chk(txt($('pbTitle')) === 'Top 30 lines' && txt($('spTitle')) === 'Suggested Parlays' && !!$('tab-suggest').querySelector('#pbRec'), `the panel is the Top 30 lines, and the levels and their record are the Suggested Parlays tab's (${txt($('pbTitle'))}; ${txt($('spTitle'))})`);
   /* the default list, and the Suggested Parlays tab's sets, every level by brute force */
   const P0 = holdPanel(w, AT, 'default'), S0 = holdSuggest(w, AT, 'default');
   /* every clock on the page is the visitor's own and names its zone; the card's, which goes to other people, is Eastern and says ET */
@@ -880,7 +882,7 @@ async function parlayBuilder() {
   chk(txt($('pbRead')).includes(`as read at ${clock(PUB)}, the job's last run`), `the panel dates the prices in the visitor's zone, named (${txt($('pbRead'))})`);
   const tileTimes = [...d.querySelectorAll('#pbGrid input[data-g]')].map(x => [x.dataset.g, txt(x.closest('.pb-gt'))]);
   chk(tileTimes.every(([id, t]) => t.endsWith(clock(Date.parse(S.games.find(g => g.id === id).start)))), `every game tile's puck drop names its zone (${tileTimes.slice(0, 2).map(x => x[1]).join(' | ')})`);
-  const spTimes = [...d.querySelectorAll('#spBody .sp-day[data-sp-state="open"] .pb-tl')].map(x => [x.dataset.id.split('|')[0], txt(x.querySelector('.pb-ll .m'))]);
+  const spTimes = [...d.querySelectorAll('#spBody .sp-day[data-sp-state="open"] .pb-tl')].map(x => [x.dataset.id.split('|')[0], txt(x.querySelector('.nm .m'))]);
   chk(spTimes.every(([id, t]) => t.endsWith(clock(Date.parse(S.games.find(g => g.id === id).start)))), `every suggested level's leg names its puck drop's zone (${spTimes.slice(0, 2).map(x => x[1]).join(' | ')})`);
   /* preferred is the Games cards' call: every qualifying leg of the slate */
   for (const L of P0.pool.legs) chk(!L.thin === (L.pick === L.side), `${L.id}: a line 5 points above the price is exactly the card's call (edge ${L.edge}, call ${L.pick})`);
@@ -1787,7 +1789,7 @@ async function refreshOddsChecks() {
   /* the buttons, their status lines, the parse; no ESPN request for odds on load, on the watch or on a tab */
   {
     const errs = [], w = await boot(AT, errs, { hash: 'games' }), d = w.document;
-    for (const [id, note, tab] of [['refreshOdds', 'oddsNote', 'games'], ['pbRefreshOdds', 'pbOddsNote', 'parlays']]) {
+    for (const [id, note, tab] of [['refreshOdds', 'oddsNote', 'games'], ['spRefreshOdds', 'spOddsNote', 'suggest'], ['pbRefreshOdds', 'pbOddsNote', 'parlays']]) {
       const b = d.getElementById(id), s = d.getElementById(note);
       chk(!!b && b.tagName === 'BUTTON' && b.type === 'button' && !b.disabled && b.tabIndex >= 0 && txt(b) === 'Refresh odds' && b.closest('section') === d.getElementById('tab-' + tab), `${id}: a Refresh odds button on the ${tab} tab, a button the keyboard reaches`);
       chk(!!b && w.getComputedStyle(b).minHeight === '44px', `${id}: 44px tall (min-height ${b && w.getComputedStyle(b).minHeight})`);
@@ -1921,7 +1923,7 @@ async function refreshOddsChecks() {
   for (const g of sPropsAsk(AT)) { pq.asked++; if (sStarted(g, T2) || g === gI) pq.started++; else if (g === gP || g === gX) pq.off++; else pq.none++; }
   const said = sOddsText(cnt, atMs) + sPropsText(pq) + (cardShut ? ' The parlay card was closed: a leg on it moved or came off with this read; Finish again for the new lines.' : '');
   if (cardDuring) chk(d.getElementById('pcWin').hidden === !!cardShut, `a card open during the read ${cardShut ? 'that held a leg whose number moved is closed' : 'stays open'} (${d.getElementById('pcWin').hidden ? 'closed' : 'open'})`);
-  chk(txt(d.getElementById('pbOddsNote')) === said && txt(d.getElementById('oddsNote')) === said, `after the read the status line says "${said}" (${txt(d.getElementById('pbOddsNote'))})`);
+  chk(txt(d.getElementById('pbOddsNote')) === said && txt(d.getElementById('oddsNote')) === said && txt(d.getElementById('spOddsNote')) === said, `after the read every status line says "${said}" (${txt(d.getElementById('pbOddsNote'))})`);
   console.log(`  after the press: "${txt(d.getElementById('pbOddsNote'))}"; the builder ${legs.length} legs -> ${d.querySelectorAll('#legs .leg').length}`);
   chk(d.getElementById('pbRefreshOdds').getAttribute('aria-disabled') === null, 'and the button is no longer busy');
   /* nothing stored by the press */
@@ -4561,8 +4563,10 @@ async function suggestRecord() {
     const any = TIERS.some(([id]) => R.tiers[id].graded || R.tiers[id].push);
     const want = ['Record'].concat(any ? TIERS.map(([id, label]) => { const t = R.tiers[id]; return `${label} ${t.won}–${t.lost}${t.graded || t.push ? ` ${un(t.units)} units` : ''}`; }) : ['None graded yet']).concat(R.pending ? [`Pending ${R.pending}`] : []);
     const got = [...rec.children].map(txt);
-    chk(!rec.hidden && rec.closest('#spPanel') && rec.previousElementSibling && rec.previousElementSibling.classList.contains('pb-head') && JSON.stringify(got) === JSON.stringify(want),
-      `the Suggested Parlays tab's record row under its heading, pill by pill: ${got.join(' | ')} (want ${want.join(' | ')})`);
+    /* the NFL hub's order (nhl v22): the heading, the odds bar, the record, the days' sets */
+    const sibs = rec.parentElement ? [...rec.parentElement.children] : [], at = q => sibs.indexOf(d.querySelector(q));
+    chk(!rec.hidden && rec.closest('#spPanel') && at('#spPanel .pb-head') === 0 && at('#spPanel .pb-head') < at('#spPanel .sp-odds') && at('#spPanel .sp-odds') < at('#pbRec') && at('#pbRec') < at('#spBody') && JSON.stringify(got) === JSON.stringify(want),
+      `the Suggested Parlays tab's record row under its heading and odds bar, pill by pill: ${got.join(' | ')} (want ${want.join(' | ')})`);
     if (any) for (const [id, label] of TIERS) {
       const t = R.tiers[id], el = rec.querySelector(`[data-pb-rec="${id}"]`);
       const title = `${label}: ${t.won} won of ${t.graded} graded${R.since ? ` since ${PBS.day(R.since)}` : ''}${t.graded ? `; wins expected ${f1(t.exp_fair)} by DraftKings' fair chance${t.fair_n < t.graded ? ` (on the ${t.fair_n} with one)` : ''}, ${f1(t.exp_model)} by the model` : ''}`

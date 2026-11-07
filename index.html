@@ -374,7 +374,7 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
    the card; three a row from 1100px down. Each figure steps down to fit its box (fitNums), never cut */
 .pb-nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .pb-n{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:6px 8px}
-.pb-n.pay{grid-column:1/-1}
+.pb-n.pay,.pb-n.pb-span{grid-column:1/-1}
 .pb-n .v{font:700 17px/1.15 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
 .pb-n .k{font-size:10px;font-weight:700;letter-spacing:.05em;line-height:21px;text-transform:uppercase;color:var(--muted-ink)}
 .pb-n .s{margin-top:1px;font-size:11px;font-weight:600;line-height:1.4;color:var(--ink-2)}
@@ -2348,7 +2348,7 @@ function spWide(D) {
   if (D.pool.tickable.length < 2) return `Only one game on ${txt} has a DraftKings line, and a parlay needs two.`;
   return '';
 }
-const legRuleText = (t, res) => { const [, , n, floor] = t; return !floor ? 'likeliest pair' : res.likeliest ? `likeliest ${n} legs` : `best return · lands ${Math.round(floor * 100)}%+`; };
+const legRuleText = (t, res) => { const [, , n, floor] = t; return !floor ? 'likeliest pair' : res.likeliest ? `likeliest ${n} legs` : `best return · model ${Math.round(floor * 100)}%+`; };
 const legRuleTitle = (t, res) => { const [, , n, floor] = t; return !floor ? 'The likeliest 2-leg parlay by the model' : res.likeliest ? `No ${n}-leg parlay lands ${Math.round(floor * 100)}% of the time by the model: the likeliest ${n} legs` : `The ${n}-leg parlay with the best return (the model's chance times the payout) that lands at least ${Math.round(floor * 100)}% of the time by the model`; };
 const thinT = () => `thin edge: the model rates it at or above DraftKings' price, but not ${Math.round(S.edge * 100)} points above it`;
 /* the three numbers of a level: the fair chance (the model's beside it), the price, what the bet amount pays */
@@ -2362,18 +2362,20 @@ const spNums = (p, fair, dec, pays, prop) => `<div class="pb-nums">
 const spHead = (id, label, n, tag, rule) => `<div class="pb-th">${tag || ''}<span class="pb-tn">${label}</span><span class="pb-tc">${n} legs</span>${rule || ''}</div>`;
 /* a leg's two lines: the club or player on the first (a total's two clubs and its bet), the bet, the game and its puck drop under it */
 const spWho = (pills, who, thin) => `<span class="pb-who">${pills}<b>${esc(who)}</b>${thin || ''}</span>`;
+const spFairEm = (fair, est) => fair === null || fair === undefined ? '—' : `${whole(fair)}${est ? ' est.' : ''}`;
 const spUnder = (bet, mu, when) => `<small>${bet ? `${esc(bet)} · ` : ''}<span class="m"><span class="nw">${esc(mu)}</span>${when ? ` · <span class="nw">${esc(when)}</span>` : ''}</span></small>`;
 /* an open level's card: each leg a row with its own Add, then Finish and Add to builder */
 function spCard(t, res, D, inB, drawnIds) {
   const [id, label, n] = t, key = `${D.date}|${id}`;
   if (!res) return `<div class="pb-tier none" data-tier="${id}">${spHead(id, label, n)}<p class="pb-empty">${esc(spWhy(D.date, D.pool))}</p></div>`;
   const stake = pbStake(), all = sameLegs(drawnIds, res.legs.map(L => L.id));
-  /* the model's chance under the price, the NFL's; DraftKings' fair chance on the row's title and in the Add's name */
+  /* DraftKings' fair chance under the price, the NFL's (est. on a Yes price): the legs' figures multiply to the card's fair chance; both
+     chances, named, on the row's title and in the Add's name */
   const rows = res.legs.map(L => { const on = inB.has(L.id), ch = legChances(L, true) + (L.prop ? ' (on trial)' : ''), tot = L.kind === 'ou' && !L.prop;
     return `<li class="pb-tl" data-id="${esc(L.id)}" title="${esc(ch)}">
       <span class="nm">${spWho(legWho(L), tot ? L.bet : L.who, L.thin ? `<span class="tag thin" title="${esc(thinT())}">thin edge</span>` : '')}${spUnder(tot ? '' : L.bet, L.mu, timeOf(L.g))}</span>
-      <span class="pr">${fmtOdds(L.price)}<em>${L.prop ? 'props ' : ''}${whole(L.p)}</em></span>
-      <button type="button" class="sp-add" data-leg="${esc(L.id)}" aria-pressed="${on}" aria-label="${esc(`${on ? 'In your parlay: take out' : 'Add'} ${legName(L)}, ${fmtOdds(L.price)}, ${ch}`)}" title="${on ? 'In your parlay: tap to take it out' : 'Add this leg to your parlay'}">${on ? 'Added' : 'Add'}</button></li>`; }).join('');
+      <span class="pr">${fmtOdds(L.price)}<em>${spFairEm(L.fair, L.fairEst)}</em></span>
+      <button type="button" class="sp-add" data-leg="${esc(L.id)}" aria-pressed="${on}" aria-label="${esc(`${on ? 'In your parlay: take out' : 'Add'} ${legName(L)}, ${fmtOdds(L.price)}, ${ch.replace(/ · /g, ', ')}`)}" title="${on ? 'In your parlay: tap to take it out' : 'Add this leg to your parlay'}">${on ? 'Added' : 'Add'}</button></li>`; }).join('');
   return `<div class="pb-tier" data-tier="${id}">
     ${spHead(id, label, n, '', `<span class="pb-rule" title="${esc(legRuleTitle(t, res))}">${esc(legRuleText(t, res))}</span>`)}
     ${spNums(res.p, res.fair, res.dec, `<div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`, res.legs.some(L => L.prop))}
@@ -2427,12 +2429,12 @@ function spLockedCard(t, e) {
     const who = L.kind === 'prop' ? (S.teams && S.teams[L.team] ? pill(L.team) : '') : L.kind === 'ou' ? (away && home ? pill(away) + pill(home) : '') : side ? pill(side) : '';
     const st = gr ? `<span class="tag ${SP_GRADE[gr][1]}">${SP_GRADE[gr][0]}</span>` : g && hasStarted(g) ? '<span class="tag ice" title="Under way: graded once it is final">live</span>' : `<span class="nw">${esc(L.start ? hhmm(L.start) : '')}</span>`;
     /* the club or player and the bet, as an open level shows them */
-    const name = L.kind === 'prop' ? (L.name || `ESPN athlete ${L.pid}`) : L.kind === 'ou' ? `${L.side === 'over' ? 'Over' : 'Under'} ${L.line} goals` : side ? T(side).short : bet;
+    const name = L.kind === 'prop' ? (L.name || `ESPN athlete ${L.pid}`) : L.kind === 'ou' ? `${L.side === 'over' ? 'Over' : 'Under'} ${L.line} goals` : side ? T(side).short : (L.side === 'home' ? ab[1] : L.side === 'away' ? ab[0] : '') || 'A club';
     const what = L.kind === 'prop' ? propBet(L.stat, L.mk, L.side, +L.line, L.k) : L.kind === 'ml' ? 'To win' : L.kind === 'pl' ? `Puck line ${fmtLine(L.line)}` : '';
     const ch = `fair ${L.fair === null ? '—' : whole(L.fair)}${L.kind === 'prop' && L.mk === 'yes' ? ' est.' : ''} · ${L.kind === 'prop' ? 'props model' : 'model'} ${whole(L.p)}${L.kind === 'prop' ? ' (on trial)' : ''}`;
     return `<li class="pb-tl" data-id="${esc(L.id)}" data-grade="${gr || 'pending'}" title="${esc(ch)}">
       <span class="nm">${spWho(who, name)}${spUnder(what, mu, '')}</span>
-      <span class="pr">${fmtOdds(L.price)}<em>${L.kind === 'prop' ? 'props ' : ''}${whole(L.p)}</em></span>
+      <span class="pr">${fmtOdds(L.price)}<em>${spFairEm(L.fair, L.kind === 'prop' && L.mk === 'yes')}</em></span>
       <span class="sp-st">${st}</span></li>`;
   }).join('');
   const res = R.result === 'won' ? `<span class="tag win">won</span>` : R.result === 'lost' ? '<span class="tag loss">lost</span>' : R.result === 'push' ? '<span class="tag push">push</span>' : '';
@@ -2739,9 +2741,8 @@ function fitNums() {
   for (const n of document.querySelectorAll('#spBody .pb-n')) {
     const v = n.querySelector('.v'); if (!v) continue;
     n.classList.remove('pb-span');
-    if (fitOne(v, 13)) continue;
-    if (n.classList.contains('pay')) n.classList.add('pb-span');
-    fitOne(v, 11);
+    if (!fitOne(v, 13)) { if (n.classList.contains('pay')) n.classList.add('pb-span'); fitOne(v, 11); }
+    if (n.classList.contains('pb-chance') && n.scrollWidth > n.clientWidth + 0.5) n.classList.add('pb-span');
   }
 }
 let FIT_T = null;

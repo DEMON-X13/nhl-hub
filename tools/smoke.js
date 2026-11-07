@@ -788,6 +788,13 @@ function holdSuggest(w, ms, tag) {
   for (const dd of days) {
     const sec = d.querySelector(`#spBody .sp-day[data-sp-day="${dd}"]`); if (!sec) continue;
     const open = sDayOpen(dd, ms), lockMs = sLockAt(dd), lockEl = sec.querySelector('.sp-lock'), dt = `${tag}, ${dd}`;
+    {
+      const today = etDate(ms), nm = dd === today ? 'Today' : dd === PBS.nextDay(today) ? 'Tomorrow' : PBS.day(dd), dg = S.games.filter(g => g.date === dd);
+      const ts = [...new Set(dg.slice().sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0).map(g => sClock(Date.parse(g.start))))], span = ts.length > 1 ? `${ts[0]} to ${ts[ts.length - 1]}` : ts[0] || '';
+      const pill = sec.querySelector('.sp-dh .sp-dpill');
+      chk(txt(sec.querySelector('.sp-dh h3')) === `${nm}, ${dg.length} game${dg.length === 1 ? '' : 's'}` && (nm === PBS.day(dd) ? !pill : txt(pill) === PBS.day(dd)) && txt(sec.querySelector('.sp-dh small')) === span,
+        `${dt}: the day's heading names it, counts its games, dates it and gives its first and last puck drop in the visitor's zone (${txt(sec.querySelector('.sp-dh'))})`);
+    }
     chk((sec.dataset.spState === 'open') === open, `${dt}: the set is ${open ? 'open' : 'locked'} (${sec.dataset.spState})`);
     if (open) {
       chk(!!lockEl && txt(lockEl) === `Locks ${sClock(lockMs)}`, `${dt}: it says when it locks, the day's first puck drop (${txt(lockEl)})`);
@@ -800,7 +807,7 @@ function holdSuggest(w, ms, tag) {
         const shown = [...el.querySelectorAll('.pb-tl')].map(x => x.dataset.id), b = sBrute(pool.legs, n, floor);
         if (!b) { chk(el.classList.contains('none') && txt(el.querySelector('.pb-empty')) === sSpWhy(dd, pool), `${dt}: ${label} is empty: "${sSpWhy(dd, pool)}" (${txt(el.querySelector('.pb-empty')) || 'a parlay drawn'})`); levels[id] = null; continue; }
         chk(JSON.stringify(shown) === JSON.stringify(b.legs.map(L => L.id)), `${dt}: ${label} is the brute force's ${b.likeliest ? 'likeliest' : floor ? 'best return' : 'likeliest pair'}: ${b.legs.map(L => L.id).join(', ')} (page: ${shown.join(', ')})`);
-        const rule = !floor ? 'likeliest pair' : b.likeliest ? `likeliest ${n} legs` : `best return · lands ${Math.round(floor * 100)}%+`;
+        const rule = !floor ? 'likeliest pair' : b.likeliest ? `likeliest ${n} legs` : `best return · model ${Math.round(floor * 100)}%+`;
         chk(txt(el.querySelector('.pb-rule')) === rule, `${dt}: ${label}'s rule line reads "${rule}" (${txt(el.querySelector('.pb-rule'))})`);
         const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x));
         const hasP = b.legs.some(L => L.prop);      // a level holding a player line: its chance partly the props model's, on trial, never "model says"
@@ -813,9 +820,10 @@ function holdSuggest(w, ms, tag) {
         for (const L of b.legs) {
           const row = el.querySelector(`.pb-tl[data-id="${L.id}"]`), rt = txt(row), ab = row && row.querySelector('button.sp-add'), on = inB.has(L.id);
           const ttl = row ? row.getAttribute('title') || '' : '', pr = row && row.querySelector('.pr'), em = pr && pr.querySelector('em'), mdl = `${L.prop ? 'props model' : 'model'} ${PBS.pctW(L.p)}`;
-          const ch = `${L.prop ? 'props ' : ''}${PBS.pctW(L.p)}`;
+          const ch = `${PBS.pctW(L.fair)}${L.fairEst ? ' est.' : ''}`, bold = L.kind === 'ou' && !L.prop ? L.bet : L.who, under = L.kind === 'ou' && !L.prop ? '' : `${L.bet} · `;
           if (!(pr && txt(pr) === `${PBS.odds(L.price)}${ch}` && txt(em) === ch && ttl.includes(`fair ${PBS.pctW(L.fair)}`) && ttl.includes(mdl) && (!L.prop || /on trial/.test(ttl))
-            && txt(row.querySelector('.nm .m')) === `${L.mu} · ${sClock(Date.parse(L.start))}` && ab && ab.getAttribute('aria-label').includes(mdl))) lb.push(`${L.id}: ${rt} [${ttl}]`);
+            && txt(row.querySelector('.nm .m')) === `${L.mu} · ${sClock(Date.parse(L.start))}` && txt(row.querySelector('.nm b')) === bold && txt(row.querySelector('.nm small')) === `${under}${L.mu} · ${sClock(Date.parse(L.start))}`
+            && ab && ab.getAttribute('aria-label').includes(mdl) && !/ · /.test(ab.getAttribute('aria-label')))) lb.push(`${L.id}: ${rt} [${ttl}]`);
           if (/thin edge/i.test(rt) !== (L.edge < S.edge)) lb.push(`${L.id}: thin edge ${/thin edge/i.test(rt)} at edge ${L.edge}`);
           if (!ab || ab.dataset.leg !== L.id || ab.getAttribute('aria-pressed') !== String(on) || txt(ab) !== (on ? 'Added' : 'Add') || !ab.getAttribute('aria-label').includes(`${S.teams[L.g.away].short} @ ${S.teams[L.g.home].short}`)) lb.push(`${L.id}: its Add (${ab ? txt(ab) + ' ' + ab.getAttribute('aria-pressed') : 'none'})`);
         }
@@ -847,6 +855,20 @@ function holdSuggest(w, ms, tag) {
         if (canon(shown.map(x => x.dataset.id)) !== canon(t.legs.map(L => L.id))) lb.push(`${label}: legs ${shown.map(x => x.dataset.id).join(',')} not the record's`);
         t.legs.forEach((L, i) => { const gr = sSpGrade(L, i, e, id), r = shown[i]; if (r && r.dataset.grade !== (gr || 'pending')) lb.push(`${L.id}: graded ${r.dataset.grade}, not ${gr || 'pending'}`); });
         if (el.dataset.result !== res[id].result) lb.push(`${label}: ${el.dataset.result}, not ${res[id].result}`);
+        { const fl = TIERS.find(x => x[0] === id), want = !fl[3] ? 'likeliest pair' : t.likeliest ? `likeliest ${fl[2]} legs` : `best return · model ${Math.round(fl[3] * 100)}%+`;
+          if (txt(el.querySelector('.pb-rule')) !== want) lb.push(`${label}: rule "${txt(el.querySelector('.pb-rule'))}" not "${want}"`); }
+        t.legs.forEach((L, i) => {
+          const r = shown[i]; if (!r) return;
+          const g = S.games.find(x => x.id === L.game), ab = String(L.mu || '').split(' @ '), club = x => Object.keys(S.teams || {}).find(k => S.teams[k].abbr === x) || null;
+          const side = L.side === 'home' ? (g ? g.home : club(ab[1])) : L.side === 'away' ? (g ? g.away : club(ab[0])) : null;
+          const name = L.kind === 'prop' ? (L.name || `ESPN athlete ${L.pid}`) : L.kind === 'ou' ? `${L.side === 'over' ? 'Over' : 'Under'} ${L.line} goals` : side ? S.teams[side].short : (L.side === 'home' ? ab[1] : ab[0]) || 'A club';
+          const what = L.kind === 'prop' ? null : L.kind === 'ml' ? 'To win' : L.kind === 'pl' ? `Puck line ${PBS.line(L.line)}` : '';
+          const fair = L.fair === null || L.fair === undefined ? '—' : `${PBS.pctW(L.fair)}${L.kind === 'prop' && L.mk === 'yes' ? ' est.' : ''}`, gr = sSpGrade(L, i, e, id);
+          const st = gr ? { win: 'won', loss: 'lost', push: 'push', void: 'void' }[gr] : g && sStarted(g, ms) ? 'live' : sClock(Date.parse(L.start));
+          const small = txt(r.querySelector('.nm small'));
+          if (txt(r.querySelector('.nm b')) !== name || (what === null ? !small.endsWith(` · ${L.mu}`) : small !== `${what ? what + ' · ' : ''}${L.mu}`) || txt(r.querySelector('.pr')) !== `${PBS.odds(L.price)}${fair}` || txt(r.querySelector('.sp-st')) !== st)
+            lb.push(`${L.id}: "${txt(r)}" not ${name} / ${what === null ? '(a player\'s bet)' : what} · ${L.mu} / ${PBS.odds(L.price)} ${fair} / ${st}`);
+        });
         const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x)), R = res[id];
         if (!(v[1] || '').startsWith(PBS.toAm(t.dec)) || !(v[0] || '').startsWith(PBS.pctW(t.fair === null ? t.p : t.fair))) lb.push(`${label}: numbers ${v.join(' | ')}`);
         /* what the bet amount paid, was lost, came back or pays */

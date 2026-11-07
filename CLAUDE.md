@@ -260,7 +260,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   copied from its computed styles: under the heading the odds bar ("Odds", its own Refresh odds, `#spRefreshOdds`, and status line,
   `#spOddsNote`), then the record ("Record" over its pills), then today's set and tomorrow's (Eastern), a rule between each: the
   day's heading, "Today, 3 games" with its date in a pill and its first and last puck drops, its lock words on a line under it
-  ("Locks 7:00 PM EDT"; a locked day's "Locked since 7:00 PM EDT", "Under way" or "Graded" in a gold-outlined mark); the three
+  ("Locks 7:00 PM EDT"; a locked day's the NFL's, a gold-outlined Locked and a sentence, "Locked since 7:00 PM EDT. Under way." or
+  "... Graded."); the three
   levels three a row from 1101px, two from 641px to 1100px (Aggressive under the two) and one on a phone, the cards of a row one
   height with their buttons at the foot (nhl v14 first put the three on one line: "can you get rid of the extreme parlay and make
   the other three be on the same line in columns like in the nfl-hub?"). A card, the NFL's: its top edge lime, gold or rose by the
@@ -270,11 +271,13 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   what the amount pays across the card under them, all three a row from 1100px down and on the narrowest phones (380px and under)
   the chance across the card over the other two, each figure stepped down to fit its box (`fitNums`); a leg a row (its club's pill
   or a total's two and, bold, the club, the player or the total's bet, with a thin edge's tag; under it in small type the bet, the
-  game and its puck drop; at the right DraftKings' price with the model's chance under it, the NFL's; then the leg's own Add, Added
-  once in the parlay; DraftKings' fair chance and the model's, named, a player's "props model ... (on trial)", on the row's title and
-  in its Add's name); Add to builder, then Finish filled lime; an empty level only as tall as its words. A locked day's levels are
-  the record's, read only, in the same rows: each leg its grade in a tag (won, lost, push, void) or its puck drop or "under way"
-  where the Add was, each level its result at the left of its head and what it paid in its third box. Lock and New legs went with
+  game and its puck drop, the game and its puck drop each kept whole and moving to the next line together; at the right DraftKings'
+  price with the model's chance under it, the NFL's, a player line's "props 81%"; then the leg's own Add, one width with Added, which
+  is lit ice once in the parlay (as the Top 30's, and the smoke holds both by the page's own rules); DraftKings' fair chance and the
+  model's, named, a player's "props model ... (on trial)", on the row's title and in its Add's name); Add to builder, then Finish
+  filled lime, both at the NFL's 14.5px; an empty level only as tall as its words. A locked day's levels are the record's, read only,
+  in the same rows and with the same rule line: each leg its grade in a tag (won, lost, push, void), its puck drop, or "live" while
+  its game is on, where the Add was, each level its result at the left of its head and what it paid in its third box. Lock and New legs went with
   nhl v17, as the NFL hub's went in its v116.
 - **The Parlay Builder tab**: Refresh odds in the tab's own odds bar, as the NBA's; then the builder (nhl v17: first, as the
   NFL hub's); then the Top 30 lines with the controls box (its groups' labels on one line, the bet amount's note under the
@@ -936,8 +939,8 @@ worse probability on log loss and Brier; its Unders at 5 points or more above th
   price's implied chance, a main line with both prices, no whole-number line, under 15 points over DraftKings' fair chance,
   the anytime goal's fair chance its price over DraftKings' measured margin, est.); a value pick at 5 points or more. The
   Top 30 shows it by the player's club and name, and its chance as "props model 65%", never just "model"; a level (nhl v22, the
-  NFL's rows) shows the chance under the price as the team legs' is, the card's chance box saying "props on trial" and the row's
-  title and its Add's name "props model 65% (on trial)".
+  NFL's rows) shows it under the price as "props 65%", the card's chance box saying "props on trial" and the row's title and its
+  Add's name "props model 65% (on trial)".
 - **The levels** still take one leg a game, chosen on every qualifying leg of the game, team bet or player line, by the same
   exact search; their price is the legs' prices multiplied. The record takes them as the tab draws them and grades a player
   leg on the box score the state carries (under The suggested parlays' record).

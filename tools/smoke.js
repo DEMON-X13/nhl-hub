@@ -813,7 +813,8 @@ function holdSuggest(w, ms, tag) {
         for (const L of b.legs) {
           const row = el.querySelector(`.pb-tl[data-id="${L.id}"]`), rt = txt(row), ab = row && row.querySelector('button.sp-add'), on = inB.has(L.id);
           const ttl = row ? row.getAttribute('title') || '' : '', pr = row && row.querySelector('.pr'), em = pr && pr.querySelector('em'), mdl = `${L.prop ? 'props model' : 'model'} ${PBS.pctW(L.p)}`;
-          if (!(pr && txt(pr) === `${PBS.odds(L.price)}${PBS.pctW(L.p)}` && txt(em) === PBS.pctW(L.p) && ttl.includes(`fair ${PBS.pctW(L.fair)}`) && ttl.includes(mdl) && (!L.prop || /on trial/.test(ttl))
+          const ch = `${L.prop ? 'props ' : ''}${PBS.pctW(L.p)}`;
+          if (!(pr && txt(pr) === `${PBS.odds(L.price)}${ch}` && txt(em) === ch && ttl.includes(`fair ${PBS.pctW(L.fair)}`) && ttl.includes(mdl) && (!L.prop || /on trial/.test(ttl))
             && txt(row.querySelector('.nm .m')) === `${L.mu} · ${sClock(Date.parse(L.start))}` && ab && ab.getAttribute('aria-label').includes(mdl))) lb.push(`${L.id}: ${rt} [${ttl}]`);
           if (/thin edge/i.test(rt) !== (L.edge < S.edge)) lb.push(`${L.id}: thin edge ${/thin edge/i.test(rt)} at edge ${L.edge}`);
           if (!ab || ab.dataset.leg !== L.id || ab.getAttribute('aria-pressed') !== String(on) || txt(ab) !== (on ? 'Added' : 'Add') || !ab.getAttribute('aria-label').includes(`${S.teams[L.g.away].short} @ ${S.teams[L.g.home].short}`)) lb.push(`${L.id}: its Add (${ab ? txt(ab) + ' ' + ab.getAttribute('aria-pressed') : 'none'})`);
@@ -836,7 +837,7 @@ function holdSuggest(w, ms, tag) {
       const all = S.games.filter(g => g.date === dd), under = all.length && all.every(g => sStarted(g, ms));
       const res = {}; for (const [id] of TIERS) if (e.tiers[id]) res[id] = sSpResult(e.tiers[id], e.tiers[id].legs.map((L, i) => sSpGrade(L, i, e, id)));
       const lv = TIERS.filter(([id]) => e.tiers[id]);
-      const words = lv.length && lv.every(([id]) => res[id].result !== 'pending') ? 'Graded' : under ? 'Under way' : `Locked since ${sClock(Date.parse(e.lock))}`;
+      const words = `Locked since ${sClock(Date.parse(e.lock))}.` + (lv.length && lv.every(([id]) => res[id].result !== 'pending') ? ' Graded.' : under ? ' Under way.' : '');
       chk(txt(lockEl) === words, `${dt}: the locked set says "${words}" (${txt(lockEl)})`);
       const lb = [];
       for (const [id, label] of TIERS) {
@@ -4180,6 +4181,8 @@ async function theLook() {
     chk(txt(ab) === (was ? 'Added' : 'Add') && !ab.querySelector('svg') && w.getComputedStyle(ab).minHeight === '44px', `${sel}: says ${was ? 'Added' : 'Add'}, a word, 44px (${txt(ab)})`);
     ab.click(); const a2 = d.querySelector(`${sel}[data-leg="${key}"]`);
     chk(!!a2 && txt(a2) === (was ? 'Add' : 'Added') && a2.getAttribute('aria-pressed') === String(!was), `${sel}: pressed, it says ${was ? 'Add' : 'Added'} (${a2 && txt(a2)})`);
+    { const lit = el => cssWith(w, 'border-color', /var\(--ice\)/).some(([sl, m]) => !m && hitsSel(el, sl)), on = was ? ab : a2, off = was ? a2 : ab;
+      chk(!!on && !!off && lit(on) && !lit(off), `${sel}: Added is lit ice and Add is not, by the page's own rules`); }
     if (a2) a2.click();
   }
   chk(!d.querySelector('svg:not(.spark):not(.pk-chart)'), 'no icon drawn on the page but the players\' sparklines and the Pick\'em chart');

@@ -365,18 +365,18 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pb-tier.none{border-top-style:dashed;align-self:start}      /* an empty level only as tall as its words */
 /* its head: the level's name in capitals at the right beside its legs; its rule under them in small capitals; a locked level's
    result at the left */
-.pb-th{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:3px 6px;min-height:44px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-ink)}
+.pb-th{display:flex;align-items:center;align-content:flex-start;justify-content:flex-end;flex-wrap:wrap;gap:3px 6px;min-height:44px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-ink)}
 .pb-tn{font:700 17px/1.45 var(--display);letter-spacing:-.3px;color:var(--muted-ink)}
 .pb-tc{font-size:11px;font-weight:600;line-height:1.45;color:var(--ink-2);background:var(--panel-3);border-radius:999px;padding:3px 9px;white-space:nowrap}
 .pb-rule{flex-basis:100%;font-size:11px;font-weight:700;line-height:1.45;color:var(--muted-ink)}
-.pb-th .tag{margin-right:auto;text-transform:none;letter-spacing:0}
+.pb-th .tag{margin-right:auto}
 /* the numbers in boxes: the fair chance (the model's under it) and the price side by side, what the bet amount pays under them across
    the card; three a row from 1100px down. Each figure steps down to fit its box (fitNums), never cut */
 .pb-nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .pb-n{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:6px 8px}
 .pb-n.pay{grid-column:1/-1}
 .pb-n .v{font:700 17px/1.15 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
-.pb-n .k{margin-top:2px;font-size:10px;font-weight:700;letter-spacing:.05em;line-height:1.4;text-transform:uppercase;color:var(--muted-ink)}
+.pb-n .k{font-size:10px;font-weight:700;letter-spacing:.05em;line-height:21px;text-transform:uppercase;color:var(--muted-ink)}
 .pb-n .s{margin-top:1px;font-size:11px;font-weight:600;line-height:1.4;color:var(--ink-2)}
 @media(max-width:1100px){.pb-nums{display:flex;flex-wrap:wrap}.pb-n{flex:1 1 0}.pb-n.pb-span{flex-basis:100%}}
 @media(max-width:380px){.pb-n.pb-chance{flex-basis:100%}}      /* the narrowest phones: the chance and its model line across the card, the price and pays under it */
@@ -388,22 +388,28 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pb-tl .pb-who{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px}
 .pb-tl .pb-who .pill{margin:0}
 .pb-tl .pb-who .tag{margin:0}
+.pb-tl .pb-who b{font-weight:inherit}
 .pb-tl .nm small{display:block;font-size:11.5px;font-weight:400;color:var(--ink-2)}
+.pb-tl .nm small .m{display:inline-block;max-width:100%}       /* the game and its puck drop move to the next line together */
+.pb-tl .nm small .nw{white-space:nowrap}
 .pb-tl .pr{flex:none;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pb-tl .pr em{display:block;font-style:normal;font-size:11px;font-weight:500;color:var(--muted-ink)}
-.pb-tl .sp-add{align-self:center;min-width:44px}
+.pb-tl .sp-add{align-self:center}
 .pb-tl .sp-st{flex:none;align-self:center;display:inline-flex;justify-content:flex-end;min-width:44px;font-size:12px;color:var(--ink-2);white-space:nowrap}
 /* a leg's Add (a suggested level's and a Top 30 line's): a text toggle, Add or Added (aria-pressed), lit ice in the parlay */
 .sp-add,.t30-add{flex:none;min-width:58px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink);cursor:pointer;padding:0 10px;font:700 12.5px var(--body)}
-.pb-tl .sp-add{background:var(--panel-3)}
+.sp-add:hover,.t30-add:hover{border-color:var(--ink-2)}
+.sp-add[aria-pressed=true],.t30-add[aria-pressed=true],.pb-tl .sp-add[aria-pressed=true]{border-color:var(--ice);color:var(--ice-2);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--bg-2)}
+.pb-tl .sp-add{background:var(--panel-3);min-width:64px}       /* Add and Added one width, so the prices stay in a column */
 /* the foot: Add to builder, then Finish filled lime, the NFL hub's */
 .pb-tier .pb-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
-.pb-tier .pb-acts .btn{flex:1 1 auto;min-height:44px;white-space:normal}
+.pb-tier .pb-acts .btn{flex:1 1 auto;min-height:44px;padding:9px 15px;font-size:14.5px;white-space:normal}
 .btn.go{background:var(--lime);border-color:var(--lime);color:#1E2230}
 .btn.go:hover{background:#DBFF7A;border-color:#DBFF7A}
 /* the Suggested Parlays tab: the odds bar, the record, then each day's set under its heading and its lock, a rule between them */
 .sp-odds{margin:10px 0 0}
-.sp-oddsk{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);min-width:84px}
+.sp-oddsk{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-ink);min-width:84px}
+.sp-odds .btn{padding:9px 15px;font-size:14.5px}
 @media(max-width:640px){.sp-oddsk{flex-basis:100%}}
 .sp .pb-rec{margin:14px 0 0;padding:14px 0 0;border-top:1px solid var(--line)}
 .sp .pb-rec .pb-reck{flex-basis:100%;margin:0;font:700 16px var(--body);letter-spacing:0;text-transform:none;color:var(--ink)}
@@ -413,7 +419,7 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .sp-dh .sp-dpill{font-size:11px;font-weight:600;color:var(--ink-2);background:var(--panel-3);border-radius:999px;padding:3px 9px;white-space:nowrap}
 .sp-dh small{font-size:12px;color:var(--muted-ink)}
 .sp-lock{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--ink-2)}
-.sp-lock.mark{display:inline-block;padding:1px 8px;border:1px solid var(--gold);border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+.sp-lockmark{display:inline-block;margin-right:6px;padding:1px 8px;border:1px solid var(--gold);border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);vertical-align:1px}
 /* the Top 30 lines: two parts, each a numbered list; a line a row, its rank, the bet and the price, the game and the numbers under
    them, Add at the right (the NFL hub's Top 30, in the NBA's rows) */
 .t30-part{margin-top:14px}
@@ -2348,7 +2354,7 @@ const thinT = () => `thin edge: the model rates it at or above DraftKings' price
 /* the three numbers of a level: the fair chance (the model's beside it), the price, what the bet amount pays */
 /* a level holding a player line (nhl v18) says its chance is partly the props model's, on trial, never "model says" */
 const spNums = (p, fair, dec, pays, prop) => `<div class="pb-nums">
-      <div class="pb-n pb-chance"><div class="v">${fair === null ? whole(p) : whole(fair)}</div><div class="k">${fair === null ? "model's chance" : 'fair chance'}${fair !== null && prop ? ', est.' : ''}</div><div class="s">${fair === null ? 'no fair chance' : prop ? `model ${whole(p)}, props on trial` : `model says ${whole(p)}`}</div></div>
+      <div class="pb-n pb-chance"><div class="v">${fair === null ? whole(p) : whole(fair)}</div><div class="k">${fair === null ? "model's chance" : 'fair chance'}${fair !== null && prop ? ', est.' : ''}</div><div class="s">${fair === null ? 'no fair chance' : prop ? `model ${whole(p)}, <span class="nw">props on trial</span>` : `model says ${whole(p)}`}</div></div>
       <div class="pb-n"><div class="v">${toAm(dec)}</div><div class="k">price</div></div>
       ${pays}
     </div>`;
@@ -2356,7 +2362,7 @@ const spNums = (p, fair, dec, pays, prop) => `<div class="pb-nums">
 const spHead = (id, label, n, tag, rule) => `<div class="pb-th">${tag || ''}<span class="pb-tn">${label}</span><span class="pb-tc">${n} legs</span>${rule || ''}</div>`;
 /* a leg's two lines: the club or player on the first (a total's two clubs and its bet), the bet, the game and its puck drop under it */
 const spWho = (pills, who, thin) => `<span class="pb-who">${pills}<b>${esc(who)}</b>${thin || ''}</span>`;
-const spUnder = (bet, mu, when) => `<small>${bet ? `${esc(bet)} · ` : ''}<span class="m">${esc(mu)}${when ? ` · <span class="nw">${esc(when)}</span>` : ''}</span></small>`;
+const spUnder = (bet, mu, when) => `<small>${bet ? `${esc(bet)} · ` : ''}<span class="m"><span class="nw">${esc(mu)}</span>${when ? ` · <span class="nw">${esc(when)}</span>` : ''}</span></small>`;
 /* an open level's card: each leg a row with its own Add, then Finish and Add to builder */
 function spCard(t, res, D, inB, drawnIds) {
   const [id, label, n] = t, key = `${D.date}|${id}`;
@@ -2366,7 +2372,7 @@ function spCard(t, res, D, inB, drawnIds) {
   const rows = res.legs.map(L => { const on = inB.has(L.id), ch = legChances(L, true) + (L.prop ? ' (on trial)' : ''), tot = L.kind === 'ou' && !L.prop;
     return `<li class="pb-tl" data-id="${esc(L.id)}" title="${esc(ch)}">
       <span class="nm">${spWho(legWho(L), tot ? L.bet : L.who, L.thin ? `<span class="tag thin" title="${esc(thinT())}">thin edge</span>` : '')}${spUnder(tot ? '' : L.bet, L.mu, timeOf(L.g))}</span>
-      <span class="pr">${fmtOdds(L.price)}<em>${whole(L.p)}</em></span>
+      <span class="pr">${fmtOdds(L.price)}<em>${L.prop ? 'props ' : ''}${whole(L.p)}</em></span>
       <button type="button" class="sp-add" data-leg="${esc(L.id)}" aria-pressed="${on}" aria-label="${esc(`${on ? 'In your parlay: take out' : 'Add'} ${legName(L)}, ${fmtOdds(L.price)}, ${ch}`)}" title="${on ? 'In your parlay: tap to take it out' : 'Add this leg to your parlay'}">${on ? 'Added' : 'Add'}</button></li>`; }).join('');
   return `<div class="pb-tier" data-tier="${id}">
     ${spHead(id, label, n, '', `<span class="pb-rule" title="${esc(legRuleTitle(t, res))}">${esc(legRuleText(t, res))}</span>`)}
@@ -2419,14 +2425,14 @@ function spLockedCard(t, e) {
     const ab = mu.split(' @ '), club = x => Object.keys(S.teams || {}).find(k => T(k).abbr === x) || null;
     const away = g ? g.away : club(ab[0]), home = g ? g.home : club(ab[1]), side = L.side === 'home' ? home : L.side === 'away' ? away : null;
     const who = L.kind === 'prop' ? (S.teams && S.teams[L.team] ? pill(L.team) : '') : L.kind === 'ou' ? (away && home ? pill(away) + pill(home) : '') : side ? pill(side) : '';
-    const st = gr ? `<span class="tag ${SP_GRADE[gr][1]}">${SP_GRADE[gr][0]}</span>` : g && hasStarted(g) ? '<span class="tag ice">under way</span>' : `<span class="nw">${esc(L.start ? hhmm(L.start) : '')}</span>`;
+    const st = gr ? `<span class="tag ${SP_GRADE[gr][1]}">${SP_GRADE[gr][0]}</span>` : g && hasStarted(g) ? '<span class="tag ice" title="Under way: graded once it is final">live</span>' : `<span class="nw">${esc(L.start ? hhmm(L.start) : '')}</span>`;
     /* the club or player and the bet, as an open level shows them */
     const name = L.kind === 'prop' ? (L.name || `ESPN athlete ${L.pid}`) : L.kind === 'ou' ? `${L.side === 'over' ? 'Over' : 'Under'} ${L.line} goals` : side ? T(side).short : bet;
     const what = L.kind === 'prop' ? propBet(L.stat, L.mk, L.side, +L.line, L.k) : L.kind === 'ml' ? 'To win' : L.kind === 'pl' ? `Puck line ${fmtLine(L.line)}` : '';
     const ch = `fair ${L.fair === null ? '—' : whole(L.fair)}${L.kind === 'prop' && L.mk === 'yes' ? ' est.' : ''} · ${L.kind === 'prop' ? 'props model' : 'model'} ${whole(L.p)}${L.kind === 'prop' ? ' (on trial)' : ''}`;
     return `<li class="pb-tl" data-id="${esc(L.id)}" data-grade="${gr || 'pending'}" title="${esc(ch)}">
       <span class="nm">${spWho(who, name)}${spUnder(what, mu, '')}</span>
-      <span class="pr">${fmtOdds(L.price)}<em>${whole(L.p)}</em></span>
+      <span class="pr">${fmtOdds(L.price)}<em>${L.kind === 'prop' ? 'props ' : ''}${whole(L.p)}</em></span>
       <span class="sp-st">${st}</span></li>`;
   }).join('');
   const res = R.result === 'won' ? `<span class="tag win">won</span>` : R.result === 'lost' ? '<span class="tag loss">lost</span>' : R.result === 'push' ? '<span class="tag push">push</span>' : '';
@@ -2435,7 +2441,7 @@ function spLockedCard(t, e) {
     : R.result === 'push' ? `<div class="pb-n pay"><div class="v">${money(cents(stake))}</div><div class="k">the stake back</div></div>`
     : `<div class="pb-n pay" data-pb-pay="${tt.dec}"><div class="v">${money(cents(stake * tt.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`;
   return `<div class="pb-tier locked" data-tier="${id}" data-result="${R.result}">
-    ${spHead(id, label, n, res)}
+    ${spHead(id, label, n, res, `<span class="pb-rule" title="${esc(legRuleTitle(t, tt))}">${esc(legRuleText(t, tt))}</span>`)}
     ${spNums(tt.p, tt.fair, tt.dec, pay, tt.legs.some(L => L.kind === 'prop'))}
     <ul class="pb-tlegs">${rows}</ul>
   </div>`;
@@ -2455,15 +2461,16 @@ function spSetHtml(date, inB, drawnIds) {
   delete SP_CUR[date];
   const e = spSet(date), carries = !!(S.suggest && isObj(S.suggest.sets));
   const all = S.games.filter(g => g.date === date), under = all.length && all.every(g => hasStarted(g));
-  let words = 'Locked', state = 'locked';
+  let words = '', state = 'locked';
   if (e) {
     const lv = PB_TIERS.filter(t => e.tiers[t[0]]);
     const settled = lv.length && lv.every(t => spResult(e.tiers[t[0]], e.tiers[t[0]].legs.map((L, i) => spLegNow(L, i, e, t[0]))).result !== 'pending');
-    if (settled) { words = 'Graded'; state = 'graded'; } else if (under) { words = 'Under way'; state = 'under'; } else words = `Locked since ${hhmm(e.lock)}`;
+    words = ` since ${hhmm(e.lock)}.`;
+    if (settled) { words += ' Graded.'; state = 'graded'; } else if (under) { words += ' Under way.'; state = 'under'; }
   }
   /* a publish from before the record's sets were carried (nhl v16 and older) says only that the day locked, never that no set was taken */
   const none = !carries ? `${dayText(date)}'s set locked at its first puck drop: the record above grades it.` : `No set was taken for ${dayText(date)} before its first puck drop.`;
-  return `<section class="sp-day" data-sp-day="${date}" data-sp-state="${state}">${head}<p class="sp-lock mark">${esc(words)}</p>`
+  return `<section class="sp-day" data-sp-day="${date}" data-sp-state="${state}">${head}<p class="sp-lock"><span class="sp-lockmark">Locked</span>${esc(words)}</p>`
     + (e ? `<div class="pb-tiers">${PB_TIERS.map(t => spLockedCard(t, e)).join('')}</div>` : `<div class="empty pb-wide">${esc(none)}</div>`) + '</section>';
 }
 /* the tab-wide line in place of every set: no season left, or before the opener */

@@ -143,29 +143,35 @@ h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04e
 .badge.pick{background:var(--tc);color:#1E2230;box-shadow:0 0 18px -6px var(--tc)}
 @media(max-width:380px){.badge{font-size:22px;padding:7px 8px}}         /* WPG and WSH inside their column at 360, clear of the chance */
 .team .nm{font-size:12px;color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.team .rec{font-size:11.5px;color:var(--muted-ink);margin-top:-4px;font-variant-numeric:tabular-nums}
 .team .sc{font-family:var(--display);font-size:30px;font-weight:700;line-height:1}
 .team .sc.lose{color:var(--muted)}
 .vs{font-family:var(--display);font-size:11px;color:var(--muted-ink);text-align:center;line-height:1.3}
 .vs b{display:block;font-size:22px;color:var(--ink);font-weight:900}
+/* the confidence pill under a card's chance and the key over the day's cards, the NBA's (nhl v23), its orange ice and its ice gold */
+.conf{display:inline-block;font-family:var(--body);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;line-height:1.35;padding:2px 8px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--ink-2);white-space:nowrap}
+.conf.high{color:var(--lime);border-color:rgba(205,255,79,.5)} .conf.med{color:var(--ice-2);border-color:rgba(95,212,255,.5)} .conf.low{color:var(--gold);border-color:rgba(255,209,102,.5)}
+.vs .conf{display:block;width:max-content;margin:6px auto 0}
+.confkey{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0 0 14px;font-size:12.5px;color:var(--ink-2)}
+.confkey .ck-h{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.confkey .ck-h span{text-transform:none;letter-spacing:0;font-weight:600}
+.confkey .ck-i{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.confkey .ck-i b{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.chip .lime{color:var(--lime);font-weight:700} .chip:not(.edge) .lime{color:var(--ink-2);font-weight:600}
+.chip .far{align-self:center;font:800 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:999px;color:#1E2230;background:var(--rose-ink)}   /* a call far off the market, left out of the suggested levels: a solid pill, as a grade (rose text on a chip falls under 4.5:1) */
 .prob{margin:14px 0 8px;height:10px;border-radius:999px;background:var(--panel-3);overflow:hidden;display:flex}
 .prob i{display:block;height:100%;background:var(--ac)}
 .prob i.h{margin-left:auto;background:var(--hc);border-left:2px solid var(--panel-3)}
 .pline{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink-2);font-weight:700}
 .pline b{color:var(--ink);font-family:var(--display);font-size:13px}
-/* who is out, under the chips: the goalies, the players out with what each is worth, the rest named on a line */
+/* who is out, under the chips (nhl v23, the NBA's rows): the goalies on one line, a row for each player out worth a point of the chance */
 .game .out{margin-top:10px;font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
 .game .out>span{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .game .out .who{color:var(--rose-ink);font-weight:700;min-width:0}   /* the name and the status each whole (.nw), the status under the name where a phone has no room */
-.game .out .dtd .who{color:var(--gold)}                /* day to day: he stays in the lineup */
-.game .out .gk>span,.game .out .also>span{min-width:0}
+.game .out .gk>span{min-width:0}
 .game .out .muted{color:var(--muted-ink);font-weight:500}
 .game .out .gk b{color:var(--ink)}
 .game .out .cost{color:var(--muted-ink);font-variant-numeric:tabular-nums;flex:none;white-space:nowrap}
-.game .out .src{display:block;font-size:11.5px;color:var(--muted-ink);margin-top:2px}
-.game .out .also{color:var(--ink-2)}
-.game .out abbr{text-decoration:none}
-.game .out .fig{color:var(--muted-ink);font-variant-numeric:tabular-nums}
 .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;flex-wrap:wrap}
 .foot>span{display:flex;gap:6px;flex-wrap:wrap}
 .foot>span:empty{display:none}
@@ -186,8 +192,8 @@ h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04e
 .drawer h4.lu-oh{margin:10px 0 6px}
 .drawer .lu-out li>span:first-child{white-space:normal;overflow:visible}      /* a name and his status whole, the status free to go under it: nothing cut */
 .drawer .lu-out .muted{color:var(--muted-ink)}
-.games-key{margin:-4px 0 12px;font-size:12px;color:var(--ink-2)}
-.games-key+.games-key{margin-top:-8px}
+.drawer .lu-dtd{margin:6px 0 0;color:var(--ink-2)} .drawer .lu-dtd .muted{color:var(--muted-ink)}
+.drawer abbr{text-decoration:none}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.game:hover,.day:hover,.btn:hover,nav button:hover{transform:none}}
 /* ---------- tables: the NBA's ---------- */
 .wrap{overflow-x:auto;border-radius:14px}
@@ -654,6 +660,12 @@ body.pp-on{overflow:hidden}
 .pp-stats button small{font-weight:600;margin-left:5px;opacity:.85}
 .pp-key{margin:0 0 4px;font-size:12px;color:var(--ink-2)}
 .pp-team h3{display:flex;align-items:center;gap:8px;margin:14px 0 6px}
+/* Game bets (nhl v23, the NBA's): the game's bets board over the player props, a rule under it */
+.pp-gbets{margin:0 0 14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.pp-gbets h3{margin:4px 0 2px}
+.pp-gbets .pb-key{margin:0}
+.pp-gbets .pb-bets{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 10px 8px}   /* the card's ground the board sat on, so its buttons stand off the window as they did */
+.pp-gbets .pp-none{margin:6px 0 0}
 .pp-team h3 small{font:600 11.5px var(--body);color:var(--ink-2);text-transform:none;letter-spacing:0}
 .pp-row{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 8px;min-width:0}
 .pp-who{display:flex;justify-content:space-between;align-items:baseline;gap:2px 10px;flex-wrap:wrap}
@@ -744,8 +756,7 @@ body.pp-on{overflow:hidden}
       <span class="odds-note" id="oddsNote" role="status" aria-live="polite"></span>
     </div>
     <div class="days" id="days"></div>
-    <p class="games-key" id="gamesKey" hidden>Tap a bet to add it to your parlay: DraftKings' price · the model's chance. Edge: the model's less the price's, in points.</p>
-    <p class="games-key" id="outKey" hidden></p>
+    <p class="confkey" id="confKey" data-confkey hidden></p>
     <div id="sourceNote" class="note warn" hidden></div>
     <div id="opening" hidden></div>
     <div class="grid" id="games"></div>
@@ -898,6 +909,7 @@ body.pp-on{overflow:hidden}
       <div class="note pp-note"><p class="pp-read" id="ppRead"></p>
         <div class="pp-odds"><button type="button" class="btn ice odds-btn" id="ppRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="odds-note" id="ppOddsNote" role="status" aria-live="polite"></span></div></div>
       <p class="pp-msg" id="ppMsg" role="status" aria-live="polite"></p>
+      <section class="pp-gbets" id="ppBets" aria-labelledby="ppBetsH" hidden></section>
       <details class="pp-trial" id="ppTrialBox"><summary id="ppTrialSum">The props model is on trial</summary><div id="ppTrial"></div></details>
       <div class="seg pp-stats" id="ppStats" role="group" aria-label="Stat"></div>
       <div id="ppBody"></div>
@@ -907,7 +919,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v22 · 2026-11-07';
+const APP_BUILD = 'nhl v23 · 2026-11-08';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1140,27 +1152,57 @@ function renderGames() {
   dayStrip();
   const gs = S.games.filter(g => g.date === DAY).sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
   const box = $('games');
-  if (!gs.length) { box.innerHTML = '<div class="empty">No games this day.</div>'; CARD_HTML.clear(); $('gamesKey').hidden = true; $('outKey').hidden = true; updateTabCounts(); return; }
-  GO_DAYS = null;
+  /* Refresh scores only while the day shown has a game under way (or a read of it runs), as the NBA's odds bar carries Refresh odds alone */
+  const rs = $('refreshScores');
+  rs.hidden = !rs.disabled && !gs.some(g => LIVE[g.id] ? LIVE[g.id].state === 'live' : g.state !== 'final' && hasStarted(g));
+  if (!gs.length) { box.innerHTML = '<div class="empty">No games this day.</div>'; CARD_HTML.clear(); $('confKey').hidden = true; updateTabCounts(); return; }
+  GO_DAYS = null; CONF_REC = confRecord();
   const html = gs.map(g => [g.id, gameCard(g)]), cur = [...box.children];
   if (cur.length === html.length && cur.every((el, i) => el.dataset && el.dataset.id === html[i][0] && CARD_HTML.has(html[i][0]))) {
     html.forEach(([id, h], i) => { if (CARD_HTML.get(id) === h) return; const t = document.createElement('template'); t.innerHTML = h; cur[i].replaceWith(t.content.firstElementChild); });
   } else box.innerHTML = html.map(x => x[1]).join('');
   CARD_HTML.clear(); for (const [id, h] of html) CARD_HTML.set(id, h);
-  $('gamesKey').hidden = !box.querySelector('.pb-bets');
-  $('outKey').hidden = !box.querySelector('.out'); $('outKey').textContent = OUT_KEY;
-  syncBetRows(box);
+  $('confKey').hidden = false; $('confKey').innerHTML = confKey(CONF_REC);
   updateTabCounts();
+}
+/* ---------- confidence, the NBA's (nhl v23) ----------
+   The band of the chance a card shows (the call's chance on its pick), worded the same on the pill under the card's chance (confPill)
+   and the key over the day's cards (confKey): High 65%+, Med 60-64%, Low 55-59%, 50/50 under 55%, the Pick'em's bands. The chance is
+   rounded to a whole percent as the card shows it (pct), so a pill and the percentage beside it never disagree. Each band's record is
+   the call's this season straight up, every graded game (the Record tab's SU record, band by band) */
+const CONF = { high: ['High', '65%+'], med: ['Med', '60-64%'], low: ['Low', '55-59%'], coin: ['50/50', 'under 55%'] };
+const CONF_ORDER = ['high', 'med', 'low', 'coin'];
+const confBand = c => { const r = +(c * 100).toFixed(0); return r >= 65 ? 'high' : r >= 60 ? 'med' : r >= 55 ? 'low' : 'coin'; };
+const gameConf = pHome => confBand(Math.max(pHome, 1 - pHome));
+function confRecord() {
+  const t = {}; for (const k of CONF_ORDER) t[k] = [0, 0];
+  for (const g of S.games) if (g.result && typeof g.result.su === 'boolean' && typeof g.pHome === 'number') t[gameConf(g.pHome)][g.result.su ? 0 : 1]++;
+  return t;
+}
+let CONF_REC = null;
+const confWl = x => x && x[0] + x[1] ? `${x[0]}-${x[1]}` : '';
+const confSay = (k, rec) => { const [name, range] = CONF[k], wl = confWl(rec && rec[k]);
+  return `Confidence: ${name}, the model gives its pick ${range}.${wl ? ` Its ${name} picks this season: ${wl}.` : ''}`; };
+function confPill(c, rec) {
+  const k = confBand(c), say = confSay(k, rec);
+  return `<span class="conf ${k}" data-conf="${k}" title="${say}"><span aria-hidden="true">${CONF[k][0]}</span><span class="sr">${say}</span></span>`;
+}
+/* the key over the day's cards: the four bands, each its range and this season's record (none where nothing is graded) */
+function confKey(rec) {
+  const any = CONF_ORDER.some(k => confWl(rec[k]));
+  return `<span class="ck-h">Confidence${any ? ' <span>· W-L this season</span>' : ''}</span> ${CONF_ORDER.map(k => { const wl = confWl(rec[k]);
+    return `<span class="ck-i" data-ck="${k}" title="${confSay(k, rec)}"><span class="conf ${k}">${CONF[k][0]}</span> <span class="ck-r">${CONF[k][1]}</span>${wl ? ` <b>${wl}</b>` : ''}</span>`; }).join(' ')}`;
 }
 /* the days the Parlay Builder offers (pbSlate), worked once a draw of the Games tab: a card's Parlay Builder → is there only for them */
 let GO_DAYS = null;
 const goDays = () => GO_DAYS || (GO_DAYS = pbSlate().days);
-/* ---------- a game card: the NBA's ----------
+/* ---------- a game card: the NBA's Tonight card (nhl v23) ----------
    The top line (puck drop, the date, the tags: live, final, the start moved, neutral ice, the call right or wrong, replayed); the two
-   clubs' badges, the model's pick filled (the state's own straight-up call, kept after the game); its chance in the middle; the win
-   bar with each side's chance; the chips (the model's numbers, the market's lines where the card has no bets board, the calls and
-   their grades); the bets board (a game still to come on a fresh line: every side a button, one tap puts it in the parlay); who is
-   out; the Lineups drawer; the foot (Lineups, Player props, Parlay Builder →). Every number is the state's, or LIVE's for a score */
+   clubs' badges, the model's pick filled (the state's own straight-up call, kept after the game); its chance in the middle with its
+   confidence pill; the win bar with each side's chance; the chips (the model's margin and goals, DraftKings' moneyline and total, each
+   lit lime with its edge where the model takes a side, a puck line only where it does, the grades after the game); who is out (the
+   goalies, a row for each player out who moves the chance); the Lineups drawer; the foot (Lineups, Player props, Parlay Builder →).
+   The game's bets are in the Player props window (Game bets), as the NBA's. Every number is the state's, or LIVE's for a score */
 function gameCard(g) {
   const live = LIVE[g.id], state = live ? live.state : g.state;
   const hs = live ? live.hs : g.hs, as = live ? live.as : g.as;
@@ -1169,8 +1211,6 @@ function gameCard(g) {
   const scored = (final || state === 'live') && typeof hs === 'number' && typeof as === 'number' && isFinite(hs) && isFinite(as);
   const line = g.line;
   const started = final || state === 'live' || hasStarted(g);
-  /* a game still to come with a line DraftKings listed at the last run: its bets as buttons */
-  const bets = !started && !!line && freshLine(g);
   /* the tags: a live score is the job's, as of its run, unless this browser read ESPN since; a game the state has as to come whose
      puck drop has passed says so instead */
   const tags = [];
@@ -1185,123 +1225,89 @@ function gameCard(g) {
   if (g.result && !g.frozen) tags.push('<span class="tag replay" title="this game was over before the job first ran; the call is the replay\'s">replayed</span>');
   const date = new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   const homeWon = final && scored && hs > as, awayWon = final && scored && as > hs;
-  const team = (side, id, rc, sc, lose) => `<div class="team ${side}" style="--tc:${TC(id).c}"><span class="badge${g.pick === side ? ' pick' : ''}" title="${esc(T(id).short)}">${esc(T(id).abbr)}</span><span class="nm">${esc(T(id).short)}</span>${rc ? `<span class="rec">${esc(rc)}</span>` : ''}${scored ? `<span class="sc${lose ? ' lose' : ''}">${sc}</span>` : ''}</div>`;
-  const pickId = g.pick ? g[g.pick] : (g.pHome >= 0.5 ? g.home : g.away);
+  const team = (side, id, sc, lose) => `<div class="team ${side}" style="--tc:${TC(id).c}"><span class="badge${g.pick === side ? ' pick' : ''}" title="${esc(T(id).short)}${g.pick === side ? ": the model's pick" : ''}">${esc(T(id).abbr)}</span><span class="nm">${esc(T(id).short)}</span>${scored ? `<span class="sc${lose ? ' lose' : ''}">${sc}</span>` : ''}</div>`;
+  const pickId = g.pick ? g[g.pick] : (g.pHome >= 0.5 ? g.home : g.away), c = Math.max(g.pHome, 1 - g.pHome);
   const wpT = "the model's chance to win, overtime included";
   return `<article class="game${final ? ' final' : ''}" data-id="${g.id}">
     <div class="top when"><span><b>${esc(hhmm(g.start))}</b> · ${esc(date)}${g.note ? ' · ' + esc(g.note) : ''}</span>${tags.length ? `<span class="tags">${tags.join('')}</span>` : ''}</div>
     <div class="teams">
-      ${team('away', g.away, g.arec, as, homeWon)}
-      <div class="vs" title="${wpT}"><b>${pct(Math.max(g.pHome, 1 - g.pHome))}</b>${esc(T(pickId).abbr)}</div>
-      ${team('home', g.home, g.hrec, hs, awayWon)}
+      ${team('away', g.away, as, homeWon)}
+      <div class="vs"><b title="${wpT}">${pct(c)}</b>${esc(T(pickId).abbr)}${confPill(c, CONF_REC)}</div>
+      ${team('home', g.home, hs, awayWon)}
     </div>
     <div class="prob" style="--ac:${TC(g.away).c};--hc:${TC(g.home).c}"><i style="width:${Math.round((1 - g.pHome) * 100)}%"></i><i class="h" style="width:${Math.round(g.pHome * 100)}%"></i></div>
     <div class="pline" title="${wpT}"><span>${esc(ta.abbr)} <b class="wp">${pct(1 - g.pHome)}</b></span><span><b class="wp">${pct(g.pHome)}</b> ${esc(th.abbr)}</span></div>
-    <div class="chips">${cardChips(g, bets)}</div>
-    ${!started && line && !bets ? `<p class="pb-stale">line from ${esc(hhmm(line.at))}: not on DraftKings at the last run</p>` : ''}
-    ${bets ? betBlock(g) : ''}
-    ${outBlock(g, !started && luOk(g))}
+    <div class="chips">${cardChips(g, started)}</div>
+    ${!started && line && !freshLine(g) ? `<p class="pb-stale">line from ${esc(hhmm(line.at))}: not on DraftKings at the last run</p>` : ''}
+    ${outBlock(g)}
     ${luBlock(g, started)}
   </article>`;
 }
-/* the card's chips: the model's numbers (the goals layer's margin, the expected goals, the overtime chance, and the model that does
-   not make the call); the market's lines where the card has no bets board (a game started, over, or on a stale line); each side the
-   model took, lit lime until its grade, then plain with the grade as a pill; else why there is no call (a side far off the market is
-   flagged on its own bet button, with its two numbers) */
-function cardChips(g, bets) {
+/* the card's chips, the NBA's: the model's margin and expected goals; DraftKings' line as the job read it, the moneyline (the side the
+   model took, else the favourite) and the over/under, each lit lime with "call · edge +N" where the model takes a side and a puck line
+   only where it does (a call far off the market says so in place of its edge); after the game each call plain with its grade; the
+   other model only where its chance is 10 points or more from the call's (the NBA's Team model) */
+function cardChips(g, started) {
   const L = g.line, ta = T(g.away), th = T(g.home), out = [];
   out.push(`<span class="chip" data-ck="model" title="the model's expected goal margin, from its goals layer; the win chance above blends that layer with the team Elo, so on a close game the two can favour different clubs">Margin <b>${esc(marginText(g))}</b></span>`);
   out.push(`<span class="chip" data-ck="xt" title="the model's expected goals, both clubs">Goals <b>${g.xt.toFixed(1)}</b></span>`);
-  out.push(`<span class="chip" data-ck="ot" title="the model's chance the game goes past regulation">OT <b>${pct(g.tie)}</b></span>`);
-  const side = p => p >= 0.5 ? th.abbr : ta.abbr;
-  if (g.elo && g.by === 'players') out.push(`<span class="chip" data-ck="alt" title="the team Elo's chance and expected goals, shown beside the call; the call is the player model's">Team Elo <b>${esc(side(g.elo.pHome))} ${pct(Math.max(g.elo.pHome, 1 - g.elo.pHome))}</b> <span class="muted">${g.elo.xt.toFixed(1)} goals</span></span>`);
-  else if (g.pm) out.push(`<span class="chip" data-ck="alt" title="the player model's chance and expected goals, shown beside the call; the team Elo makes it">Player model <b>${esc(side(g.pm.pHome))} ${pct(Math.max(g.pm.pHome, 1 - g.pm.pHome))}</b> <span class="muted">${g.pm.xt.toFixed(1)} goals</span></span>`);
-  if (!bets && L) {
-    if (priced(L.awayML) || priced(L.homeML)) out.push(`<span class="chip" data-ck="ml">Moneyline <b>${esc(ta.abbr)} ${fmtOdds(L.awayML)}</b> <b>${esc(th.abbr)} ${fmtOdds(L.homeML)}</b></span>`);
-    if (L.homeLine !== null && L.homeLine !== undefined) out.push(`<span class="chip" data-ck="pl">Puck line <b>${esc(ta.abbr)} ${fmtLine(-L.homeLine)} ${fmtOdds(L.awaySpreadOdds)}</b> <b>${esc(th.abbr)} ${fmtLine(L.homeLine)} ${fmtOdds(L.homeSpreadOdds)}</b></span>`);
-    if (L.total !== null && L.total !== undefined) out.push(`<span class="chip" data-ck="ou">Over/under <b>${L.total}</b> <span class="muted">o ${fmtOdds(L.overOdds)} · u ${fmtOdds(L.underOdds)}</span></span>`);
-  }
-  /* the calls: a side on the moneyline, the puck line or the total wherever the model's chance beats the book's by the edge */
-  const edgeT = e => `the model's chance is ${Math.round(e * 100)} points above the chance DraftKings' price implies`;
   const R = g.result, res = (k, word) => R && R[k] ? ` <span class="res ${esc(R[k])}">${esc(word)} ${esc(R[k])}</span>` : '';
-  const call = (k, b, e, word) => `<span class="chip${R ? '' : ' edge'}" data-ck="call" title="${edgeT(e)}">${b} · edge +${Math.round(e * 100)}${res(k, word)}</span>`;
-  /* a call the bets board shows on its own button, edge and all ("call · edge +8"), is not said again in a chip; a call far off the
-     market, whose button says that instead of its edge, keeps its chip */
-  const onBoard = (side, kind) => { if (!bets) return false; const B = legOf(g, side, kind); return !!B && !legFarOff(B); };
-  if (g.mlPick && !onBoard(g.mlPick, 'ml')) out.push(call('ml', `ML <b>${esc(T(g[g.mlPick]).abbr)}</b>`, g.mlEdge[g.mlPick], 'ML'));
-  if (g.plPick && !onBoard(g.plPick, 'pl')) out.push(call('pl', `<b>${esc(T(g[g.plPick]).abbr)} ${fmtLine(g.plPick === 'home' ? L.homeLine : -L.homeLine)}</b>`, g.plEdge[g.plPick], 'PL'));
-  if (g.ouPick && !onBoard(g.ouPick, 'ou')) out.push(call('ou', `<b>${g.ouPick} ${L.total}</b>`, g.ouEdge[g.ouPick], g.ouPick));
-  if (!g.mlPick && !g.plPick && !g.ouPick && !R) out.push(L ? '<span class="chip" data-ck="call">no edge</span>' : '<span class="chip" data-ck="call"><span class="muted">no line yet</span></span>');
+  const edgeT = e => `the model's call: its chance is ${Math.round(e * 100)} points above the chance DraftKings' price implies`;
+  /* a call far off the market (15 points or more over DraftKings' fair chance) is left out of the suggested levels: said in place of its edge */
+  const far = (side, kind) => { if (started || !L || !freshLine(g)) return null; const B = legOf(g, side, kind); return B && legFarOff(B) ? B : null; };
+  const callT = (side, kind, e) => { const F = far(side, kind); return F ? { t: 'call · far off', far: true, title: `${farText(F)}: left out of the suggested levels` } : { t: `call · edge +${Math.round(e * 100)}`, title: edgeT(e) }; };
+  /* lit lime as the NBA's edge chip on a call before its grade, never on a call far off the market (a solid rose pill says so instead) */
+  const chip = (ck, C, title, body) => `<span class="chip${C && !C.far && !R ? ' edge' : ''}" data-ck="${ck}"${title ? ` title="${esc(title)}"` : ''}>${body}</span>`;
+  if (L && (priced(L.awayML) || priced(L.homeML))) {
+    const fav = !priced(L.homeML) ? 'away' : !priced(L.awayML) ? 'home' : implied(L.homeML) >= implied(L.awayML) ? 'home' : 'away', side = g.mlPick || fav;
+    const C = g.mlPick ? callT(side, 'ml', g.mlEdge[side]) : null, pr = side === 'home' ? L.homeML : L.awayML;
+    out.push(chip('ml', C, C ? C.title : "DraftKings' moneyline on the favourite", `Moneyline <b>${esc(T(g[side]).abbr)} ${fmtOdds(pr)}</b>${C ? ` <span class="${C.far ? 'far' : 'lime'}">${esc(C.t)}</span>` : ''}${res('ml', 'ML')}`));
+  }
+  if (g.plPick && L && L.homeLine !== null && L.homeLine !== undefined) {
+    const side = g.plPick, C = callT(side, 'pl', g.plEdge[side]);
+    out.push(chip('pl', C, C.title, `Puck line <b>${esc(T(g[side]).abbr)} ${fmtLine(side === 'home' ? L.homeLine : -L.homeLine)} ${fmtOdds(side === 'home' ? L.homeSpreadOdds : L.awaySpreadOdds)}</b> <span class="${C.far ? 'far' : 'lime'}">${esc(C.t)}</span>${res('pl', 'PL')}`));
+  }
+  if (L && L.total !== null && L.total !== undefined) {
+    const C = g.ouPick ? callT(g.ouPick, 'ou', g.ouEdge[g.ouPick]) : null;
+    out.push(chip('ou', C, C ? C.title : `DraftKings' total: over ${fmtOdds(L.overOdds)}, under ${fmtOdds(L.underOdds)}`, `Over/under <b>${L.total}</b>${C ? ` <span class="${C.far ? 'far' : 'lime'}">${esc(g.ouPick)} · ${esc(C.t.replace(/^call · /, ''))}</span>` : ''}${res('ou', g.ouPick || 'O/U')}`));
+  }
+  const side = p => p >= 0.5 ? th.abbr : ta.abbr;
+  const alt = g.by === 'players' ? (g.elo ? ['Team Elo', g.elo.pHome, "the team Elo's chance, shown where it parts from the call (the player model's) by 10 points or more"] : null)
+    : g.pm ? ['Player model', g.pm.pHome, "the player model's chance, shown where it parts from the call (the team Elo's) by 10 points or more"] : null;
+  if (alt && typeof alt[1] === 'number' && Math.abs(alt[1] - g.pHome) >= 0.1) out.push(`<span class="chip" data-ck="alt" title="${esc(alt[2])}">${alt[0]} <b>${esc(side(alt[1]))} ${pct(Math.max(alt[1], 1 - alt[1]))}</b></span>`);
   return out.join('');
 }
-/* who is out, under the chips, as the NBA's rows but cut to what moves the call: each club's goalie and how he was chosen; a row for
-   each player out who is worth OUT_ROW goals a game or more to his club by the player model (his rating times his expected ice time),
-   his status and that figure; each club's players day to day on one line (they stay in the lineup, so no figure); the rest of each
-   club's outs named on one line a club, grouped by status, most valuable first, with each one's figure beside his name on a card that
-   has no Lineups drawer and in the drawer on a card that has one; the source and whose call it is. A phrase never breaks across lines
-   and nothing is cut (a phone shows no title, so an ellipsis there could never be read).
+/* who is out, under the chips, as the NBA's rows but cut to what moves the call (nhl v23): the two goalies on one line, how each was
+   chosen on his title and in Lineups; a row for each player out who is worth OUT_ROW goals a game or more to his club by the player
+   model (his rating times his expected ice time), his status and that figure; a club whose last box score is not read yet, said. The
+   rest (day to day, the smaller outs, injured reserve) and the injury report the call stands on are in the Lineups drawer. A phrase
+   never breaks across lines and nothing is cut (a phone shows no title, so an ellipsis there could never be read).
    OUT_ROW is what "matters" means here: about a point of the club's chance to win. The card's chance on a player model's call is half
    its goals layer and half the team Elo (tools/players.js, blend 0.5), and a goal of margin moves the goals layer's chance by about
    0.15 at the league's 5.5 to 6.5 goals a game (tools/elo.js's goals and homeByGoals), so a player worth 0.13 goals moves the card's
    chance by a point: 1.00 at the median of the 1,224 games to come on 17 October 2026, 0.76 to 1.20 at the ends; the smoke works it out
-   again on every state it is given. Under it a player is named, never a row: 0.02 goals, the bar before nhl v13 (with every player the
-   report has Out), put some 70 players a night on rows of their own and a card to come past 800px on a phone */
+   again on every state it is given */
 const OUT_ROW = 0.13;
 const outRow = o => typeof o.cost === 'number' && Math.abs(o.cost) >= OUT_ROW - 1e-9;
 const goalsWorth = x => { const r = Math.round(x * 100) / 100; return `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)} goals`; };
 const figOf = x => { const r = Math.round(x * 100) / 100; return `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)}`; };
-const outGroup = st => /injured reserve/i.test(String(st || '')) ? 'IR' : /^out$/i.test(String(st || 'out')) ? 'out' : /suspen/i.test(String(st)) ? 'suspended' : `out (${String(st).toLowerCase()})`;
-/* a club's line: out first, then suspended, any other status, injured reserve last */
-const groupRank = k => k === 'out' ? 0 : k === 'suspended' ? 1 : k === 'IR' ? 3 : 2;
 /* the rest of a club's outs, most valuable first (by the size of the figure, a player the model does not rate last), the report's order kept between equals */
 const outOrder = list => list.map((o, i) => [o, i]).sort((a, b) => ((typeof b[0].cost === 'number' ? Math.abs(b[0].cost) : -1) - (typeof a[0].cost === 'number' ? Math.abs(a[0].cost) : -1)) || a[1] - b[1]).map(x => x[0]);
-/* said once over the day's cards, two lines on a phone at 360 and 390 (three at 320, as the bets' key), so the keys put the first card no lower than
-   v12's one did: where the rest's figures are is said on their line's title and in Lineups itself */
-const OUT_KEY = `Who's out: a row for a player worth ${OUT_ROW.toFixed(2)} goals a game or more to his club, about a point of its chance to win.`;
 const ROW_T = `a row of his own: worth ${OUT_ROW.toFixed(2)} goals a game or more to his club by the player model, about a point of its chance to win`;
-function outBlock(g, drawer) {
+const gkHow = t => `${t.how}${t.debut ? ', first NHL start' : ''}`;
+function outBlock(g) {
   const pm = g.pm; if (!pm) return '';
   const rows = [], sides = ['away', 'home'], nw = t => `<span class="nw">${t}</span>`;
-  /* the two goalies on one row, away first: each name, his club and how he was chosen, the how said once ("both ...") where the two
-     are chosen alike, as on most game days ("named by DailyFaceoff (no status)") */
-  const gks = sides.map(side => ({ t: pm[side].goalie, ab: T(g[side]).abbr }));
-  const same = gks.every(x => x.t && !x.t.debut) && gks[0].t.how === gks[1].t.how;
-  const gk1 = ({ t, ab }) => !t ? `<span class="g1"><span class="muted">${nw(`${esc(ab)} goalie unknown`)}</span></span>`
-    : `<span class="g1"><b class="nw">${esc(t.name)}</b> <span class="muted">${nw(esc(ab))}${same ? '' : `, ${nw(esc(t.how))}`}${t.debut ? `, ${nw('first NHL start')}` : ''}</span></span>`;
-  rows.push(`<span class="gk"><span><span class="muted">In goal:</span> ${gks.map(gk1).join(' · ')}${same ? ` <span class="muted">${nw(`both ${esc(gks[0].t.how)}`)}</span>` : ''}</span></span>`);
+  const gk1 = side => { const t = pm[side].goalie, ab = T(g[side]).abbr;
+    return !t ? `<span class="g1"><span class="muted">${nw(`${esc(ab)} goalie unknown`)}</span></span>`
+      : `<span class="g1" title="${esc(`${t.name}, ${ab}: ${gkHow(t)}`)}"><b class="nw">${esc(t.name)}</b> <span class="muted">${nw(esc(ab))}${t.debut ? `, ${nw('first NHL start')}` : ''}</span></span>`; };
+  rows.push(`<span class="gk"><span><span class="muted">In goal:</span> ${sides.map(gk1).join(' · ')}</span></span>`);
   const costT = `What he adds to his club in a game by the player model: his rating times his expected ice time. Out, his club plays without it. ${ROW_T[0].toUpperCase() + ROW_T.slice(1)}.`;
   for (const side of sides) for (const o of outOrder((pm[side].out || []).filter(outRow))) {
     const name = o.name, ab = T(g[side]).abbr, st = o.status || 'Out';
     rows.push(`<span class="orow"><span class="who" title="${esc(`${name} · ${ab} · ${st}`)}">${nw(esc(name))} <span class="muted nw">${esc(ab)} · ${esc(st)}</span></span> <span class="cost" title="${esc(costT)}">${goalsWorth(o.cost)}</span></span>`);
   }
-  /* each club's day to day on one line, in gold: he stays in the lineup */
-  for (const side of sides) {
-    const d = pm[side].dtd || []; if (!d.length) continue;
-    rows.push(`<span class="dtd" title="day to day: each stays in the lineup the call expects, so no figure"><span><span class="muted">${esc(T(g[side]).abbr)} day to day:</span> ${d.map(o => `<span class="who nw">${esc(o.name)}</span>`).join(', ')}</span></span>`);
-  }
-  /* the rest of each club's outs on one line a club, grouped by status (out, suspended, any other, IR), most valuable first, each one's
-     figure beside his name where the card has no drawer. On a card with a drawer the figures are in Lineups, and so are the names of
-     the players on injured reserve (out for weeks, in no lineup the model has drawn since): counted at the end of the club's line, or,
-     for a club with no one else out, on one line for both clubs */
-  const restT = `Each under ${OUT_ROW.toFixed(2)} goals a game to his club by the player model, under about a point of its chance to win: ${drawer ? "named here and in Lineups, with each one's status and figure" : "named here, each one's figure beside him"}`;
-  const irN = [];
-  for (const side of sides) {
-    const rest = outOrder((pm[side].out || []).filter(o => !outRow(o))), groups = new Map(), parts = [];
-    for (const o of rest) { const k = outGroup(o.status); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); }
-    let ir = 0;
-    for (const [k, list] of [...groups].sort((a, b) => groupRank(a[0]) - groupRank(b[0]))) {
-      if (drawer && k === 'IR') { ir = list.length; continue; }
-      const head = `${parts.length ? '' : esc(T(g[side]).abbr) + ' '}${k === 'IR' ? 'on <abbr title="injured reserve">IR</abbr>' : esc(k)}:`;
-      parts.push(`<span class="muted">${head}</span> ${list.map(o => nw(`${esc(o.name)}${!drawer && typeof o.cost === 'number' ? ` <span class="fig">${figOf(o.cost)}</span>` : ''}`)).join(', ')}`);
-    }
-    if (ir && parts.length) parts.push(nw(`<span class="muted">on <abbr title="injured reserve">IR</abbr>:</span> ${ir}, in Lineups`));
-    else if (ir) irN.push(`${esc(T(g[side]).abbr)} ${ir}`);
-    if (parts.length) rows.push(`<span class="also" title="${esc(restT)}"><span>${parts.join(' · ')}</span></span>`);
-  }
-  if (irN.length) rows.push(`<span class="also ir" title="${esc(restT)}"><span><span class="muted">On <abbr title="injured reserve">IR</abbr>, named in Lineups:</span> ${irN.map(nw).join(' · ')}</span></span>`);
   for (const side of sides) { const t = pm[side]; if (t.lastBox && t.lastFinal && t.lastFinal > t.lastBox) rows.push(`<span class="muted">${esc(T(g[side]).abbr)} lineup from ${esc(t.lastBox)}: the box score of ${esc(t.lastFinal)} not read yet</span>`); }
-  const whose = `the ${g.by === 'players' ? "player model's" : "team Elo's"} call`;
-  rows.push(`<span class="src">${pm.inj ? `Injury report of ${nw(esc(dateClock(pm.inj)))}${hasStarted(g) ? ', as the call was made' : ''}` : 'No injury report applied'} · ${nw(whose)}</span>`);
   return `<div class="out">${rows.join('')}</div>`;
 }
 /* the Lineups drawer: who the call expects to dress, each club's goalie and its nine skaters with the most ice time, in goals a game
@@ -1323,12 +1329,16 @@ function luDrawer(g) {
     for (let k = tot - fl.reduce((a, b) => a + b, 0), j = 0; k > 0 && j < 3; k--, j++) fl[ord[j][1]]++;
     const sh = fl.reduce((a, b) => a + b, 0) === tot ? fl.map(x => x / 100) : parts;
     /* every player of the club out, as the card names him: his status and what he adds to his club in a game, most valuable first */
-    const outs = outOrder(pm.out || []);
+    const outs = outOrder(pm.out || []), dtd = pm.dtd || [];
     const outL = outs.length ? `<h4 class="lu-oh">${esc(T(code).abbr)} · out</h4><ul class="lu-out">${outs.map(o => `<li><span><span class="nw">${esc(o.name)}</span> <span class="muted nw">${esc(o.status || 'Out')}</span></span><span class="v">${typeof o.cost === 'number' ? figOf(o.cost) : '—'}</span></li>`).join('')}</ul>` : '';
+    /* day to day: each stays in the lineup the call expects, so no figure */
+    const dtdL = dtd.length ? `<p class="lu-dtd"><span class="muted">Day to day, in the lineup:</span> ${dtd.map(o => `<span class="nw">${esc(o.name)}</span>`).join(', ')}</p>` : '';
     return `<div><h4>${esc(T(code).abbr)} · expected</h4><ul class="lu-in">${gk ? li(gk.name, 'G', gk.gk) : ''}${lu.slice(0, 9).map(p => li(p.name, `${Math.round(p.share * 60)}'`, p.v)).join('')}</ul>`
-      + `<div class="coach">Strength <b>${luV(tot / 100).t}</b> goals a game: attack ${luV(sh[0]).t} · defence ${luV(sh[1]).t} · goalie ${luV(sh[2]).t} · top 9 of ${lu.length} skaters shown</div>${outL}</div>`;
+      + `<div class="coach">${gk ? `In goal <b>${esc(gk.name)}</b>, ${esc(gkHow(gk))} · ` : ''}Strength <b>${luV(tot / 100).t}</b> goals a game: attack ${luV(sh[0]).t} · defence ${luV(sh[1]).t} · goalie ${luV(sh[2]).t} · top 9 of ${lu.length} skaters shown</div>${outL}${dtdL}</div>`;
   };
-  return `<div class="drawer lu" id="lu-${g.id}" role="region" aria-label="Lineups, ${esc(matchup(g))}"${open ? '' : ' hidden'}><p class="lu-key">Who the call expects to dress: the last lineup less the injury report's outs. Minutes and goals a game by the player model; the Players tab shows ratings ×100. Under each club, everyone out, his status and what he adds to his club in a game.</p>${club('away')}${club('home')}</div>`;
+  const whose = `the ${g.by === 'players' ? "player model's" : "team Elo's"} call`;
+  const src = `${g.pm.inj ? `Injury report of <span class="nw">${esc(dateClock(g.pm.inj))}</span>` : 'No injury report applied'} · <span class="nw">${whose}</span>`;
+  return `<div class="drawer lu" id="lu-${g.id}" role="region" aria-label="Lineups, ${esc(matchup(g))}"${open ? '' : ' hidden'}><p class="lu-key">Who the call expects to dress: the last lineup less the injury report's outs. Minutes and goals a game by the player model; the Players tab shows ratings ×100. Under each club, everyone out, his status and what he adds to his club in a game. <span class="lu-src">${src}.</span></p>${club('away')}${club('home')}</div>`;
 }
 /* the drawer and the foot: Lineups and Player props on the left, Parlay Builder → on the right, each only on a game still to come */
 function luBlock(g, started) {
@@ -2607,16 +2617,25 @@ document.addEventListener('click', e => {
   /* a team bet "gid|side|kind", or (nhl v18, from the Top 30 and the levels) a player's line by its id, "gid|p|pid|stat|over0.5" */
   const prop = /\|p\|/.test(b.dataset.leg), [gid, side, kind] = b.dataset.leg.split('|'), id = prop ? b.dataset.leg : `${gid}|${side}|${kind}`; const g = gameById()[gid];
   const cur = g && (prop ? propLegById(id) : legOf(g, side, kind));
-  if (builderLegs(false).some(B => B.id === id)) takeOut(gid, l => legIdOf(l) !== id);   // a refusal or a replacement said before no longer stands
+  /* a bet tapped in the props window's Game bets is said in the window's own status line too, as a player's price is (ppAdd) */
+  const inWin = !!b.closest('#ppBets'), say = t => { if (inWin) $('ppMsg').textContent = t; };
+  let said = '';
+  if (builderLegs(false).some(B => B.id === id)) { const m = takeOut(gid, l => legIdOf(l) !== id); said = `Taken out of your parlay: ${cur ? cur.desc : 'that bet'}.${m ? ' ' + m : ''}`; }   // a refusal or a replacement said before no longer stands
   else {
     if (!g || hasStarted(g) || (prop ? !propRead(g) : !freshLine(g))) { rerender(); return; }        // a page left open past puck drop, or a line gone: no bet
     const L = cur; if (!L) return;
     const { msg, refused } = placeLeg(storeLeg(L), g);   // by the same-game rule: a second side bet or total on a game takes the first's place
-    if (refused) { BMSG = [refused]; slipSay(refused, 0, false, true); rerender(); return; }   // past the most legs of one game: nothing changes
+    if (refused) { BMSG = [refused]; slipSay(refused, 0, false, true); rerender(); say(refused); return; }   // past the most legs of one game: nothing changes
     BMSG = []; builderLegs(true);                       // in the builder's order, every other leg read again
     if (msg) { BMSG.unshift(msg); slipSay(msg, 0, false, true); } else slipQuiet();
+    said = `${msg ? msg + ' ' : ''}Added to your parlay: ${L.desc}, ${fmtOdds(L.price)}.`;
   }
   save(); rerender();
+  if (inWin) {
+    renderProps();                                     // the players' prices too: where a game takes one leg, a bet put in leaves a player's out
+    const nb = [...document.querySelectorAll('#ppBets button[data-leg]')].find(x => x.dataset.leg === leg0); if (nb) nb.focus();
+    say(`${said} Your parlay: ${plural(builderLegs(false).length, 'leg', 'legs')}.`);
+  }
   if (top0 !== null) { const nb = [...document.querySelectorAll(`#${box.id} button[data-leg]`)].find(x => x.dataset.leg === leg0), dy = nb ? nb.getBoundingClientRect().top - top0 : 0; if (dy && typeof window.scrollBy === 'function') window.scrollBy(0, dy); }
 });
 
@@ -2751,7 +2770,7 @@ let FIT_T = null;
 window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(() => { fitTiles(); if (typeof pkFit === 'function') pkFit(); if (ADMIN && S && !$('tab-xbets').hidden) renderXBets(); }, 120); });
 if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(() => { fitTiles(); syncBetRows(); }, () => {});
 if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => { fitTiles(); syncBetRows(); });
-if (BET_RO) for (const id of ['games', 'plLines']) BET_RO.observe($(id));
+if (BET_RO) for (const id of ['ppBets', 'plLines']) BET_RO.observe($(id));
 /* a parlay as saved: its legs (each bet, price and number) and its stake. Save says Saved, and is off,
    while the builder is a parlay already in this device's list, so a reload never lets it be saved twice */
 const savedKey = (legs, stake) => legs.map(l => isProp(l) ? `${legIdOf(l)}:${+l.odds}` : `${l.game}|${l.side}|${l.kind}:${+l.odds}:${l.line === null || l.line === undefined || l.line === '' ? '' : +l.line}`).join(',') + '|' + stakeRead(stake);
@@ -3257,11 +3276,12 @@ function renderParlays() {
 }
 function rerender() {
   const t = curTab(), a = document.activeElement, ds = a && a.dataset ? a.dataset : null;
-  const key = ds ? ['leg', 'lu', 'pp', 'pbgo'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#games, #plLines, #pbBody, #spBody');
+  const key = ds ? ['leg', 'lu', 'pp', 'pbgo'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#games, #plLines, #pbBody, #spBody, #ppBets');
   /* a suggested leg's Add: the levels of a day share legs, so it is found again in its own day and level, never the first copy */
   const tier = box && box.id === 'spBody' && a.closest('.pb-tier'), day = tier && a.closest('.sp-day');
   const scope = tier && day ? `#spBody .sp-day[data-sp-day="${day.dataset.spDay}"] .pb-tier[data-tier="${tier.dataset.tier}"]` : null;
   if (t === 'parlays') renderParlays(); else if (t === 'games') { SHOWN = new Set(); renderGames(); } else if (t === 'suggest') { SHOWN = new Set(); renderSuggest(); }
+  ppBetsRedraw();                                                  // the window's Game bets drawn on the builder as it now stands
   updateSlip();
   /* a bet button, a card's Lineups, Player props or Parlay Builder → redrawn under the visitor's finger keeps the focus, where it is still offered */
   if (key && box && !document.contains(a)) { const nb = [...document.querySelectorAll(`${scope || '#' + box.id} button[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}]`)].find(x => x.dataset[key] === val); if (nb) nb.focus(); }
@@ -3756,21 +3776,21 @@ function ppText(q) {
   if (q.off) parts.push(`${plural(q.off, 'game', 'games')} called off at ESPN: not shown`);
   return ` DraftKings' player props: ${parts.join(', ')}.`;
 }
-/* the button on a game card (and in Pick your own legs): there for a game still to come with projections or a read */
+/* the button on a game card (and in Pick your own legs): there for a game still to come with projections, a read or a fresh line (the
+   window holds the game's bets too, as the NBA's) */
 function ppBtn(g) {
   if (!S || hasStarted(g)) return '';
-  const pr = ppProj(g.id), rd = PROPS.games[g.id];
-  if (!pr && !rd) return '';
+  const pr = ppProj(g.id), rd = PROPS.games[g.id], gl = !!g.line && freshLine(g);
+  if (!pr && !rd && !gl) return '';
   SHOWN.add(g.id);                              // the watch redraws the card when its puck drops
-  const sub = !rd ? "the model's projections (on trial) · press Refresh odds for DraftKings' props"
+  const sub = !rd ? (pr ? "the model's projections (on trial) · press Refresh odds for DraftKings' props" : ppAsk([g]).length ? "press Refresh odds for DraftKings' props" : "DraftKings posts player props on game day")
     : rd.status === 200 ? `DraftKings: ${plural(rd.main.length, 'main line', 'main lines')} and ${plural(rd.yes.length, 'milestone price', 'milestone prices')}, read ${hhmm(rd.at)}`
     : rd.status === 404 ? `DraftKings: none posted yet (read ${hhmm(rd.at)})` : "DraftKings' props could not be read";
-  /* on the button, in few words (the NBA's): Player props alone until a press (the model's projections, said on its title), then
-     what DraftKings has and when it was read; the whole sentence on its title */
+  /* on the button, the NBA's word alone, so the foot keeps one row on a phone (a count beside it put Parlay Builder → on a second): Player
+     props, outlined ice once DraftKings' lines are in; the whole sentence (what was read and when, none posted yet, the game's bets) on its title */
   const has = !!rd && rd.status === 200 && rd.main.length + rd.yes.length > 0;
-  const word = !rd ? '' : rd.status === 200 ? `${rd.main.length ? plural(rd.main.length, 'line', 'lines') : plural(rd.yes.length, 'price', 'prices')} · ${hhmm(rd.at)}`
-    : rd.status === 404 ? `none posted yet · ${hhmm(rd.at)}` : 'not read';
-  return `<button type="button" class="btn ghost pp-open${has ? ' has' : ''}" data-pp="${esc(g.id)}" aria-haspopup="dialog" title="${esc(sub)}">Player props${word ? ' · ' + esc(word) : ''}</button>`;
+  const t = `${gl ? "Game bets: DraftKings' moneyline, puck line and total, tap one to add it to your parlay. " : ''}Player props: ${sub}`;
+  return `<button type="button" class="btn ghost pp-open${has ? ' has' : ''}" data-pp="${esc(g.id)}" aria-haspopup="dialog" title="${esc(t)}"${gl ? ' aria-label="Player props and game bets"' : ''}>Player props</button>`;
 }
 /* every player of the game: the props model's projection for each stat (the published distribution), DraftKings' main line
    and Yes ladder for each stat from the read, matched by ESPN's athlete id; the club and name from the projections, else the
@@ -3844,13 +3864,16 @@ function renderProps() {
   $('ppTrial').innerHTML = S.props ? trial : `<p><b>No props model in this publish.</b> DraftKings' prices are shown alone.</p>`;
   $('ppHow').innerHTML = ppHow();
   if (PP.gone) {
-    $('ppRead').textContent = g ? 'The puck has dropped on this game: its player props are no longer shown.' : 'This game is no longer on the schedule.';
-    $('ppStats').innerHTML = ''; $('ppBody').innerHTML = ''; return;
+    $('ppRead').textContent = g ? 'The puck has dropped on this game: its bets and player props are no longer shown.' : 'This game is no longer on the schedule.';
+    $('ppBets').hidden = true; $('ppBets').innerHTML = ''; delete $('ppBets').dataset.game; $('ppStats').innerHTML = ''; $('ppBody').innerHTML = ''; return;
   }
+  renderGameBets(g);
   const pr = ppProj(g.id), rd = PROPS.games[g.id], dkIn = !!rd && rd.status === 200;
   const ago2 = rd ? hhmm(rd.at) : '';
   const job = !!rd && rd.src === 'job';
-  $('ppRead').textContent = !rd ? `Press Refresh odds for DraftKings' player props on this game.${pr ? " Shown until then: the props model's projections for the expected players." : ''}`
+  /* a game past tomorrow (a fresh line, nhl v23): DraftKings has no props on it yet and a press reads none for it */
+  $('ppRead').textContent = !rd && !ppAsk([g]).length ? "DraftKings posts player props on game day: Refresh odds reads them for today's and tomorrow's games."
+    : !rd ? `Press Refresh odds for DraftKings' player props on this game.${pr ? " Shown until then: the props model's projections for the expected players." : ''}`
     : rd.status === 200 ? `DraftKings' player props from ESPN, read ${ago2}${job ? " at the job's last run" : ''}: ${plural(rd.main.length, 'main line', 'main lines')} and ${plural(rd.yes.length, 'milestone price', 'milestone prices')}. ${job ? 'Refresh odds reads them again now.' : pr && isObj(pr.dk) ? "A reload brings back the job's read; Refresh odds reads them again." : 'Gone with a reload; Refresh odds reads them again.'}`
     : rd.status === 404 ? `DraftKings has posted no player props for this game yet (ESPN, read ${ago2}${job ? " at the job's last run" : ''}): they usually go up on game day, the goalies' saves last.${pr ? " Shown: the props model's projections." : ''}`
     : `ESPN's player props could not be read ${job ? `at the job's last run (${ago2}, ${rd.why})` : `at ${ago2} (${rd.why})`}: press Refresh odds to try again.${pr ? " Shown: the props model's projections." : ''}`;
@@ -3873,8 +3896,26 @@ function renderProps() {
     } else body += rest.length ? rest.map(x => ppRow(x, stat)).join('') : `<p class="pp-none">No ${PP_NAME[stat]} projection for ${esc(t ? t.short : 'them')}.</p>`;
     return `<section class="pp-team" data-pp-team="${esc(club || '')}">${head}${body}</section>`;
   };
+  /* a fold the visitor opened stays open through a draw on the same stat (its club's) */
+  const opened = new Set([...$('ppBody').querySelectorAll('details.pp-more[open]')].map(x => { const t = x.closest('[data-pp-team]'); return `${PP.gid}|${PP_STAT}|${t ? t.dataset.ppTeam : ''}`; }));
   $('ppBody').innerHTML = `<p class="pp-key">${dkIn ? "model and DraftKings: each one's chance of the Over (of reaching a milestone). est.: DraftKings' margin on a Yes price estimated. Tap a DraftKings price to put it in your parlay." : "Projection: the props model's expected " + PP_NAME[stat] + ' in this game.'}</p>`
     + block(g.away, people.filter(x => x.team === g.away), 'away') + block(g.home, people.filter(x => x.team === g.home), 'home') + (dkIn && other.length ? block(null, other, '') : '');
+  for (const x of $('ppBody').querySelectorAll('details.pp-more')) { const t = x.closest('[data-pp-team]'); if (opened.has(`${PP.gid}|${stat}|${t ? t.dataset.ppTeam : ''}`)) x.open = true; }
+}
+/* Game bets, the NBA's: the game's bets board (the moneyline, the puck line and the total, each side a button), on a fresh line; drawn
+   alone on every redraw while the window is open (rerender: ppBetsRedraw), so the rest of the window, its stat tabs, its open folds and
+   the keyboard's place in them, is left as it is */
+function renderGameBets(g) {
+  const gl = !!g.line && freshLine(g);
+  $('ppBets').innerHTML = `<h3 id="ppBetsH">Game bets</h3>` + (gl ? `<p class="pb-key">Tap a bet to add it to your parlay: DraftKings' price · the model's chance. Edge: the model's less the price's, in points.</p>${betBlock(g)}`
+    : `<p class="pp-none">${g.line ? `No game bets: the line from ${esc(hhmm(g.line.at))} was not on DraftKings at the last run.` : 'No DraftKings line for this game yet.'}</p>`);
+  $('ppBets').hidden = false; $('ppBets').dataset.game = g.id; syncBetRows($('ppBets'));
+}
+function ppBetsRedraw() {
+  if (!PP || !S || $('ppWin').hidden) return;
+  const g = gameById()[PP.gid];
+  if (!g || hasStarted(g)) { if (!PP.gone) renderProps(); return; }
+  renderGameBets(g);
 }
 function openProps(gid, opener) {
   if (!S) return;

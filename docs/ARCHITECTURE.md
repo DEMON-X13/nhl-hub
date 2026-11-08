@@ -23,7 +23,8 @@ everything else changes only with a commit.
 X NHL Bets is the shape of nfl-hub's college site (one page, one job, one state file) with the
 NBA Hub's unit and look: the NHL has no weeks, so the page opens on a day strip, yesterday to
 ten days out, one card per game. Moneylines, puck lines and totals; and a player props model, on trial
-(below), shown beside DraftKings' own player prices and never suggested. Everything is ESPN's public feeds,
+(below), shown beside DraftKings' own player prices, whose chance ranks DraftKings' player lines in the Top 30 and the
+suggested parlays since the owner's call of 25 October 2026 (nhl v18). Everything is ESPN's public feeds,
 free.
 
 ```
@@ -168,21 +169,25 @@ starter of the night before, or the one expected for it while it is not boxed). 
 has started: the Games tab's Today is the visitor's Eastern date, a game past its puck drop offers no
 bet and says it is under way, a live score the job published says when it was read (and the page
 reads ESPN itself once on opening for a game under way), and a leg whose game has started leaves the
-builder. Tabs: Games, Parlay Builder (`#parlays`, `#parlay` too; browser only, no sync), Standings, Power
-Ratings, Players (the player model's rankings and the sources it stands on), Record (a Playoff tab went in nhl v14:
-the Standings and Power ratings carry the playoff chances).
+builder. Tabs: Games, Suggested Parlays (`#suggest`), Parlay Builder (`#parlays`, `#parlay` too; browser only, no
+sync), Standings, Power Ratings, Players (the player model's rankings and the sources it stands on), Pick'em Record
+(`#pickem`), Record, and on the owner's devices X Parlays and the X Bet Log (a Playoff tab went in nhl v14: the Standings
+and Power ratings carry the playoff chances).
 
 THE LOOK (nhl v12, the card and the colours nhl v13, `index.html`; CLAUDE.md has the rules): the NBA Hub's components with ice for
 its orange, no image anywhere, each club a badge or a pill in its own colour from `TEAM_COLORS` (each club's primary colour, or its
 secondary where the primary is near-black, lifted in OKLCH, its hue kept, only to 3:1 for a badge and the win bar and 4.5:1 for a
 12px pill, then a few picked by hand: the navies a stronger blue, the Avalanche a crimson; the smoke holds the bars and keeps every two
-clubs outside one brand colour 5 apart in CIEDE2000); the game card the NBA's (badges, the call filled, the win bar, chips, tags, the
-bets board as the NBA's Game lines rows with each button one line where it fits, side, price and the model's chance, a row's two
-buttons laid out alike (`syncBetRows` reads the browser's wrap), the call a tag on its edge with its edge, said in no chip as well, a
-side far off the market a "far off" tag and its two numbers under its line, every piece that cannot wrap fitting a 320px phone's button; who is out cut to the goalies on one row and a row for each player worth
-`OUT_ROW`, 0.13 goals a game, about a point of his club's chance to win, each club's day to day and the rest of its outs a line a
-club, their figures beside them or in the Lineups drawer, which lists everyone out, never cut short; the Lineups drawer opened from its
-one toggle in the foot, the foot with Player props and Parlay Builder →; a redraw replaces only the cards that changed); every table
+clubs outside one brand colour 5 apart in CIEDE2000); the game card the NBA's Tonight card since nhl v23 (badges, the call filled,
+its chance with a confidence pill, High 65%+, Med 60-64, Low 55-59, 50/50, its season's record on its title, the win bar, the NBA's
+chips: Margin, Goals, Moneyline, a Puck line only on a call, Over/under, each call lit with its edge, or unlit and marked far off; tags; who is out cut to
+the goalies on one line and a row for each player worth `OUT_ROW`, 0.13 goals a game, about a point of his club's chance to win; the
+foot Lineups, Player props and Parlay Builder →; the confidence key over the day's cards; no bets board on the card); the game's bets
+in its Player props window, Game bets over the player props (`#ppBets`: the NBA's Game lines rows with each button one line where it
+fits, side, price and the model's chance, a row's two buttons laid out alike, `syncBetRows` reading the browser's wrap, the call a tag
+on its edge with its edge, a side far off the market a "far off" tag and its two numbers under its line, every piece that cannot wrap
+fitting a 320px phone's button); the Lineups drawer, opened from its one toggle in the foot, listing everyone out, the day to day, the
+goalie's how and the injury report, never cut short; a redraw replaces only the cards that changed); every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (the Standings' four
 sharing their column widths); the Player props window the NBA's sheet with a head that stays put; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
@@ -260,15 +265,16 @@ holds the box files' new columns and starter marks, the record's shape, every di
 ledger's open calls, and runs `props_check.js` on the ledger against the last commit's.
 
 THE PROPS VIEW (nhl v10, `index.html`, every class `pp-`; CLAUDE.md has the rules and the tests): a Player props button
-on each game card still to come that the props model projects (and in Pick your own legs) opens a window over the page,
-six stats, each club apart. Before a press: the model's projections (`state.props`). The Refresh odds press reads ESPN's
+on each game card still to come that the props model projects, the job read props for or has a fresh line (and in Pick your own
+legs) opens a window over the page: the game's bets first (Game bets, nhl v23), then six stats, each club apart. Before a press: the model's projections (`state.props`). The Refresh odds press reads ESPN's
 DraftKings propBets for every game still to come today and tomorrow beside the scoreboards (`readPropsGame`, one request
 a game, a second page only where paged); `PROPS_FEED` is `tools/espn.js`'s `propsOf` and `pOver` is `tools/props.js`'s,
 each word for word; `ppTake` keeps each game's answer in `PROPS` (200, none posted yet, or failed, which keeps an earlier
 read), never a game started by the clock or at ESPN. After it each priced player's row is DraftKings' line and prices,
 then "projection · model · DraftKings" (the model's chance of the Over and DraftKings' fair chance, all of the margin on
 the Over), then the milestones at their Yes prices (fair chance est.). The model is labelled on trial with the ledger's
-running numbers, suggests nothing and never says "model says" or "edge"; nothing is stored but the legs a visitor adds
+running numbers and never says "model says" or "edge" on a prop (the Top 30 and the suggested parlays rank player lines on its
+chance, marked props model, since nhl v18); nothing is stored but the legs a visitor adds
 (below), and a reload is the published page with those legs at the prices they were added at. The smoke's PLAYER PROPS section holds all of it on answers it makes from the state's projections.
 
 SAME-GAME PARLAYS AND PLAYER LEGS (nhl v11, `index.html`; CLAUDE.md has the rules and the table's numbers): after a

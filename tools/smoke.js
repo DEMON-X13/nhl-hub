@@ -4365,10 +4365,14 @@ async function holdPickem(St, ms, tag) {
   /* the legend and the chart: each model's season and its wins less DraftKings' on the games both picked, week by week */
   for (const [id, name] of PK_S) {
     const li = d.querySelector(`#pkLegend .pk-li[data-pk="${id}"]`), r = D.rec[id];
-    const wantLi = id === 'dk' ? `DraftKings ${r.w}-${r.l}` : `${name} ${r.w}-${r.l} · ${sPkSigned(D.cum[id].length ? D.cum[id][D.cum[id].length - 1] : 0)} vs DraftKings`;
+    /* the Team Elo is the baseline (nhl v24): the legend calls it so and its swatch and line are dashed, every other model's solid */
+    const base = id === 'elo';
+    const wantLi = id === 'dk' ? `DraftKings ${r.w}-${r.l}` : `${name} ${r.w}-${r.l} · ${sPkSigned(D.cum[id].length ? D.cum[id][D.cum[id].length - 1] : 0)} vs DraftKings${base ? ' · baseline' : ''}`;
     chk(txt(li) === wantLi, `${tag}: the legend says ${wantLi} (${txt(li)})`);
     if (id === 'dk') continue;
     const pl = d.querySelector(`#pkChart svg.pk-chart polyline[data-model="${id}"]`);
+    chk(!li || li.classList.contains('base') === base, `${tag}: ${name}'s legend swatch ${base ? 'dashed, the baseline' : 'solid'}`);
+    chk(!pl || (pl.getAttribute('stroke-dasharray') !== null) === base, `${tag}: ${name}'s line on the chart ${base ? 'dashed, the baseline' : 'solid'} (${pl && pl.getAttribute('stroke-dasharray')})`);
     chk(D.weeks.length ? !!pl && pl.getAttribute('data-cum') === D.cum[id].join(',') && pl.getAttribute('points').trim().split(/\s+/).length === D.weeks.length + 1 : !pl,
       `${tag}: ${name}'s line on the chart, its wins less DraftKings' added up week by week from 0 (${pl && pl.getAttribute('data-cum')}, want ${D.cum[id].join(',')})`);
   }

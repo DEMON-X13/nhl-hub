@@ -260,6 +260,7 @@ select,input[type=text],input[type=number]{background:var(--panel);border:1px so
 .pk-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:13px;color:var(--ink-2)}
 .pk-li{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .pk-li i{display:inline-block;width:14px;height:3px;border-radius:2px}
+.pk-li.base i{background:repeating-linear-gradient(90deg,var(--c) 0 5px,transparent 5px 8px)}   /* the baseline's swatch dashed, as its line */
 .pk-li b{color:var(--ink)}
 .tbl td.pk-c{text-align:right;font-variant-numeric:tabular-nums}
 .tbl td.pk-c b{display:block;font-family:var(--display)}
@@ -919,7 +920,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v23 · 2026-11-08';
+const APP_BUILD = 'nhl v24 · 2026-11-11';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -4001,7 +4002,11 @@ const PK_MODELS = [
   { id: 'joker', key: 'joker', name: 'The Joker', sub: "boosted trees on the market and every pre-game number, as the NFL hub's Joker", c: '#FF6B8A' },
   { id: 'elom', key: 'elo', name: 'ELO Model', sub: "the player ratings on the Joker's baseline, as the NFL hub's ELO Model", c: '#FFA94D' },
   { id: 'call', name: 'The call', sub: "the site's own pick: the player ratings, blended with the club Elo", c: '#EEF2FF' },
-  { id: 'elo', name: 'Team Elo', sub: 'the club ratings alone', c: '#5FD4FF' },
+  /* the baseline (nhl v24, the owner's question of 11 November 2026 whether the "ELO model" should be scrapped, about this line at -7):
+     the club ratings alone, the base the call, Alpha and the playoff odds are built on, not a pick of its own. Drawn dashed and called
+     the baseline in the legend so it is never read as the ELO Model; on the finished seasons it trailed the closing line by about 4
+     games in 277 every season (its log loss +0.005 to +0.009 behind), as it does this one */
+  { id: 'elo', name: 'Team Elo', sub: "the club ratings alone: the baseline the call, Alpha and the playoff odds are built on, not a pick of its own", c: '#5FD4FF', base: true },
 ];
 const PK_KEY = Object.fromEntries(PK_MODELS.filter(m => m.key).map(m => [m.id, m.key]));
 /* one of the NFL's three on a game: the call frozen with the game's own, else its backtest (a final before the models existed) */
@@ -4069,7 +4074,7 @@ function pkChart(D) {
   /* the end labels, nudged apart where two would overlap */
   const ends = PK_MODELS.map(m => ({ m, v: D.vs[m.id].cum[n - 1], yy: y(D.vs[m.id].cum[n - 1]) })).sort((a, b) => a.yy - b.yy);
   for (let i = 1; i < ends.length; i++) if (ends[i].yy - ends[i - 1].yy < 13) ends[i].yy = ends[i - 1].yy + 13;
-  const lines = PK_MODELS.map(m => { const pts = [[x(0), y(0)]].concat(D.vs[m.id].cum.map((v, i) => [x(i + 1), y(v)])); return `<polyline fill="none" stroke="${m.c}" stroke-width="2.5" stroke-linejoin="round" data-model="${m.id}" data-cum="${D.vs[m.id].cum.join(',')}" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`; }).join('');
+  const lines = PK_MODELS.map(m => { const pts = [[x(0), y(0)]].concat(D.vs[m.id].cum.map((v, i) => [x(i + 1), y(v)])); return `<polyline fill="none" stroke="${m.c}" stroke-width="${m.base ? 2 : 2.5}"${m.base ? ' stroke-dasharray="6 4"' : ''} stroke-linejoin="round" data-model="${m.id}" data-cum="${D.vs[m.id].cum.join(',')}" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`; }).join('');
   const labels = narrow ? '' : ends.map(e => `<text x="${(x(n) + 6).toFixed(1)}" y="${(e.yy + 4).toFixed(1)}" style="fill:${e.m.c}">${esc(e.m.name)} ${pkSigned(e.v)}</text>`).join('');
   return `<svg class="pk-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(PK_MODELS.map(m => `${m.name} ${pkSigned(D.vs[m.id].d)} against DraftKings`).join(', '))}">${yt}<line class="zero" x1="${L}" x2="${W - R}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>${narrow || ends.some(e => Math.abs(e.yy - y(0)) < 12) ? '' : `<text x="${(x(n) + 6).toFixed(1)}" y="${(y(0) + 4).toFixed(1)}" style="opacity:.8">= DraftKings</text>`}<text x="${x(0).toFixed(1)}" y="${H - 10}" text-anchor="middle">Start</text>${xl}${lines}${labels}</svg>`;
 }
@@ -4082,7 +4087,7 @@ function renderPickem() {
   const tile = (v, k, s) => `<div class="stat"><div class="v">${v}</div><div class="k">${esc(k)}</div>${s ? `<div class="s">${esc(s)}</div>` : ''}</div>`;
   $('pkTiles').innerHTML = tile(`${dk.w}-${dk.l}`, 'DraftKings', pkPct(dk)) + PK_BANDS.map(([k]) => { const b = D.bands[k]; return tile(`${b.w}-${b.l}`, `Favourite ${k === '65+' ? '65%+' : k.replace('-', '–') + '%'}`, pkPct(b)); }).join('');
   $('pkChart').innerHTML = pkChart(D);
-  $('pkLegend').innerHTML = PK_MODELS.map(m => `<span class="pk-li" data-pk="${m.id}" title="${esc(m.sub)}"><i style="background:${m.c}"></i><b>${esc(m.name)}</b> ${D.rec[m.id].w}-${D.rec[m.id].l} · ${pkSigned(D.vs[m.id].d)} vs DraftKings</span>`).join('')
+  $('pkLegend').innerHTML = PK_MODELS.map(m => `<span class="pk-li${m.base ? ' base' : ''}" data-pk="${m.id}" title="${esc(m.sub)}"><i style="${m.base ? `--c:${m.c}` : `background:${m.c}`}"></i><b>${esc(m.name)}</b> ${D.rec[m.id].w}-${D.rec[m.id].l} · ${pkSigned(D.vs[m.id].d)} vs DraftKings${m.base ? ' · baseline' : ''}</span>`).join('')
     + `<span class="pk-li" data-pk="dk"><i style="background:var(--muted-ink)"></i><b>DraftKings</b> ${dk.w}-${dk.l}</span>`;
   const rows = PK_MODELS.concat([PK_BASE]);
   $('pkWeeks').innerHTML = `<thead><tr><th class="sk">Model</th>${D.weeks.map(w => `<th class="n">${esc(pkShort(w))}</th>`).join('')}<th class="n">Season</th></tr></thead><tbody>`
@@ -4101,7 +4106,7 @@ function renderPickem() {
       + (gs.length ? gs.map(g => `<tr data-id="${g.id}"><td class="sk">${muPills(g)}</td><td>${res(g)}</td>${rows.map(m => cell(g, m.id)).join('')}</tr>`).join('') : `<tr><td class="sk">No games</td><td></td>${rows.map(() => '<td></td>').join('')}</tr>`) + '</tbody>';
   }
   const nBt = D.fin.filter(g => PK_MODELS.some(m => { const x = pkCall(g, m.id); return x && x.bt; })).length;
-  $('pkNote').textContent = `Every final straight up, each pick the one frozen at puck drop and never changed after. Alpha: the club Elo with each club's shots, goals and goalie, a margin model. The Joker: boosted trees on DraftKings' price and every pre-game number. ELO Model: the player ratings on the Joker's baseline. The three are the NFL hub's, rebuilt for hockey and fitted on the 2022-23 to 2025-26 seasons; ${nBt ? `the ${nBt} final${nBt === 1 ? '' : 's'} played before they existed are their backtest (marked bt), each called afterwards on what was known before its puck drop, and counted as the NFL hub counts its own. ` : ''}The call: the site's own pick, the player ratings blended with the club Elo. Team Elo: the club ratings alone. DraftKings: the moneyline favourite with its margin taken out, on the line the job last read before puck drop (not the closing line). Against DraftKings: a model's wins less DraftKings' on the games both picked.`;
+  $('pkNote').textContent = `Every final straight up, each pick the one frozen at puck drop and never changed after. Alpha: the club Elo with each club's shots, goals and goalie, a margin model. The Joker: boosted trees on DraftKings' price and every pre-game number. ELO Model: the player ratings on the Joker's baseline. The three are the NFL hub's, rebuilt for hockey and fitted on the 2022-23 to 2025-26 seasons; ${nBt ? `the ${nBt} final${nBt === 1 ? '' : 's'} played before they existed are their backtest (marked bt), each called afterwards on what was known before its puck drop, and counted as the NFL hub counts its own. ` : ''}The call: the site's own pick, the player ratings blended with the club Elo. Team Elo (dashed): the baseline, the club ratings alone, which the call, Alpha and the playoff odds are built on; not a pick of its own, and on every finished season it trailed the market by about 4 games in 277. DraftKings: the moneyline favourite with its margin taken out, on the line the job last read before puck drop (not the closing line). Against DraftKings: a model's wins less DraftKings' on the games both picked.`;
 }
 /* on a resize, the chart drawn again at its box's new width (only while the tab is open and the width moved) */
 function pkFit() { const box = $('pkChart'); if (!S || !box || $('tab-pickem').hidden) return; const cw = Math.round(box.clientWidth || 0); if (cw && cw !== PK_CW) box.innerHTML = pkChart(pkData()); }

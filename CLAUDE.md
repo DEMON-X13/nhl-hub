@@ -318,7 +318,14 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   picks with the score and a tick or a cross (the day it opens on today where today has games, else the latest played). The call's season is the state's own SU record (the Record tab's). Since nhl v20 the NFL's three
   are on it too, first (Alpha green, the Joker rose, the ELO Model orange, as the NFL's; the call white, the Team Elo ice): each
   game's `models`, frozen with its call, and for the finals before they existed their backtest (`models.backtest`), counted as the
-  NFL hub counts its own and marked bt in the picks (under The pick'em models).
+  NFL hub counts its own and marked bt in the picks (under The pick'em models). Since nhl v24 (11 November 2026, the owner asking whether
+  the "ELO model" at -7 should be improved or scrapped: it was the Team Elo line, the ELO Model being at -2 with the season's best log
+  loss) the Team Elo is drawn as the baseline, its line and its legend swatch dashed and "· baseline" after its legend entry, the note
+  saying it is the club ratings the call, Alpha and the playoff odds are built on, not a pick of its own. A review that day found it
+  replayed exactly (277 of 277 finals), its -7 noise (19-26 where it parted from DraftKings, p 0.37) on a known weakness (behind the
+  close by +0.0048, +0.0073 and +0.0090 log loss walk-forward, about 4 games in 277), 29 goals-only refits of it within ±0.0002, and a
+  club shot rating added to it +0.0053 better on its own line but only +0.0008 on the call (Alpha already carries the shots), so it
+  is kept as it is.
 - **The Record tab**: the stat strip's five figures step down together from 30px until each fits its tile on one line
   (`fitRecord`, 16px the least, again on a resize), so a three-figure record never breaks at its hyphen ("179-" over
   "145" on a 390 phone).

@@ -939,7 +939,9 @@ it as `elo`). Do not tune it on the season in progress. Each game's lineup (WHO 
 suspended and anyone listed by another club or whose latest game was for one; the report is matched by
 the ESPN id `fetch_box.js` reads from the player's link (the feed has no id field: before October 2026
 every id was "undefined" and nobody was ever taken out), else by club and name, else by a name only one
-rated player has. Day-to-day players stay in, flagged. The goalie is chosen game by game: the one
+rated player has; an id no rated player has is matched by club and name alone, as the smoke reads the report (on 10 November
+2026 ESPN linked LA's Erik Gustafsson, Out, to athlete 5774, another of his name, and the id alone kept him in LA's lineup, so
+three runs in a row failed the smoke and published nothing). Day-to-day players stay in, flagged. The goalie is chosen game by game: the one
 DailyFaceoff names for that game and date (Confirmed, Likely or Unconfirmed, said exactly; a goalie it names with no NHL
 game on a rookie's rating, unless his club's report has him out by name and he is not confirmed), else the
 club's goalie with the most starts in its last ten games this season (then last season's starts for the

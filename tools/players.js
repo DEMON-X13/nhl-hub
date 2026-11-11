@@ -227,15 +227,18 @@ const STATUS_RANK = { Confirmed: 3, Likely: 2, Unconfirmed: 1 };
 const HOW = { Confirmed: 'confirmed by DailyFaceoff', Likely: 'likely, says DailyFaceoff', Unconfirmed: "DailyFaceoff's projection, unconfirmed" };
 
 /* the injury report against the rated players: each row to an id by ESPN id, else by the club and
-   the name, else by a name only one rated player has */
+   the name, else by a name only one rated player has. An id no rated player has is held by the club
+   and the name alone, as the smoke reads the report: on 10 November 2026 ESPN's report linked LA's
+   Erik Gustafsson (3891922, Out) to athlete 5774, another of his name, and the id alone kept him in */
 function readInjuries(m, injuries) {
   const byTeamName = new Map(), byName = new Map();
   const push = (map, k, v) => { if (!map.has(k)) map.set(k, []); map.get(k).push(v); };
   for (const [id, x] of Object.entries(m.r)) { const n = E.normName(x.name); if (n) { push(byTeamName, x.team + '|' + n, id); push(byName, n, id); } }
   const resolve = (code, row) => {
-    if (row.id && /^\d+$/.test(String(row.id))) return m.r[row.id] ? String(row.id) : null;   // an id is the player's: no name guess past it
-    const n = E.normName(row.name); if (!n) return null;
-    const t = byTeamName.get(code + '|' + n); if (t && t.length === 1) return t[0];
+    const n = E.normName(row.name), t = n ? byTeamName.get(code + '|' + n) : null, club = t && t.length === 1 ? t[0] : null;
+    if (row.id && /^\d+$/.test(String(row.id))) return m.r[row.id] ? String(row.id) : club;   // a rated player's id is his alone: no name guess past it
+    if (!n) return null;
+    if (club) return club;
     const a = byName.get(n); return a && a.length === 1 ? a[0] : null;
   };
   const byClub = {}, outIds = new Set(), listedAt = new Map(); let rows = 0, withId = 0, matched = 0;

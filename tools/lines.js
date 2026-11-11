@@ -1,5 +1,5 @@
 /* The market's history: each finished game's closing line from ESPN's odds archive, pulled once
-   (`node tools/lines.js`) for the Joker to be fitted on (tools/joker.js), as data/history.json is the
+   (`node tools/lines.js`) for the Joker to be fitted on (tools/models.js), as data/history.json is the
    results'. It is source: the job never writes it, and a pull again is a deliberate change, committed.
 
    ESPN's core API serves every past game's odds, one request a game, free:
@@ -13,6 +13,16 @@
    kept only where both moneylines are there and price a fair book (the two implied chances adding
    to 1.00 to 1.15, one favourite); otherwise the game has no line here and the Joker reads it so.
    2026-27 is not pulled: this season's lines are the hub's own, frozen with each call in state.json.
+
+   ESPN BET's 2022-23 close blocks are shaped apart (pulled again 11 November 2026: the first pull read
+   1,139 of them into the wrong columns). Their `total` holds the over's price and their `pointSpread` the
+   home side's puck-line price (the away side's its negative), or, where the over is even, `total` is not
+   there at all; the numbers themselves are in the `current` block, whose six prices are the close's own
+   on every one of those games, so it is the same closing snapshot. So a close number is taken only as a
+   number of goals (under 20, a multiple of a half; a price is 100 or more either way), else the current
+   block's, and that only where its moneylines, puck-line and over/under prices are all the close's.
+   And ESPN BET writes an even price (+100) with no american or display value, only decimal 2 ("1/1"):
+   read as 100, where it once dropped the price, and with a moneyline the whole game (93 games).
 
    Columns: id, book, homeML, awayML, total, overOdds, underOdds, homeLine, homeSpreadOdds,
    awaySpreadOdds (each null where ESPN gave none). */
@@ -28,8 +38,15 @@ const BOOKS = [['58', 'ESPN BET'], ['100', 'DraftKings'], ['40', 'DraftKings']];
 const COLS = ['id', 'book', 'homeML', 'awayML', 'total', 'overOdds', 'underOdds', 'homeLine', 'homeSpreadOdds', 'awaySpreadOdds'];
 const URL = id => `https://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/events/${id}/competitions/${id}/odds?limit=50`;
 
-const am = x => { if (!x) return null; const s = String(x.american !== undefined ? x.american : x.alternateDisplayValue || '').replace(/^\+/, ''); const v = Number(s); return s !== '' && isFinite(v) && v !== 0 ? v : null; };
+/* a price: ESPN's american, else its display; an even one ESPN BET sends as decimal 2 alone */
+const am = x => {
+  if (!x) return null;
+  if (x.american === undefined && x.alternateDisplayValue === undefined) return x.decimal === 2 ? 100 : null;
+  const s = String(x.american !== undefined ? x.american : x.alternateDisplayValue || '').replace(/^\+/, ''); const v = Number(s); return s !== '' && isFinite(v) && v !== 0 ? v : null;
+};
 const num = x => { if (!x) return null; const s = String(x.american !== undefined ? x.american : x.alternateDisplayValue || ''); const v = Number(s.replace(/^\+/, '')); return s !== '' && isFinite(v) ? v : null; };
+/* a number of goals (a total above 0, a puck line either side), never a price */
+const goals = (v, total) => v !== null && Math.abs(v) < 20 && Number.isInteger(v * 2) && (!total || v > 0) ? v : null;
 const implied = o => o === null ? null : o < 0 ? -o / (100 - o) : 100 / (100 + o);
 
 /* one game's line from ESPN's answer: the first book of BOOKS with a close block that prices a fair book */
@@ -43,8 +60,12 @@ function lineOf(id, body) {
     if (homeML === null || awayML === null) continue;
     const s = implied(homeML) + implied(awayML);
     if (!(s >= 1.0 && s <= 1.15) || (homeML > 0 && awayML > 0)) continue;
-    const homeLine = num(hc.pointSpread);
-    return [id, name, homeML, awayML, num(tc.total), am(tc.over), am(tc.under), homeLine, homeLine === null ? null : am(hc.spread), homeLine === null ? null : am(ac.spread)];
+    /* the close's own numbers, else the current block's where it is the same snapshot (every price the close's) */
+    const hu = it.homeTeamOdds.current || {}, au = it.awayTeamOdds.current || {}, tu = it.current || {};
+    const same = [[hc.moneyLine, hu.moneyLine], [ac.moneyLine, au.moneyLine], [hc.spread, hu.spread], [ac.spread, au.spread], [tc.over, tu.over], [tc.under, tu.under]].every(([c, u]) => am(c) === am(u));
+    const pick = (c, u, total) => { const v = goals(num(c), total); return v !== null ? v : same ? goals(num(u), total) : null; };
+    const total = pick(tc.total, tu.total, true), homeLine = pick(hc.pointSpread, hu.pointSpread, false);
+    return [id, name, homeML, awayML, total, am(tc.over), am(tc.under), homeLine, homeLine === null ? null : am(hc.spread), homeLine === null ? null : am(ac.spread)];
   }
   return null;
 }

@@ -60,7 +60,7 @@ scores, never by hand: `node tools/corr.js --check` measures it again and fails 
 measures) is source too; a refit of `players.js` or of the props model moves the chances it stands on, so it is
 measured again then and committed with the refit.
 `data/lines.json` (each final of 2022-23 to 2025-26 with its closing line, pulled once by `node tools/lines.js` from ESPN's odds
-archive), `data/models.json` (the pick'em models' constants and walk-forward table, written by `node tools/models.js fit` on the
+archive, and again on 11 November 2026: under The pick'em models), `data/models.json` (the pick'em models' constants and walk-forward table, written by `node tools/models.js fit` on the
 finished seasons only) and `data/models_backtest.json` (this season's finals before the models existed, called afterwards on what was
 known before each puck drop, written once by `node tools/models.js --backtest`) are source too: a refit or a pull again is deliberate
 and committed with its reason, and the job only reads them.
@@ -90,7 +90,7 @@ node tools/test_props.js      # the props model's own test (the parse, the distr
 node tools/test_models.js     # the pick'em models' own test (the trees, the ELO Model's rule, the fit and the backtest made again); must end "0 failures"
 node tools/models.js fit      # only for a deliberate change to the pick'em models: Alpha, the Joker, the ELO Model and their walk-forward -> data/models.json (seconds)
 node tools/models.js --backtest  # once, with a refit: this season's finals before the models' first call -> data/models_backtest.json
-node tools/lines.js           # once: every final of 2022-23 to 2025-26 with its closing line from ESPN's odds archive -> data/lines.json (about 5 minutes)
+node tools/lines.js           # once: every final of 2022-23 to 2025-26 with its closing line from ESPN's odds archive -> data/lines.json (under a minute to 5; it reads only the games the file lacks, so a pull again starts with the file removed)
 node tools/test_sgp.js        # the same-game rule's own test (tools/sgp.js, and data/corr.json holding exactly the keys it reads); must end "0 failures"
 node tools/test_suggest.js    # the suggested parlays' record's own test (the grading, the summary, the check on broken ledgers, the step end to end); must end "0 failures"
 node tools/suggest.js --check # the record's ledger against its rules and the last commit's (the smoke holds it too); "suggest check: 0 failures"
@@ -533,27 +533,44 @@ each season from 2023-24 scored walk-forward by constants fitted on the seasons 
   line in data/lines.json for the seasons it is fitted on; the team Elo's chance on a game with no line) with trees on 21
   inputs (the market's log-odds and total, Alpha's four, each club's shots and goals for and against, both goalies, rest,
   points per game, the playoffs): depth 3, 25 rounds, rate 0.03, a hundred rows a leaf. It takes the market's side on 91-97%
-  of games, as the NFL's took the favourite's on 81.5%.
+  of games, as the NFL's took the favourite's on 81.5%. None of its trees splits on the total: the first fit's seven splits on
+  it (at -49.75 and -117.5) only told 2022-23's misread rows from the rest (below).
 - **The ELO Model** (the NFL's: its player-Elo game model on the Joker's baseline, logit(Joker held to 1-99%) + 0.2058 x m).
   Hockey's player ratings are players.js, its m the expected goal margin with home ice taken out (`mu` less `hfa`):
-  logit(Joker held to 1-99%) + 0.095 x m (fitted on the Joker's walk-forward chances and players.js's own walk-forward margins;
-  0.112 on each season before 2025-26). No player model view, no ELO Model.
+  logit(Joker held to 1-99%) + 0.1 x m (fitted on the Joker's walk-forward chances and players.js's own walk-forward margins;
+  0.117 and 0.118 in the walk-forward of 2024-25 and 2025-26, each fitted on the seasons before it). No player model view, no
+  ELO Model.
 
 Walk-forward log loss (and accuracy), each season by constants fitted on the seasons before it:
 
 | Season | Alpha | The Joker | ELO Model | DraftKings' close | Team Elo | Player model |
 |---|---|---|---|---|---|---|
-| 2023-24 | 0.6548 (60.6%) | 0.6568 (61.0%) | - | 0.6554 (61.0%) | 0.6602 (60.1%) | 0.6558 (61.9%) |
-| 2024-25 | 0.6592 (59.0%) | 0.6555 (61.1%) | 0.6550 (61.5%) | 0.6569 (61.2%) | 0.6642 (58.2%) | 0.6596 (59.4%) |
-| 2025-26 | 0.6849 (55.5%) | 0.6816 (54.3%) | 0.6815 (55.2%) | 0.6808 (55.5%) | 0.6898 (53.9%) | 0.6808 (55.5%) |
-| 2026-27 to 25 Oct | 0.6491 (60.8%) | 0.6463 (59.6%) | 0.6417 (60.2%) | 0.6484 (62.0%, the job's line) | 0.6564 (61.4%) | 0.6433 (62.6%) |
+| 2023-24 | 0.6548 (60.6%) | 0.6566 (61.1%) | - | 0.6556 (61.0%) | 0.6602 (60.1%) | 0.6558 (61.9%) |
+| 2024-25 | 0.6592 (59.0%) | 0.6563 (60.9%) | 0.6557 (61.3%) | 0.6569 (61.2%) | 0.6642 (58.2%) | 0.6596 (59.4%) |
+| 2025-26 | 0.6849 (55.5%) | 0.6821 (54.9%) | 0.6821 (55.0%) | 0.6808 (55.5%) | 0.6898 (53.9%) | 0.6808 (55.6%) |
+| 2026-27 to 10 Nov | 0.6400 (62.1%) | 0.6392 (61.4%) | 0.6345 (61.7%) | 0.6414 (62.1%, the job's line) | 0.6480 (59.6%) | 0.6395 (62.8%) |
 
 The differences are a few thousandths, one or two standard errors over a season: expect the models and DraftKings to finish within
-a few games of one another, as the NFL's did. **This season's first 171 finals** were played before the models existed: `node
+a few games of one another, as the NFL's did.
+
+**The pull again and the refit (11 November 2026).** The first pull (25 October) read ESPN BET's 2022-23 close blocks into the wrong
+fields: there the block's `total` holds the over's price and its `pointSpread` the home side's puck-line price (the numbers are in its
+`current` block, the same snapshot), so 1,302 of its 1,311 rows of 2022-23 were wrong: 1,139 carried a price for a total (-125
+where 5.5 was meant) and 163 none, 1,255 a price for a puck line and 47 none. And an even price (+100), which ESPN BET sends as
+decimal 2 alone, was dropped, and with a moneyline the game (93 of 2022-23, 10 of 2023-24). `tools/lines.js` reads both now (its
+header says how), and the pull again holds 5,564 lines where there were 5,461, every total 5.5 to 7.5, no row's moneylines or book
+moved. Refitted on them: Alpha's constants as they were, the Joker's trees off the total, the ELO Model's beta 0.095 to 0.1; on
+this season's 277 finals to 10 November, never fitted on, the old constants and the new score alike (the Joker 0.6390 and 0.6392,
+170 right each; the ELO Model 0.6345 both, 170 and 171 right). The table above is the refit's (the first fit's read the Joker
+0.6568, 0.6555, 0.6816 and the ELO Model 0.6550, 0.6815).
+
+**This season's first 172 finals** were played before the models existed: `node
 tools/models.js --backtest` called each afterwards on what was known before its puck drop (the ratings and averages to the day
 before, the line and the player model's view frozen with the call, its goalies), into data/models_backtest.json; update.js copies
 those of them with no call of their own into the state (`models.backtest`), and the Pick'em counts them as the NFL counts its own
-backtests and marks them bt (Alpha 104-67, the Joker 102-69, the ELO Model 103-68 on them). From nhl v20's first run every call is
+backtests and marks them bt (Alpha 105-67, the Joker 103-69, the ELO Model 104-68 on them; made again with the refit, which moved
+no bt pick of the first backtest's 171 and added FLA at CHI of 25 October, under way when the first was made and called before the
+models' first run). From nhl v20's first run every call is
 the job's, frozen at puck drop. `node tools/test_models.js` makes the fit and the backtest again from the committed data and fails
 on any difference; a refit is a deliberate change, committed with data/models.json and a backtest made again.
 

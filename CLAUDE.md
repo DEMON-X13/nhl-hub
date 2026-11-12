@@ -210,7 +210,7 @@ steps stand on:
   outlined colours of nhl v13 below are gone, and since nhl v28 the card's badge with them.
 - **No descriptions** (the owner's rule on the NFL page, 22 October 2026: "i dont want any descriptions anywhere. i want the site
   to speak for itself"). Cut in v25: the tagline; the confidence key over the cards (each band's record stays on its pill's
-  title and in the Record's By confidence); Lineups' key but its state line (`.lu-src`, the Lineups window's foot since nhl v27); the opening countdown's small print; the
+  title; the Record tab's By confidence is other bands, 70+, 60-70 and 50-60); Lineups' key but its state line (`.lu-src`, the Lineups window's foot since nhl v27); the opening countdown's small print; the
   folds "How the levels are chosen", "How the list is chosen", "How these numbers are worked out" and "The props model is on
   trial" (the trial stays as one pill in the bar of a game's page, the ledger's running numbers on its title: a model on trial
   against the book is a money warning); in nhl v27, with the Player props window, its read sentence, its stat tabs' key and its
@@ -286,31 +286,52 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   pills (`#dayRec`, the call straight up on the day shown as its rows show it, "Today 0–0", a final read in this browser
   counted; `#seasonRec`, the state's own record, "Season 178–106"), and at the right **Refresh scores** (`#slateNow`, always
   there: one read of the shown day's scoreboard from ESPN, a press while one runs doing nothing) with its stamp
-  (`#slateStamp`: nothing before a read, "reading…", "scores 9:12:05 PM", or "scores not loading" in the warning ink). The day
+  (`#slateStamp`: nothing before a read, "reading…", "scores 9:12:05 PM EST", to the second in the visitor's clock with its
+  zone, or "scores not loading" in the warning ink; the read the page makes itself stamps it too, so a score this browser
+  read always says when). The day
   shown is this page's memory alone (`DAY`, never stored, as the NFL's week): it opens on today where today has games or
   tomorrow has none, else the next day with games, else the last. Under the bar the source note (`#sourceNote`, a few words
   only when a source the calls stand on is not the latest: "Injury report from Nov 11, 6:57 AM EST.", "No injury report.", "No
-  announced goalies this run."), then **Refresh odds** (`#slateOdds`, shown only on a day from today on with a game still to
-  come; before a press its line is "DraftKings via ESPN, 7:59 PM EST.", when the job read the prices), six column heads (Date,
+  announced goalies this run."; in the page's warning ink, `--gold-ink`, with what it means for the calls on its title: "…
+  the lineups the calls stand on leave out who that report had out."), then **Refresh odds** (`#slateOdds`, shown only on a
+  day from today on with a game still to come; before a press its line says whose lines the page holds for the games to
+  come and when the job read them, `oddsIdleText`: "DraftKings via ESPN, 7:59 PM EST." where every line is DraftKings',
+  each book named where another prices a game, "DraftKings, ESPN BET via ESPN, …", since another book's price is never
+  called DraftKings', and "No lines yet at the job's last run, …" where none of the games to come has a line; the Parlay
+  Builder's and the Suggested Parlays' lines read the same), six column heads (Date,
   Matchup, Win probability, Confidence, Score prediction, Final score) and the rows.
   **A row is one button a game, which opens the game's page** (`button.game[data-game]`; `locked` once started, `final` once
   over): the date and the puck drop on the visitor's clock (the game's note on its title); the two clubs' tags with "at"
   between them ("vs" on neutral ice), the state's straight-up call (`g.pick`) raised, and once final a tick or a cross on the
-  winner's tag alone (the call hit or missed); the model's two chances as whole percentages that add to 100 (`slateCall`: the
-  away side rounded, the home side the rest) on a bar in the two clubs' fills, each half as wide as its chance, its number
+  winner's tag alone (the call hit or missed); the model's two chances as whole percentages that add to 100 (`slateCall`, the
+  one rounding of the call wherever it is written, the game's page and its Matchup window too: the pick's own chance
+  rounded, the other side the rest, so a half-point, 0.695, is 70% on the row, on the page's Model pick and on its To win
+  rows, where the row once said 69%) on a bar in the two clubs' fills, each half as wide as its chance, its number
   printed from 14% up and the pick's bold, and a number its half has no room for left out, never cut (it wraps under a strut,
   out of sight; the row's label for a screen reader says both) (`slateCols`: two clubs of one brand colour, `BAR_FAMILIES`, the smoke's own list, or
   of one fill, and the home half takes the first of the home club's other colours that is a colour and does not read as the
   away's, else the track; Team Stats' bars use the same pair); the **confidence** pill, the band of the larger chance as the
   bar shows it, on the Pick'em's cut-offs in the NFL's words and colours (HIGH 65%+ lime, MED 60-64% gold, LOW 55-59% grey,
-  50/50 rose) with that percentage, so a pill and the bar never disagree; the **score prediction**, the goals layer's two rates
+  50/50 rose) with that percentage, so a pill and the bar never disagree, and on its title what the band is and its record
+  this season, the call straight up ("HIGH: the model gives its pick 65% or more. Its HIGH picks this season: 41–5.",
+  `bandRecs`: the record nhl v23's card had on its pill; the Record tab's By confidence is other bands); the **score prediction**, the goals layer's two rates
   to a tenth, away first (`xgOf`, the game page's expected score), its leader's tag and "by" the difference of the two numbers
   shown ("even" where level); and **where the game stands** (`slateOutcome`, `slateResult`): "0 : 0" to come; "LIVE" once the
   puck has dropped with no score read; "TB leading 2–0" or "Tied 1–1" with the clock under it (a score the job read says "as
   of" its time), lime where the call is ahead and rose where behind; "BUF won 3–2" with "Pick hit" or "Pick missed" (and "·
   OT" or "· SO"); "Final" four hours past a puck drop with no score read; "start moved · call kept" on a start the feed moved
-  after the puck drop. A score read in this browser (`LIVE`: on Refresh scores, and once a load for a day shown that has a game
-  under way the state has no final for, `liveOnce`) comes before the state's. The rows still to finish first, in puck-drop
+  after the puck drop; and "Postponed" or "Cancelled" with "at ESPN" under it for **a game ESPN has called off** (`calledOff`:
+  ESPN's scoreboard gives such a game the state of a final and a score of 0–0, so `readLive` reads its status by name as the
+  job's `gameRow` does and keeps it as a game off, never a final: no score, never among Completed, not in the day's record,
+  and its page says postponed at ESPN on the head, the strip and its status line and never FINAL; the job takes it off the
+  schedule at its next run). The words and the score are two whole parts ("WPG leading" and "4–1"), each kept on one line,
+  and the cell wraps between them: where the column has no room for both, the score goes under the words, so nothing is cut
+  at the row's edge at any width or score (from 901px to 1160px "WPG leading 4–1" once lost its last figure). **A game the
+  state has no call for** (one new to the feed, which the job's second pass calls) says "no call yet" with an empty bar and
+  a dash for the prediction, and its page opens and says the same. A score read in this browser (`LIVE`: on Refresh scores,
+  and once a load for each day shown that has a game under way the state has no final for, `liveOnce`, wherever the Games
+  tab is first drawn for it: a page opened on another tab reads when Games is opened) comes before the state's. The rows
+  still to finish first, in puck-drop
   order, then "Completed" and the finals. **No bet, price, edge, chip or control is on a row**: they are on the game's page
   (the smoke holds it). Three layouts: the six columns from 1161px, the same six tighter from 901px (the bar's side labels
   dropped), and at 900px and under a card of four lines (the date and where the game stands, the matchup, the bar, the
@@ -321,8 +342,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   and the select is drawn again when the Eastern day turns. Until nhl v28 the tab was a day strip (yesterday to ten days out)
   over a grid of cards (a badge a club, the call's chance and a confidence pill with its band's record on its title, the win
   bar, Margin and Goals chips, tags, and Refresh scores only on a day with a game under way): the two chips' numbers are the
-  predicted score now, a band's record is the Record tab's By confidence, and a day before yesterday, which the strip never
-  reached, is in the select.
+  predicted score now, a band's record is on the row pill's title as it was on the card's, and a day before yesterday,
+  which the strip never reached, is in the select.
 - **The game's page** (`#gameModal`, `openGame`, `renderGame`; nhl v27, 12 November 2026: the second step of the owner's ask
   above, the NFL hub's game page, the page a row of its Props list opens, in hockey's numbers). It took the place of the Player
   props window (`#ppWin`, the NBA's sheet with six stat tabs), the card's bet chips, who is out and the Lineups drawer: one page
@@ -348,16 +369,28 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     yet", "Line from 9:12 PM EST: not on DraftKings at the last run", another book by its name; then its player lines where they
     are not simply in ("· no player lines yet", "· couldn't read player lines", "· player lines not read yet", "· player lines on
     game day" for a game past tomorrow, "· player lines 9:12 PM EST" where they were read at another time than the line); "·
-    couldn't reach ESPN" after a press that could not; "reading…" and `aria-busy` while one runs. Under it the page's one live
-    status line (`#ppMsg`, empty until a tick has something to say). **Once the puck has dropped** the bar and its line give way
+    couldn't reach ESPN" after a press that could not; "reading…" and `aria-busy` while one runs. **The last press's word on
+    this game** is said there too, between the line and the player lines (`ODDS.words`, `ODDS.at`, `ODDS.kept`, which
+    `refreshOdds` and `ppTake` fill game by game; the review of 12 November 2026 found the page dropping what the tabs' line
+    said of its own game): "· postponed at ESPN, read 10:20 PM EST: the published line stands until the job takes the game
+    off" (cancelled the same), "· under way at ESPN, read …: the published line stands", "· no line at ESPN, read …", "· not
+    in ESPN's answer, read …", "· ESPN's read of … is older than the line shown", and "· couldn't read player lines at 10:20
+    PM EST: the read of 10:11 PM EST stands" where a press failed on its props and the earlier read is kept. A game ESPN has
+    called off or under way says nothing of player lines (they are not shown), and "player lines not read yet" is said only
+    where nothing was asked. **The page's one live status line** (`#ppMsg`, `GP.msg`) is the last thing on the page and is held
+    at the foot of the screen (sticky, on a ground of its own, gone while empty), so what a tick, a refusal or the builder says
+    is in view wherever the visitor is, and its coming and going moves no row. **Once the puck has dropped** the bar and its line give way
     to the strip (`.gp-live`, lime once final): "TB 2, BUF 1 · 8:12 - 2nd." (a score the job read says "as of" its time),
-    "Final (OT): TB 3, BUF 2.", "Start moved · call kept.", "In progress." with nothing read ("Final." four hours on), and
+    "Final (OT): TB 3, BUF 2.", "Start moved · call kept.", "In progress." with nothing read ("Final." four hours on: over by the clock only where no score is known, so a live
+    score that late, a long overtime or a score the job kept, is still a game under way, "playing" and LIVE, as on the list), and
     **Refresh scores** (`#gameScoresNow`: `readLive` for the game's day) until it is final.
   - **The head** (`gameHeadCard`), the NFL's six cells: **Puck drop** (the day and time on the visitor's clock; under way the
     score and clock, or LIVE; "start moved · call kept"; FINAL, FINAL · OT, FINAL · SO); **Matchup** (the two tags, "at", or "vs"
     on neutral ice, a ✓ on the winner's once final, the game's note under them); **Biggest projections** (the highest
     projected points, shots on goal and saves over both clubs; on a final the state no longer carries the projections, so the
-    label is **Leaders** and the three are its box score's, or "Box score not read yet"); **Expected score** (the goals
+    label is **Leaders** and the three are its box score's, or the rows' own words where it has none, "Box score not read
+    yet" or "Box score no longer carried"; a game under way with nothing projected says "No projections for this game", with
+    no "yet"); **Expected score** (the goals
     layer's two rates, `max(0.3, (xt ∓ mu) / 2)`, each rounded once to a tenth, away first: whole goals come out level on two
     games in three; the actual score beside it once known); **Total** (`xt`, goals); **Model pick** (the state's call and its
     chance; "✓ TB by 1" or "✗ BUF by 2" once final). The pick can be the club the expected score has behind on a close game:
@@ -376,7 +409,11 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     exactly where the builder draws the leg; a tap anywhere on the row ticks it. A stale line draws its prices with no box and
     says why at the card's foot; no line draws each club's To win alone, the model's chance and no price, and "No DraftKings
     line yet."; once the puck has dropped each box is a grade (✓, ✗, push, – until the final: To win by the score, the puck
-    line and the total from `result`).
+    line and the total from `result`), and the side the call took is still marked, **Call** in Value's place ("the model's
+    call, made before the puck drop" on its title), so a finished game shows which bets were the model's and how each did. On a
+    ticked or graded row the band stands on the panel and the model's figure is in `--ink`: on its own soft fill over the
+    row's wash the Med band fell to 3.6:1 in the dark look. At 340px and under a bet's cells are drawn closer and its name
+    may take two lines ("Anytime" over "goal"), so a table with a five-figure price fits its box at 320px.
   - **Each club** (`rosterFor`): its tag, name and "playing BUF" ("played" once final); **"Out:"** everyone the injury report
     has out for the club, in the report's order, his position and status, no figure (the figures are in the Lineups window; the
     card's 0.13-goal rule went); "Lineup from 2026-11-08: the box score of 2026-11-10 not read yet." where it is so. Then **a
@@ -389,8 +426,13 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     44px target there takes taps meant for the row; Enter and Space work on it), and three figures of his group (a forward's
     points, shots, goals; a defenceman's points, shots, blocks; a goalie's saves). A game the props model does not project
     (past tomorrow) lists the player model's lineup, names and roles alone, "No lines yet"; a final lists who its box score
-    has, by points ("FINAL 2 points · 3 shots · 2 goals"), or says "Box score not read yet." / "Box score no longer carried.";
-    a game under way whose projections the state still carries shows them as "LIVE projected …".
+    has, by points ("FINAL 2 points · 3 shots · 2 goals"), or says "Box score not read yet." / "Box score no longer carried."
+    (`boxWord`); a game under way whose projections the state still carries shows them as "LIVE projected …", and one with
+    none says "Under way: the box score comes after the final.". **A final the state has no box score for keeps its
+    projections** (the game this browser read final before the job has boxed it, every night from the horn to the next run:
+    "FINAL projected 1.23 points · …" on each row, "Box score not read yet." over each club's rows and under an opened
+    player's tiles): a player "did not play", and his legs are "void", only on the word of a box score the state carries
+    and that lacks him (until the review the page said it of every projected player of such a game).
   - **A player open** (`playerBody`; one at a time, his row kept where it stood): a block a stat of his group (Points, Goals,
     Shots on goal, Assists, Blocked shots; Saves), its heading "projected 0.92" and "DraftKings line 0.5"; **the main line's
     two rows** (Over, Under) and **every milestone under them** (2+, 3+, Anytime goal; the one that is the main line's Over
@@ -405,7 +447,14 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   - **A tick** is the builder's own: `legTap` (a game bet; the handler every leg button on the page calls) and `ppAdd` (a
     player's price) put the leg in or take it out by `placeLeg` and `takeOut` (under The Parlay Builder, the same-game rule),
     and the page says what happened in `#ppMsg` ("Added to your parlay: … Your parlay: 3 legs.", a replacement, a refusal),
-    drawn again with the box ticked only where the builder draws the leg, so a refusal leaves it unticked.
+    drawn again with the box ticked only where the builder draws the leg, so a refusal leaves it unticked. **The box ticked
+    stays under the finger**: the tick notes where it stood (`GP.pin`) and every draw of that tick scrolls the page back by
+    whatever it moved the box, so a second tap on the same spot is on the same bet. **The status line follows the builder**:
+    each draw compares the builder's legs of this game, their prices and the parlay's size with what the last tick here
+    left (`GP.sig`); where they differ by anything else (a Refresh odds read, the puck drop, another tab) the tick's words go
+    and the page says what the builder says of this game's legs (`builderLegs().why`, by game: "Under 6.5 left the builder:
+    DraftKings' total is now 5.5 (as read 10:20 PM EST). Your parlay: 3 legs.", "MIN @ TOR left the builder: the puck
+    dropped. Your parlay: 0 legs."), or nothing where the builder has nothing to say.
   No description anywhere on it: what a number means is on its `title`. On a phone a bet's row drops its bar (it only draws the
   percentage beside it); no figure is hidden. Measured on 12 November's state, a game to come with DraftKings' player lines is
   2,370px at 1280 and 3,259px at 390 with every row shut (the NFL's page 2,306 and 3,423), where the Player props window ran
@@ -419,8 +468,9 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     cut-offs on the gap in league standard deviations (Easy 1.5, Favorable 0.5, Even, Tough, Very tough; a reading of the
     model's own gap, said on its title, not a new model); **The clubs** (in goal, strength, the team Elo, rest in days or "back
     to back", the higher marked); **Models**: every model's pick and chance on the game as the Pick'em Record reads them (the
-    call, the Team Elo, Alpha, the Joker, the ELO Model, DraftKings with its margin out), where the card showed the other
-    model only when it parted from the call by 10 points.
+    call, the Team Elo, Alpha, the Joker, the ELO Model, DraftKings with its margin out; the NFL's three by `pkCall`: the call
+    frozen with the game's own, else, for a final from before they existed, its backtest, the row saying "backtest"), where
+    the card showed the other model only when it parted from the call by 10 points.
   - **Lineups** (`lineupsBody`, where the NFL's middle window is Mismatches: hockey has no player-against-unit figure to rank;
     should one be built its window takes the middle and these lists move into Matchup): the drawer's lists, a club a column
     (one over the other on a phone): the goalie and the nine skaters with the most ice time, minutes and goals a game; "In
@@ -660,7 +710,8 @@ the hold (an exact integral for two legs, two million draws beyond), never above
 chance (an Under main line's its own implied chance among the legs), no thin edge on a team leg beside a player leg (a
 thin one planted on a copy, marked on its own and not beside a player leg), the card, nothing stored but the legs added,
 a reload, a later read, the puck drop, the suggested levels as they were (by brute force before any player leg, with them in
-the builder, and on a reload that opens with them there), and saved player legs graded on planted box scores (a goalie who came on in relief void, "did
+the builder, and on a reload that opens with them there; the section's game is one starting more than four minutes after the
+clock, since its reload and its later read run one and two minutes on and a puck drop under them failed a correct page), and saved player legs graded on planted box scores (a goalie who came on in relief void, "did
 not start"; one of a side whose starter the box cannot tell "who started is not certain", the parlay not graded here). THE PARLAY BUILDER's game priced at another book is held with the same-game table there: a second leg of
 it, of a kind the rule would otherwise take beside the first, takes the first's place, one leg a game, said. Its section THE PARLAY BUILDER holds the
 builder with rules of its own, sharing nothing with the page but the state: every line's DraftKings ids in
@@ -692,8 +743,9 @@ box score's leaders, the expected score to a tenth, the total, the pick with its
 bets row by row (the bet, a box exactly where a fresh line of a game to come prices the side and ticked exactly where the builder
 draws the leg, DraftKings' fair chance as the bar and the percentage, its band by 70 and 45, the model's chance and whose it is on
 its title, the price, Value exactly on the state's picks with the edge on its title, the lines' source, why there is no line or no
-box, every grade from `result` once the puck has dropped); each club's head, "Out:" exactly the report's outs in its order, a box
-score not read; every player's row in order (the goalie, the forwards and the defencemen by expected ice time, six and four before
+box, every grade from `result` once the puck has dropped with Call on the side the state's call took); each club's head, "Out:"
+exactly the report's outs in its order, a box score not read, a finished game with no box score in the state said over the rows;
+every player's row in order (the goalie, the forwards and the defencemen by expected ice time, six and four before
 All skaters; the player model's lineup by name for a game not projected; a final's box score by points), his role and its title,
 the DTD chip, Show stats, his figures; and every player with something under his row opened in turn, one open at a time: each
 block's projection and line, the main line's two rows then each milestone but the main line's Over, each row's fair chance (the
@@ -709,13 +761,30 @@ change of tab each closing it with the focus back on the card, the address uncha
 closing the window alone and the next the page), All skaters and the search finding a skater the cut leaves out, Show stats from a
 click, Enter and Space with his games in the box scores by its own sums, one player open at a time, a tick (said in `#ppMsg`, the
 box drawn ticked with the keyboard on it, the other side of the total taking its place, a second tick taking it out, a tap on the
-row), nothing asked and nothing stored by any of it; the layout read from the stylesheet (44px on Close, the search, Refresh odds,
+row; on a made-up layout that drops every row 30px once the status line has words, the page scrolled back by exactly as much, so
+the box stays where it stood), nothing asked and nothing stored by any of it; the layout read from the stylesheet (44px on Close, the search, Refresh odds,
 the windows' buttons, a bet's row and a player's row, Show stats the one named exception; the head six columns and three from
 980px; a bet's row hiding its bar and the band's dot on a phone and nothing else; the page the whole screen at 760px; the layers;
-a 16px search box on a phone); and, planted in the page's memory and in the section's own copy alike: another book, a stale line,
-no line, DraftKings' player lines none posted, failed and not read, the trial decided FAIL and PASS and no ledger, the puck
-dropping with the page open (the watch), a live score and a final in overtime read in this browser, a start moved after the first
-puck drop, a final with its box score, with none and past the box window, and no props model in the state at all.
+a 16px search box on a phone; the status line sticky at the foot on its own ground and hidden while empty; on a ticked or graded
+row the band on the panel and the model's figure in `--ink`, 4.5:1 or more in both looks by its own sums; at 340px and under a
+bet's cells drawn closer and its name free to wrap); and, planted in the page's memory and in the section's own copy alike:
+another book, a stale line, no line, DraftKings' player lines none posted, failed and not read, the trial decided FAIL and PASS and
+no ledger, a builder emptied in another tab (the box unticked, the tick's words gone), the puck dropping with a leg ticked (the
+builder's reason on the page) and with the page open (the watch), a live score and a final in overtime read in this browser (the
+final with no box score in the state: every projection kept, nobody "did not play", "Box score not read yet." over each club and
+under an opened player; then with a box score planted: who is in it by what he did, who is not "did not play", his legs void), a
+start moved after the first puck drop, a final with its box score, with none and past the box window (the head's words the
+clubs'), no props model in the state at all, and that game under way (no "yet", no box score "not read"). Last, in a window of
+its own with ESPN answered from the state, **a Refresh odds press made from a game's page**: a ticked Over whose total the read
+moves is unticked and the page says the builder's reason, and each game's own page says what the press was told of it
+(postponed, cancelled, under way at ESPN, no line there, not in the answer, the job's read of its player lines kept, a game
+simply read saying none of it), by the section's model of the status line. The scoreboard read of a day shown is the list's own, so
+the walk counts it apart from what a game's page may ask for, which is nothing: a game under way on a day other than the one the
+page opens on (a run after midnight Eastern, a game stuck at the feed) no longer fails a correct page; and the model takes a game
+for over by the clock only where no score is known, from four hours on (`>=`, as the row), with a live score four hours past the
+puck drop planted: playing, LIVE, Refresh scores kept. That model works the press's word out by the job's
+own parse (`tools/espn.js`) of the answers the stubs gave, which `boot` notes for every window (`__answers`, `pressS`,
+`pressWordS`), so every section that holds a game's page after a press holds its words too.
 Its section THE GAMES LIST (nhl v28) works the Games tab out from the state by rules of its own, on any state the job can
 publish: the tab's parts (the bar, the source note, the odds bar, the six heads, the list; no strip, card grid or key); the Day
 select (its days, by month, each by its words; the day it opens on; "Today" the visitor's day), the page's colour families for a
@@ -727,16 +796,35 @@ chance and printed from 14% up, the bar's colours, the band by 65, 60 and 55 wit
 with its leader and "by" the difference of the numbers shown, where the game stands, and no bet, price, edge, chip or control),
 the rows in order with Completed between, the day's pill by its rows and the season's by the state's record, Refresh odds exactly
 on a day from today on with a game to come, a day with no game saying so; choosing a day writing nothing; the steppers and their
-ends; Refresh scores and its stamp's four states (one no-store read of the day, a press during a read asking nothing); and,
-planted in the page's memory and the section's own copy alike: a puck drop with the list shown (the watch: locked, LIVE), a score
+ends; the one read of a day shown (every day of the select chosen once: read once, no-store, where it has a game under way the
+state has no final for, never where it has none, not again when chosen or opened a second time, the read stamped beside Refresh
+scores with its zone); Refresh scores and its stamp (one no-store read of the day, a press during a read asking nothing, when it
+was read to the second with the zone, a failure in the warning ink); and,
+planted in the page's memory and the section's own copy alike: two games ESPN has postponed and cancelled, read by Refresh scores
+(the job's own reading of the planted events: gone; ESPN's word in the last cell, never a score, out of Completed and of the
+day's record, four hours past the puck drop too; its page by the page's model, never FINAL; scheduled again, the word gone), a
+puck drop with the list shown (the watch: locked, LIVE), a score
 read here with the pick ahead, behind and level, a final in regulation, overtime and a shootout won and lost (the pill and the
 order following), four hours on with no score, a live score the job read, a start moved after the first puck drop, neutral ice
-and a note, a lopsided game (the short half blank), the Eastern day turning, today with no game and no schedule at all; the page
-opened five days before the season (today and the first week, the countdown), twenty days after it (every game day, the last
+and a note, a lopsided game (the short half blank), four half-points (0.695, 0.645 and their mirrors: the row and the game's page
+write the call the same, 70% and 30%, HIGH 65%), a game with no call (no call yet, an empty bar, a dash, its page open and saying
+the same) and one with a chance and no goals layer, the source note on an old injury report (its words, its title), the Eastern
+day turning, today with no game and no schedule at all; the idle odds line on a copy with a line at another book and on one with
+no line to come; a page opened on another tab at a puck drop (nothing asked of ESPN until Games is opened, then the day once); the
+page opened five days before the season (today and the first week, the countdown), twenty days after it (every game day, the last
 shown) and on a day with no game whose tomorrow has one (tomorrow shown); and the layout read from the stylesheet (the six columns'
 least widths fitting 1161px and 901px with a scrollbar, the Final-score column 136px, the phone card's four lines with the heads
 hidden, one layout between, a bar's number that wraps out of sight and is never cut, the date whole and the score's cell capped
-on the narrowest phones, 44px controls, the heads and Completed in `--ink-2`).
+on the narrowest phones, the last cell free to wrap with each of its parts whole, the source note in the warning ink, 44px
+controls, the heads and Completed in `--ink-2`). Every row is held by `rowWrongs`, which works the call out by the one rounding
+(`slCallS`), the band's record on the pill's title by its own count (`slRecS`), a game with no call, and the last cell's two whole
+parts. **The score read is held through the page's own read**, never by writing `LIVE` alone (the smoke's review found a page with
+home and away scores swapped passing): ESPN is answered with one game under way, 2–1 to the visitors, and one final in overtime,
+Refresh scores is pressed, and the rows, the order, the day's pill and the stamp are held to the job's own reading of those events
+(`tools/espn.js`); then the game's page and its own Refresh scores, which must read the day once more and carry the new score, its
+stamp with the zone, the list under it following. Also held since that review: the keyboard on its row through the watch's redraw, a
+row a minute short of four hours still LIVE, no odds bar for a game still to come on a past date (made up), and, on the schedule's
+last game day (no later date: with today's games gone the season is over), the select as every game day with the last shown.
 Its section THE LOOK (nhl v12; the colours nhl v13, the tags nhl v25) holds the page's look with its own code: no image (the
 source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, a game's page, its windows and the parlay card finds none),
 `TEAM_COLORS` (nhl v25: every club a palette of hex colours; each club's tag worked out again by the smoke's own code, the fill
@@ -1556,7 +1644,7 @@ outrank what the job published:
   (`nhl vN · YYYY-MM-DD`), so any change to the page bumps it. Without it a stale copy cannot be
   told from a current one.
 - **Data fetches are `cache: 'no-store'`.** `state.json` (with a `?t=` on it too) and ESPN's
-  scoreboard, which the page reads itself for a day shown that has a game under way (once a load) and on a press of Refresh
+  scoreboard, which the page reads itself for a day shown that has a game under way (once a load, wherever the Games tab is first drawn for it) and on a press of Refresh
   scores and, for the odds, only on a
   press of Refresh odds (with a cache-buster too), and ESPN's DraftKings propBets, only on that press
   (a cache-buster too: ESPN serves them with a fifteen-minute max-age). The HTML is served by

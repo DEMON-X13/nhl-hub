@@ -97,7 +97,8 @@ tools/starters.js   DailyFaceoff's announced goalies into data/starters.json, ea
                     applied (GitHub's runners only)
 tools/players.js    THE PLAYER MODEL: skaters' offence and defence, goalies' saves, lineups by ice
                     time; fit, holdout, walk-forward, every game to come lined up -> data/players.json
-                    (each game to come with each side's expected shots and goals, sh/sa/lh/la, for props.js)
+                    (each game to come with each side's expected shots and goals, sh/sa/lh/la, for props.js;
+                    each rated player with `last`, the day of his last game on the ice, for the page's ELO Ratings)
 tools/props.js      THE PROPS MODEL (on trial): goals, assists, points, shots on goal and blocked shots for every
                     expected skater, saves for every expected goalie, a mean and a whole distribution each; the
                     record of DraftKings' closing props; the shadow ledger; DraftKings' player lines on every game
@@ -172,8 +173,8 @@ has started: the Games tab's Today is the visitor's Eastern date, a game past it
 bet and says it is under way, a live score the job published says when it was read (and the page
 reads ESPN itself once on opening for a game under way), and a leg whose game has started leaves the
 builder. Tabs: Games, Suggested Parlays (`#suggest`), Parlay Builder (`#parlays`, `#parlay` too; browser only, no
-sync), Team Rankings (`#ratings`; `#standings` and `#playoff` open it too), Players (the player model's rankings and the sources
-it stands on), Pick'em Record (`#pickem`), Record, and on the owner's devices X Parlays and the X Bet Log. Team Rankings (nhl v26)
+sync), Team Rankings (`#ratings`; `#standings` and `#playoff` open it too), ELO Ratings (`#players`, the Players tab's name kept,
+and `#elo`), Pick'em Record (`#pickem`), Record, and on the owner's devices X Parlays and the X Bet Log. Team Rankings (nhl v26)
 is the NFL hub's tab of that name where the Standings and Power Ratings were (a Playoff tab went in nhl v14): one table of the 32
 clubs in order of the team Elo (`rankRows()`, `renderRankings()`: the rank shared by clubs level on the Elo shown, the record, the
 points, the Elo with its tier's shield on hockey's 30-point ladder (`TEAM_TIERS`, `teamShield()`, the NFL's `tierBadge()`), the Elo
@@ -181,7 +182,23 @@ gained or lost and the places moved over the last 7 days, read off the game rows
 against an average club, goals for and against a game, the simulation's playoff and Cup chances), and under it the NFL's Impact
 absences card (`renderAbsences()`: everyone out who is worth 0.13 goals a game or more to his club either way, a goalie by his
 rating's gap to the goalie in net, `outWorth()`). It reads only the
-state as published.
+state as published. ELO Ratings (nhl v29) is the NFL hub's tab of that name where the Players tab was (`renderPlayers()`, every class
+`pe-`): one card under a "rated …" stamp, the heading "Rankings" with the season and the last day rated in its pill, one search box,
+the pills Forwards, Defencemen and Goalies, the clubs' pills Overall, Attack, Defence and Goaltending, the tier histogram and one
+table. The player model rates in goals a game, so each figure is set on the NFL's Elo scale, round(1500 + 100 x (v - mean) / sd) on
+the mean and spread of the group's ranked players (`peScale()`), and wears the NFL's ladder as it is (`eloTier()`, `tierBadge()`);
+the goals-a-game figures stay in columns of their own. Ranked (`peWho()`, `peRows()`): 20 games behind the rating (10 for a
+goalie) and a game this season, read off `last`, the day of each player's last game on the ice, which `players.js` writes beside
+his rating (last season counts before this one has a final); or, with those games, on a club's injury report, marked IR, OUT, SUSP
+or DTD and shown at that club. A state from before `last` is read by the tab's first rule (a club's last lineup, its goalie in
+net, its report, or a box score the state carries). Players level on the Elo shown share a rank (`peRanks()`), a club's places
+too. Career, Trend and Peak are worked from each player's season-end figures on file on today's scale (`peHist()`, `peSpark()`);
+there is no Move column, the state carrying no rating of a week ago. The clubs' tables (`peClubs()`) rank
+`S.players.teams[club]`'s strength, offence, defence or goalie on the same scale among the clubs, every club's four figures with
+their places beside them and the goalie in net. The histogram (`peCurve()`, `peDrawCurve()`, `peFit()`) is an inline SVG drawn at
+its box's width, 520 to 680px: twelve 50-point bins in the tiers' colours, the bell curve of as many, a bin's words under the
+pointer, held inside what shows of the chart. The search takes a name or a club's abbreviation, and says where a name with no row
+is (`peWhere()`). It reads only the state as published and stores one thing, the pill chosen (`nhl_v1` `ui.plKind`).
 
 THE LOOK (`index.html`; CLAUDE.md has the rules). Since nhl v25 (12 November 2026, the owner's "match what the NFL hub has") the shell
 is the NFL hub's, staged tab by tab: the stylesheet's first block is its tokens (both looks: `:root` and `html[data-theme="light"]`,
@@ -219,11 +236,13 @@ reads it, a backtest said),
 Lineups (the drawer's lists) and Team Stats (the NFL's bars on what the state carries); the bets board (`betBlock`, `syncBetRows`)
 is Pick your own legs' alone; every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (Team Rankings'
-table fixed on a width a column, laid out by its own words on a phone); the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
+table fixed on a width a column, laid out by its own words on a phone; ELO Ratings' players in a box that scrolls both ways under a
+held head); the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
 builder first, then the Top 30 lines a line a row. The smoke's THE GAME'S PAGE section holds the page and its windows by a model of its own, THE LOOK the rest with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
-and the no-descriptions rule, and TEAM RANKINGS the Team Rankings tab, worked out from the state by rules of its own on the state and
-on made-up copies.
+and the no-descriptions rule, and TEAM RANKINGS and ELO RATINGS those two tabs, each worked out from the state by rules of its own
+(ELO RATINGS: who is ranked, each group's mean and spread, every row, the histogram's counts, the clubs' tables, the pills, the search
+and what is stored) on the state and on made-up copies.
 
 REFRESH ODDS (nhl v9, `index.html`; CLAUDE.md has the rules): a button on the Games tab's odds bar and on the Parlay
 Builder tab's, over its panel, reads ESPN's scoreboard in the browser, on a press and never else, for the Day select's days

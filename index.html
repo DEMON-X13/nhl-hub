@@ -114,7 +114,7 @@ h2 small{font-family:var(--body);font-weight:500;color:var(--ink-2);font-size:13
 @media(max-width:640px){h2 small{display:block;margin:4px 0 0}}             /* a phone: the small print under its heading, never broken beside it */
 h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin:16px 0 8px}
 .card h2 .btn{font-family:var(--body);font-size:13px;font-weight:700}
-/* a heading's small pill ("Power ratings [Elo]", "Top 30 lines [Today]"): the NFL's .pill, grey, and its three meanings; ice is hockey's own */
+/* a heading's small pill ("Team rankings [Team Elo]", "Top 30 lines [Today]"): the NFL's .pill, grey, and its three meanings; ice is hockey's own */
 .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
 h2 .pill{font-family:var(--body);font-size:12px;font-weight:700;vertical-align:middle;letter-spacing:.02em;margin-left:6px}
 .pill.warn{background:var(--gold-soft);color:var(--gold-ink)}
@@ -188,7 +188,8 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ice)}
 .tier{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px 4px 8px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);text-align:center;white-space:nowrap}
 .tier::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.75}
 .tier.high{background:var(--pick-soft);color:var(--pick)} .tier.med{background:var(--gold-soft);color:var(--gold-ink)}
-.tier.coin,.tier.doubt{background:var(--miss-soft);color:var(--miss)}
+.tier.coin,.tier.doubt,.tier.out{background:var(--miss-soft);color:var(--miss)}
+.delta{font-weight:700} .delta.up{color:var(--pick)} .delta.down{color:var(--miss)}      /* a signed figure: lime where the club gains, rose where it loses */
 /* FINAL in ice, LIVE in gold */
 .finchip{display:inline-block;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.06em;line-height:1;padding:4px 8px;border-radius:5px;vertical-align:1px;background:var(--ice-soft);color:var(--ice-2);border:1px solid rgba(95,212,255,.45);white-space:nowrap;text-transform:uppercase}
 .finchip.live{background:var(--gold-soft);color:var(--gold-ink);border-color:rgba(255,209,102,.5)}
@@ -329,21 +330,59 @@ html[data-theme="light"] tbody tr:hover td.sk{background:color-mix(in srgb,var(-
 .tbl .rk{color:var(--muted-ink);width:30px}
 .tbl .big{font-family:var(--display);font-weight:700}
 .tbl .pos{color:var(--lime)} .tbl .neg{color:var(--rose-ink)}
-.tbl tr.in td{font-weight:600} .tbl tr.cut td{border-bottom:2px dashed var(--line-2)}
 .tbl .outs{color:var(--rose-ink);white-space:normal;min-width:180px}
 .tbl .pn b{font-weight:700}
 #plSearch{flex:1 1 160px;min-width:0}
 .pl-src{margin:0 0 12px;font-size:12.5px;color:var(--ink-2)}      /* a state line: which injury report and goalies, how many calls predate the report */
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media(max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
-/* the Standings' four division tables share every column's width (laid out fixed on their heads' widths, each a little over what its
-   widest figure of a season needs), so GP, W, L and PTS run straight down the page from the Atlantic to the Pacific, where each table
-   once sized its Team column to its own longest name; narrower than that, a table scrolls sideways in its .wrap as every table does.
-   The order: #, Team, GP, W, L, OTL, PTS, RW, ROW, GF, GA, Diff, Rating, Playoff */
-#standings .tbl{table-layout:fixed;min-width:912px}
-#standings .tbl th:nth-child(1){width:36px} #standings .tbl th:nth-child(2){width:200px} #standings .tbl th:nth-child(3){width:46px} #standings .tbl th:nth-child(4){width:46px} #standings .tbl th:nth-child(5){width:46px} #standings .tbl th:nth-child(6){width:52px} #standings .tbl th:nth-child(7){width:60px} #standings .tbl th:nth-child(8){width:48px} #standings .tbl th:nth-child(9){width:56px} #standings .tbl th:nth-child(10){width:54px} #standings .tbl th:nth-child(11){width:54px} #standings .tbl th:nth-child(12){width:56px} #standings .tbl th:nth-child(13){width:78px} #standings .tbl th:nth-child(14){width:80px}
-@media(max-width:640px){#standings .tbl{min-width:660px}
-  #standings .tbl th:nth-child(1){width:28px} #standings .tbl th:nth-child(2){width:74px} #standings .tbl th:nth-child(3){width:36px} #standings .tbl th:nth-child(4){width:36px} #standings .tbl th:nth-child(5){width:36px} #standings .tbl th:nth-child(6){width:40px} #standings .tbl th:nth-child(7){width:52px} #standings .tbl th:nth-child(8){width:38px} #standings .tbl th:nth-child(9){width:46px} #standings .tbl th:nth-child(10){width:46px} #standings .tbl th:nth-child(11){width:46px} #standings .tbl th:nth-child(12){width:46px} #standings .tbl th:nth-child(13){width:68px} #standings .tbl th:nth-child(14){width:68px}}
+/* ---------- Team Rankings (nhl v26, the NFL hub's tab of that name; it took the Standings' and Power Ratings' place) ----------
+   One table of the 32 clubs in order of the team Elo (table.rt-v, the NFL's), eleven columns where the NFL has eight: laid out fixed,
+   the rank and the club at the NFL's 46px and 230px and each figure column at least as wide as its own heading (the NFL shares what is
+   left equally among six, so its headings break in two from 561 to 990px). The widths add up to 1018px: a wider table shares the rest
+   out in proportion, a narrower box scrolls it sideways in its .wrap with the club held (.sk). Rows 44px, the NFL's. No colour is
+   written here: every one is a token, so the light look needs no rule of its own */
+table.rt-v{table-layout:fixed;width:100%;min-width:1020px}
+table.rt-v th,table.rt-v td{white-space:nowrap}
+table.rt-v td{line-height:20px;height:44px}
+table.rt-v th:nth-child(1),table.rt-v td:nth-child(1){width:46px;padding-right:2px}
+table.rt-v th:nth-child(2),table.rt-v td:nth-child(2){width:230px;padding-left:4px}
+table.rt-v th:nth-child(3){width:84px} table.rt-v th:nth-child(4){width:60px} table.rt-v th:nth-child(5){width:96px} table.rt-v th:nth-child(6){width:100px} table.rt-v th:nth-child(7){width:100px} table.rt-v th:nth-child(8){width:70px} table.rt-v th:nth-child(9){width:70px} table.rt-v th:nth-child(10){width:86px} table.rt-v th:nth-child(11){width:76px}
+table.rt-v th:nth-child(n+3),table.rt-v td:nth-child(n+3){text-align:center;font-variant-numeric:tabular-nums}
+table.rt-v td.movecell{padding-left:0;padding-right:0}                  /* the Elo change: its chip centred, the cell's side padding given up to it */
+table.rt-v .tw{gap:0}                                                    /* tag, name, move chip on one line, the NFL's spacing */
+table.rt-v .tn{color:var(--ink-2);margin-left:4px}
+/* every table shrinks its type and padding at 900px (the prop tables'); this one and the absences' keep the NFL's, which change only on a phone */
+@media(max-width:900px){ table.rt-v,#injCard table{font-size:inherit} table.rt-v th,table.rt-v td,#injCard th,#injCard td{padding:10px 12px} table.rt-v th:nth-child(1),table.rt-v td:nth-child(1){padding-right:2px} table.rt-v th:nth-child(2),table.rt-v td:nth-child(2){padding-left:4px} table.rt-v td.movecell{padding-left:0;padding-right:0} }
+@media(max-width:1110px){ table.rt-v .sk{box-shadow:inset -1px 0 0 var(--line)} }      /* the held column's edge, where the table can be wider than its box */
+/* a phone (640px and under; the NFL's own rule is at 560px): the NFL's tighter cells and 38px rows; each column as wide as its own words
+   (the NFL's table lays itself out so there too); the club its tag alone, its name kept for a screen reader inside the club's own
+   positioned box; the tag and its move chip held at the left as the figures pass under them */
+@media(max-width:640px){
+  table.rt-v{table-layout:auto;width:max-content;min-width:100%}
+  table.rt-v th:nth-child(n),table.rt-v td:nth-child(n){padding:7px 9px;width:auto}
+  table.rt-v td{height:38px}
+  table.rt-v th:nth-child(1),table.rt-v td:nth-child(1){padding-right:2px}
+  table.rt-v th:nth-child(2),table.rt-v td:nth-child(2){padding-left:4px}
+  table.rt-v .tw{position:relative}
+  table.rt-v .tw .tn{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+}
+/* the narrowest phones (380px and under): 6px at a cell's sides, so the Elo, the column the table is in order of, is whole before any swipe at 360px */
+@media(max-width:380px){
+  table.rt-v th:nth-child(n),table.rt-v td:nth-child(n){padding-left:6px;padding-right:6px}
+  table.rt-v th:nth-child(1),table.rt-v td:nth-child(1){padding-right:2px}
+  table.rt-v th:nth-child(2),table.rt-v td:nth-child(2){padding-left:4px}
+}
+/* the card under it, the NFL's Impact absences: its heading (the NFL writes it inline), its table (a name never broken: on a phone it
+   scrolls in its .wrap, the player held), the figure at the right, the stamp */
+#injCard[hidden]{display:none}
+#injCard h3{margin:0 0 6px;font-family:var(--display);font-size:17px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink)}
+#injCard th,#injCard td{white-space:nowrap}
+#injCard th.num,#injCard td.num{text-align:right}
+#injCard .inj-asof{margin:8px 0 0}
+@media(max-width:720px){ #injCard th.num{white-space:normal;min-width:96px} }      /* the long heading on three lines, so the figure stays whole beside the held player: on a phone, and on the first widths past one (at 641px the one-line heading put the figure half out of its box) */
+@media(max-width:640px){ #injCard th,#injCard td{padding:7px 9px} #injCard .sk{box-shadow:inset -1px 0 0 var(--line)} }
+@media(max-width:380px){ #injCard th,#injCard td{padding-left:6px;padding-right:6px} }
 .spark{display:inline-block;vertical-align:middle;height:22px;width:90px}
 .spark polyline{fill:none;stroke:var(--ice);stroke-width:1.5}
 .spark circle{fill:var(--lime)}
@@ -833,8 +872,7 @@ body.pp-on{overflow:hidden}
     <button data-tab="suggest">Suggested Parlays</button>
     <button data-tab="parlays">Parlay Builder</button>
     <button data-tab="xparlays" data-admin-only>X Parlays</button>
-    <button data-tab="standings">Standings</button>
-    <button data-tab="ratings">Power Ratings</button>
+    <button data-tab="ratings">Team Rankings</button>
     <button data-tab="players">Players</button>
     <button data-tab="pickem">Pick'em Record</button>
     <button data-tab="xbets" data-admin-only>X Bet Log</button>
@@ -854,16 +892,9 @@ body.pp-on{overflow:hidden}
     <div class="grid" id="games"></div>
   </section>
 
-  <section id="tab-standings" hidden>
-    <div id="standings"></div>
-  </section>
-
   <section id="tab-ratings" hidden>
-    <div class="card">
-      <h2 id="ratH">Power ratings <span class="pill ok" id="ratChamp" hidden></span></h2>
-      <div class="bar"><select id="ratConf" aria-label="Conference"><option value="">Both conferences</option><option value="East">East</option><option value="West">West</option></select></div>
-      <div class="wrap"><table class="tbl" id="ratTable"></table></div>
-    </div>
+    <div class="card" id="ratingsCard"><div id="ratingsTable"></div></div>
+    <div class="card" id="injCard" hidden><div id="injSuggest"></div></div>
   </section>
 
   <section id="tab-players" hidden>
@@ -1002,7 +1033,7 @@ body.pp-on{overflow:hidden}
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v25 · 2026-11-12';
+const APP_BUILD = 'nhl v26 · 2026-11-12';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1015,7 +1046,6 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const pct = p => (p * 100).toFixed(0) + '%';
 const pct1 = p => (p * 100).toFixed(1) + '%';
 const signed = n => n > 0 ? '+' + n : String(n);
-const fix1 = x => typeof x === 'number' && isFinite(x) ? x.toFixed(1) : '—';    /* a column of figures at one place, 1553.0 beside 1600.5 */
 const sgn = n => n > 0 ? ' pos' : n < 0 ? ' neg' : '';                     /* a table's signed figure: lime above zero, --rose-ink below */
 const fmtLine = n => n === 0 ? 'PK' : (n > 0 ? '+' + n : String(n));
 const fmtOdds = n => n === null || n === undefined ? '—' : (n > 0 ? '+' + n : String(n));
@@ -1158,6 +1188,29 @@ const tagFill = id => tagBg(teamCols(id)[0]);          // a club's fill, for a t
 const tag = (id, cls, hide) => { const bg = tagFill(id); return `<span class="ttag${cls ? ' ' + cls : ''}"${hide ? ' aria-hidden="true"' : ''} style="background:${bg};color:${textOn(bg)};border-color:${darken(bg, .72)}">${esc(T(id).abbr)}</span>`; };
 const muPills = g => `<span class="mu">${tag(g.away, 'mini')} @ ${tag(g.home, 'mini')}</span>`;
 function teamCell(id) { return `<span class="tw">${tag(id, 'mini', true)}<span class="tn">${esc(T(id).short)}</span></span>`; }
+
+/* ---------- tier shields: the NFL hub's, word for word (its betting app's TIERS, tierBadge) ----------
+   An inline SVG, no image: a shield in its tier's gradient, the top tiers with a mark inside. The gradients are defined once a page, in
+   a zero-size SVG the first shield appends to the body (#peDefs, tierDefs); every shield refers to them by id. The numbers in TIERS are
+   the NFL's own scale; a tab that draws a shield on another scale picks the tier itself and rewrites the words (teamShield, below) */
+const TIERS=[['HOF',1750,'#C084FC','#6D28D9'],['Elite',1700,'#7C3AED','#4C1D95'],['Master',1650,'#DB2777','#9D174D'],['Diamond',1600,'#3B82F6','#1E4FA8'],['Platinum',1550,'#2FA5A0','#176F6C'],
+  ['Gold',1500,'#D4A017','#8A6508'],['Silver',1450,'#9CA3AF','#5A6673'],['Bronze',1400,'#A05A2C','#5E3416'],['Iron',1350,'#6B6B6B','#3A3A3A'],['Wood',-Infinity,'#9A7B56','#5E4630']];
+function eloTier(elo){ return TIERS.find(t=>elo>=t[1]); }
+const TIER_DEFS=`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="tg-hof-gem" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67E8F9"/><stop offset=".38" stop-color="#A78BFA"/><stop offset=".7" stop-color="#F472B6"/><stop offset="1" stop-color="#FCD34D"/><animateTransform attributeName="gradientTransform" type="rotate" values="0 .5 .5;360 .5 .5" dur="8s" repeatCount="indefinite"/></linearGradient>${TIERS.map(t=>`<linearGradient id="tg-${t[0].toLowerCase()}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t[2]}"/><stop offset="1" stop-color="${t[3]}"/></linearGradient>`).join('')}</defs></svg>`;
+function woodBadge(){ return "<svg class=\"tierbadge tier-wood\" viewBox=\"0 0 18 20\" role=\"img\" aria-label=\"Wood tier\"><title>Wood tier (Elo under 1350)</title><path d=\"M2 2 H16 V10 C16 15 12.5 17.5 9 19 C5.5 17.5 2 15 2 10 Z\" fill=\"#9A7B56\" stroke=\"#5E4630\" stroke-width=\"1.1\"/><path d=\"M3.5 6.2 C6 5.4 9 7 14.5 6 M3.4 10.4 C7 9.6 10 11.2 14.6 10.2 M5 14.4 C7.5 13.8 10 14.9 13 14.2\" fill=\"none\" stroke=\"#5E4630\" stroke-opacity=\".45\" stroke-width=\".7\" stroke-linecap=\"round\"/><ellipse cx=\"11.2\" cy=\"8.3\" rx=\"1.1\" ry=\".6\" fill=\"none\" stroke=\"#5E4630\" stroke-opacity=\".5\" stroke-width=\".6\"/></svg>"; }
+function hofBadge(){ return "<svg class=\"tierbadge tier-hof\" viewBox=\"0 0 18 20\" role=\"img\" aria-label=\"HOF tier\"><title>HOF tier (Elo 1750+)</title><path d=\"M4.6 3.2 H13.4 L17 7.6 L9 18.8 L1 7.6 Z\" fill=\"none\" stroke=\"#E879F9\" stroke-width=\"2.4\" stroke-linejoin=\"round\" opacity=\".45\"/><path d=\"M4.6 3.2 H13.4 L17 7.6 L9 18.8 L1 7.6 Z\" fill=\"url(#tg-hof-gem)\" stroke=\"#5B21B6\" stroke-width=\".9\" stroke-linejoin=\"round\"/><path d=\"M1 7.6 H17 M4.6 3.2 L6.7 7.6 L9 3.2 L11.3 7.6 L13.4 3.2 M6.7 7.6 L9 18.8 L11.3 7.6\" fill=\"none\" stroke=\"#fff\" stroke-opacity=\".6\" stroke-width=\".65\" stroke-linejoin=\"round\"/><path d=\"M5 3.8 H8.2 L6.5 7 H2.5 Z\" fill=\"#fff\" opacity=\".5\"/><path d=\"M15.4 .2 l.45 1.15 1.15.45-1.15.45-.45 1.15-.45-1.15-1.15-.45 1.15-.45z\" fill=\"#F59E0B\"/><path d=\"M2.2 13 l.3.8.8.3-.8.3-.3.8-.3-.8-.8-.3.8-.3z\" fill=\"#F59E0B\" opacity=\".8\"/></svg>"; }
+function tierBadge(elo){ if(eloTier(elo)[0]==='HOF') return hofBadge(); if(eloTier(elo)[0]==='Wood') return woodBadge(); const [name,min,fill,edge]=eloTier(elo); const i=TIERS.findIndex(t=>t[0]===name)-1; const id='tg-'+name.toLowerCase();
+  const range=isFinite(min)?`${min}+`:'under 1400';
+  let inner='';
+  if(i===0) inner=`<path d="M4.5 7 L6.8 4.2 L9 6.6 L11.2 4.2 L13.5 7 L12.6 9.2 H5.4 Z" fill="#FDE68A"/><path d="M9 10.2 l1 2.1 2.3.3-1.7 1.6.4 2.3L9 15.4l-2 1.1.4-2.3-1.7-1.6 2.3-.3z" fill="#fff" opacity=".95"/>`;
+  else if(i===1) inner=`<path d="M5 6.8 L7 4.4 L9 6.6 L11 4.4 L13 6.8 L12.2 8.8 H5.8 Z" fill="#FBCFE8"/><circle cx="9" cy="12.6" r="2" fill="#fff" opacity=".9"/>`;
+  else if(i===2) inner=`<path d="M9 5.2 L12.6 9 L9 14.6 L5.4 9 Z" fill="#fff" opacity=".9"/>`;
+  else if(i===3) inner=`<circle cx="9" cy="9.8" r="2.4" fill="#fff" opacity=".85"/>`;
+  else if(i===4) inner=`<circle cx="9" cy="9.8" r="2" fill="#fff" opacity=".7"/>`;
+  const glow=i===0?`<path d="M2 2 H16 V10 C16 15 12.5 17.5 9 19 C5.5 17.5 2 15 2 10 Z" fill="none" stroke="#C4B5FD" stroke-width="2.4" opacity=".55"/>`:'';
+  return `<svg class="tierbadge" viewBox="0 0 18 20" role="img" aria-label="${name} tier"><title>${name} tier (Elo ${range})</title>${glow}<path d="M2 2 H16 V10 C16 15 12.5 17.5 9 19 C5.5 17.5 2 15 2 10 Z" fill="url(#${id})" stroke="${edge}" stroke-width="1.1"/><path d="M4.2 4 H13.8 V9.6 C13.8 13.3 11.4 15.2 9 16.4 C6.6 15.2 4.2 13.3 4.2 9.6 Z" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1"/>${inner}</svg>`; }
+/* the gradients, once a page, before the first shield is drawn */
+function tierDefs(){ if(document.getElementById('peDefs')) return; const box=document.createElement('div'); box.id='peDefs'; box.innerHTML=TIER_DEFS; document.body.appendChild(box); }
 /* the goals layer's margin, on the card's chip: the side it favours and by how much, even under 0.05 of a goal. The card's win chance
    blends that layer with the team Elo (tools/players.js), so the two can favour different clubs on a close game: the chip says Margin,
    never Model, and its title says why */
@@ -1166,8 +1219,9 @@ const marginText = g => Math.abs(g.mu) < 0.05 ? 'even' : `${T(g.mu > 0 ? g.home 
 /* ---------- tabs ---------- */
 /* a tab by name; #parlay, the NFL site's name for the builder, opens it too. On a phone the bar scrolls
    sideways, and the chosen tab's button is brought into it by scrolling the bar, never the page */
-/* '#parlay', the NFL site's name, opens the Parlay Builder; '#playoff', the tab nhl v14 took off, the Standings and their playoff chances */
-const tabName = n => n === 'parlay' ? 'parlays' : n === 'playoff' ? 'standings' : n;
+/* '#parlay', the NFL site's name, opens the Parlay Builder; '#standings' and '#playoff', the tabs nhl v26 and nhl v14 took off, open
+   Team Rankings, where the record, the points and the playoff chances are (a tab stored under either name too) */
+const tabName = n => n === 'parlay' ? 'parlays' : n === 'playoff' || n === 'standings' ? 'ratings' : n;
 function navTo(b) {
   const nav = $('tabs'); if (!b || !nav) return;
   const left = Math.max(0, b.offsetLeft - (nav.clientWidth - b.offsetWidth) / 2);
@@ -1180,7 +1234,7 @@ function showTab(name) {
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   P.ui.tab = name; save();
   if (name === 'games') SHOWN = new Set();
-  ({ games: renderGames, suggest: renderSuggest, standings: renderStandings, ratings: renderRatings, players: renderPlayers, parlays: renderParlays, xparlays: renderXParlays, pickem: renderPickem, xbets: renderXBets, record: renderRecord })[name]();
+  ({ games: renderGames, suggest: renderSuggest, ratings: renderRankings, players: renderPlayers, parlays: renderParlays, xparlays: renderXParlays, pickem: renderPickem, xbets: renderXBets, record: renderRecord })[name]();
   updateSlip();
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
@@ -1473,32 +1527,99 @@ async function autoLive() {
   try { if (await readLive(day) && !$('tab-games').hidden) renderGames(); } catch (e) {}
 }
 
-/* ---------- Standings ---------- */
-function renderStandings() {
-  const PO = S.playoff; const po = PO.odds || {};
-  const inField = new Set();
-  for (const conf of ['East', 'West']) { const f = PO.bracket[conf]; for (const t of [].concat(...Object.values(f.divs), f.wild)) inField.add(t); }
-  const row = (r, i, cut) => { const t = T(r.team), df = r.gf - r.ga; return `<tr class="${inField.has(r.team) ? 'in' : ''} ${cut ? 'cut' : ''}"><td class="n rk">${i + 1}</td><td class="sk">${teamCell(r.team)}</td><td class="n">${r.gp}</td><td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.otl}</td><td class="n big">${r.pts}</td><td class="n">${r.rw}</td><td class="n">${r.row}</td><td class="n">${r.gf}</td><td class="n">${r.ga}</td><td class="n${sgn(df)}">${signed(df)}</td><td class="n">${fix1(t.rating)}</td><td class="n">${po[r.team] ? pct(po[r.team].playoff) : '—'}</td></tr>`; };
-  const head = '<thead><tr><th class="n on">#</th><th class="sk">Team</th><th class="n">GP</th><th class="n">W</th><th class="n">L</th><th class="n">OTL</th><th class="n on">PTS</th><th class="n">RW</th><th class="n">ROW</th><th class="n">GF</th><th class="n">GA</th><th class="n">Diff</th><th class="n">Rating</th><th class="n">Playoff</th></tr></thead>';
-  const divs = { East: ['Atlantic', 'Metropolitan'], West: ['Central', 'Pacific'] };
-  $('standings').innerHTML = ['East', 'West'].map(conf => {
-    const f = PO.bracket[conf];
-    const wild = f.wild.map(t => T(t).abbr).join(', ');
-    return `<div class="card stand"><h2>${conf}ern Conference <span class="pill">wild cards ${esc(wild)}</span></h2>` + divs[conf].map(d => `<h3>${d}</h3><div class="wrap"><table class="tbl">${head}<tbody>${PO.standings[d].map((r, i) => row(r, i, i === 2)).join('')}</tbody></table></div>`).join('') + '</div>';
-  }).join('');
+/* ---------- Team Rankings (nhl v26: the NFL hub's tab of that name, its ratingsViz(), in hockey's terms) ----------
+   The owner's ask of 11 November 2026: "match what the NFL hub has, the look, the layout". One table of the 32 clubs in order of the
+   team Elo where the Standings' four division tables and the Power Ratings' one were, and under it the absences that move a call.
+   Everything is read from the state as published: nothing is fetched or stored, and none of the job's models is worked again. */
+const RK_DAYS = 7;                                           // the Elo change and the rank chips look this many days back (Eastern), from the state's own day
+/* hockey's club ladder: the NFL's ten tiers on a 30-point step where the NFL's is 50. A tier is half a standard deviation of the league
+   at a season's end on both: the NFL's shown Elo is scaled to 100, this Elo's spread was 55 over 2011-12 to 2025-26 (on the NFL's
+   numbers three clubs in four wore Gold or Silver and the top three tiers were never worn). Gold still starts at 1500, the average
+   club. The least Elo of HOF, Elite, Master, Diamond, Platinum, Gold, Silver, Bronze, Iron; under the last, Wood: */
+const TEAM_TIERS = [1650, 1620, 1590, 1560, 1530, 1500, 1470, 1440, 1410];
+function teamTier(elo) { const i = TEAM_TIERS.findIndex(m => elo >= m), k = i < 0 ? TEAM_TIERS.length : i; return { k, name: TIERS[k][0], range: i < 0 ? 'under ' + TEAM_TIERS[TEAM_TIERS.length - 1] : TEAM_TIERS[i] + '+' }; }
+/* a club's shield, teamShield(elo) on the Elo as shown (a whole number): the NFL's shield for that tier by its own code (drawn on a
+   rating inside the tier's NFL band), its words hockey's ("Master tier (Elo 1590+)") */
+function teamShield(elo) { const t = teamTier(elo), nfl = isFinite(TIERS[t.k][1]) ? TIERS[t.k][1] : TIERS[t.k - 1][1] - 1;
+  tierDefs(); return tierBadge(nfl).replace(/<title>[^<]*<\/title>/, `<title>${t.name} tier (Elo ${t.range})</title>`); }
+/* the Elo's chance against an average club (1500) on neutral ice, no rest either way: tools/elo.js's expected() */
+const vsAverage = rating => 1 / (1 + Math.pow(10, -(rating - 1500) / 400));
+const az = (a, b) => a < b ? -1 : a > b ? 1 : 0;      // two keys or names in one fixed order, whatever the visitor's language
+const dayWords = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+/* the 32 rows. Each club's Elo as shown (a whole number); the Elo it had on the morning RK_DAYS back: the rating going into its first
+   game on or after that day (every game row carries both clubs' ratings going into it, rh and ra, frozen with its call; a game still to
+   come carries the rating as it stands, and a club with no game since is where it was); and how many games it has finished since.
+   Clubs level on the Elo shown share a rank, one more than the clubs shown above them (the NFL's rule: 7, 7, 9), now and then alike,
+   every club ranked then on its Elo then. A club with no final this season has no "then" (was is null): it is ranked then where it
+   stands and wears no chip */
+function rankRows() {
+  const from = addDays(S.today, -RK_DAYS), by = {};
+  for (const g of S.games) for (const id of [g.home, g.away]) (by[id] = by[id] || []).push(g);
+  const rows = Object.keys(S.teams).map(id => { const t = S.teams[id], into = g => g.home === id ? g.rh : g.ra;
+    const fin = (by[id] || []).filter(g => g.state === 'final' && typeof g.hs === 'number');
+    const first = (by[id] || []).filter(g => g.date >= from && typeof into(g) === 'number').sort((a, b) => Date.parse(a.start) - Date.parse(b.start) || String(a.id).localeCompare(String(b.id)))[0];
+    return { id, t, elo: Math.round(t.rating), was: fin.length ? Math.round(first ? into(first) : t.rating) : null, n: fin.filter(g => g.date >= from).length }; })
+    .sort((a, b) => (b.t.rating - a.t.rating) || az(a.id, b.id));
+  const then = x => x.was === null ? x.elo : x.was;
+  for (const x of rows) { x.rank = 1 + rows.filter(y => y.elo > x.elo).length; x.rankWas = x.was === null ? null : 1 + rows.filter(y => then(y) > then(x)).length; }
+  return { rows, from };
 }
-
-/* ---------- Power ratings ---------- */
-$('ratConf').addEventListener('change', renderRatings);
-function renderRatings() {
-  $('ratH').title = `Elo: home ice ${S.model.params.hfa} Elo, ${S.model.gpe.toFixed(0)} Elo per goal of margin.`;
+function renderRankings() {
+  const el = $('ratingsTable'); if (!el) return;
+  const { rows, from } = rankRows(), since = dayWords(from), po = (S.playoff && S.playoff.odds) || {};
+  const games = n => `${n} game${n === 1 ? '' : 's'}`;
+  const mv = x => { if (x.rankWas === null) return ''; const d = x.rankWas - x.rank;
+    if (d === 0) return `<span class="rankmv flat" title="No change since ${since}">·</span>`;
+    const w = `${d > 0 ? 'Up' : 'Down'} ${Math.abs(d)} since ${since}`;
+    return `<span class="rankmv ${d > 0 ? 'up' : 'down'}" title="${w}" aria-label="${w}"><i>${d > 0 ? '▲' : '▼'}</i>${Math.abs(d)}</span>`; };
+  const eloMv = x => { if (x.was === null) return ''; const d = x.elo - x.was;
+    if (d === 0) return `<span class="elomv flat" title="No change since ${since} (${games(x.n)})">·</span>`;
+    const w = `${d > 0 ? 'Gained' : 'Lost'} ${Math.abs(d)} Elo since ${since} (${games(x.n)})`;
+    return `<span class="elomv ${d > 0 ? 'up' : 'down'}" title="${w}" aria-label="${w}">${d > 0 ? '+' : '−'}${Math.abs(d)}</span>`; };
+  const per = (n, gp) => gp ? (n / gp).toFixed(2) : '—';
+  const odd = (o, k, places) => o && typeof o[k] === 'number' ? (o[k] * 100).toFixed(places) + '%' : '—';
+  const row = x => { const t = x.t, o = po[x.id];
+    return `<tr><td class="muted">${x.rank}</td><td class="sk"><span class="tw">${tag(x.id, 'mini win', true)}<span class="tn">${esc(t.short)}</span>${mv(x)}</span></td>`
+      + `<td class="num rt-rec">${t.w}-${t.l}-${t.otl}</td><td class="num">${t.pts}</td>`
+      + `<td class="num"><span class="elocell">${teamShield(x.elo)}<b>${x.elo}</b></span></td><td class="movecell">${eloMv(x)}</td>`
+      + `<td class="num rt-pct">${Math.round(vsAverage(t.rating) * 100)}%</td>`
+      + `<td class="num">${per(t.gf, t.gp)}</td><td class="num">${per(t.ga, t.gp)}</td>`
+      + `<td class="num rt-pct">${odd(o, 'playoff', 0)}</td><td class="num rt-pct">${odd(o, 'cup', 1)}</td></tr>`; };
+  /* what a number means is on its heading's title, never in a sentence on the page; the Elo's two constants on the pill's */
+  const H = [['#', ''], ['Team', ''], ['Record', 'Wins, losses, losses past regulation'], ['PTS', 'Standings points'], ['Elo', 'The team Elo, and its tier'],
+    ['Elo change', `Elo gained or lost over the last ${RK_DAYS} days`], ['Vs average', 'The chance of beating an average club on neutral ice'], ['GF/G', 'Goals for a game this season'],
+    ['GA/G', 'Goals against a game this season'], ['Playoff', "The simulation's chance of a playoff spot"], ['Cup', "The simulation's chance of the Stanley Cup"]];
   const champ = S.playoff && S.playoff.phase === 'over' && S.playoff.champion;      // the season's champion, once it has one: a state, on the heading's pill
-  $('ratChamp').textContent = champ ? `${T(champ).short} won the Cup` : ''; $('ratChamp').hidden = !champ;
-  const conf = $('ratConf').value; const po = S.playoff.odds || {};
-  let ids = Object.keys(S.teams); if (conf) ids = ids.filter(id => T(id).conf === conf);
-  ids.sort((a, b) => T(b).rating - T(a).rating);
-  $('ratTable').innerHTML = '<thead><tr><th class="n on">#</th><th class="sk">Team</th><th>Div</th><th class="n on">Rating</th><th class="n">Record</th><th class="n">PTS</th><th class="n">GF/g</th><th class="n">GA/g</th><th class="n">Playoff</th><th class="n">Cup</th></tr></thead><tbody>' +
-    ids.map(id => { const t = T(id); return `<tr><td class="n rk">${t.rank}</td><td class="sk">${teamCell(id)}</td><td class="muted">${esc(t.div)}</td><td class="n big">${fix1(t.rating)}</td><td class="n">${rec(t)}</td><td class="n">${t.pts}</td><td class="n">${t.gfRate.toFixed(2)}</td><td class="n">${t.gaRate.toFixed(2)}</td><td class="n">${po[id] ? pct(po[id].playoff) : '—'}</td><td class="n">${po[id] ? pct1(po[id].cup) : '—'}</td></tr>`; }).join('') + '</tbody>';
+  const elo = S.model && S.model.params && typeof S.model.gpe === 'number' ? ` title="Home ice ${S.model.params.hfa} Elo; ${S.model.gpe.toFixed(0)} Elo a goal of margin"` : '';
+  el.innerHTML = `<h2 id="ratH">Team rankings <span class="pill"${elo}>Team Elo</span><span class="pill ok" id="ratChamp"${champ ? '' : ' hidden'}>${champ ? esc(T(champ).short) + ' won the Cup' : ''}</span></h2>
+    <div class="wrap"><table class="rt-v"><thead><tr>${H.map(([h, t], i) => `<th${i === 1 ? ' class="sk"' : i > 1 ? ' class="num"' : ''}${t ? ` title="${esc(t)}"` : ''}>${h}</th>`).join('')}</tr></thead><tbody>`
+    + rows.map(row).join('') + '</tbody></table></div>';
+  renderAbsences();
+}
+/* the card under it (the NFL's Impact absences): every player the injury report has out who is worth OUT_ROW goals a game or more to his
+   club by the player model, either way (the Games card's own bar), the most first; the figure is what his absence does to his club's
+   expected margin. A goalie, whom players.js gives no cost, is sized as the NFL sizes a quarterback, by the gap to his replacement: his
+   save rating less that of the goalie in net for his club's next game, in whole hundredths, and only where he is the better of the two
+   (one rated under the goalie in net would not be starting). Hidden when there is none, and with no player model in the state */
+function outWorth(t, o) {
+  if (typeof o.cost === 'number') return outRow(o) ? o.cost : null;
+  const P = S.players.players || {}, p = o.pos === 'G' && o.id != null ? P[o.id] : null, n = t.goalie;
+  if (!p || typeof p.gk !== 'number' || !n || typeof n.gk !== 'number') return null;
+  const h = Math.round((Math.round(p.gk * 1000) - Math.round(n.gk * 1000)) / 10);
+  return h >= Math.round(OUT_ROW * 100) ? h / 100 : null;
+}
+function renderAbsences() {
+  const card = $('injCard'), el = $('injSuggest'); if (!card || !el) return;
+  const PL = S.players, list = [];
+  for (const [club, t] of Object.entries((PL && PL.teams) || {})) for (const o of t.out || []) { const cost = outWorth(t, o); if (cost !== null) list.push({ club, o, cost }); }
+  list.sort((a, b) => Math.abs(b.cost) - Math.abs(a.cost) || az(a.club, b.club) || az(String(a.o.name), String(b.o.name)));
+  card.hidden = !list.length; if (!list.length) { el.innerHTML = ''; return; }
+  const status = s => { const w = String(s || 'Out'); return /^out$/i.test(w) ? 'OUT' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); };
+  const I = PL.injuries;
+  el.innerHTML = `<h3>Impact absences</h3>
+    <div class="wrap"><table><thead><tr><th>Team</th><th class="sk">Player</th><th>Pos</th><th>Status</th><th class="num" title="What his absence does to his club's expected margin, by the player model; a goalie against the goalie in net">Goals off predicted margin</th></tr></thead><tbody>`
+    + list.map(({ club, o, cost }) => `<tr><td>${tag(club, 'mini win')}</td><td class="sk">${esc(o.name)}</td><td>${esc(o.pos || '—')}</td><td><span class="tier out">${esc(status(o.status))}</span></td><td class="num"><b class="delta ${cost > 0 ? 'down' : 'up'}">${goalsWorth(-cost)}</b></td></tr>`).join('')
+    + '</tbody></table></div>' + (I && I.pulled ? `<p class="muted inj-asof">Injury report of ${esc(dateClock(I.pulled))}</p>` : '');
 }
 
 /* ---------- Players ---------- */
@@ -1535,7 +1656,7 @@ function renderPlayers() {
      rating (the table's order) right beside it so a phone shows it without a swipe */
   const head = kind === 'goalies' ? '<thead><tr><th class="n on">#</th><th class="sk">Goalie</th><th class="n on">Rating</th><th>Club</th><th class="n">Starts</th><th>Five seasons</th></tr></thead>' : '<thead><tr><th class="n on">#</th><th class="sk">Player</th><th class="n on">Rating</th><th>Club</th><th class="n">Offence</th><th class="n">Defence</th><th class="n">Games</th><th class="n">TOI</th><th>Five seasons</th></tr></thead>';
   const sx = v => sgn(+x100(v));          /* coloured by the sign shown */
-  /* a signed figure printed signed, as the NBA's and as the Standings' Diff: +29.5 lime, -8.3 rose, 0.0 plain (never -0.0); a rating
+  /* a signed figure printed signed, as the NBA's: +29.5 lime, -8.3 rose, 0.0 plain (never -0.0); a rating
      or a strength, a column a table is in order of, stays unsigned */
   const s100 = v => { const t = x100(v), n = +t; return n > 0 ? '+' + t : n < 0 ? t : (0).toFixed(1); };
   const who = p => `<td class="pn sk"><b>${esc(p.name)}</b>${kind === 'goalies' ? '' : ` <span class="muted">${esc(p.pos)}</span>`}</td>`;

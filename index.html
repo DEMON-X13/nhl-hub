@@ -472,6 +472,7 @@ table.pe-t .tw .tn{position:absolute;width:1px;height:1px;margin:-1px;padding:0;
 .rv-tip{position:absolute;top:6px;z-index:2;max-width:calc(100% - 16px);background:var(--panel);border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--ink-2);box-shadow:0 8px 24px -10px rgba(15,27,45,.35);pointer-events:none;white-space:nowrap}
 .rv-tip b{display:block;color:var(--ink);margin-bottom:4px}
 .rv-tip div{display:flex;align-items:center;flex-wrap:wrap;gap:2px;line-height:1.6}
+.rv-tip.tight .vs{display:none}
 .pk-bar{margin:12px 0 0;gap:10px}
 .pk-bar label{display:inline-flex;align-items:center;gap:8px}
 /* every pick of a day (the NFL's pick grid): laid out fixed, the game's column its own width and the six picks sharing the rest, never
@@ -1612,10 +1613,12 @@ function slateCols(a, h) {
 }
 /* the call as it is written, one rule wherever it is (the list's row, the game's page and its windows): the pick's own chance rounded to
    a whole percentage, the other side the rest, so the two add to 100 and a half-point (0.695) reads 70% everywhere; null where the
-   state has no call for the game (a game new to the feed, which the job's second pass calls) */
+   state has no call for the game (a game new to the feed, which the job's second pass calls). The side's chance is taken to four
+   places first: 1 - 0.455 is 0.54499999... in floating point, which would round an away pick at a half-point down (54%, 50/50)
+   where the home pick at 0.545 rounds up (55%, LOW) */
 function slateCall(g) {
   if (typeof g.pHome !== 'number' || !isFinite(g.pHome)) return null;
-  const side = g.pick === 'home' || g.pick === 'away' ? g.pick : (g.pHome >= 0.5 ? 'home' : 'away'), conf = Math.round((side === 'home' ? g.pHome : 1 - g.pHome) * 100);
+  const side = g.pick === 'home' || g.pick === 'away' ? g.pick : (g.pHome >= 0.5 ? 'home' : 'away'), conf = Math.round(Math.round((side === 'home' ? g.pHome : 1 - g.pHome) * 1e4) / 100);
   return { pa: side === 'away' ? conf : 100 - conf, ph: side === 'home' ? conf : 100 - conf, side, pick: g[side], conf };
 }
 /* a game ESPN has postponed or cancelled, by a scoreboard read this browser made: 'postponed', 'cancelled' or null. It is not a final
@@ -3902,7 +3905,7 @@ function renderParlayLines() {
   const sl = pbSlate(), gs = sl.games.filter(freshLine);
   $('pbPickN').textContent = gs.length ? `${gs.length} game${gs.length > 1 ? 's' : ''} on ${slateText(sl)}` : ''; $('pbPickN').hidden = !gs.length;
   if (!PICK_SET) { PICK_SET = true; $('pbPick').open = !(window.matchMedia && window.matchMedia('(max-width:760px)').matches); }
-  $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh">${muPills(g)}<span class="pb-pgt">${esc(sl.dates.length > 1 ? when(g) : timeOf(g))}</span><span class="chip" title="the model's chance to win, overtime included">Model <b>${esc(T(g.pHome >= 0.5 ? g.home : g.away).abbr)} ${pct(Math.max(g.pHome, 1 - g.pHome))}</b></span></div>${betBlock(g)}${ppBtn(g)}</div>`).join('')
+  $('plLines').innerHTML = gs.length ? gs.map(g => `<div class="pb-pg" data-id="${g.id}"><div class="pb-pgh">${muPills(g)}<span class="pb-pgt">${esc(sl.dates.length > 1 ? when(g) : timeOf(g))}</span>${(c => c ? `<span class="chip" title="the model's chance to win, overtime included">Model <b>${esc(T(c.pick).abbr)} ${c.conf}%</b></span>` : '')(slateCall(g))}</div>${betBlock(g)}${ppBtn(g)}</div>`).join('')
     : `<div class="empty">Nothing to bet yet: no game on ${esc(slateText(sl) || 'the schedule')} still to come has a DraftKings line. Lines come about a day before puck drop.</div>`;
   syncBetRows($('plLines'));
 }
@@ -5151,12 +5154,13 @@ const pkLgd = m => m.id === 'dk' ? '<i class="lgd ink"></i>' : `<i class="lgd${m
    DraftKings the zero line, so above it is beating the favourite and a line's height is games. An inline SVG (no image), drawn at
    its box's own width so its 11px words stay 11px on a phone; every line labelled at its end beside the legend, the labels nudged
    apart; a dot a week while the weeks are 8px apart or more (the season's last only, under that); a band a week to hover or tap for
-   the week's own numbers. Each line carries its weekly sums for the smoke */
-let PK_CW = 0, PK_D = null, PK_X = null;
+   the week's own numbers. Each line carries its weekly sums for the smoke. Drawn at the box's width down to 240 (a 320px phone's box
+   is 242), so the words are 11px there too; the end labels' room (112) holds the longest, "−10 ELO Model", whole */
+let PK_CW = 0, PK_D = null, PK_X = null, PK_ON = -1, PK_PT = 'mouse';
 function pkChart(D) {
-  const box = $('pkChart'), cw = box ? Math.round(box.clientWidth || 0) : 0, W = Math.max(280, Math.min(900, cw || 900)), small = W < 520;
+  const box = $('pkChart'), cw = box ? Math.round(box.clientWidth || 0) : 0, W = Math.max(240, Math.min(900, cw || 900)), small = W < 520;
   const H = small ? 230 : 250, padL = 40, padR = small ? 112 : 128, padT = 16, padB = 30, n = D.weeks.length;
-  PK_CW = cw; PK_D = D;
+  PK_CW = cw; PK_D = D; PK_ON = -1;
   const all = PK_MODELS.flatMap(m => D.vs[m.id].cum);
   let lo = Math.min(-3, ...all), hi = Math.max(3, ...all);
   const step = hi - lo <= 8 ? 1 : hi - lo <= 20 ? 2 : hi - lo <= 50 ? 5 : hi - lo <= 100 ? 10 : 20; lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
@@ -5185,21 +5189,30 @@ function pkChart(D) {
   svg += D.weeks.map((w, i) => `<rect class="rv-hit" data-i="${i}" x="${(X(i + 1) - gap / 2).toFixed(1)}" y="${padT}" width="${gap.toFixed(1)}" height="${H - padT - padB}" fill="transparent"/>`).join('');
   return `<svg viewBox="0 0 ${W} ${H}" class="pk-chart rv-chart" role="img" aria-label="${esc('Wins against DraftKings by week: ' + PK_MODELS.map(m => `${m.name} ${pkSigned(D.vs[m.id].d)}`).join(', '))}">${svg}</svg><div class="rv-tip" id="pkTip" hidden></div>`;
 }
-/* a week's own numbers beside the crosshair: each model's record that week and where its season stood against DraftKings after it */
+/* a week's own numbers beside the crosshair: each model's record that week and where its season stood against DraftKings after it.
+   Kept inside the chart's box: beside the week where it fits, else against the box's edge; and where its rows would wrap or it would
+   stand taller than the box (a phone), the rows drop their "vs DraftKings" (.tight) */
 function pkTip(i) {
   const box = $('pkChart'), tip = $('pkTip'), cross = box.querySelector('.rv-cross'), D = PK_D; if (!tip || !cross || !D || !PK_X || !D.weeks[i]) return;
   const w = D.weeks[i], x = PK_X.X(i + 1), wk = r => pkRec(r.wk[w] || { w: 0, l: 0 });
   cross.setAttribute('x1', x.toFixed(1)); cross.setAttribute('x2', x.toFixed(1)); cross.style.display = '';
-  tip.innerHTML = `<b>Week of ${esc(pkShort(w))}</b>` + PK_MODELS.map(m => `<div>${pkLgd(m)}${esc(m.name)} ${wk(D.rec[m.id])}<span class="muted">&nbsp;· season ${pkSigned(D.vs[m.id].cum[i])} vs DraftKings</span></div>`).join('') + `<div>${pkLgd(PK_BASE)}DraftKings ${wk(D.rec.dk)}</div>`;
-  tip.hidden = false;
-  const bw = box.getBoundingClientRect().width || PK_X.W, px = x / PK_X.W * bw;
+  tip.innerHTML = `<b>Week of ${esc(pkShort(w))}</b>` + PK_MODELS.map(m => `<div>${pkLgd(m)}${esc(m.name)} ${wk(D.rec[m.id])}<span class="muted">&nbsp;· season ${pkSigned(D.vs[m.id].cum[i])}<span class="vs"> vs DraftKings</span></span></div>`).join('') + `<div>${pkLgd(PK_BASE)}DraftKings ${wk(D.rec.dk)}</div>`;
+  tip.classList.remove('tight'); tip.hidden = false; PK_ON = i;
+  const r = box.getBoundingClientRect(), bw = r.width || PK_X.W, bh = r.height || 0, px = x / PK_X.W * bw;
+  const rows = [...tip.querySelectorAll('div')].map(d => d.offsetHeight), one = Math.min(...rows);
+  if ((one > 0 && rows.some(h => h > one * 1.5)) || (bh && tip.offsetHeight > bh - 12)) tip.classList.add('tight');
   tip.style.left = Math.min(Math.max(8, px + 12), Math.max(8, bw - tip.offsetWidth - 8)) + 'px';
+  tip.style.top = (bh ? Math.max(0, Math.min(6, bh - tip.offsetHeight)) : 6) + 'px';
 }
-function pkTipOff() { const tip = $('pkTip'), cross = $('pkChart').querySelector('.rv-cross'); if (tip) tip.hidden = true; if (cross) cross.style.display = 'none'; }
+function pkTipOff() { const tip = $('pkTip'), cross = $('pkChart').querySelector('.rv-cross'); PK_ON = -1; if (tip) tip.hidden = true; if (cross) cross.style.display = 'none'; }
 const pkHit = e => e.target && e.target.closest ? e.target.closest('.rv-hit') : null;
-$('pkChart').addEventListener('mouseover', e => { const h = pkHit(e); if (h) pkTip(+h.dataset.i); });
-$('pkChart').addEventListener('click', e => { const h = pkHit(e); if (h) pkTip(+h.dataset.i); else pkTipOff(); });
-$('pkChart').addEventListener('mouseout', e => { if (pkHit(e)) pkTipOff(); });
+/* a mouse points (the week's numbers while it is over the week); a finger taps: a tap opens a week's numbers and they stay until the
+   next tap, on the same week (shut), another week (moved) or anywhere else (shut). A touch's own over and out are not a mouse's */
+$('pkChart').addEventListener('pointerdown', e => { PK_PT = e.pointerType || 'mouse'; });
+$('pkChart').addEventListener('pointerover', e => { if (e.pointerType === 'touch') return; const h = pkHit(e); if (h) pkTip(+h.dataset.i); });
+$('pkChart').addEventListener('pointerout', e => { if (e.pointerType === 'touch') return; if (pkHit(e)) pkTipOff(); });
+$('pkChart').addEventListener('click', e => { const h = pkHit(e); if (!h) { pkTipOff(); return; } const i = +h.dataset.i; if (PK_PT === 'touch' && PK_ON === i) pkTipOff(); else pkTip(i); });
+document.addEventListener('pointerdown', e => { if (PK_ON >= 0 && !$('pkChart').contains(e.target)) pkTipOff(); });
 /* a record cell of the week grid, shaded by its rate as the NFL's: clear at .500, green over and red under, deepest (.42) at 30 points off */
 function pkCell(t, name, label, season) {
   const g = t ? t.w + t.l : 0, cls = 'rv-c' + (season ? ' rv-season' : '');

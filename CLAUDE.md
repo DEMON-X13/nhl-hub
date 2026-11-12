@@ -110,7 +110,7 @@ a fault (it says so in `data/starters.json`, and the model chooses the goalies).
 
 The page is `index.html`, hand-written, one file, in the NFL hub's shell since nhl v25 (The look, below); it fetches `state.json` on
 every load, so a page change is just an edit (bump `APP_BUILD` in it) and a data change is the
-job's. The NHL has no weeks: the unit is the day (Eastern), and the page opens on a day strip.
+job's. The NHL has no weeks: the unit is the day (Eastern), and the Games tab lists one day, chosen in its Day select.
 `data/history.json` is fifteen seasons of results (2011-12 on, with the period count) pulled
 once by `tools/history.js`; `tools/fit.js` chooses the model's parameters on it and writes
 `data/model.json`. Refit only for a deliberate model change, and commit the new numbers with
@@ -205,9 +205,9 @@ steps stand on:
   Dallas, 4.59); the border is the fill at 72%. The fills are the clubs' own colours (ESPN's, or the brand's gold, silver, ice
   blue or orange where ESPN gives black or a navy the page never drew the club in; the Ducks keep the orange they had, 7.8 from
   Philadelphia's, where ESPN's is 0.5 from Edmonton's), in the families the owner approved in nhl v13. `cls`: `mini` in a row or a
-  table (40px least, so two and three letters line up), `win` the pick's, `lg`, `xs`. On a game card (until the Games tab is
-  rebuilt) the badge is the club's letters in `--ink` edged in its fill, the pick's filled with its tag's text and edge (`--tc`,
-  `--tx`, `--tb` on the `.team`), and the win bar is the two fills. The lifted, outlined colours of nhl v13 below are gone.
+  table (40px least, so two and three letters line up), `win` the pick's, `lg`, `xs`. On a row of the Games list the pick's tag is `sl-win` (raised by its
+  weight and a shadow, in its own colours) and the win bar is the two fills (`slateCols`, under The Games list). The lifted,
+  outlined colours of nhl v13 below are gone, and since nhl v28 the card's badge with them.
 - **No descriptions** (the owner's rule on the NFL page, 22 October 2026: "i dont want any descriptions anywhere. i want the site
   to speak for itself"). Cut in v25: the tagline; the confidence key over the cards (each band's record stays on its pill's
   title and in the Record's By confidence); Lineups' key but its state line (`.lu-src`, the Lineups window's foot since nhl v27); the opening countdown's small print; the
@@ -277,27 +277,56 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   in a hue (CIELAB chroma 15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
   icons left are the drawn ones (the puck, the folds' chevrons, the players' sparklines, and since nhl v19 the Pick'em chart); a leg's Add (a suggested level's, a
   Top 30 line's) is a word, Add or Added.
-- **The game card** (`gameCard`; the NBA's Tonight card of nhl v23, cut in nhl v27 to what a list shows, until the Games tab's
-  rows come): **one button a game, which opens the game's page** (below). The top line (puck drop and date in the visitor's
-  clock, a note after them; tags: live in ice, the job's live score "as of" in gold, Final, start moved, under way, neutral ice,
-  call right or wrong, replayed); the two badges, the state's straight-up call (`g.pick`) filled and kept after the game, the
-  name, the score where one is known (the loser's muted), no record; the call's chance in the middle, its club, and its
-  **confidence pill** (`confPill`; the NFL's pill, a soft fill and a dot, in the NFL's colours: High 65%+ lime, Med 60-64% gold,
-  Low 55-59% grey, 50/50 under 55% rose, on the Pick'em's cut-offs applied to the chance rounded as the card writes it, so a pill
-  and the percentage beside it never disagree, each band's record this season on its title and for a screen reader); the win bar
-  and each side's chance; two chips (`data-ck`): Margin (the goals layer's, "even" under 0.05: the win chance blends it with the
-  team Elo, so on a close game the two can favour different clubs, and the chip is never called Model) and Goals (the model's
-  expected total). Nothing else: no bet, price, edge, grade, out row, drawer, foot or control of its own (the smoke holds it).
-  Until nhl v27 the card also carried DraftKings' moneyline, puck line and total as chips with the calls' edges and grades, the
-  other model where it parted from the call, the stale-line note, who is out (the goalies and a row for each player worth
-  `OUT_ROW`, 0.13 goals), the Lineups drawer and a foot of three buttons (Lineups, Player props, Parlay Builder →): each is on
-  the game's page now, or gone with a reason (below). Refresh scores shows only while the day shown has a game under way. A
-  redraw replaces only the cards whose markup changed (`CARD_HTML`); a card still to come is watched (`SHOWN`), so it is drawn
-  again at its puck drop.
+- **The Games list** (`renderGames`, `gameRow`; nhl v28, 12 November 2026: the Games tab as the NFL hub's game list, the rest of
+  the second step of the owner's ask above; the NBA's Tonight cards and the day strip are gone). **The bar** over it: **Day** (`#daySel`, a
+  select of every Eastern day with a game from the season's first to ten days out, grouped by month, and today itself where it
+  has none: "Today, Nov 12", "Tomorrow, Nov 13", "Yesterday, Nov 11", else "Sat, Nov 14"; before the season opens, today, which
+  is the countdown to opening night, and the first week's game days; once it is over, every game day; `listDays`), its two
+  steppers (`#dayPrev`, `#dayNext`: one listed day back or on, each off at its end, where the keyboard goes to the select), two
+  pills (`#dayRec`, the call straight up on the day shown as its rows show it, "Today 0–0", a final read in this browser
+  counted; `#seasonRec`, the state's own record, "Season 178–106"), and at the right **Refresh scores** (`#slateNow`, always
+  there: one read of the shown day's scoreboard from ESPN, a press while one runs doing nothing) with its stamp
+  (`#slateStamp`: nothing before a read, "reading…", "scores 9:12:05 PM", or "scores not loading" in the warning ink). The day
+  shown is this page's memory alone (`DAY`, never stored, as the NFL's week): it opens on today where today has games or
+  tomorrow has none, else the next day with games, else the last. Under the bar the source note (`#sourceNote`, a few words
+  only when a source the calls stand on is not the latest: "Injury report from Nov 11, 6:57 AM EST.", "No injury report.", "No
+  announced goalies this run."), then **Refresh odds** (`#slateOdds`, shown only on a day from today on with a game still to
+  come; before a press its line is "DraftKings via ESPN, 7:59 PM EST.", when the job read the prices), six column heads (Date,
+  Matchup, Win probability, Confidence, Score prediction, Final score) and the rows.
+  **A row is one button a game, which opens the game's page** (`button.game[data-game]`; `locked` once started, `final` once
+  over): the date and the puck drop on the visitor's clock (the game's note on its title); the two clubs' tags with "at"
+  between them ("vs" on neutral ice), the state's straight-up call (`g.pick`) raised, and once final a tick or a cross on the
+  winner's tag alone (the call hit or missed); the model's two chances as whole percentages that add to 100 (`slateCall`: the
+  away side rounded, the home side the rest) on a bar in the two clubs' fills, each half as wide as its chance, its number
+  printed from 14% up and the pick's bold, and a number its half has no room for left out, never cut (it wraps under a strut,
+  out of sight; the row's label for a screen reader says both) (`slateCols`: two clubs of one brand colour, `BAR_FAMILIES`, the smoke's own list, or
+  of one fill, and the home half takes the first of the home club's other colours that is a colour and does not read as the
+  away's, else the track; Team Stats' bars use the same pair); the **confidence** pill, the band of the larger chance as the
+  bar shows it, on the Pick'em's cut-offs in the NFL's words and colours (HIGH 65%+ lime, MED 60-64% gold, LOW 55-59% grey,
+  50/50 rose) with that percentage, so a pill and the bar never disagree; the **score prediction**, the goals layer's two rates
+  to a tenth, away first (`xgOf`, the game page's expected score), its leader's tag and "by" the difference of the two numbers
+  shown ("even" where level); and **where the game stands** (`slateOutcome`, `slateResult`): "0 : 0" to come; "LIVE" once the
+  puck has dropped with no score read; "TB leading 2–0" or "Tied 1–1" with the clock under it (a score the job read says "as
+  of" its time), lime where the call is ahead and rose where behind; "BUF won 3–2" with "Pick hit" or "Pick missed" (and "·
+  OT" or "· SO"); "Final" four hours past a puck drop with no score read; "start moved · call kept" on a start the feed moved
+  after the puck drop. A score read in this browser (`LIVE`: on Refresh scores, and once a load for a day shown that has a game
+  under way the state has no final for, `liveOnce`) comes before the state's. The rows still to finish first, in puck-drop
+  order, then "Completed" and the finals. **No bet, price, edge, chip or control is on a row**: they are on the game's page
+  (the smoke holds it). Three layouts: the six columns from 1161px, the same six tighter from 901px (the bar's side labels
+  dropped), and at 900px and under a card of four lines (the date and where the game stands, the matchup, the bar, the
+  confidence and the predicted score) with the heads hidden, the date and the time each whole (the time under the date where
+  the two will not fit) and, at 380px and under, the score's cell capped at 125px so a long clock wraps under the score and the
+  matchup keeps its room. A redraw replaces the list only when its markup changed
+  (`LIST_HTML`), the keyboard kept on its row; a row still to come is watched (`SHOWN`), so it is drawn again at its puck drop,
+  and the select is drawn again when the Eastern day turns. Until nhl v28 the tab was a day strip (yesterday to ten days out)
+  over a grid of cards (a badge a club, the call's chance and a confidence pill with its band's record on its title, the win
+  bar, Margin and Goals chips, tags, and Refresh scores only on a day with a game under way): the two chips' numbers are the
+  predicted score now, a band's record is the Record tab's By confidence, and a day before yesterday, which the strip never
+  reached, is in the select.
 - **The game's page** (`#gameModal`, `openGame`, `renderGame`; nhl v27, 12 November 2026: the second step of the owner's ask
   above, the NFL hub's game page, the page a row of its Props list opens, in hockey's numbers). It took the place of the Player
   props window (`#ppWin`, the NBA's sheet with six stat tabs), the card's bet chips, who is out and the Lineups drawer: one page
-  a game, every game's (a final's too), opened from its card and from a Player props button in Pick your own legs. **What kind
+  a game, every game's (a final's too), opened from its row in the Games list and from a Player props button in Pick your own legs. **What kind
   of thing**: the NFL's `.modal` and `.modal-panel`, a child of `<body>`, 1,100px at the most and 28px from the top, the backdrop
   scrolling and the page under it locked (`body.modal-open`); at 760px and under the whole screen. The address does not change
   and nothing of it is stored (`GP`: the game, the open player, whose stats show, All skaters, the search, the status line): a
@@ -655,8 +684,8 @@ day kept), never from the whole schedule. Its section REFRESH ODDS holds the pag
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the game's page on them (under The props model) on answers it makes from the state's own
 projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19) works the Pick'em tab out from the state by rules of its own (the picks, the weeks, the tiles and bands, the legend, the chart's weekly sums, every cell of the week grid and its shading, every pick of the day it opens on and of a past day), on the state and on a copy planting an unlined final, a game whose two ratings part and a level price, and holds the call's season to the state's SU record. Its section THE GAME'S PAGE (nhl v27) holds the page a game opens and its three windows by a model of its own, on any
-state the job can publish (what a rule needs and the state lacks is said and skipped): for every game of every day on the strip,
-opened from its card, the bar (Close, the trial's pill by the ledger's decision, All skaters, no Book's cut), the search, Refresh
+state the job can publish (what a rule needs and the state lacks is said and skipped): for every game of the days it holds (yesterday to ten days
+out, the season's first day and a past day mid-way), opened from its row, the bar (Close, the trial's pill by the ledger's decision, All skaters, no Book's cut), the search, Refresh
 odds and this game's own status line or, once the puck has dropped, the strip; the head's six cells (the day and time or where the
 game stands, the tags in their colours and "vs" on neutral ice, a tick on the winner alone, the note, the three projections or the
 box score's leaders, the expected score to a tenth, the total, the pick with its chance and its result); the three buttons; Game
@@ -687,16 +716,34 @@ a 16px search box on a phone); and, planted in the page's memory and in the sect
 no line, DraftKings' player lines none posted, failed and not read, the trial decided FAIL and PASS and no ledger, the puck
 dropping with the page open (the watch), a live score and a final in overtime read in this browser, a start moved after the first
 puck drop, a final with its box score, with none and past the box window, and no props model in the state at all.
-Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
+Its section THE GAMES LIST (nhl v28) works the Games tab out from the state by rules of its own, on any state the job can
+publish: the tab's parts (the bar, the source note, the odds bar, the six heads, the list; no strip, card grid or key); the Day
+select (its days, by month, each by its words; the day it opens on; "Today" the visitor's day), the page's colour families for a
+win bar its own list, and for every pair of the 32 clubs the bar's two halves by its own rule, each number 4.5:1 on its fill and
+two clubs of one brand colour never one colour; every row of every day in the select, cell by cell (`rowWrongs`: a button classed
+by where the game stands, the date on the visitor's clock, the tags in their colours with the pick's alone raised and "vs" exactly
+on neutral ice, a tick or a cross on the winner's tag alone, the two chances whole and adding to 100 with each half as wide as its
+chance and printed from 14% up, the bar's colours, the band by 65, 60 and 55 with the larger chance, the predicted score to a tenth
+with its leader and "by" the difference of the numbers shown, where the game stands, and no bet, price, edge, chip or control),
+the rows in order with Completed between, the day's pill by its rows and the season's by the state's record, Refresh odds exactly
+on a day from today on with a game to come, a day with no game saying so; choosing a day writing nothing; the steppers and their
+ends; Refresh scores and its stamp's four states (one no-store read of the day, a press during a read asking nothing); and,
+planted in the page's memory and the section's own copy alike: a puck drop with the list shown (the watch: locked, LIVE), a score
+read here with the pick ahead, behind and level, a final in regulation, overtime and a shootout won and lost (the pill and the
+order following), four hours on with no score, a live score the job read, a start moved after the first puck drop, neutral ice
+and a note, a lopsided game (the short half blank), the Eastern day turning, today with no game and no schedule at all; the page
+opened five days before the season (today and the first week, the countdown), twenty days after it (every game day, the last
+shown) and on a day with no game whose tomorrow has one (tomorrow shown); and the layout read from the stylesheet (the six columns'
+least widths fitting 1161px and 901px with a scrollbar, the Final-score column 136px, the phone card's four lines with the heads
+hidden, one layout between, a bar's number that wraps out of sight and is never cut, the date whole and the score's cell capped
+on the narrowest phones, 44px controls, the heads and Completed in `--ink-2`).
+Its section THE LOOK (nhl v12; the colours nhl v13, the tags nhl v25) holds the page's look with its own code: no image (the
 source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, a game's page, its windows and the parlay card finds none),
 `TEAM_COLORS` (nhl v25: every club a palette of hex colours; each club's tag worked out again by the smoke's own code, the fill
 darkened until white or `#1E2230` reads on it at 4.5:1, the text whichever reads better, the border the fill at 72%: the text 4.5:1 on
 the fill and no fill needing darkening, by its own WCAG sums; the surfaces the outlined pill and badge were held on went with them; every club but the Kings in a hue of its own by its own CIELAB sums; any two clubs outside one
-brand colour, the reds, the navies, the golds, the two oranges, 5 or more apart by its own CIEDE2000), every game card of every day
-on the strip worked out from the state (badges, colours, the filled pick, chances, the confidence pill by its own bands and this
-season's record, no record on a club, its two chips, Margin and Goals, by their `data-ck`, the tags; a button that opens its game's
-page, with no bet, price, edge, grade, out row, drawer, foot or control of its own), no confidence key over the cards and Refresh
-scores exactly where the day has a game under way; the bets board, which is Pick your own legs' alone since nhl v27 (every bet button
+brand colour, the reds, the navies, the golds, the two oranges, 5 or more apart by its own CIEDE2000), no confidence key, bets board, chip, out row, drawer or foot on the Games tab,
+a row's pick its club's tag raised by weight and a shadow alone (the rows themselves are THE GAMES LIST's); the bets board, which is Pick your own legs' alone since nhl v27 (every bet button
 part by part (its side, a check in the parlay, its price, its chance, the call's tag with its edge, far off the market's tag and both
 numbers, nothing else) and its name for a screen reader, the rules that keep it one line where it fits (the side and the price and
 chance each whole, the call's tag on its edge taking no line, 44px), every piece of it that cannot wrap within the narrowest
@@ -905,7 +952,7 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   since nhl v18 Player overs, the anytime goal among them, and Player unders: `PB_KINDS`, `PB_MIX`), Day (today and tomorrow, Eastern, each offered while it has a game to come;
   Both days when both have a fresh line; else the next day with a game), and a Games fold (a game with no fresh line shown but
   not tickable). The list: every line on the picks that qualifies as a level's leg does (below), Value picks (5 points or more
-  above the price, `S.edge`: the Games cards' calls) then Other lines (0 to 5 points), each part ranked by the expected return
+  above the price, `S.edge`: the calls a game's page marks Value) then Other lines (0 to 5 points), each part ranked by the expected return
   on $1 (the model's chance times the decimal price, less the stake: `legEv`), ties to the lower leg id, cut at 30 in all
   (`TOP_N`), the lines past it counted ("4 more lines qualify beyond the top 30."), "No line on your picks is a value pick right
   now" where none is, and the reason where no line qualifies (`pbWhy`: nothing ticked, or what would help: more games, more bet
@@ -920,7 +967,7 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   (`likeliest`); Extreme, the 5-leg parlay at 5%, went in nhl v14 (the owner's call, as the NFL hub's had). A leg qualifies with both prices, the model at 45% to 97%, its edge 0
   or more (the margin left in), no push (a whole-number line never goes in a level), and under 15 points over
   the fair chance (`FAR_OFF`; those are counted in the far-off note and flagged on their buttons in Pick your own legs; a game's page marks the call Value and says nothing of far off). It is
-  preferred at the site's own bar (`S.edge`, so preferred is exactly the Games cards' call) and thin below it,
+  preferred at the site's own bar (`S.edge`, so preferred is exactly the call a game's page marks Value) and thin below it,
   used only where the calls cannot make a level, the fewest first. The search is exact (`pbSearch`/`pbBest`:
   branch and bound over every parlay of the size, pruning only what cannot reach the floor or the best found;
   the 28-game worst Both days takes under 10 ms at 4x CPU throttle), chances and prices worked in leg order
@@ -958,7 +1005,7 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   DraftKings, and Start over from the builder. Nothing is saved by finishing. Close, Escape and a click
   outside give the focus back to the button that opened it (or Finish parlay, if the watch redrew it away).
 - **Clocks.** Every time on the page is the visitor's own and names its zone ("3:30 PM PDT": the game
-  tiles, the level and builder rows, Pick your own legs, the Games cards, "as read at" and the header's
+  tiles, the level and builder rows, Pick your own legs, the Games list's rows, "as read at" and the header's
   published stamp). The card, its image and its Share text go to other people, so they are in Eastern time
   and say ET.
 - **DraftKings' ids** (`line.dk`): `tools/espn.js` reads them from the links ESPN carries on every price
@@ -1138,10 +1185,10 @@ for four, and the cap at the product binds on 0-5% of tickets.
 
 The job reads DraftKings' game lines only when it runs, so a line on the page can be hours old by puck drop
 (the owner's ask, 15 October 2026: "a refresh odds button that will pull the live lines on demand ... rather
-than like a constant job"). **Refresh odds** (on the Games tab's odds bar, on the Parlay Builder tab's over its
+than like a constant job"). **Refresh odds** (on the Games tab, over the list on a day from today on with a game still to come; on the Parlay Builder tab's odds bar over its
 panel, since nhl v22 on the Suggested Parlays tab's under its heading, and, since nhl v10, on a game's page (the Player props window's until nhl v27), 44px, with one `aria-live` status line beside each: the tabs' three share one sentence, a game's page says its own game's state) reads
 ESPN's free scoreboard in the browser (`?dates=YYYYMMDD&limit=100&_=<now>`, no-store, no custom header, so no
-preflight: ESPN answers with `access-control-allow-origin: *`) for every day the Games strip shows from today on
+preflight: ESPN answers with `access-control-allow-origin: *`) for every day the Games tab's Day select lists from today on
 with a game still to come, and, at the same time, DraftKings' player props for the games still to come today and
 tomorrow (the props view, under The props model), and nothing else: never on load, never on the watch or a timer. Each game's odds are taken by `ESPN`
 in `index.html`, which is `tools/espn.js`'s `oddsOf` and `dkOf` word for word, and DraftKings' ids come with
@@ -1159,7 +1206,7 @@ the answer or with no odds keeps its published line, and the status line counts 
 ESPN, read 9:12 PM EDT: 5 games, 2 moved since the last read. 1 game had no line at ESPN: its published line
 stands. 1 game is postponed at ESPN: its published line stands until the job takes it off."). A line read so
 is fresh (`line.refreshed`, in the page's memory alone; the job never writes it, and the smoke fails a state
-that carries it), and the Games cards, the open days' suggested levels and the Top 30 (worked again on the new prices),
+that carries it), and a game's page, the open days' suggested levels and the Top 30 (worked again on the new prices),
 the builder, the card's DraftKings link and the Refresh odds status lines all follow (the panel's own "as read" sentence went in nhl v25; its line shows only where another book prices a game). The builder draws its legs on the new lines (a moved price updated, a moved
 number out, said once with the read's time) but keeps them stored as they were, so nothing a read changed
 reaches `nhl_v1` on a later save. A parlay card open during a read is drawn again on the new prices and ids
@@ -1509,7 +1556,8 @@ outrank what the job published:
   (`nhl vN · YYYY-MM-DD`), so any change to the page bumps it. Without it a stale copy cannot be
   told from a current one.
 - **Data fetches are `cache: 'no-store'`.** `state.json` (with a `?t=` on it too) and ESPN's
-  scoreboard, which the page reads itself on opening for a game under way and, for the odds, only on a
+  scoreboard, which the page reads itself for a day shown that has a game under way (once a load) and on a press of Refresh
+  scores and, for the odds, only on a
   press of Refresh odds (with a cache-buster too), and ESPN's DraftKings propBets, only on that press
   (a cache-buster too: ESPN serves them with a fifteen-minute max-age). The HTML is served by
   GitHub Pages with its own ten-minute cache, which a reload clears; nothing else may hold data

@@ -6123,14 +6123,17 @@ function sPeClubs(St) {
   }
   return U;
 }
-/* a shield in a cell: the tier of the Elo shown, named for a screen reader, its gradient in the page once (Wood's is drawn flat) */
-function sPeShieldBad(d, cell, elo) {
+/* a shield in a cell: the tier of the Elo shown, named for a screen reader, its gradient in the page once (Wood's is drawn flat).
+   `memo` (a Map a table pass makes and drops) counts each gradient in the document once a pass: the count is the same for every row of
+   one drawing, and a document-wide search a row was half this section's time */
+function sPeShieldBad(d, cell, elo, memo) {
   const sh = cell.querySelector('svg.tierbadge'), tier = sPeTier(elo), box = cell.querySelector('.pe-shield');
   if (!sh || !box || cell.querySelectorAll('svg').length !== 1 || sh.parentElement !== box) return 'no shield';
   if (sh.getAttribute('aria-label') !== `${tier.name} tier` || sh.getAttribute('role') !== 'img' || txt(sh.querySelector('title')) !== tier.words) return `shield "${txt(sh.querySelector('title'))}", want ${tier.words}`;
   if (txt(box).replace(txt(sh.querySelector('title')), '').trim() !== tier.name) return `tier "${txt(box)}", want ${tier.name}`;
   const fills = [...sh.querySelectorAll('[fill^="url(#"]')].map(p => /#([\w-]+)\)/.exec(p.getAttribute('fill'))[1]), want = tier.name === 'Wood' ? [] : [tier.name === 'HOF' ? 'tg-hof-gem' : `tg-${tier.name.toLowerCase()}`];
-  return eqA(fills, want) && fills.every(f => d.querySelectorAll(`[id="${f}"]`).length === 1) ? '' : `shield filled ${fills.join(',') || 'flat'}, want ${want.join(',') || 'flat'}`;
+  const count = f => { if (memo && memo.has(f)) return memo.get(f); const n = d.querySelectorAll(`[id="${f}"]`).length; if (memo) memo.set(f, n); return n; };
+  return eqA(fills, want) && fills.every(f => count(f) === 1) ? '' : `shield filled ${fills.join(',') || 'flat'}, want ${want.join(',') || 'flat'}`;
 }
 /* the histogram of a list of Elos as shown: what is wrong with it, or nothing (`label` what they are, `one` one of them) */
 function sPeCurveBad(w, root, elos, label, one) {
@@ -6239,7 +6242,7 @@ async function holdElo(St, ms, tag, opts = {}) {
       `${many}: one table, its head ${HEAD.join(' · ')}, a row a ranked ${one}, the first sixty drawn at once and the rest after (${heads().map(txt).join(' · ')}; ${trs().length} rows of ${rows.length}; ${first} at once)`);
     ck(eqA(heads().map(th => th.getAttribute('title') || ''), sPeTitles(St, view)), `${many}: each heading says what it is on its title, word for word, who is ranked on the Player's (${heads().map(th => th.getAttribute('title') || '').filter((t, i) => t !== sPeTitles(St, view)[i]).slice(0, 2).join(' | ')})`);
     if (trs().length !== rows.length || !trs().every(r => r.cells.length === HEAD.length)) { out.groups[view] = { rows, sc }; return; }
-    const bad = [], T = trs();
+    const bad = [], T = trs(), gradMemo = new Map();
     rows.forEach((x, i) => {
       const c = T[i].cells, p = x.p, miss = m => bad.push(`row ${i + 1} ${p.name}: ${m}`), h = sPeHist(St, p, sc), k = goalie ? 6 : 8;
       if (txt(c[0]) !== String(x.rank)) miss(`rank "${txt(c[0])}", want ${x.rank}`);
@@ -6257,7 +6260,7 @@ async function holdElo(St, ms, tag, opts = {}) {
       /* the Elo, the figure it is set from on its title, and the shield of its tier */
       const eb = c[3].querySelector('.pe-elo');
       if (!eb || txt(c[3]) !== String(x.elo) || eb.getAttribute('title') !== sPeExact(p.v)) miss(`Elo "${txt(c[3])}" (${eb && eb.getAttribute('title')}), want ${x.elo} (${sPeExact(p.v)})`);
-      const sb = sPeShieldBad(d, c[4], x.elo); if (sb) miss(sb);
+      const sb = sPeShieldBad(d, c[4], x.elo, gradMemo); if (sb) miss(sb);
       /* the figures in goals a game, signed and coloured by the sign shown */
       (goalie ? [p.v] : [p.v, p.o, p.d]).forEach((v, j) => { const f = sPeFig(v), cell = c[5 + j], sp = cell.querySelector('span');
         if (txt(cell) !== f.t || !sp || !sp.classList.contains(f.c) || ['pe-up', 'pe-down', 'pe-flat'].filter(q => sp.classList.contains(q)).length !== 1) miss(`${HEAD[5 + j]} "${txt(cell)}" (${sp && sp.className}), want ${f.t} ${f.c}`); });
@@ -6287,7 +6290,7 @@ async function holdElo(St, ms, tag, opts = {}) {
     ck(none.hidden && !boxT.hidden && eqA(heads().map(txt), PE_HEAD.U) && T.length === order.length && T.every(r => r.cells.length === PE_HEAD.U.length), `${name}: one table, its head ${PE_HEAD.U.join(' · ')}, a row a club (${heads().map(txt).join(' · ')}; ${T.length} rows of ${order.length})`);
     ck(eqA(heads().map(th => th.getAttribute('title') || ''), sPeTitles(St, view)), `${name}: each heading says what it is on its title, the Rating's which unit it is (${heads().map(th => th.getAttribute('title') || '').filter((t, i) => t !== sPeTitles(St, view)[i]).slice(0, 2).join(' | ')})`);
     if (T.length !== order.length || !T.every(r => r.cells.length === PE_HEAD.U.length)) return;
-    const bad = [];
+    const bad = [], gradMemo = new Map();
     order.forEach((id, i) => {
       const c = T[i].cells, t = teams[id] && typeof teams[id] === 'object' ? teams[id] : {}, club = St.teams[id], v = PE_VAL[view](t), ok = sPeIsNum(v), miss = m => bad.push(`row ${i + 1} ${id}: ${m}`);
       if (txt(c[0]) !== (ok ? String(u.place.get(id)) : '–')) miss(`rank "${txt(c[0])}", want ${ok ? u.place.get(id) : '–'}`);
@@ -6299,7 +6302,7 @@ async function holdElo(St, ms, tag, opts = {}) {
       if (!ok) { if (txt(c[3]) !== '–' || txt(c[4]) !== '–' || c[4].querySelector('svg')) miss(`a rating "${txt(c[3])}" and tier "${txt(c[4])}" on a club with no figure`); }
       else { const elo = u.sc.elo(v), eb = c[3].querySelector('.pe-elo');
         if (!eb || txt(c[3]) !== String(elo) || eb.getAttribute('title') !== sPeExact(v)) miss(`rating "${txt(c[3])}" (${eb && eb.getAttribute('title')}), want ${elo} (${sPeExact(v)})`);
-        const sb = sPeShieldBad(d, c[4], elo); if (sb) miss(sb); }
+        const sb = sPeShieldBad(d, c[4], elo, gradMemo); if (sb) miss(sb); }
       /* its four figures, each with its place among the clubs that have one: the top eight lime, the bottom eight rose */
       PE_UNITS_S.forEach(([k2], j) => { const cell = c[5 + j], x = PE_VAL[k2](t), n2 = U[k2].have.length, pl = U[k2].place.get(id);
         if (!sPeIsNum(x)) { if (txt(cell) !== '–' || cell.querySelector('small')) miss(`${PE_HEAD.U[5 + j]} "${txt(cell)}" on a club with none`); return; }

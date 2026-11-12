@@ -527,7 +527,9 @@ const PBS = (() => {
   const toAm = d => d >= 2 ? '+' + Math.round((d - 1) * 100) : String(Math.round(-100 / (d - 1)));
   const odds = n => n > 0 ? '+' + n : String(n);
   const line = n => n === 0 ? 'PK' : (n > 0 ? '+' + n : String(n));
-  const pctW = p => Math.round(p * 100) + '%';
+  /* a chance as a whole percentage, as the call is written (slCallS): to four places first, so a side at a half-point rounds up
+     whichever side it is (1 - 0.455 is 0.54499999... in floating point: 55%, the call's own figure) */
+  const pctW = p => Math.round(Math.round(p * 1e4) / 100) + '%';
   const pct1 = p => (p * 100).toFixed(1) + '%';
   const money = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const short = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(+v) ? 0 : 2, maximumFractionDigits: 2 });
@@ -984,6 +986,19 @@ const sDrawnList = w => JSON.parse(w.eval('JSON.stringify(builderLegs(false).map
 /* every level's legs by the leg order, the builder's: puck drop, then the matchup, then the kind */
 function legsSorted(ids) { const L = ids.map(x => { const [g, s, k] = x.split('|'); return sLeg(S.games.find(y => y.id === g), s, k); }); return L.slice().sort(sOrder).map(l => l.id).join(',') === ids.join(','); }
 
+/* Pick your own legs' Model chips against the state St: a game with a call (slCallS, the Games list's rule) carries "Model <club> <N>%",
+   its pick's club and chance as a row writes them, and the moneyline button on that club, where it has one, the same chance; a game
+   with no call carries no chip. { n, ids, bad } */
+function plChipWrongs(d, St) {
+  const pgs = [...d.querySelectorAll('#plLines .pb-pg[data-id]')], bad = [];
+  for (const pg of pgs) {
+    const g = St.games.find(x => x.id === pg.dataset.id), chip = pg.querySelector('.pb-pgh > .chip'); if (!g) { bad.push(`${pg.dataset.id}: no such game`); continue; }
+    const c = slCallS(g), want = c ? `Model ${St.teams[c.pick].abbr} ${c.conf}%` : null, ml = c && pg.querySelector(`button[data-leg="${g.id}|${c.side}|ml"] .pb-bc`);
+    if ((chip ? txt(chip) : null) !== want || (chip && txt(chip.querySelector('b')) !== `${St.teams[c.pick].abbr} ${c.conf}%`)) bad.push(`${g.id}: chip "${chip ? txt(chip) : 'none'}", want "${want || 'none'}" (pHome ${g.pHome}, pick ${g.pick})`);
+    if (ml && txt(ml) !== `· ${c.conf}%`) bad.push(`${g.id}: the moneyline on ${St.teams[c.pick].abbr} reads "${txt(ml)}" beside the chip's ${c.conf}%`);
+  }
+  return { n: pgs.length, ids: pgs.map(x => x.dataset.id), bad };
+}
 async function parlayBuilder() {
   console.log('THE PARLAY BUILDER');
   const AT = PUB + 60000, errors = [];
@@ -1010,14 +1025,29 @@ async function parlayBuilder() {
   chk(spTimes.every(([id, t]) => t.endsWith(clock(Date.parse(S.games.find(g => g.id === id).start)))), `every suggested level's leg names its puck drop's zone (${spTimes.slice(0, 2).map(x => x[1]).join(' | ')})`);
   /* preferred is the Games cards' call: every qualifying leg of the slate */
   for (const L of P0.pool.legs) chk(!L.thin === (L.pick === L.side), `${L.id}: a line 5 points above the price is exactly the card's call (edge ${L.edge}, call ${L.pick})`);
+  /* Pick your own legs: each game's Model chip is the call as the Games list writes it (the second review of nhl v30: the chip and the
+     moneyline button beside it rounded an away pick at a half-point apart, 55% and 54%) */
+  const chipsAt = (dd, tag) => { const c = plChipWrongs(dd, S); chk(!c.bad.length, `${tag}: Pick your own legs' Model chip on each game is the call, its club and its chance as the Games list writes it, and the moneyline on that club reads the same chance (${c.n} games; ${c.bad.slice(0, 3).join(' | ')})`); return c; };
+  const plIds = chipsAt(d, 'the default slate').ids;
   /* Both days, when offered: the list on both */
   if (P0.sl.both) {
     const b = d.querySelector('#pbDay button[data-day="both"]'); b.focus(); b.click();
     chk(d.activeElement && d.activeElement.dataset && d.activeElement.dataset.day === 'both', `choosing a Day keeps the keyboard's focus on it, redrawn (${d.activeElement && (d.activeElement.dataset && d.activeElement.dataset.day || d.activeElement.tagName)})`);
     holdPanel(w, AT, 'both days');
+    chipsAt(d, 'Both days');
     chk(store().ui.pb.day === 'both', 'Both days is kept in nhl_v1');
     d.querySelector(`#pbDay button[data-day="${P0.sl.pick}"]`).click();
   } else console.log(`  Both days not offered (${P0.sl.days.join(', ') || 'no day'}): its list skipped`);
+  /* and on a copy planting, on the games Pick your own legs lists, an away pick at pHome exactly 0.455 (55%, as a home pick at 0.545 is,
+     though 1 - 0.455 is 0.54499999... in floating point) and a home pick at 0.545 */
+  if (plIds.length) {
+    const PC = JSON.parse(STATE), pa = PC.games.find(g => g.id === plIds[0]), ph = plIds[1] ? PC.games.find(g => g.id === plIds[1]) : null;
+    pa.pHome = 0.455; pa.pick = 'away'; if (ph) { ph.pHome = 0.545; ph.pick = 'home'; }
+    const e5 = [], w5 = await boot(AT, e5, { state: JSON.stringify(PC), hash: 'parlays' }), c5 = plChipWrongs(w5.document, PC), chip5 = w5.document.querySelector(`#plLines .pb-pg[data-id="${pa.id}"] .chip`);
+    chk(!c5.bad.length && txt(chip5) === `Model ${S.teams[pa.away].abbr} 55%`, `a copy planting an away pick at pHome 0.455 on ${pa.id}${ph ? ` and a home pick at 0.545 on ${ph.id}` : ''}: each chip ${S.teams[pa.away].abbr} 55% and the moneyline beside it the same (${txt(chip5)}; ${c5.bad.slice(0, 3).join(' | ')})`);
+    chk(!e5.length, 'no runtime error on the planted copy: ' + e5.join(' | '));
+    w5.close(); OPEN.delete(w5);
+  } else console.log('  Pick your own legs lists no game on the default slate: its Model chip is not held on this state');
   const listOn = !!(P0.top && P0.top.value.length + P0.top.other.length);
   if (listOn) {
     /* the controls: each mix, each box alone, none, the games All and None and one unticked; the list follows, the reasons say why */
@@ -5386,8 +5416,11 @@ function sPkGeom(svg, D, wantW) {
     const pts = pl.getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number)), want = [[x0, Yv(0)]].concat(D.cum[id].map((v, i) => [xw(i + 1), Yv(v)]));
     const off = want.map((p, i) => pts[i] && near(pts[i][0], p[0]) && near(pts[i][1], p[1]) ? null : `${i}: ${pts[i] ? pts[i].join(',') : 'none'} for ${f1(p[0])},${f1(p[1])}`).filter(Boolean);
     if (pts.length !== want.length || off.length) bad.push(`${name}'s line off its weeks' heights (${off.slice(0, 2).join('; ')})`);
-    const dots = [...svg.querySelectorAll('circle')].filter(c => c.getAttribute('style') === pl.getAttribute('style')).map(c => [num(c, 'cx'), num(c, 'cy')]), wantD = dots.length === 1 ? want.slice(-1) : want;
-    if (dots.length !== wantD.length || dots.some((p, i) => !near(p[0], wantD[i][0]) || !near(p[1], wantD[i][1]))) bad.push(`${name}'s dots off its line (${dots.slice(0, 2).map(p => p.join(',')).join('; ')}, want ${wantD.slice(0, 2).map(p => p.map(f1).join(',')).join('; ')})`);
+    /* a dot a week from the start where the weeks stand 8 or more apart, the last alone under that (the second review of nhl v30: a line
+       drawing its last dot alone with the weeks 120 apart passed); each dot 3 to 4 across, never hidden by its size */
+    const dotEls = [...svg.querySelectorAll('circle')].filter(c => c.getAttribute('style') === pl.getAttribute('style')), dots = dotEls.map(c => [num(c, 'cx'), num(c, 'cy')]), wantD = gap >= 8 ? want : want.slice(-1);
+    if (dots.length !== wantD.length || dots.some((p, i) => !near(p[0], wantD[i][0]) || !near(p[1], wantD[i][1]))) bad.push(`${name}'s dots off its line, a dot a week from the start where the weeks are 8 or more apart and the last alone under that (${dots.length} dots for ${n} weeks ${f1(gap)} apart: ${dots.slice(0, 2).map(p => p.join(',')).join('; ')}, want ${wantD.length}: ${wantD.slice(0, 2).map(p => p.map(f1).join(',')).join('; ')})`);
+    if (dotEls.some(c => !(num(c, 'r') >= 3 && num(c, 'r') <= 4))) bad.push(`${name}'s dots ${[...new Set(dotEls.map(c => c.getAttribute('r')))].join(', ')} across, want 3 to 4`);
   }
   /* the weeks under the plot */
   const wk = texts.filter(t => t.getAttribute('text-anchor') === 'middle'), wy = wk.length ? num(wk[0], 'y') : NaN, rest = wk.slice(1), idx = rest.map(t => Math.round((num(t, 'x') - x0) / gap));
@@ -5402,6 +5435,14 @@ function sPkGeom(svg, D, wantW) {
   if (!eqA(byY, byV)) bad.push(`the end labels down the chart ${byY.join(' ')}, want ${byV.join(' ')} by their values`);
   const ys = ends.map(e => num(e.t, 'y')).sort((a, b) => a - b);
   if (ys.some((y, i) => i && y - ys[i - 1] < 12)) bad.push(`two end labels on one another (${ys.map(f1).join(' ')})`);
+  /* each label's place by the nudging rule (the second review of nhl v30: labels pushed 24 apart, up to 61 from their lines' ends, passed):
+     each at its value's height, taken down the chart in its values' order, pushed down to 14 under the one above where closer, then all
+     lifted by as much as the lowest passes the plot's foot; its words 4 under that, its marker on it */
+  const nud = ends.slice().sort((a, b) => b.v - a.v || a.k - b.k).map(e => ({ e, y: Yv(e.v) }));
+  for (let i = 1; i < nud.length; i++) if (nud[i].y - nud[i - 1].y < 14) nud[i].y = nud[i - 1].y + 14;
+  { const lift = nud[nud.length - 1].y - foot; if (lift > 0) for (const x of nud) x.y -= lift; }
+  const offN = nud.filter(({ e, y }) => { const mk = e.id === 'dk' ? null : e.t.previousElementSibling; return !near(num(e.t, 'y'), y + 4) || (mk && (!mk.matches('line.s') || !near(num(mk, 'y1'), y))); });
+  if (offN.length) bad.push(`the end labels off their nudged places (${offN.slice(0, 3).map(({ e, y }) => `${e.id} at ${e.t.getAttribute('y')}, want ${f1(y + 4)}`).join(', ')})`);
   for (const e of ends) {
     const y = num(e.t, 'y'), x = num(e.t, 'x'), mk = e.t.previousElementSibling, pl = svg.querySelector(`polyline[data-model="${e.id}"]`);
     if (y < top + 2 || y > foot + 6 || Math.abs(y - 4 - Yv(e.v)) > 14 * (ends.length - 1) + 2) bad.push(`${e.id}'s end label at ${f1(y)}, want within the plot (${top} to ${foot}) and near ${f1(Yv(e.v))}`);
@@ -5411,6 +5452,24 @@ function sPkGeom(svg, D, wantW) {
   /* every word inside the drawing */
   const out = texts.filter(t => { const w = txt(t).length * PK_CHAR, x = num(t, 'x'), a = t.getAttribute('text-anchor') || 'start', l = a === 'end' ? x - w : a === 'middle' ? x - w / 2 : x; return l < 0 || l + w > W || num(t, 'y') < 11 || num(t, 'y') > H; });
   if (out.length) bad.push(`words past the drawing's edge (${W}x${H}): ${out.slice(0, 3).map(t => `"${txt(t)}" at ${t.getAttribute('x')},${t.getAttribute('y')}`).join(', ')}`);
+  /* every mark of the drawing carries only what its kind draws with (the second review of nhl v30: Alpha's line with opacity="0", its dots
+     drawn and its line not, passed): no opacity, visibility, transform, fill or stroke written on a mark, a line's colour its --c alone,
+     a dash on the baseline's alone, a band clear and nothing in the drawing but these */
+  const KIND = [['line.g', 'class x1 x2 y1 y2'], ['line.z', 'class x1 x2 y1 y2'], ['line.rv-cross', 'class x1 x2 y1 y2 style'], ['line.s', 'class style stroke-dasharray x1 x2 y1 y2'],
+    ['polyline', 'style stroke-dasharray data-model data-cum points'], ['circle', 'style cx cy r'], ['text', 'class x y text-anchor data-end'], ['tspan', ''], ['rect.rv-hit', 'class data-i x y width height fill']];
+  const marks = [], tok = /^--c:var\(--m-(alpha|joker|elom|call|base)\)$/;
+  for (const x of svg.querySelectorAll('*')) {
+    const k = KIND.find(([sel]) => x.matches(sel)), names = [...x.attributes].map(a => a.name), cls = x.getAttribute('class');
+    const why = !k ? 'not a mark the chart draws' : names.filter(a => !k[1].split(' ').includes(a)).map(a => `${a}="${x.getAttribute(a)}"`).join(' ')
+      || (x.matches('line') && !['g', 'z', 'rv-cross', 's'].includes(cls) ? `class "${cls}"` : '') || (x.matches('text') && cls !== null && !['z', 'e'].includes(cls) ? `class "${cls}"` : '')
+      || (x.matches('polyline, circle, line.s') && !tok.test(x.getAttribute('style') || '') ? `style "${x.getAttribute('style')}"` : '')
+      || (x.matches('polyline, line.s') && x.hasAttribute('stroke-dasharray') !== (x.getAttribute('style') === '--c:var(--m-base)') ? 'a dash off the baseline, or the baseline solid' : '')
+      || (x.matches('line.rv-cross') && !/^(display: ?none;?)?$/.test(x.getAttribute('style') || '') ? `style "${x.getAttribute('style')}"` : '')
+      || (x.matches('rect') && x.getAttribute('fill') !== 'transparent' ? `fill "${x.getAttribute('fill')}"` : '');
+    if (why) marks.push(`<${x.tagName.toLowerCase()}${cls ? '.' + cls : ''}> ${why}`);
+  }
+  if (!eqA([...svg.attributes].map(a => a.name).sort(), ['aria-label', 'class', 'role', 'viewBox'].sort())) marks.push(`the drawing carries ${[...svg.attributes].map(a => a.name).join(' ')}`);
+  if (marks.length) bad.push(`marks carrying what their kind does not draw with (${[...new Set(marks)].slice(0, 3).join(' | ')})`);
   return bad;
 }
 /* a grid cell's shade, the NFL's: clear at .500, green over and red under, deepest (42%) from 30 points off */
@@ -5421,6 +5480,7 @@ async function holdPickem(St, ms, tag, opts = {}) {
   const sec = el('tab-pickem'), onB = d.querySelector('#tabs button.on'), tabs = [...d.querySelectorAll('#tabs button')].map(b => b.dataset.tab);
   ck(!!sec && !sec.hidden && w.location.hash === '#pickem' && !!onB && onB.dataset.tab === 'pickem' && txt(onB) === "Pick'em Record" && onB.getAttribute('aria-current') === 'page', `${opts.how || '#pickem'} opens the Pick'em Record, its address #pickem (${w.location.hash}; ${txt(onB)})`);
   if (!sec) { w.close(); return; }
+  if (opts.laProbe) ck(new w.Date(opts.laProbe).getHours() === 4 && w.eval(`new Date(${opts.laProbe}).getTimezoneOffset()`) === 480, `the page's own clock is the visitor's, in Los Angeles (noon UTC reads ${new w.Date(opts.laProbe).getHours()}:00 on it)`);
   const writes0 = w.__writes.slice();
   /* the NFL's tab bar, and no Record tab: its button, its section and what it drew are gone */
   ck(eqA(tabs, ['games', 'suggest', 'parlays', 'ratings', 'players', 'pickem']) && !el('tab-record') && !d.querySelector('#recordTotals, #recMonth, #recBand, #recordNote, .two') && !/fitRecord|renderRecord/.test(HTML),
@@ -5472,9 +5532,16 @@ async function holdPickem(St, ms, tag, opts = {}) {
         /* a line's height is games: over the zero line with more wins than DraftKings, under it with fewer, each week */
         ck(pts.length === n + 1 && D.cum[id].every((v, i) => Math.sign(zy - pts[i + 1][1]) === Math.sign(v)), `${name}'s line is above DraftKings' zero line in the weeks it leads and below where it trails`);
         ck(txt(end) === `${sPkSigned(last(id))} ${name}` && !!end && txt(end.querySelector('tspan')) === sPkSigned(last(id)), `${name}'s line labelled at its end, "${sPkSigned(last(id))} ${name}" (${txt(end)})`);
-        const dots = [...svg.querySelectorAll('circle')].filter(c => c.getAttribute('style') === pl.getAttribute('style')).length;
-        ck(dots === n + 1 || dots === 1, `${name}'s line has a dot a week from the start, or its last alone where the weeks are too close (${dots} for ${n} weeks)`);
+        const dots = [...svg.querySelectorAll('circle')].filter(c => c.getAttribute('style') === pl.getAttribute('style')).length, gapW = zero ? (+zero.getAttribute('x2') - +zero.getAttribute('x1')) / n : NaN;
+        ck(dots === (gapW >= 8 ? n + 1 : 1), `${name}'s line has a dot a week from the start where the weeks stand 8 or more apart (${gapW.toFixed(1)} here), its last alone under that (${dots} for ${n} weeks)`);
       }
+      /* the page's CSS draws each line and its marker in its own --c and fills each dot with it, every mark shown (the second review of
+         nhl v30: a rule stroking every line in the ink, all five one colour, passed). jsdom's computed style is the cascade's declared value */
+      { const cs = x => w.getComputedStyle(x), v = (s, k) => s.getPropertyValue(k).trim(), one = (s, k) => ['', '1'].includes(v(s, k)), wrongC = [];
+        const shown = s => one(s, 'opacity') && one(s, 'stroke-opacity') && one(s, 'fill-opacity') && !['hidden', 'collapse'].includes(v(s, 'visibility')) && v(s, 'display') !== 'none';
+        for (const x of svg.querySelectorAll('polyline, line.s')) { const s = cs(x); if (v(s, 'stroke') !== 'var(--c)' || !['none', 'rgba(0, 0, 0, 0)', 'transparent'].includes(v(s, 'fill')) || !shown(s)) wrongC.push(`${x.tagName.toLowerCase()}${x.dataset.model ? ' ' + x.dataset.model : ''}: stroke ${v(s, 'stroke')}, fill ${v(s, 'fill')}, opacity ${v(s, 'opacity')}, visibility ${v(s, 'visibility')}`); }
+        for (const x of svg.querySelectorAll('circle')) { const s = cs(x); if (v(s, 'fill') !== 'var(--c)' || !shown(s)) wrongC.push(`a dot: fill ${v(s, 'fill')}, opacity ${v(s, 'opacity')}`); }
+        ck(!wrongC.length && !!svg.querySelector('polyline') && !!svg.querySelector('circle'), `the page's CSS strokes every line and its end marker in the line's own --c and fills every dot with it, none of them hidden (${[...new Set(wrongC)].slice(0, 3).join(' | ')})`); }
       const hits = [...svg.querySelectorAll('rect.rv-hit')], inked = [...svg.querySelectorAll('text, tspan')].every(t => !t.getAttribute('fill') && !t.getAttribute('style'));
       ck(txt(svg.querySelector('text[data-end="dk"]')) === '= DraftKings' && eqA(hits.map(h => h.dataset.i), D.weeks.map((x, i) => String(i))) && inked, `the zero line labelled "= DraftKings", a band to point at for each of the ${n} weeks, and every word in the page's ink, never a line's colour`);
       /* the drawing itself, by this section's own geometry (the review of nhl v30): jsdom lays nothing out, so the chart is drawn 900 wide */
@@ -5485,27 +5552,35 @@ async function holdPickem(St, ms, tag, opts = {}) {
       const wantTip = k => { const wk = D.weeks[k]; return [`Week of ${sPkShort(wk)}`].concat(models.map(([id, name]) => `${name} ${sPkRec(D.rec[id][wk])} · season ${sPkSigned(D.cum[id][k])} vs DraftKings`), [`DraftKings ${sPkRec(D.rec.dk[wk])}`]); };
       const shows = k => { const px = svg.querySelector('polyline') ? svg.querySelector('polyline').getAttribute('points').trim().split(/\s+/)[k + 1].split(',')[0] : ''; return !!tip && !tip.hidden && eqA([...tip.children].map(txt), wantTip(k)) && cross.style.display !== 'none' && cross.getAttribute('x1') === px; };
       const shut = () => !!tip && tip.hidden && !!cross && cross.style.display === 'none';
-      for (const k of [...new Set([0, n - 1])]) {      // the first week, where a season's sum so far is that week's own, and the last, where it is the legend's
+      /* every week (the second review of nhl v30: a tip a week behind in its season's figure, or a crosshair a week behind, on the weeks
+         between the first and the last passed): its own numbers, the season's sums after it, the crosshair on it; pointed away, both gone */
+      const offWk = [], stayWk = [];
+      for (let k = 0; k < n; k++) {
         const tip0 = shut();
-        if (hits[k]) hits[k].dispatchEvent(PE('pointerover', 'mouse'));
-        ck(tip0 && shows(k), `the week of ${sPkShort(D.weeks[k])} pointed at shows its own numbers, and the season's sums after it, beside a crosshair on that week (${tip ? [...tip.children].map(txt).join(' | ') : 'no tip'}; want ${wantTip(k).join(' | ')})`);
-        if (hits[k]) hits[k].dispatchEvent(PE('pointerout', 'mouse'));
-        ck(shut(), 'pointed away from, the numbers and the crosshair go');
+        hits[k].dispatchEvent(PE('pointerover', 'mouse'));
+        if (!tip0 || !shows(k)) offWk.push(`${sPkShort(D.weeks[k])}: ${tip ? [...tip.children].map(txt).join(' | ') : 'no tip'}, crosshair at ${cross && cross.getAttribute('x1')}; want ${wantTip(k).join(' | ')}`);
+        hits[k].dispatchEvent(PE('pointerout', 'mouse'));
+        if (!shut()) stayWk.push(sPkShort(D.weeks[k]));
       }
+      ck(!offWk.length, `each of the ${n} weeks pointed at shows its own numbers, and the season's sums after it, beside a crosshair on that week (${offWk.slice(0, 2).join(' || ')})`);
+      ck(!stayWk.length, `pointed away from, the numbers and the crosshair go, on every week (${stayWk.slice(0, 3).join(', ')})`);
       /* a finger (the review of nhl v30: a tap opened the numbers and the touch's own out shut them at once): a tap opens a week's numbers,
          which stay through the touch's own over and out until the next tap, on the same week (shut), another week (moved) or anywhere
-         off the chart (shut); a mouse's click on a week it points at leaves them as they are */
-      const tap = (x, k) => { for (const t of ['pointerover', 'pointerdown', 'pointerup', 'pointerout']) x.dispatchEvent(PE(t, 'touch')); x.dispatchEvent(new w.MouseEvent('mouseover', { bubbles: true })); x.dispatchEvent(new w.MouseEvent('mouseout', { bubbles: true })); x.dispatchEvent(new w.MouseEvent('click', { bubbles: true })); return k; };
-      const kT = n - 1, kO = n > 1 ? 0 : null;
-      tap(hits[kT]); const t1 = shows(kT);
-      hits[kT].dispatchEvent(PE('pointerout', 'touch')); const t2 = shows(kT);
-      tap(hits[kT]); const t3 = shut();
-      tap(hits[kT]); if (kO !== null) tap(hits[kO]); const t4 = shows(kO === null ? kT : kO);
-      tap(el('pkLegend')); const t5 = shut();
-      tap(hits[kT]); tap(el('pkWeeksC')); const t6 = shut();
-      hits[kT].dispatchEvent(PE('pointerover', 'mouse')); hits[kT].dispatchEvent(PE('pointerdown', 'mouse')); hits[kT].dispatchEvent(new w.MouseEvent('click', { bubbles: true })); const t7 = shows(kT);
-      hits[kT].dispatchEvent(PE('pointerout', 'mouse')); const t8 = shut();
-      ck(t1 && t2 && t3 && t4 && t5 && t6 && t7 && t8, `a tap opens a week's numbers and they stay through the touch's own out; a second tap on that week shuts them, a tap on another moves them, a tap off the chart shuts them; a mouse's click keeps them while it points (${[t1, t2, t3, t4, t5, t6, t7, t8].map(x => x ? 'y' : 'n').join('')})`);
+         off the chart (shut); a mouse's click on a week it points at leaves them as they are. A pen taps as a finger does (the second
+         review: a pen's second tap on its week shut nothing) */
+      for (const type of ['touch', 'pen']) {
+        const tap = (x, k) => { for (const t of ['pointerover', 'pointerdown', 'pointerup', 'pointerout']) x.dispatchEvent(PE(t, type)); x.dispatchEvent(new w.MouseEvent('mouseover', { bubbles: true })); x.dispatchEvent(new w.MouseEvent('mouseout', { bubbles: true })); x.dispatchEvent(new w.MouseEvent('click', { bubbles: true })); return k; };
+        const kT = n - 1, kO = n > 1 ? 0 : null;
+        tap(hits[kT]); const t1 = shows(kT);
+        hits[kT].dispatchEvent(PE('pointerout', type)); const t2 = shows(kT);
+        tap(hits[kT]); const t3 = shut();
+        tap(hits[kT]); if (kO !== null) tap(hits[kO]); const t4 = shows(kO === null ? kT : kO);
+        tap(el('pkLegend')); const t5 = shut();
+        tap(hits[kT]); tap(el('pkWeeksC')); const t6 = shut();
+        hits[kT].dispatchEvent(PE('pointerover', 'mouse')); hits[kT].dispatchEvent(PE('pointerdown', 'mouse')); hits[kT].dispatchEvent(new w.MouseEvent('click', { bubbles: true })); const t7 = shows(kT);
+        hits[kT].dispatchEvent(PE('pointerout', 'mouse')); const t8 = shut();
+        ck(t1 && t2 && t3 && t4 && t5 && t6 && t7 && t8, `a ${type}'s tap opens a week's numbers and they stay through its own out; a second tap on that week shuts them, a tap on another moves them, a tap off the chart shuts them; a mouse's click keeps them while it points (${[t1, t2, t3, t4, t5, t6, t7, t8].map(x => x ? 'y' : 'n').join('')})`);
+      }
       /* a narrower box (the review of nhl v30: at 320px the chart was drawn 280 wide and shrunk, its 11px words 9.5px): the chart drawn at
          the box's own width down to 240 and at most 900, by the same geometry; and the numbers kept inside the box, beside the week where
          they fit, and short (.tight, no "vs DraftKings") where they would stand taller than it */
@@ -5524,6 +5599,27 @@ async function holdPickem(St, ms, tag, opts = {}) {
           h2[k].dispatchEvent(PE('pointerout', 'mouse'));
         }
         ck(!bad2.length, `in a box 242 by 230 the week's numbers stand inside it, and drop their "vs DraftKings" where they would stand taller than it less 12 (${bad2.join(' | ')})`);
+        /* short or not is the week's own, never the week shown before's (the second review of nhl v30: at 390 a week's tip was full when
+           shown first and short after another): a tip absolutely placed is only as wide as the room right of where it stands, so laid
+           out here as a browser would, each row one line where its words fit in the room left of the tip's place and two where not (the
+           DraftKings row, short, never two). The last week's rows are long enough to want two lines anywhere, so it is short and stands
+           far right; every other week's fit on one line from the box's left edge, so each is full though shown after it */
+        if (n > 1) {
+          const s3 = await drawAt(242), t3 = el('pkTip'), h3 = [...d.querySelectorAll('#pkChart rect.rv-hit')], kL = n - 1, longW = `Week of ${sPkShort(D.weeks[kL])}`;
+          const at = () => { const L = parseFloat(t3.style.left); return Number.isFinite(L) ? L : 0; }, room = () => 242 - at() - 16, tight = () => t3.classList.contains('tight');
+          const rowW = rw => { const rows = [...t3.querySelectorAll(':scope > div')], last = rows.indexOf(rw) === rows.length - 1, lng = txt(t3.querySelector('b')) === longW; return last ? 90 : lng ? (tight() ? 140 : 240) : (tight() ? 130 : 210); };
+          const oh0 = Object.getOwnPropertyDescriptor(w.HTMLElement.prototype, 'offsetHeight');
+          Object.defineProperty(w.HTMLDivElement.prototype, 'offsetHeight', { configurable: true, get() { return this.parentElement === t3 ? (rowW(this) > room() ? 32 : 16) : oh0.get.call(this); } });
+          Object.defineProperty(t3, 'offsetHeight', { configurable: true, get: () => 34 + [...t3.querySelectorAll(':scope > div')].reduce((a, r) => a + r.offsetHeight, 0) });
+          Object.defineProperty(t3, 'offsetWidth', { configurable: true, get: () => Math.min(16 + Math.max(...[...t3.querySelectorAll(':scope > div')].map(rowW)), 242 - at()) });
+          const bad3 = [], showT = k => { h3[k].dispatchEvent(PE('pointerover', 'mouse')); const r = { k, tight: tight(), L: at(), W: t3.offsetWidth, H: t3.offsetHeight }; h3[k].dispatchEvent(PE('pointerout', 'mouse')); return r; };
+          for (let k = 0; k < kL; k++) {
+            const a = showT(kL), b = showT(k);
+            if (!a.tight || b.tight || a.L + a.W > 242 || b.L + b.W > 242 || b.L < 0) bad3.push(`${sPkShort(D.weeks[k])} after ${sPkShort(D.weeks[kL])}: ${b.tight ? 'short' : 'full'} at ${b.L} (${b.W} wide), the long week ${a.tight ? 'short' : 'full'} at ${a.L}`);
+          }
+          delete w.HTMLDivElement.prototype.offsetHeight; delete t3.offsetHeight; delete t3.offsetWidth;
+          ck(!!s3 && !bad3.length, `a week's tip is short or full by its own rows alone, measured from the box's left edge: every week after the long last one is full and stands inside the box (${bad3.slice(0, 3).join(' | ')})`);
+        }
         delete box.getBoundingClientRect; delete box.clientWidth; }
     }
     /* the week grid: a column a week (its Monday, its games) and the season, a row a model, each cell its record and rate, shaded by the rate */
@@ -6797,7 +6893,30 @@ async function pickemChecks() {
         && C.record.ou.p >= 1 && C.record.pl.p >= 1 && Bb.high.w + Bb.high.l === 0 && Bb.low.w + Bb.low.l >= 2 && sPkConf(f[7]) === 55 && sPkConf(f[4]) === 55 && f[4].pick === 'away' && D.fin.length >= 9 && D.fin.every(g => moOf(g) === M) && Object.keys(C.record.byMonth).length === new Set(D.fin.map(g => g.type === 3 ? 'playoffs' : M)).size,
         `copy B plants one month of finals (${M}) with an unlined final, the two ratings parting, a level price, a model's own call over a backtest of the same game, a final with neither, one called by its backtest alone, two pushes, no HIGH pick, a 54.51% pick and an away pick at pHome 0.455, both LOW 55%`);
       console.log(`  copy B: ${D.fin.length} finals in ${M}; the record ${sPkRecStr(C.record).slice(0, 110)}`);
-      await holdPickem(C, PUB, 'copy B (one month, the planted finals)', { store: JSON.stringify({ ui: { tab: 'record' } }), how: 'a stored Record tab', days: [f[3].date, f[8].date] });
+      /* copy B on a visitor's clock in Los Angeles (the second review of nhl v30: days and weeks named from a date read at midnight UTC and
+         written on the visitor's clock, the day before for any American visitor, passed on this machine's UTC, as on GitHub's runners).
+         Node takes a new TZ at once, and the page's Date with it; put back as it was after */
+      const tz0 = process.env.TZ, probe = Date.UTC(2026, 0, 15, 12), off0 = new Date(probe).getTimezoneOffset();
+      process.env.TZ = 'America/Los_Angeles';
+      try {
+        chk(new Date(probe).getHours() === 4 && new Date(probe).getTimezoneOffset() === 480, `copy B runs on a clock in Los Angeles (noon UTC on 15 January reads ${new Date(probe).getHours()}:00 there)`);
+        await holdPickem(C, PUB, 'copy B (one month, the planted finals; a visitor in Los Angeles)', { store: JSON.stringify({ ui: { tab: 'record' } }), how: 'a stored Record tab', days: [f[3].date, f[8].date], laProbe: probe });
+      } finally { if (tz0 === undefined) delete process.env.TZ; else process.env.TZ = tz0; }
+      chk(new Date(probe).getTimezoneOffset() === off0, `and the clock put back as it was for the rest of the run (${process.env.TZ || 'the machine\'s own'}: offset ${new Date(probe).getTimezoneOffset()} minutes, was ${off0})`);
+    } }
+  /* copy C: one week of finals, at most four of them (the second review of nhl v30: the axis's step for lines spanning 8 games or fewer,
+     a figure every game, was never drawn by the state or copies A and B, so doubling it passed): the latest week with a final, its first
+     four finals kept and every other final put back to come, so no line can stand more than four games off DraftKings and the axis runs
+     −4 to +4 at most, a figure a game; one week, so a dot at the start and one at the week's end */
+  { const C3 = JSON.parse(STATE), fin3 = C3.games.filter(g => g.state === 'final' && num(g.hs) && num(g.as) && g.hs !== g.as).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+    if (!fin3.length) console.log("  copy C skipped: the state has no final, so no week to keep");
+    else {
+      const wk = sPkWeek(fin3[fin3.length - 1].date), keep = new Set(fin3.filter(g => sPkWeek(g.date) === wk).slice(0, 4).map(g => g.id));
+      for (const g of C3.games) if (g.state !== 'pre' && !keep.has(g.id)) { g.state = 'pre'; g.hs = null; g.as = null; delete g.result; }
+      C3.record = sPkRecord(C3);
+      const D3 = sPkData(C3), all3 = PK_S.filter(([id]) => id !== 'dk').flatMap(([id]) => D3.cum[id]), span3 = Math.max(3, ...all3) - Math.min(-3, ...all3);
+      chk(D3.weeks.length === 1 && D3.fin.length === keep.size && keep.size >= 1 && span3 <= 8, `copy C plants one week of finals (${wk}, ${keep.size} of them), its lines spanning ${span3} games: a figure a game on the axis`);
+      await holdPickem(C3, PUB, 'copy C (one week of finals)', {});
     } }
 }
 

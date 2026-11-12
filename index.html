@@ -2171,7 +2171,9 @@ const PB_KINDS = ['ml', 'pl', 'ou', 'po', 'pu'];
 const PB_MIX = { all: { ml: true, pl: true, ou: true, po: true, pu: true }, teams: { ml: true, pl: true, ou: true, po: false, pu: false }, players: { ml: false, pl: false, ou: false, po: true, pu: true } };
 const money = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const stakeShort = v => '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(+v) ? 0 : 2, maximumFractionDigits: 2 });
-const whole = p => Math.round(p * 100) + '%';
+/* a chance as a whole percentage, as slateCall rounds the call (to four places first: 1 - 0.455 is 0.54499999... in floating point,
+   so an away side at a half-point would read 54% beside the call's 55%) */
+const whole = p => Math.round(Math.round(p * 1e4) / 100) + '%';
 const cents = x => Math.round(x * 100) / 100;
 const etDay = iso => new Date(iso).toLocaleDateString('en-US', Object.assign({ weekday: 'short', month: 'short', day: 'numeric' }, ETZ));
 const etRead = iso => new Date(iso).toLocaleString('en-US', Object.assign({ weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, ETZ)) + ' ET';
@@ -5197,7 +5199,9 @@ function pkTip(i) {
   const w = D.weeks[i], x = PK_X.X(i + 1), wk = r => pkRec(r.wk[w] || { w: 0, l: 0 });
   cross.setAttribute('x1', x.toFixed(1)); cross.setAttribute('x2', x.toFixed(1)); cross.style.display = '';
   tip.innerHTML = `<b>Week of ${esc(pkShort(w))}</b>` + PK_MODELS.map(m => `<div>${pkLgd(m)}${esc(m.name)} ${wk(D.rec[m.id])}<span class="muted">&nbsp;· season ${pkSigned(D.vs[m.id].cum[i])}<span class="vs"> vs DraftKings</span></span></div>`).join('') + `<div>${pkLgd(PK_BASE)}DraftKings ${wk(D.rec.dk)}</div>`;
-  tip.classList.remove('tight'); tip.hidden = false; PK_ON = i;
+  /* measured at the box's left edge, where it has the box's whole width to stand in: an absolute tip is only as wide as the room right of
+     where it stands, so measured where the week before left it, its rows could wrap and it go short for that alone */
+  tip.classList.remove('tight'); tip.style.left = '8px'; tip.style.top = '6px'; tip.hidden = false; PK_ON = i;
   const r = box.getBoundingClientRect(), bw = r.width || PK_X.W, bh = r.height || 0, px = x / PK_X.W * bw;
   const rows = [...tip.querySelectorAll('div')].map(d => d.offsetHeight), one = Math.min(...rows);
   if ((one > 0 && rows.some(h => h > one * 1.5)) || (bh && tip.offsetHeight > bh - 12)) tip.classList.add('tight');
@@ -5207,11 +5211,13 @@ function pkTip(i) {
 function pkTipOff() { const tip = $('pkTip'), cross = $('pkChart').querySelector('.rv-cross'); PK_ON = -1; if (tip) tip.hidden = true; if (cross) cross.style.display = 'none'; }
 const pkHit = e => e.target && e.target.closest ? e.target.closest('.rv-hit') : null;
 /* a mouse points (the week's numbers while it is over the week); a finger taps: a tap opens a week's numbers and they stay until the
-   next tap, on the same week (shut), another week (moved) or anywhere else (shut). A touch's own over and out are not a mouse's */
+   next tap, on the same week (shut), another week (moved) or anywhere else (shut). A touch's own over and out are not a mouse's. Any
+   pointer but a mouse (a pen, a touch) is a finger here: a pen's tap on the week it opened shut nothing (the second review of nhl v30) */
+const pkFinger = t => !!t && t !== 'mouse';
 $('pkChart').addEventListener('pointerdown', e => { PK_PT = e.pointerType || 'mouse'; });
-$('pkChart').addEventListener('pointerover', e => { if (e.pointerType === 'touch') return; const h = pkHit(e); if (h) pkTip(+h.dataset.i); });
-$('pkChart').addEventListener('pointerout', e => { if (e.pointerType === 'touch') return; if (pkHit(e)) pkTipOff(); });
-$('pkChart').addEventListener('click', e => { const h = pkHit(e); if (!h) { pkTipOff(); return; } const i = +h.dataset.i; if (PK_PT === 'touch' && PK_ON === i) pkTipOff(); else pkTip(i); });
+$('pkChart').addEventListener('pointerover', e => { if (pkFinger(e.pointerType)) return; const h = pkHit(e); if (h) pkTip(+h.dataset.i); });
+$('pkChart').addEventListener('pointerout', e => { if (pkFinger(e.pointerType)) return; if (pkHit(e)) pkTipOff(); });
+$('pkChart').addEventListener('click', e => { const h = pkHit(e); if (!h) { pkTipOff(); return; } const i = +h.dataset.i; if (pkFinger(PK_PT) && PK_ON === i) pkTipOff(); else pkTip(i); });
 document.addEventListener('pointerdown', e => { if (PK_ON >= 0 && !$('pkChart').contains(e.target)) pkTipOff(); });
 /* a record cell of the week grid, shaded by its rate as the NFL's: clear at .500, green over and red under, deepest (.42) at 30 points off */
 function pkCell(t, name, label, season) {

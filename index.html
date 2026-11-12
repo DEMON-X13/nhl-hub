@@ -121,7 +121,7 @@ h2 small{font-family:var(--body);font-weight:500;color:var(--ink-2);font-size:13
 @media(max-width:640px){h2 small{display:block;margin:4px 0 0}}             /* a phone: the small print under its heading, never broken beside it */
 h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin:16px 0 8px}
 .card h2 .btn{font-family:var(--body);font-size:13px;font-weight:700}
-/* a heading's small pill ("Team rankings [Team Elo]", "Top 30 lines [Today]"): the NFL's .pill, grey, and its three meanings; ice is hockey's own */
+/* a heading's small pill ("Team rankings [Elo ratings]", "Top 30 lines [Today]"): the NFL's .pill, grey, and its three meanings; ice is hockey's own */
 .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
 h2 .pill{font-family:var(--body);font-size:12px;font-weight:700;vertical-align:middle;letter-spacing:.02em;margin-left:6px}
 .pill.warn{background:var(--gold-soft);color:var(--gold-ink)}
@@ -1874,12 +1874,12 @@ function renderRankings() {
       + `<td class="num">${per(t.gf, t.gp)}</td><td class="num">${per(t.ga, t.gp)}</td>`
       + `<td class="num rt-pct">${odd(o, 'playoff', 0)}</td><td class="num rt-pct">${odd(o, 'cup', 1)}</td></tr>`; };
   /* what a number means is on its heading's title, never in a sentence on the page; the Elo's two constants on the pill's */
-  const H = [['#', ''], ['Team', ''], ['Record', 'Wins, losses, losses past regulation'], ['PTS', 'Standings points'], ['Elo', 'The team Elo, and its tier'],
+  const H = [['#', ''], ['Team', ''], ['Record', 'Wins, losses, losses past regulation'], ['PTS', 'Standings points'], ['Elo', 'The Elo rating, and its tier'],
     ['Elo change', `Elo gained or lost over the last ${RK_DAYS} days`], ['Vs average', 'The chance of beating an average club on neutral ice'], ['GF/G', 'Goals for a game this season'],
     ['GA/G', 'Goals against a game this season'], ['Playoff', "The simulation's chance of a playoff spot"], ['Cup', "The simulation's chance of the Stanley Cup"]];
   const champ = S.playoff && S.playoff.phase === 'over' && S.playoff.champion;      // the season's champion, once it has one: a state, on the heading's pill
   const elo = S.model && S.model.params && typeof S.model.gpe === 'number' ? ` title="Home ice ${S.model.params.hfa} Elo; ${S.model.gpe.toFixed(0)} Elo a goal of margin"` : '';
-  el.innerHTML = `<h2 id="ratH">Team rankings <span class="pill"${elo}>Team Elo</span><span class="pill ok" id="ratChamp"${champ ? '' : ' hidden'}>${champ ? esc(T(champ).short) + ' won the Cup' : ''}</span></h2>
+  el.innerHTML = `<h2 id="ratH">Team rankings <span class="pill"${elo}>Elo ratings</span><span class="pill ok" id="ratChamp"${champ ? '' : ' hidden'}>${champ ? esc(T(champ).short) + ' won the Cup' : ''}</span></h2>
     <div class="wrap"><table class="rt-v"><thead><tr>${H.map(([h, t], i) => `<th${i === 1 ? ' class="sk"' : i > 1 ? ' class="num"' : ''}${t ? ` title="${esc(t)}"` : ''}>${h}</th>`).join('')}</tr></thead><tbody>`
     + rows.map(row).join('') + '</tbody></table></div>';
   renderAbsences();

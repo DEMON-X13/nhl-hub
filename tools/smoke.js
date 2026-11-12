@@ -4650,7 +4650,8 @@ function gpWindowWrongs(w, g, ms) {
     /* each row's side is the Pick'em tab's own pick of the model on this game (but a call whose stored pick parts from its chance, which the tab reads off `pick`) */
     for (const [n, p, id] of MW) { const pk = sPkPick(g, id), side = p >= 0.5 ? 'home' : 'away'; if (id !== 'call' && pk) ck(pk === side, `Matchup, ${n}: its side is the Pick'em Record's pick for the game (${side}, ${pk})`); }
     /* the club ratings are a row of The clubs, "Elo rating", never a pick: nothing in the window calls anything "Team Elo" (nhl v32) */
-    ck(!/team elo/i.test(md.textContent) && !md.querySelector('[data-gs-model="Team Elo"]'), `Matchup: no "Team Elo" anywhere in it, the ratings' row "Elo rating" and no Team Elo pick among the models (${[...md.querySelectorAll('.ddunit')].map(txt).join(', ')})`);
+    const mdWords = [md.textContent].concat([...md.querySelectorAll('*')].flatMap(x => ['title', 'aria-label'].map(k => x.getAttribute(k) || ''))).join(' | ');
+    ck(!/team elo/i.test(mdWords) && !md.querySelector('[data-gs-model="Team Elo"]'), `Matchup: no "Team Elo" anywhere in it, the ratings' row "Elo rating" and no Team Elo pick among the models (${[...md.querySelectorAll('.ddunit')].map(txt).join(', ')})`);
     ck(!md.querySelector('p') || [...md.querySelectorAll('p')].every(p => txt(p).length <= 90), 'Matchup: no description');
     close();
   } else ck(false, 'the Matchup window did not open');
@@ -5649,7 +5650,7 @@ async function holdPickem(St, ms, tag, opts = {}) {
         for (const x of svg.querySelectorAll('polyline, line.s')) { const s = cs(x); if (v(s, 'stroke') !== 'var(--c)' || !['none', 'rgba(0, 0, 0, 0)', 'transparent'].includes(v(s, 'fill')) || !shown(s)) wrongC.push(`${x.tagName.toLowerCase()}${x.dataset.model ? ' ' + x.dataset.model : ''}: stroke ${v(s, 'stroke')}, fill ${v(s, 'fill')}, opacity ${v(s, 'opacity')}, visibility ${v(s, 'visibility')}`); }
         for (const x of svg.querySelectorAll('circle')) { const s = cs(x); if (v(s, 'fill') !== 'var(--c)' || !shown(s)) wrongC.push(`a dot: fill ${v(s, 'fill')}, opacity ${v(s, 'opacity')}`); }
         ck(!wrongC.length && !!svg.querySelector('polyline') && !!svg.querySelector('circle'), `the page's CSS strokes every line and its end marker in the line's own --c and fills every dot with it, none of them hidden (${[...new Set(wrongC)].slice(0, 3).join(' | ')})`); }
-      ck(eqA([...svg.querySelectorAll('polyline')].map(x => x.dataset.model), models.map(m => m[0])) && eqA([...svg.querySelectorAll('text[data-end]')].map(x => x.dataset.end).sort(), PK_S.map(m => m[0]).sort()),
+      ck(eqA([...svg.querySelectorAll('polyline')].map(x => x.dataset.model), models.map(m => m[0])) && svg.querySelectorAll('line.s').length === models.length && eqA([...svg.querySelectorAll('text[data-end]')].map(x => x.dataset.end).sort(), PK_S.map(m => m[0]).sort()),
         `the chart's lines are the four models' (${models.map(m => m[1]).join(', ')}) and its end labels theirs and DraftKings', no more (${[...svg.querySelectorAll('polyline')].map(x => x.dataset.model).join(' ')}; ${[...svg.querySelectorAll('text[data-end]')].map(x => x.dataset.end).join(' ')})`);
       const hits = [...svg.querySelectorAll('rect.rv-hit')], inked = [...svg.querySelectorAll('text, tspan')].every(t => !t.getAttribute('fill') && !t.getAttribute('style'));
       ck(txt(svg.querySelector('text[data-end="dk"]')) === '= DraftKings' && eqA(hits.map(h => h.dataset.i), D.weeks.map((x, i) => String(i))) && inked, `the zero line labelled "= DraftKings", a band to point at for each of the ${n} weeks, and every word in the page's ink, never a line's colour`);
@@ -5735,7 +5736,7 @@ async function holdPickem(St, ms, tag, opts = {}) {
     const ths = [...d.querySelectorAll('#pkWeeks thead th')], own = th => { const c = th.cloneNode(true); for (const x of c.querySelectorAll('small')) x.remove(); return txt(c); };
     const haveH = ths.map(th => [own(th), txt(th.querySelector('small'))]), wantH = [['', '']].concat(D.weeks.map(x => [sPkShort(x), `${D.games[x]} game${D.games[x] === 1 ? '' : 's'}`]), [['Season', '']]);
     ck(eqA(haveH, wantH) && !!ths[n + 1] && ths[0].getAttribute('aria-label') === 'Model' && ths[n + 1].classList.contains('rv-season') && el('pkWeeks').classList.contains('rv-grid'), `the week grid's columns, each week by its Monday with its games, the season last (${haveH.map(x => x.join(' ')).join(' | ')})`);
-    const gridWrong = [], rowsG = [...d.querySelectorAll('#pkWeeks tbody tr')];
+    const gridWrong = [], rowsG = [...d.querySelectorAll('#pkWeeks tr')].filter(r => r.parentElement.tagName !== 'THEAD');
     if (!eqA(rowsG.map(r => r.dataset.pk), PK_S.map(x => x[0]))) gridWrong.push(`rows ${rowsG.map(r => r.dataset.pk).join(' ')}`);
     for (const [id, name] of PK_S) {
       const tr = d.querySelector(`#pkWeeks tr[data-pk="${id}"]`), sw = tr && tr.cells[0].querySelector('i.lgd');
@@ -5895,7 +5896,7 @@ const TR_DAYS = 7;
 /* copy B's planted outs worth a row, in the card's order: the size of the figure, then the club, then the name (the day's real outs fall among them) */
 const TR_PLANT = ['Amy Beta', 'Dee Delta', 'Gil Goalie', 'Abe Alpha', 'Zed Alpha', 'Cy Gamma', 'Gia Edge'];
 /* what each figure's heading says on its title, word for word: the page keeps a number's meaning nowhere else */
-const TR_TITLES = ['Wins, losses, losses past regulation', 'Standings points', 'The team Elo, and its tier', `Elo gained or lost over the last ${TR_DAYS} days`, 'The chance of beating an average club on neutral ice',
+const TR_TITLES = ['Wins, losses, losses past regulation', 'Standings points', 'The Elo rating, and its tier', `Elo gained or lost over the last ${TR_DAYS} days`, 'The chance of beating an average club on neutral ice',
   'Goals for a game this season', 'Goals against a game this season', "The simulation's chance of a playoff spot", "The simulation's chance of the Stanley Cup"];
 /* hockey's ladder: the NFL's ten tiers on a 30-point step, Gold from 1500; under the last, Wood */
 const TR_TIERS = [['HOF', 1650], ['Elite', 1620], ['Master', 1590], ['Diamond', 1560], ['Platinum', 1530], ['Gold', 1500], ['Silver', 1470], ['Bronze', 1440], ['Iron', 1410]];
@@ -5950,8 +5951,8 @@ async function holdRankings(St, ms, tag, opts = {}) {
     `the tab holds its two cards and nothing else: no intro, small print, select, button or link (${[...sec.children].map(c => c.id || c.tagName).join(', ')}; ${[...sec.querySelectorAll('select, button, input, a, details, small, p')].map(x => x.tagName.toLowerCase() + (x.className ? '.' + x.className : '')).join(' ')})`);
   const h2 = sec.querySelector('#ratingsCard h2'), pills = h2 ? [...h2.querySelectorAll('.pill')] : [], lead = h2 ? [...h2.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').replace(/\s+/g, ' ').trim() : '';
   const champ = St.playoff && St.playoff.phase === 'over' && St.playoff.champion;
-  ck(sec.querySelectorAll('h2').length === 1 && lead === 'Team rankings' && pills.length === 2 && txt(pills[0]) === 'Team Elo' && pills[1].id === 'ratChamp' && (champ ? !pills[1].hidden && txt(pills[1]) === `${St.teams[champ].short} won the Cup` : pills[1].hidden && !txt(pills[1])),
-    `the heading is "Team rankings", its pill "Team Elo", and a champion's pill exactly when the season has one (${txt(h2)})`);
+  ck(sec.querySelectorAll('h2').length === 1 && lead === 'Team rankings' && pills.length === 2 && txt(pills[0]) === 'Elo ratings' && pills[1].id === 'ratChamp' && (champ ? !pills[1].hidden && txt(pills[1]) === `${St.teams[champ].short} won the Cup` : pills[1].hidden && !txt(pills[1])),
+    `the heading is "Team rankings", its pill "Elo ratings" (nhl v32: never "Team Elo"), and a champion's pill exactly when the season has one (${txt(h2)})`);
   /* one table, in a wrapper that scrolls sideways; its head the eleven words; a row a club, eleven cells each */
   const tbs = [...sec.querySelectorAll('#ratingsCard table')], tb = tbs[0], trs = tb ? [...tb.querySelectorAll('tbody tr')] : [];
   const heads = tb ? [...tb.querySelectorAll('thead th')] : [];
@@ -6950,8 +6951,13 @@ async function pickemChecks() {
     for (const [look, b] of [['dark', blockOf(':root')], ['light', blockOf('html[data-theme="light"]')]]) {
       for (const k of ['--m-alpha', '--m-joker', '--m-elom', '--m-call']) for (const g of ['--panel', '--panel-2']) { const c = tok(b, k), s = tok(b, g); if (!c || !s || !(crH(c, s) >= 3)) low.push(`${look} ${k} on ${g}: ${c && s ? crH(c, s).toFixed(2) : 'no token'}`); }
       for (const k of ['--rv-up', '--rv-dn']) if (!tok(b, k)) low.push(`${look} ${k}: no token`);
+      /* each two lines, and each line and DraftKings' ink, told apart (20 or more by CIEDE2000; the nearest today, the Joker and the call,
+         about 27), and no line in the Team Elo's old ice (nhl v32) */
+      const ks = ['--m-alpha', '--m-joker', '--m-elom', '--m-call', '--ink'];
+      for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) { const a = tok(b, ks[i]), c = tok(b, ks[j]); if (a && c && !(de2000S(a, c) >= 20)) low.push(`${look} ${ks[i]} and ${ks[j]} ${de2000S(a, c).toFixed(1)} apart`); }
+      for (const k of ks.slice(0, 4)) if (/^#(5FD4FF|1C85B0)$/i.test(tok(b, k) || '')) low.push(`${look} ${k} is the old baseline's ice`);
     }
-    chk(!low.length, `the chart's four line colours and the grid's two shades are tokens in both looks, each line 3:1 or more on a card (${low.slice(0, 4).join('; ') || 'all'})`);
+    chk(!low.length, `the chart's four line colours and the grid's two shades are tokens in both looks, each line 3:1 or more on a card and 20 or more from each other and the ink (${low.slice(0, 4).join('; ') || 'all'})`);
     chk(!/--m-base/.test(css) && !/\.lgd\.dash/.test(css) && !/Team Elo/.test(HTML.slice(HTML.indexOf('const PK_MODELS'), HTML.indexOf('const PK_KEY'))), "no Team Elo's colour, dashed swatch or entry left in the page's CSS or its Pick'em models"); }
   const D0 = sPkData(S), num = v => typeof v === 'number' && isFinite(v);
   console.log(`  the state: ${D0.fin.length} finals over ${D0.weeks.length} weeks; ${PK_S.map(([id, name]) => `${name} ${D0.rec[id].w}-${D0.rec[id].l}${id === 'dk' ? '' : ` (${sPkSigned(D0.cum[id].length ? D0.cum[id][D0.cum[id].length - 1] : 0)} vs DraftKings)`}`).join(', ')}; the total's average miss ${D0.miss === null ? 'none' : D0.miss.toFixed(2)} over ${D0.missN}`);

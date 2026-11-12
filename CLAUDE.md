@@ -108,7 +108,7 @@ The smoke test runs from the repo root or, as `node smoke.js`, from `tools/`. Da
 GitHub's runners but not every sandbox: `starters.js` failing to read it there, for that alone, is not
 a fault (it says so in `data/starters.json`, and the model chooses the goalies).
 
-The page is `index.html`, hand-written, one file, the NBA Hub's look (The look, below); it fetches `state.json` on
+The page is `index.html`, hand-written, one file, in the NFL hub's shell since nhl v25 (The look, below); it fetches `state.json` on
 every load, so a page change is just an edit (bump `APP_BUILD` in it) and a data change is the
 job's. The NHL has no weeks: the unit is the day (Eastern), and the page opens on a day strip.
 `data/history.json` is fifteen seasons of results (2011-12 on, with the period count) pulled
@@ -140,7 +140,93 @@ listed in `removed` with the feed's reason.
 
 ### The look
 
-Since nhl v12 (16 October 2026, the owner's "make the NHL games look like the NBA version ... the same style as the
+**Since nhl v25 (12 November 2026) the shell is the NFL hub's** (`DEMON-X13/nfl-hub`), the owner's ask of 11 November: "at this
+point the NFL-hub is pretty much perfect. i think there is a lot of clutter in the nhl one. I want you to match what the NFL hub
+has, the look, the layout and all the betting stuff". The work is staged: v25 is the shell and the look; each tab's insides (the
+Games list as the NFL's rows, the game page, Team Rankings, ELO Ratings, the Pick'em) are rebuilt in the steps after it, and until a
+tab is rebuilt what this section says of its insides below still holds, on the new tokens. What v25 changed, and what the later
+steps stand on:
+
+- **The stylesheet's first block is the NFL hub's shell**, one rule a selector with the values its page resolves to and its class
+  names kept, so its other rules drop in on top: the tokens, the page behind (two glows and a wash, the rink's 72px grid drawn by
+  `body::before` where the NFL has yard lines), the header, the tab bar, the focus ring, `.card` (its 3px ice edge down the left,
+  `overflow:hidden`: nothing may hang outside a card), `h2 .pill`, `.bar`, `.rec`, the buttons, `select` and the boxes, `.seg` and
+  the square `.pb-seg`, `.pb-ctl` with its `.pb-row`, `.pb-lbl`, `.pb-amt`, `.pb-chips`, `.pb-chip`, `.pb-games`, `.pb-glist`,
+  `.pb-g`, `.espn-ctl` (Refresh odds: `.btn.quiet.espn-btn` and its `.espn-st` line), the tables' base, `.ttag`, `.tier`, `.conf`,
+  `.finchip`, `.pb-valmark`, `.sp-lockmark`, the tier shields' sizes, `.stat-strip` and `.stat` (an ice edge across the top),
+  `.modal` and `.modal-panel`. Hockey's differences, each on purpose: **ice where the NFL's accent is gold** (the wordmark's last
+  word, a card's edge, the primary button, a checkbox, the selection, the ring, a tile's edge, the Admin mark), gold kept where it is
+  a meaning (medium confidence, a warning, Value, Locked, live); every control 44px tall (the NFL's tab is 40.8px); the chosen tab
+  is `nav button.on` with `aria-current="page"`; a wide table never hides a column; the focus ring at .6 alpha (3:1 on a panel);
+  no `scroll-behavior:smooth` (the page's own `window.scrollBy`, which keeps a tapped Add under the finger, must not animate).
+- **Two names changed their meaning to the NFL's.** `.btn` is the **primary** button (ice); the grey one nearly every button is
+  is `.btn.quiet`, `.btn.go` is lime (Finish, Save on this device, Download image), `.btn.danger` rose, `.btn.small` the small one.
+  `.pill` is the **small grey label** beside a heading or on a line (`.ok` lime, `.bad` rose, `.warn` gold, `.ice` hockey's own),
+  never a club: every `.tag` of before is a `.pill` (its own word kept as a class beside the variant: `pill ok win`, `pill warn
+  thin`, `pill ice sg`), Final and live are `.finchip` and `.finchip.live`, Value is `.pb-valmark`. Also renamed: `.strip` to
+  `.stat-strip`, `.oddsbar` / `.odds-btn` / `.odds-note` to `.espn-ctl` / `.espn-btn` / `.espn-st`, `.pb-stake` to `.pb-amt`,
+  `.pb-k` to `.pb-lbl`, `.pb-box` to `.pb-chip` (`.on` while ticked, set by the script with the box; the stake's quick amounts are
+  `.pb-quick`), `.pb-gt` to `.pb-g` (`.on` while ticked, `.no` with no fresh line), `.pb-head` to `.pb-hd`, `.pc-back` /
+  `.pc-panel` to `.modal` / `.modal-panel` (`.pc-panel` and `.pp-panel` kept beside it for each window's width).
+- **Tokens.** The NFL's names, in both looks: `--bg --bg-2 --panel --panel-2 --panel-3 --ink --ink-2 --muted --line --line-2`,
+  `--ice --ice-2 --ice-soft`, `--gold --gold-2 --gold-soft --gold-ink` (gold read as text), `--pick --pick-soft` (lime: a call, a
+  win, go), `--miss --miss-soft` (red read as text) and `--rose` (red as a fill), `--away --home`, `--r-lg --r-md --r-sm`, `--ring`,
+  and hockey's own **`--on-fill`**, the text on an ice, lime, rose or `--ink` fill (`#1E2230` dark, `#FFFFFF` light: on gold and on
+  a club's colour the text stays as written). The names from before v25 are aliases on `:root`, so a rule of a tab not yet rebuilt
+  resolves in both looks: `--lime`, `--lime-soft`, `--rose-ink` (now `--miss`), `--rose-soft`, `--muted-ink` (now `--muted`, the
+  NFL's `#B3B9CB`), `--r`. Quiet text on `--panel-3` is `--ink-2` (`--muted` and `--miss` are 4.1 and 4.25 there).
+- **The header**, the NFL's element for element: `<h1>X NHL <em>Bets</em></h1>` (the name in ink, its last word in ice, the puck
+  drawn by `h1::after`, `clamp(34px,6vw,54px)` and 28px under 360px, on one line at every width); the stamp at its right (under it
+  from 620px down): the Admin mark first on the owner's devices (`#hubAdmin` holding `#adminMark`; no Sign out, the sign-in is the
+  NFL hub's), then `#stamp`, "Updated Wed, Nov 11, 10:11 PM UTC" (when the job published, the visitor's clock, its zone named as
+  every time on the page is), then `#buildTag`. **No tagline, no season or record line, no description in the head** (the record
+  is the Record's; the champion, once the season has one, is a pill on the Power ratings' heading, `#ratChamp`). A load that fails
+  says so in the stamp (`.bad`) and in an `.empty` first in `main`.
+- **The tab bar** is words alone: **no count on a tab** (Games and the Parlay Builder carried one until v25; the slip bar still
+  shows the builder off its tab). The ten tabs and their ids are as they were (the merge to the NFL's eight comes with the Team
+  Rankings, ELO Ratings and Pick'em steps). The owner's two tabs are the NFL's way: no `hidden` attribute, hidden from a visitor's
+  first paint by the stylesheet (`html:not([data-admin="on"]) #tabs [data-admin-only]`), and taken out of a visitor's page by
+  `boot()`. The chosen tab is brought into the bar again once the page and the web fonts are in (they widen the pills).
+- **The light look is built and hidden.** Both palettes are in the stylesheet (`:root` and `html[data-theme="light"]`, the NFL's
+  light values, its ice a dark step), the head carries the NFL's theme script before the body is parsed (key
+  **`nhlhub_theme_v1`**, `'light'` or `'dark'`; dark is every visitor's default whatever the system says, and nothing in the page
+  follows `prefers-color-scheme`; anything kept but exactly `light`, or storage that throws, is dark), and the switch is in the
+  header (`.hub-theme[data-theme-toggle]`, a 44px round button named "Light mode", `aria-pressed` while light) **with the `hidden`
+  attribute**: visitors get the dark look until every tab is rebuilt on the tokens and a real-browser sweep of every text's
+  contrast in the light look is clean. Turning it on is taking that attribute off. The shell, the cards, the buttons, the tables'
+  base and the club tags are right in both looks today; the tabs' insides are only as far as the aliases take them (the Pick'em
+  and X Bet Log charts' line colours are still written for a dark card). The parlay card keeps the dark palette in both looks, as
+  its image does.
+- **A club is a filled tag** (`tag(id, cls, hide)`, `.ttag`; `muPills()`, `teamCell()`), the NFL's: its abbreviation in Unbounded
+  on its own colour, the same in both looks, its three colours inline. `TEAM_COLORS` is a palette a club, the tag's fill first (the
+  rest only for a win bar whose two clubs read as one colour: nothing draws them yet, and they are worth a look before a bar
+  wears them). **The rule, the NFL's word for word but for the one dark ink:** the text is white or `#1E2230`, whichever reads
+  better on the fill; the fill is darkened 8% at a time until one of them reads at 4.5:1 (none of the 32 needs it: the least is
+  Dallas, 4.59); the border is the fill at 72%. The fills are the clubs' own colours (ESPN's, or the brand's gold, silver, ice
+  blue or orange where ESPN gives black or a navy the page never drew the club in; the Ducks keep the orange they had, 7.8 from
+  Philadelphia's, where ESPN's is 0.5 from Edmonton's), in the families the owner approved in nhl v13. `cls`: `mini` in a row or a
+  table (40px least, so two and three letters line up), `win` the pick's, `lg`, `xs`. On a game card (until the Games tab is
+  rebuilt) the badge is the club's letters in `--ink` edged in its fill, the pick's filled with its tag's text and edge (`--tc`,
+  `--tx`, `--tb` on the `.team`), and the win bar is the two fills. The lifted, outlined colours of nhl v13 below are gone.
+- **No descriptions** (the owner's rule on the NFL page, 22 October 2026: "i dont want any descriptions anywhere. i want the site
+  to speak for itself"). Cut in v25: the tagline; the confidence key over the cards (each band's record stays on its pill's
+  title and in the Record's By confidence); Lineups' key but its state line (`.lu-src`); the opening countdown's small print; the
+  folds "How the levels are chosen", "How the list is chosen", "How these numbers are worked out" and "The props model is on
+  trial" (the rose tag in the props window's head stays, the ledger's running numbers on its title: a model on trial against the
+  book is a money warning); every tab's intro paragraph; the builder's lesson and its "Add one more leg" line; the Top 30's lead
+  and its "as read" sentence (the Refresh odds line says it); the card's "Yours alone"; the Record's fit paragraph. **Kept**:
+  headings, labels, numbers, buttons, `title=` tooltips (where each cut fact worth keeping went), state lines ("DraftKings, read
+  1:15 PM EDT.", "None posted yet: read …", "Not read: try Refresh odds.", "No DraftKings lines yet for Thu, Nov 12.", "61 calls
+  predate the injury report.", "Injury report Nov 11, 2:40 PM UTC · goalies Nov 11, 2:40 PM UTC") and money warnings in a few words
+  (a source warning's bold words, "2 lines far off the market left out.", "Price est.: DraftKings prices same-game parlays its
+  own way.", another book's prices, a leg to add by hand, a level with no parlay saying why). A new paragraph of explanation fails
+  the smoke.
+- **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("wild cards MTL, WSH", "1161 skaters",
+  "3-leg parlay"): a conference, Power ratings, Player rankings, Club strength tonight, the Pick'em's chart and its week grid, the
+  Record's two tables, the parlay tabs' panels, X Parlays. A stat strip stands bare over its cards, as the NFL's. The Games tab's
+  card grid is not wrapped (its rows come with the next step).
+
+Before nhl v25, and still true of the tabs' insides: since nhl v12 (16 October 2026, the owner's "make the NHL games look like the NBA version ... the same style as the
 NBA hub ... get rid of the icons that slow down the site and just do the regular buttons we have") the page is built from
 the NBA Hub's own components (`DEMON-X13/nba-hub`, `app/nba_hub.html`), its CSS values copied with ice (`--ice`) wherever
 the NBA has orange (`--hot`), and gold wherever the NBA uses ice for a meaning of its own (a push, a warning note): the header, the nav pills with a count badge (Games: today's games still to come, Eastern, which a puck drop
@@ -167,7 +253,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   in the page's CSS that hides anything and holds every table, row and cell clear of all of them, and every table's
   columns to the list it had before the restyle (a skater's position now beside his name).
 - **No images.** The page loads no team logo or any other image: on the table tabs ESPN's 32 logos were some 2.2 MB
-  of 2.75 MB. A club is a badge on a game card and a pill everywhere else (`pill()`, `muPills()`, `teamCell()`: the
+  of 2.75 MB. Until nhl v25 (since it a club is the NFL's filled tag, above) a club was a badge on a game card and an outlined pill everywhere else (`pill()`, `muPills()`, `teamCell()`: the
   short name stays as text beside it), in its own colour from `TEAM_COLORS` in the page (keyed by the state's club
   keys; Utah is `UTAH`, shown UTA), as the NBA's `TEAMS` gives each club its own. Since nhl v13 (17 October 2026, the
   owner's "ok" to "closer to the NBA's richer colours", where v12's left the reds salmon, the navies pastel and the
@@ -196,8 +282,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   top line (puck drop and date in the visitor's clock, a note after them; tags: live in ice, the job's live score "as of" in
   gold, Final, start moved, under way, neutral ice, call right or wrong, replayed); the two badges, the state's straight-up
   call (`g.pick`) filled and kept after the game, the name, the score where one is known (the loser's muted), no record; the
-  call's chance in the middle, its club, and its **confidence pill** (`confPill`, the NBA's: High 65%+ lime, Med 60-64% ice,
-  Low 55-59% gold, 50/50 under 55%, the Pick'em's cut-offs applied to the chance rounded as the card writes it (the Pick'em
+  call's chance in the middle, its club, and its **confidence pill** (`confPill`; since nhl v25 the NFL's pill, a soft fill and a dot, in the NFL's colours: High 65%+ lime, Med 60-64% gold,
+  Low 55-59% grey, 50/50 under 55% rose, on the Pick'em's cut-offs applied to the chance rounded as the card writes it (the Pick'em
   bands the raw chance), so a pill and the percentage beside it never disagree, each band's record this
   season straight up on its title and for a screen reader); the win bar and each side's chance; the chips (`data-ck`, the
   NBA's): Margin (the goals layer's, "even" under 0.05: the win chance blends it with the team Elo, so on a close game the two
@@ -236,8 +322,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   A bet tapped there is said in the window's own status line as a player's price is, and draws the whole window again (where a
   game takes one leg, a bet put in can leave a player's price out), its open folds kept and the keyboard on the bet; any other
   redraw while the window is open (`rerender`: the watch, a storage event) draws its Game bets alone (`ppBetsRedraw`), so its
-  stat tab, its open folds and the keyboard's place in them stay as they are. Over the day's cards the confidence key (`#confKey`,
-  `confKey`, the NBA's: each band, its range and this season's record), where the bets' and who is out's keys were. Refresh
+  stat tab, its open folds and the keyboard's place in them stay as they are. The confidence key over the day's cards (nhl v23) went in nhl v25: no descriptions. Refresh
   scores shows only while the day shown has a game under way (the NBA's odds bar carries Refresh odds alone). A redraw
   replaces only the cards whose markup changed (`CARD_HTML`).
 - **Lineups** (`luDrawer`, on a game to come the player model lines up): each club's goalie and its nine skaters with
@@ -248,7 +333,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   its own, the parts missed the total by a hundredth in about 40% of lines), led by the goalie and how he was chosen ("In goal
   Jake Allen, confirmed by DailyFaceoff · Strength ...", nhl v23); under each club (nhl v13), everyone the report has out, his status
   and what he adds to his club in a game ("—" where the model does not rate him), most valuable first, each name and status
-  whole, then (nhl v23) the club's day to day, who stay in the lineup; its key ends on the injury report the call stands on and
+  whole, then (nhl v23) the club's day to day, who stay in the lineup; its one state line (`.lu-src`: the key of sentences over it went in nhl v25) names the injury report the call stands on and
   whose call it is ("Injury report of Oct 17, 6:57 AM EDT · the player model's call."). Opened in place, never redrawn to open; open in this
   page's memory alone (`LU_OPEN`), so a redraw keeps it open; never stored. One toggle, in the foot, as the NBA's: its
   word stays Lineups, so the foot never rewraps, and `aria-expanded` and an ice outline say it is open (the drawer once
@@ -298,8 +383,9 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   card's leg-by-leg DraftKings links are 44px chips, "Leg 1", "Leg 2", on a line of their own.
 - **The Player props window**: the NBA's sheet: 900px wide, 28px from the top, as tall as the screen allows and scrolling
   inside itself (full screen on a phone) under a head that stays put (the title, the game by its clubs' pills, the time,
-  a rose "props model on trial" tag, and Close, a word); the read said in a note with Refresh odds filled (`.btn.ice`)
-  in it; the trial folded to a line in a dashed box, as the NBA's.
+  a rose "props model on trial" tag, the ledger's running numbers on its title, and Close, a word); since nhl v25 the NFL's Refresh odds
+  control (`.btn.quiet`) and under it the read's state in a line ("DraftKings, read 1:15 PM EDT at the job's last run.", "None posted
+  yet: read …", "Not read: try Refresh odds."); the trial's fold and the "how these numbers are worked out" fold went.
 - **No Playoff tab** (nhl v14, the owner's call of 25 October 2026: "can you get rid of the playoff tab, i dont see the
   need for it"): its bracket and its odds table (expected points, division and conference chances) went with it. The job's
   simulation stays, read by the Standings' Playoff column and Power ratings' Playoff and Cup, and an old `#playoff` link (or
@@ -331,8 +417,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   "145" on a 390 phone).
 - **The Players tab**: the search draws once the typing pauses (200ms); the first 60 rows at once and the rest, to 400,
   eighty at a time between frames, so a keystroke or a press is answered at once.
-- **Headings** keep their small print beside them on a wide screen and under them on a phone, so a phrase like "wild
-  cards BOS, NJ" never breaks.
+- **Headings** carry a small `.pill` for the two or three words that help ("wild cards BOS, NJ", kept whole); the sentences
+  beside a heading went in nhl v25.
 
 Since nhl v23 a card is the NBA's height: on 8 November 2026's published state at 390px, the day's cards to come 349 to
 407px and the night before's finals 331 to 448, against the NBA Hub's 351 to 469 on its own slate the same day (nhl v13's
@@ -458,9 +544,9 @@ on a scoreboard it answers from the state, never the real feed, and its section 
 DraftKings' player props and the props window (under The props model) on answers it makes from the state's own
 projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19) works the Pick'em tab out from the state by rules of its own (the picks, the weeks, the tiles and bands, the legend, the chart's weekly sums, every cell of the week grid and its shading, every pick of the day it opens on and of a past day), on the state and on a copy planting an unlined final, a game whose two ratings part and a level price, and holds the call's season to the state's SU record. Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
 source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, drawer and window finds none),
-`TEAM_COLORS` (every club; each badge colour 3:1 or more on every surface a badge or the win bar sits on, those surfaces read from the
-page's CSS (the card's two grounds and the badge's own over each), each pill colour 4.5:1 on every ground a pill is drawn on, `#1E2230`
-4.5:1 on each, by its own WCAG sums; every club but the Kings in a hue of its own by its own CIELAB sums; any two clubs outside one
+`TEAM_COLORS` (nhl v25: every club a palette of hex colours; each club's tag worked out again by the smoke's own code, the fill
+darkened until white or `#1E2230` reads on it at 4.5:1, the text whichever reads better, the border the fill at 72%: the text 4.5:1 on
+the fill and no fill needing darkening, by its own WCAG sums; the surfaces the outlined pill and badge were held on went with them; every club but the Kings in a hue of its own by its own CIELAB sums; any two clubs outside one
 brand colour, the reds, the navies, the golds, the two oranges, 5 or more apart by its own CIEDE2000), every game card of every day
 on the strip worked out from the state (badges, colours, the filled pick, chances, the confidence pill by its own bands and this
 season's record, no record on a club, every chip in order by its `data-ck` with its text, its call, its edge or far off and its light,
@@ -471,7 +557,7 @@ tag on its edge taking no line, 44px), every piece of it that cannot wrap within
 nothing out: a tag 15 characters at most, a word or number under the line 11, with any rule that keeps the far line or the button whole
 read too), a row's two buttons laid out alike (the wrap planted in a row's first button, its second or neither: a row marked exactly
 where either wraps, in the window and in Pick your own legs, and no mark kept once drawn again unwrapped), a stale line's window saying
-why it has none), the confidence key once over the cards and Refresh scores exactly where the day has a game under way, who is out row
+why it has none), no confidence key over the cards (nhl v25) and Refresh scores exactly where the day has a game under way, who is out row
 by row and word for word: the goalies' line with each one's how on his title, a row exactly for each player worth `OUT_ROW` (the page's
 is the smoke's 0.13, and the smoke works out on every game to come from `tools/elo.js`'s goals layer and `data/players.json`'s blend
 that 0.13 goals moves a club's chance about a point, held only at the median and loosely, 0.5 to 2 points, the ends reported and never
@@ -483,11 +569,10 @@ every row's title, each name and status kept whole and no rule in any media quer
 Lineups drawer's every row, its goalie and how he was chosen, and its strength line the state's own to the hundredth with its parts as
 shown adding up to it, each within a hundredth of its own value, the injury report and whose call it is in its key, its one toggle in
 the foot keeping its word and no button in the drawer, Player props (its word alone, the read on its title),
-Parlay Builder → and the foot exactly where they belong), the tab counts and a puck drop moving them, Lineups (shut, opened in place,
+Parlay Builder → and the foot exactly where they belong), the tab bar words alone on every tab and after a puck drop on the watch (the counts went in nhl v25), Lineups (shut, opened in place,
 kept open through a redraw and a bet tapped in the window, the focus kept, opened and shut from the keyboard with the foot as it was, nothing
 written, gone at the puck drop),
-Parlay Builder → (the day, the game ticked again, the slate, the focus, Both days kept), every pill its club's abbreviation in its
-colour beside its club's name, each table's marked columns (`#` and its order), every table keeping every column at every width (no
+Parlay Builder → (the day, the game ticked again, the slate, the focus, Both days kept), every tag (`.ttag`) its club's abbreviation filled in its club's colour by the smoke's own sums (its text and its edge with it), its club's name beside it, and no club in a `.pill`, each table's marked columns (`#` and its order), every table keeping every column at every width (no
 rule in the page's CSS, in any media query, hides a table, row or cell; each scrolls sideways in its wrapper with its club or player
 column the one held; each has the columns it had before the restyle; every name a table hides for a screen reader held by a
 positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), each player's name in bold
@@ -496,7 +581,24 @@ coloured by the sign shown), Rating at one place, the Standings' four tables lai
 never squeezed under them on a desktop and a phone, no Playoff tab (an old `#playoff` link opening the Standings), the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
 side far off the market said on its own button with both numbers exactly and every other part of the button (in each game's Game
 bets and in Pick your own legs, Both days included), the props window's head naming its game by its pills, the Record's tiles, the lock's words, the card's
-leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE PROPS MODEL (in the state's
+leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE LOOK: LIGHT AND DARK (nhl v25) holds the two looks and the owner's no-descriptions rule, all of it in jsdom by
+rules of its own: the theme script first in the head, after the stylesheet and before the body, `nhlhub_theme_v1` named in it alone;
+both palettes read from the stylesheet's text, every colour token of `:root` with a light value; each text token 4.5:1 on each ground
+and the fill's text 4.5:1 on each fill, in both looks, by its own WCAG sums (in the dark look `--muted` and `--miss` on `--panel-3`
+reported, not held: secondary text there is `--ink-2`); the switch one button in the header before the tabs, named Light mode, **hidden
+for now** by its attribute and the stylesheet; a press (jsdom presses a hidden button) light, pressed, the key written and nothing else,
+`nhl_v1` as it was, a second dark; another tab's switch followed with nothing written, another key's event ignored; and, on a bare page
+of the script and the switch's own markup, light kept is light as the body starts to be parsed, every kept value but exactly `light` is
+dark, storage that throws is dark and a press still switches. Then no descriptions: the classes the cut texts wore are gone from the
+page and its stylesheet, and on every tab (every day's cards with Lineups open, every pick shown) no paragraph or small print of
+`main` that shows is over 90 characters but the kept few (the source warnings, the builder's and the panel's money warnings and
+notices, another book's prices, an error line, a stale line, a level with no parlay saying why, Lineups' day to day by name).
+`main()` holds the header to the wordmark, the stamp ("Updated" and the state's `published` in the visitor's clock, zone named), the
+build tag and the tabs' words, nothing else; X PARLAYS that the owner's two tabs are not in a visitor's page at all; THE LOOK every
+button, select, box, segmented choice and checkbox chip at 44px and the switch 44px by 44px, and every table in its wrapper let out of
+the page's clip (`overflow: visible`), so its held column can stick. What jsdom cannot hold is looked at in a real browser at 1280,
+390, 360 and 320: the wordmark on one line, no sideways scroll, the chosen tab in view, and (before the switch is shown) every
+visible text's contrast in the light look. Its section THE PROPS MODEL (in the state's
 reality) holds the box files' shots (no old-shape line, no `sog`, the skater shots against the goalies' at the
 column level) and starting goalies (at most one mark a side, on a goalie of that side who played, and the sides that
 used two goalies marked), the record of closing props in its shape, one line a final, the ledger by `props_check.js` against
@@ -908,7 +1010,7 @@ ESPN, read 9:12 PM EDT: 5 games, 2 moved since the last read. 1 game had no line
 stands. 1 game is postponed at ESPN: its published line stands until the job takes it off."). A line read so
 is fresh (`line.refreshed`, in the page's memory alone; the job never writes it, and the smoke fails a state
 that carries it), and the Games cards, the open days' suggested levels and the Top 30 (worked again on the new prices),
-the builder, the card's DraftKings link and the panel's "as read" line all follow. The builder draws its legs on the new lines (a moved price updated, a moved
+the builder, the card's DraftKings link and the Refresh odds status lines all follow (the panel's own "as read" sentence went in nhl v25; its line shows only where another book prices a game). The builder draws its legs on the new lines (a moved price updated, a moved
 number out, said once with the read's time) but keeps them stored as they were, so nothing a read changed
 reaches `nhl_v1` on a later save. A parlay card open during a read is drawn again on the new prices and ids
 (said in the card), or closed when one of its legs moved or came off (said in the status line). It is all in
@@ -1150,8 +1252,8 @@ and player legs), at DraftKings' price as read.
   parse reads: none posted yet) or `{ status: 'failed', at, why }`, where a failed read keeps the last run's read of the game if that
   was one (with its own `at`); `dk` beside `games` counts the run's reads (`asked`, `read`, `none`, `failed`, `kept`, `lines`).
   `at` is the run's clock in full ISO. `update.js` copies them into the state with the projections. The page starts from it on
-  every load (`ppSeed`, `src: 'job'`): the Player props buttons (on their titles) and the window say what the job read and when ("read 1:15 PM EDT
-  at the job's last run ... Refresh odds reads them again now."), and its prices can go in the parlay at once, at the job's
+  every load (`ppSeed`, `src: 'job'`): the Player props buttons (on their titles) and the window say what the job read and when ("DraftKings, read 1:15 PM EDT
+  at the job's last run."), and its prices can go in the parlay at once, at the job's
   price, dated by its read. A press reads them again: an answer or a 404 replaces the job's read ("A reload brings back the job's
   read"), a failed request keeps it, counted as kept. `sources.js` fails the run (after the commit) when every game projected
   failed to read, and notes some failing. The smoke's THE JOB'S PLAYER LINES holds the read's shape on the state as published and
@@ -1192,9 +1294,8 @@ and player legs), at DraftKings' price as read.
   Expected players DraftKings does not price fold under their club with their projection alone. On the live feed
   (15 October 2026, BUF at TOR) that read, for example, Tage Thompson's points Over 0.5 -205, Under 0.5 +150, projection
   1.04 · model 65% · DraftKings 60%, and his anytime goal +140 · model 39% · DraftKings 36% est. **On trial**: the window
-  says so on its head ("props model on trial") and in its note ("it has not been shown to beat DraftKings' own prices.
-  Since 25 October 2026, the owner's call, the Top 30 lines and the suggested parlays rank DraftKings' player lines on its
-  chance too, marked props model wherever they show it. A DraftKings price can go in your parlay ..."), with the ledger's running numbers quietly (graded lines of 12,000, the model's log loss and Brier beside
+  says so on its head, in a rose tag ("props model on trial"; since nhl v25 the tag alone, its title "Not yet shown to beat
+  DraftKings' own prices." and the ledger's running numbers, quietly: graded lines of 12,000, the model's log loss and Brier beside
   DraftKings', never a verdict or a word of passing before the bar is decided). Nothing in the window's props (its Game
   bets are the game's own calls, edge and all), on a Player props button or anywhere else on a prop says "model says" or "edge", and nothing the props read touches moves a line,
   a level or the levels' cache (`ODDS.v`); it redraws only a player leg the visitor added, at the read's price or out where
@@ -1245,7 +1346,7 @@ outrank what the job published:
 
 - **Published data wins over anything a browser kept.** Local storage holds only what the visitor
   made (and, read and never written, the NFL hub's sign-in record that marks the owner's devices: under X Parlays): the parlay builder's legs (a player leg with DraftKings' price and the time it was read), the parlays they saved, their stake, their picks on the Parlay
-  Builder, the tab they were on and the X Parlays they cleared on this device (the owner's), under one key, `nhl_v1`. Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
+  Builder, the tab they were on and the X Parlays they cleared on this device (the owner's), under one key, `nhl_v1`; and, under a key of its own, `nhlhub_theme_v1`, the light or dark look (nhl v25: written only by a press of the header's switch, which is hidden for now, so no visitor's browser holds it yet; never in `nhl_v1`, never sent). Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
   the props model's projections and its ledger's numbers, DraftKings' player lines as the job read them, and the record are read
   from `state.json` on every load. A leg whose game has started leaves the
   builder: its price is gone. The lines and player props Refresh odds reads from ESPN live in the page's memory alone,

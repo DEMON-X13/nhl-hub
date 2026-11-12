@@ -24,10 +24,10 @@
   --miss:#FFA2B8; --miss-soft:rgba(255,61,107,.16); --rose:#FF3D6B;
   --away:#5FD4FF; --home:#CDFF4F;
   --on-fill:#1E2230;
-  /* the Pick'em chart's five lines (nhl v30): the NFL's green, red and orange for its three, a violet for the call, ice for the dashed
-     baseline; each 3:1 or more on a card, and any two apart for red-green colour-blind eyes too (worked out, never judged by eye);
-     the week grid's green over .500 and red under are the NFL's own two, one value in both looks */
-  --m-alpha:#5AF485; --m-joker:#FF6B8A; --m-elom:#F2A33A; --m-call:#B082F7; --m-base:#5FD4FF;
+  /* the Pick'em chart's four lines (nhl v30; the Team Elo's ice line went in nhl v32): the NFL's green, red and orange for its three,
+     a violet for the call; each 3:1 or more on a card, and any two apart for red-green colour-blind eyes too (worked out, never judged
+     by eye); the week grid's green over .500 and red under are the NFL's own two, one value in both looks */
+  --m-alpha:#5AF485; --m-joker:#FF6B8A; --m-elom:#F2A33A; --m-call:#B082F7;
   --rv-up:#1B7A4E; --rv-dn:#C0392B;
   --r-lg:18px; --r-md:14px; --r-sm:11px;
   --sh-xs:none; --sh-sm:none; --sh-md:0 18px 40px -24px rgba(0,0,0,.6);
@@ -52,7 +52,7 @@ html[data-theme="light"]{
   --miss:#AA1F42; --miss-soft:rgba(214,40,80,.11); --rose:#D42A54;
   --away:#2F5E9E; --home:#146638;
   --on-fill:#FFFFFF;
-  --m-alpha:#2A5E1E; --m-joker:#C1195C; --m-elom:#C57216; --m-call:#7446B8; --m-base:#1C85B0;
+  --m-alpha:#2A5E1E; --m-joker:#C1195C; --m-elom:#C57216; --m-call:#7446B8;
   --rv-up:#1B7A4E; --rv-dn:#C0392B;
   --sh-md:0 18px 40px -24px rgba(30,34,48,.35);
   --ring:0 0 0 3px rgba(8,95,134,.75);
@@ -454,7 +454,6 @@ table.pe-t .tw .tn{position:absolute;width:1px;height:1px;margin:-1px;padding:0;
 .lgdrow{margin:0 0 8px;gap:18px;font-size:12px}
 .lgd{display:inline-block;flex:none;width:16px;height:3px;vertical-align:middle;margin-right:7px;background:var(--c)}
 .lgd.ink{background:var(--ink);height:2px}
-.lgd.dash{background:repeating-linear-gradient(90deg,var(--c) 0 5px,transparent 5px 8px)}   /* the baseline's swatch dashed, as its line */
 /* an entry is one phrase; where a phone has no room for it on a line, its "vs DraftKings" half goes under its record, whole */
 .lgdrow>span{display:inline-flex;align-items:center;flex-wrap:wrap;max-width:100%;white-space:nowrap;color:var(--ink-2)}
 .lgdrow b{color:var(--ink);font-family:var(--display);font-variant-numeric:tabular-nums;margin:0 4px}
@@ -1382,7 +1381,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v31 · 2026-11-12';
+const APP_BUILD = 'nhl v32 · 2026-11-12';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -4941,17 +4940,18 @@ function restOf(g, club) {
   let p = null; for (const x of S.games) if (x !== g && (x.home === club || x.away === club) && x.date < g.date && (p === null || x.date > p)) p = x.date;
   return p === null ? null : Math.round((Date.parse(g.date + 'T12:00:00Z') - Date.parse(p + 'T12:00:00Z')) / 86400000) - 1;
 }
-/* every model's chance for the home side on a game, as the Pick'em Record reads them, the call first; DraftKings' with its margin out */
+/* every model's chance for the home side on a game, as the Pick'em Record reads them, the call first; DraftKings' with its margin out.
+   The Team Elo's own pick (the club ratings alone) went in nhl v32, as on the Pick'em Record: the ratings are in The clubs, never a pick */
 function gameModels(g) {
   const L = g.line, dk = L && priced(L.homeML) && priced(L.awayML) ? implied(L.homeML) / (implied(L.homeML) + implied(L.awayML)) : null;
   /* the NFL's three as the Pick'em Record reads them (pkCall): the call frozen with the game's own, else, for a final from before the
      models existed, its backtest, which the row says */
   const ph = id => { const x = pkCall(g, id); return x && typeof x.c.pHome === 'number' ? [x.c.pHome, x.bt] : [null, false]; };
-  return [['The call', g.pHome], ['Team Elo', g.by === 'players' && isObj(g.elo) && typeof g.elo.pHome === 'number' ? g.elo.pHome : g.pHome], ['Alpha', ...ph('alpha')], ['The Joker', ...ph('joker')], ['ELO Model', ...ph('elom')], ['DraftKings', dk]].filter(r => typeof r[1] === 'number' && isFinite(r[1]));
+  return [['The call', g.pHome], ['Alpha', ...ph('alpha')], ['The Joker', ...ph('joker')], ['ELO Model', ...ph('elom')], ['DraftKings', dk]].filter(r => typeof r[1] === 'number' && isFinite(r[1]));
 }
 /* Matchup: each club's attack against the other's defence and goalie, by the player model's own parts (goals a game against an
    average club: the club's offence; its defence and this game's goalie), each ranked among the clubs, the gap between them tagged;
-   then the clubs side by side (in goal, strength, the team Elo, rest); then every model's call */
+   then the clubs side by side (in goal, strength, the Elo rating, rest); then every model's call */
 function unitsBody(g) {
   const PT = S.players && isObj(S.players.teams) ? S.players.teams : {}, clubs = Object.keys(PT).filter(c => isObj(PT[c]) && typeof PT[c].offence === 'number' && typeof PT[c].defence === 'number');
   const pmOf = side => isObj(g.pm) && isObj(g.pm[side]) ? g.pm[side] : null, a = g.away, h = g.home, ab = esc(T(a).abbr), hb = esc(T(h).abbr);
@@ -4975,7 +4975,7 @@ function unitsBody(g) {
   const clubsRows = [
     ga || gh ? duo('goal', 'In goal', ga ? ga.gk : null, gh ? gh.gk : null, fig(ga ? ga.gk : null), fig(gh ? gh.gk : null), `${esc(ga ? last(ga.name) : '–')} · ${esc(gh ? last(gh.name) : '–')}`) : '',
     num(sa) || num(sh) ? duo('strength', 'Strength', sa, sh, fig(sa), fig(sh), 'goals a game') : '',
-    num(g.ra) && num(g.rh) ? duo('elo', 'Team Elo', g.ra, g.rh, Math.round(g.ra), Math.round(g.rh), '') : '',
+    num(g.ra) && num(g.rh) ? duo('elo', 'Elo rating', g.ra, g.rh, Math.round(g.ra), Math.round(g.rh), '') : '',
     duo('rest', 'Rest', ra, rh, restT(ra), restT(rh), ''),
   ].join('');
   const CM = slateCall(g);      /* the call's row reads as the list and the page write it */
@@ -5127,10 +5127,12 @@ function ppAdd(key) {
    the one frozen at puck drop on the game's row and copied after it (the job's CALL fields), so nothing here is worked out after a
    game: the NFL hub's three (nhl v20, tools/models.js: Alpha, the Joker and the ELO Model, `models` in the call; the finals before
    they existed from their backtest, `S.models.backtest`, called afterwards on what was known before each puck drop, as the NFL counts
-   its own), the call (the site's own pick, the player ratings blended with the club Elo: `pick`), the Team Elo (the club ratings
-   alone: `elo.pHome` beside a player-model call, else the call's own chance), and DraftKings, the baseline, as the NFL's Vegas: the
-   moneyline favourite with the margin taken out, on the line the job last read before puck drop (frozen with the call; not a closing
-   line). The unit is the week, Monday to Sunday (Eastern), named by its Monday.
+   its own), the call (the site's own pick, the player ratings blended with the club Elo: `pick`), and DraftKings, the baseline, as
+   the NFL's Vegas: the moneyline favourite with the margin taken out, on the line the job last read before puck drop (frozen with the
+   call; not a closing line). The unit is the week, Monday to Sunday (Eastern), named by its Monday. The Team Elo's line (the club
+   ratings alone) went in nhl v32, the owner's "should we just scrap Team Elo model, its severely underperforming" of 12 November 2026:
+   172-119 on the season's 291 finals against DraftKings' 183-108 and the call's 184-107, 19-30 where it parted from DraftKings. The
+   ratings stay where they are used: the call blends them, Alpha and the playoff odds stand on them, Team Rankings is them.
    The tab, the NFL's: six tiles (DraftKings' record; the call straight up in each of the Games tab's four confidence bands, bandRecs;
    how far DraftKings' total was from the goals scored); the card "Wins against DraftKings" (the legend, the chart, Show every pick);
    "Week by week"; and "Bets record", what the Record tab showed (the state's `record`: the season and each month, straight up and
@@ -5140,11 +5142,6 @@ const PK_MODELS = [
   { id: 'joker', key: 'joker', name: 'The Joker', sub: "boosted trees on the market and every pre-game number, as the NFL hub's Joker", c: 'var(--m-joker)' },
   { id: 'elom', key: 'elo', name: 'ELO Model', sub: "the player ratings on the Joker's baseline, as the NFL hub's ELO Model", c: 'var(--m-elom)' },
   { id: 'call', name: 'The call', sub: "the site's own pick: the player ratings, blended with the club Elo", c: 'var(--m-call)' },
-  /* the baseline (nhl v24, the owner's question of 11 November 2026 whether the "ELO model" should be scrapped, about this line at -7):
-     the club ratings alone, the base the call, Alpha and the playoff odds are built on, not a pick of its own. Drawn dashed and called
-     the baseline in the legend so it is never read as the ELO Model; on the finished seasons it trailed the closing line by about 4
-     games in 277 every season (its log loss +0.005 to +0.009 behind), as it does this one */
-  { id: 'elo', name: 'Team Elo', sub: "the club ratings alone: the baseline the call, Alpha and the playoff odds are built on, not a pick of its own", c: 'var(--m-base)', base: true },
 ];
 const PK_KEY = Object.fromEntries(PK_MODELS.filter(m => m.key).map(m => [m.id, m.key]));
 /* one of the NFL's three on a game: the call frozen with the game's own, else its backtest (a final before the models existed) */
@@ -5160,7 +5157,6 @@ function pkHome(g, id) {
   const num = v => typeof v === 'number' && isFinite(v) ? v : null;
   if (PK_KEY[id]) { const x = pkCall(g, id); return x ? num(x.c.pHome) : null; }
   if (id === 'call') return num(g.pHome);
-  if (id === 'elo') return g.by === 'players' ? (isObj(g.elo) ? num(g.elo.pHome) : null) : num(g.pHome);
   if (id === 'dk') { const L = g.line; if (!isObj(L) || !priced(L.homeML) || !priced(L.awayML)) return null; const h = implied(+L.homeML), a = implied(+L.awayML); return h / (h + a); }
   return null;
 }
@@ -5194,7 +5190,7 @@ function pkData() {
 }
 const pkRec = r => `${r.w}–${r.l}`;
 const pkSigned = n => n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '0';
-const pkLgd = m => m.id === 'dk' ? '<i class="lgd ink"></i>' : `<i class="lgd${m.base ? ' dash' : ''}" style="--c:${m.c}"></i>`;
+const pkLgd = m => m.id === 'dk' ? '<i class="lgd ink"></i>' : `<i class="lgd" style="--c:${m.c}"></i>`;
 /* the chart, the NFL's: each model's wins less DraftKings' on the same games, added up week by week from zero before the first week;
    DraftKings the zero line, so above it is beating the favourite and a line's height is games. An inline SVG (no image), drawn at
    its box's own width so its 11px words stay 11px on a phone; every line labelled at its end beside the legend, the labels nudged
@@ -5221,7 +5217,7 @@ function pkChart(D) {
   const r = gap >= 12 ? 4 : 3;
   for (const m of PK_MODELS) {
     const pts = [[X(0), Y(0)]].concat(D.vs[m.id].cum.map((v, i) => [X(i + 1), Y(v)]));
-    svg += `<polyline style="--c:${m.c}"${m.base ? ' stroke-dasharray="5 4"' : ''} data-model="${m.id}" data-cum="${D.vs[m.id].cum.join(',')}" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`;
+    svg += `<polyline style="--c:${m.c}" data-model="${m.id}" data-cum="${D.vs[m.id].cum.join(',')}" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`;
     svg += (gap >= 8 ? pts : pts.slice(-1)).map(p => `<circle style="--c:${m.c}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${gap >= 8 ? r : 4}"/>`).join('');
   }
   /* the end labels, the zero line's own "= DraftKings" among them, nudged apart so none sits on another */
@@ -5230,7 +5226,7 @@ function pkChart(D) {
   const over = ends[ends.length - 1].y - (H - padB); if (over > 0) for (const e of ends) e.y -= over;
   for (const e of ends) { const x = X(n) + 10;
     svg += e.dk ? `<text class="z" data-end="dk" x="${W - padR + 10}" y="${(e.y + 4).toFixed(1)}">= DraftKings</text>`
-      : `<line class="s" style="--c:${e.m.c}"${e.m.base ? ' stroke-dasharray="3 2"' : ''} x1="${x.toFixed(1)}" x2="${(x + 12).toFixed(1)}" y1="${e.y.toFixed(1)}" y2="${e.y.toFixed(1)}"/><text class="e" data-end="${e.m.id}" x="${(x + 17).toFixed(1)}" y="${(e.y + 4).toFixed(1)}"><tspan>${pkSigned(D.vs[e.m.id].d)}</tspan> ${esc(e.m.name)}</text>`; }
+      : `<line class="s" style="--c:${e.m.c}" x1="${x.toFixed(1)}" x2="${(x + 12).toFixed(1)}" y1="${e.y.toFixed(1)}" y2="${e.y.toFixed(1)}"/><text class="e" data-end="${e.m.id}" x="${(x + 17).toFixed(1)}" y="${(e.y + 4).toFixed(1)}"><tspan>${pkSigned(D.vs[e.m.id].d)}</tspan> ${esc(e.m.name)}</text>`; }
   svg += D.weeks.map((w, i) => `<rect class="rv-hit" data-i="${i}" x="${(X(i + 1) - gap / 2).toFixed(1)}" y="${padT}" width="${gap.toFixed(1)}" height="${H - padT - padB}" fill="transparent"/>`).join('');
   return `<svg viewBox="0 0 ${W} ${H}" class="pk-chart rv-chart" role="img" aria-label="${esc('Wins against DraftKings by week: ' + PK_MODELS.map(m => `${m.name} ${pkSigned(D.vs[m.id].d)}`).join(', '))}">${svg}</svg><div class="rv-tip" id="pkTip" hidden></div>`;
 }
@@ -5296,7 +5292,7 @@ function renderPickem() {
     + tile(D.miss === null ? '–' : D.miss.toFixed(2), "total's avg miss, goals", `How far DraftKings' total was from the goals scored, on average, over the ${D.missN} final${D.missN === 1 ? '' : 's'} with a total`);
   /* the card: the legend, the chart (or, before any final, that none is graded), every pick of a day */
   $('pkNone').hidden = any; $('pkLegend').hidden = !any; $('pkChart').hidden = !any;
-  $('pkLegend').innerHTML = !any ? '' : PK_MODELS.map(m => `<span data-pk="${m.id}" title="${esc(m.sub)}">${pkLgd(m)}${esc(m.name)} <b>${pkRec(D.rec[m.id])}</b> <span class="muted">${pkSigned(D.vs[m.id].d)} vs DraftKings${m.base ? ' · baseline' : ''}</span></span>`).join('')
+  $('pkLegend').innerHTML = !any ? '' : PK_MODELS.map(m => `<span data-pk="${m.id}" title="${esc(m.sub)}">${pkLgd(m)}${esc(m.name)} <b>${pkRec(D.rec[m.id])}</b> <span class="muted">${pkSigned(D.vs[m.id].d)} vs DraftKings</span></span>`).join('')
     + `<span data-pk="dk" title="${esc(PK_BASE.sub)}">${pkLgd(PK_BASE)}DraftKings <b>${pkRec(dk)}</b></span>`;
   $('pkChart').innerHTML = any ? pkChart(D) : '';
   const cols = PK_MODELS.concat([PK_BASE]);

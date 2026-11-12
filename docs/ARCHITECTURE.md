@@ -194,20 +194,24 @@ filled tag (`tag()`, `.ttag`: `TEAM_COLORS` a palette a club, the text white or 
 at 72%; the smoke works each tag out again and keeps every two clubs outside one brand colour 5 apart in CIEDE2000); and the page
 carries no descriptions (the tagline, the keys, the "how" folds and the intro paragraphs cut; state lines, tooltips and money warnings
 kept). The tabs' insides are still the NBA Hub's components of nhl v12 to v23 on the new tokens until each is rebuilt, no image
-anywhere: the game card the NBA's Tonight card since nhl v23 (badges, the call filled,
-its chance with a confidence pill, High 65%+, Med 60-64, Low 55-59, 50/50, its season's record on its title, the win bar, the NBA's
-chips: Margin, Goals, Moneyline, a Puck line only on a call, Over/under, each call lit with its edge, or unlit and marked far off; tags; who is out cut to
-the goalies on one line and a row for each player worth `OUT_ROW`, 0.13 goals a game, about a point of his club's chance to win; the
-foot Lineups, Player props and Parlay Builder →; no bets board on the card); the game's bets
-in its Player props window, Game bets over the player props (`#ppBets`: the NBA's Game lines rows with each button one line where it
-fits, side, price and the model's chance, a row's two buttons laid out alike, `syncBetRows` reading the browser's wrap, the call a tag
-on its edge with its edge, a side far off the market a "far off" tag and its two numbers under its line, every piece that cannot wrap
-fitting a 320px phone's button); the Lineups drawer, opened from its one toggle in the foot, listing everyone out, the day to day, the
-goalie's how and the injury report, never cut short; a redraw replaces only the cards that changed); every table
+anywhere: the game card the NBA's Tonight card of nhl v23, cut in nhl v27 to one button that opens the game's page (badges, the call
+filled, its chance with a confidence pill, High 65%+, Med 60-64, Low 55-59, 50/50, its season's record on its title, the win bar, two
+chips, Margin and Goals, and the tags; no bet, price, out row, drawer or control of its own; a redraw replaces only the cards that
+changed); THE GAME'S PAGE (nhl v27, `#gameModal`: `openGame`, `renderGame`, `gameHeadCard`, `gameBetsCard`, `rungRow`, `rosterFor`,
+`playerBody`, `gpStatus`, `trialPill`, `legTap`, `ppAdd`), the NFL hub's game page in hockey's numbers, where the Player props window,
+the card's bet chips, who is out and the Lineups drawer were: a window over the page (the whole screen on a phone), its bar (Close,
+the props model's trial as one pill, All skaters), Find a player, Refresh odds with the game's own status line (the score's strip
+once the puck has dropped), the head's six cells, three buttons, Game bets (a row a bet: a box, DraftKings' fair chance as the bar
+and the percentage, its band, the model's chance beside it, the price, Value on the state's call) and each club's players, a row
+each, opened to a block a stat with DraftKings' main line and every milestone as rows with boxes; a tick is the builder's own
+`placeLeg`; nothing of it stored; and its three little windows (`#gsModal`: `gameWindow`, `unitsBody`, `lineupsBody`,
+`teamStatsBody`): Matchup (the player model's attack against the defence and goalie it meets, the clubs, every model's call),
+Lineups (the drawer's lists) and Team Stats (the NFL's bars on what the state carries); the bets board (`betBlock`, `syncBetRows`)
+is Pick your own legs' alone; every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (Team Rankings'
-table fixed on a width a column, laid out by its own words on a phone); the Player props window the NBA's sheet with a head that stays put; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
+table fixed on a width a column, laid out by its own words on a phone); the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
-builder first, then the Top 30 lines a line a row. The smoke's THE LOOK section holds it with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
+builder first, then the Top 30 lines a line a row. The smoke's THE GAME'S PAGE section holds the page and its windows by a model of its own, THE LOOK the rest with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
 and the no-descriptions rule, and TEAM RANKINGS the Team Rankings tab, worked out from the state by rules of its own on the state and
 on made-up copies.
 
@@ -282,21 +286,21 @@ ledger registered (its edge, resamples, seed, percentiles and clip, held to `BAR
 holds the box files' new columns and starter marks, the record's shape, every distribution and projected player, the state's projections against the
 ledger's open calls, and runs `props_check.js` on the ledger against the last commit's.
 
-THE PROPS VIEW (nhl v10, `index.html`, every class `pp-`; CLAUDE.md has the rules and the tests): a Player props button
-on each game card still to come that the props model projects, the job read props for or has a fresh line (and in Pick your own
-legs) opens a window over the page: the game's bets first (Game bets, nhl v23), then six stats, each club apart. Before a press: the model's projections (`state.props`). The Refresh odds press reads ESPN's
-DraftKings propBets for every game still to come today and tomorrow beside the scoreboards (`readPropsGame`, one request
-a game, a second page only where paged); `PROPS_FEED` is `tools/espn.js`'s `propsOf` and `pOver` is `tools/props.js`'s,
-each word for word; `ppTake` keeps each game's answer in `PROPS` (200, none posted yet, or failed, which keeps an earlier
-read), never a game started by the clock or at ESPN. After it each priced player's row is DraftKings' line and prices,
-then "projection · model · DraftKings" (the model's chance of the Over and DraftKings' fair chance, all of the margin on
-the Over), then the milestones at their Yes prices (fair chance est.). The model is labelled on trial with the ledger's
-running numbers and never says "model says" or "edge" on a prop (the Top 30 and the suggested parlays rank player lines on its
-chance, marked props model, since nhl v18); nothing is stored but the legs a visitor adds
-(below), and a reload is the published page with those legs at the prices they were added at. The smoke's PLAYER PROPS section holds all of it on answers it makes from the state's projections.
+THE PROPS VIEW (nhl v10; since nhl v27 on the game's page; CLAUDE.md has the rules and the tests): a game's card opens its page,
+and so does the Player props button of each game in Pick your own legs. On the page a player is a row (the goalie, the forwards and
+the defencemen by expected ice time) and his stats are blocks under it. Before a read: the model's projections (`state.props`). The
+Refresh odds press reads ESPN's DraftKings propBets for every game still to come today and tomorrow beside the scoreboards
+(`readPropsGame`, one request a game, a second page only where paged); `PROPS_FEED` is `tools/espn.js`'s `propsOf` and `pOver` is
+`tools/props.js`'s, each word for word; `ppTake` keeps each game's answer in `PROPS` (200, none posted yet, or failed, which keeps
+an earlier read), never a game started by the clock or at ESPN; the page starts from the job's own read (`ppSeed`). With a read each
+priced stat is DraftKings' main line, Over and Under, then the milestones at their Yes prices, a row each: DraftKings' fair chance
+(all of the margin on the Over; a Yes price's est.), the props model's chance beside it, the price and a box. The model is on trial,
+said in one pill with the ledger's running numbers on its title, and nothing says "model says" or "edge" on a prop (the Top 30 and
+the suggested parlays rank player lines on its chance, marked props model, since nhl v18); nothing is stored but the legs a visitor
+adds (below), and a reload is the published page with those legs at the prices they were added at. The smoke's PLAYER PROPS section holds all of it on answers it makes from the state's projections.
 
 SAME-GAME PARLAYS AND PLAYER LEGS (nhl v11, `index.html`; CLAUDE.md has the rules and the table's numbers): after a
-Refresh odds press each DraftKings price in the props window is a button (`.pp-add`, `ppAdd`) that stores the leg in
+read (the job's, or a Refresh odds press's) each DraftKings price on a game's page is a row with a box (`input[data-pp-add]`, `ppAdd`) that stores the leg in
 `nhl_v1` at DraftKings' price as read with the read's time; `placeLeg` is the builder's same-game rule for every add
 (one side bet a game, one total, one leg a player a stat, each a replacement, said in the builder and on the slip bar; a
 player's points beside his own goals or assists refused; at most `GAME_LEGS_MAX`, 21, legs of one game, tools/sgp.js's
@@ -306,7 +310,7 @@ a reload by the published line's rule (`sgWhyNotPub`, `PUB_LINE`): in its slot, 
 bring the store back to 21, the last stored first, and the same bet stored at a number a read moved is in its slot (`sameBet`);
 one leg a game on another book's game or with no table, and where a read alone puts a game at another book the new leg is
 drawn alone (`SG_ONE`) in place of the one drawn, which stays stored like the rest, every leg held to the published rule). A
-bet button and a props window price are pressed only where `builderLegs` draws the leg, and a tap on one stored and not drawn
+bet button is pressed, and a box on a game's page ticked, only where `builderLegs` draws the leg, and a tap on one stored and not drawn
 puts it in; `takeOut` takes a leg out (a ×, a pressed bet or price) and says which stored leg a game kept to one leg draws in
 its place; a row's × finds its leg by the row's `data-id`, never by its place, since a puck drop between draws takes a row out above it. `slipSay`'s rule lines (placeLeg's refusals and replacements, legs taken out for good, `takeOut`'s leg drawn in
 place) go at the next change to the builder (`slipQuiet`), a read's or the clock's line running its own seconds and dropping

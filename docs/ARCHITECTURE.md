@@ -262,8 +262,8 @@ this page's `pk-`; CLAUDE.md has the rules): the last of a visitor's tabs, every
 game's `models`, the finals before they existed from `models.backtest`, marked bt), Monday-to-Sunday weeks (Eastern). `pkData()`
 makes the sums and `renderPickem()` draws: six tiles (`#pkTiles`: DraftKings' record, the call in each of the Games tab's four
 confidence bands by `bandRecs()`, the total's average miss in goals); the card Wins against DraftKings (`#pkLegend`, the chart
-`pkChart()`, an inline SVG at its box's width (240 to 900) with a week's numbers on a hover or a tap, kept inside the box,
-`pkTip()`; Show every pick, `#pkShow`, `#pkDay`,
+`pkChart()`, an inline SVG at its box's width (240 to 900) with a week's numbers on a mouse's hover or a touch's or pen's tap
+(`pkFinger`), measured from the box's left edge and kept inside the box, `pkTip()`; Show every pick, `#pkShow`, `#pkDay`,
 `#pkPicks`); the card Week by week (`#pkWeeks`, `pkCell()`); and the card Bets record (`#pkBets`, `pkBets()`: the state's
 `record`, the season and each month, what the Record tab showed until nhl v30) with the line on calls made before the injury
 report (`#pkBlind`). Nothing is stored and nothing is fetched: it reads the state alone. The chart's five lines and the grid's two

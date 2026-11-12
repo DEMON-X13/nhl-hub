@@ -1,4 +1,4 @@
-/* The record of the suggested parlays: the Parlay Builder's three levels (Safe, Medium, Aggressive), kept by the job.
+/* The record of the suggested parlays: the Suggested Parlays tab's three levels (Safe, Medium, Aggressive), kept by the job.
    The owner's ask, 25 October 2026: "I also want records of the model for suggested parlays like listed in nfl hub". The NFL
    hub's is props/build/suggest_ledger.js; this is its rule on hockey's unit, the Eastern day:
 
@@ -9,6 +9,13 @@
      and locked by the first run at or after that puck drop: the record is the last run's before it. A day no run reached with a
      fresh line before its first puck drop has no entry; one whose lines all went before its lock is dropped. `taken` is the run
      that took it (its `published`).
+   - The rule (nhl v31, the NFL hub's prices and any-size rule): each level the likeliest parlay by the site's model of 2 to 12 legs,
+     one leg a game, paying its own least price (Safe +110, Medium +300, Aggressive +700), and each level taken from then carries the
+     rule that chose it ({ pick: 'likeliest-any', minDec, chance }). Before it (nhl v15 to v30) Safe was the likeliest pair, Medium and
+     Aggressive the best return of 3 and 4 legs landing 25% and 12% by the model, else the likeliest of that size (TIERS_V30); those
+     days stand as taken, words and all. The first run of the new page rewrites the ledger's header itself (tiers, tiersBefore, how and
+     `changed`, its publish) and never a day; `v` stays 1, since any other is no ledger. The check holds each level to its own rule, no
+     entry mixing the two and no job's entry going back; the summary sums every era and keeps each apart (`eras`).
    - Each leg is graded on its own number, as the page grades a saved leg (`gradeLeg`): the final score, the shootout goal in it.
      A leg settles once and holds: a game postponed, cancelled, moved to another day or gone from the schedule is void.
      A level: any leg lost, lost (pays 0); every leg pushed or void, a push (the stake back); else won, paying the legs won
@@ -30,8 +37,15 @@ const fs = require('fs'), path = require('path');
 const { execFileSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
-const IDS = TIERS.map(t => t[0]);
+/* the levels (nhl v31): [id, label, the least legs, no floor, the least decimal], each the likeliest parlay of 2 to CAP legs paying
+   the least decimal; TIERS_V30 the rule before, [id, label, legs, the floor] */
+const TIERS = [['safe', 'Safe', 2, 0, 2.1], ['med', 'Medium', 2, 0, 4], ['aggr', 'Aggressive', 2, 0, 8]];
+const TIERS_V30 = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
+const IDS = TIERS.map(t => t[0]), PICK = 'likeliest-any', CHANCES = ['model', 'fair'], CAP = 12, TIE = 1e-9;
+/* the rule a level was taken by: its pick, its least decimal and its chance from nhl v31, 'v30' before */
+const ruleKey = t => t.pick ? [t.pick, t.minDec, t.chance].join(' ') : 'v30';
+/* an entry's rule: 'new' where every level carries a pick, 'v30' where none does, 'mixed' else, null with no level */
+function ruleOfEntry(e) { const ts = IDS.map(id => e.tiers && e.tiers[id]).filter(x => x); if (!ts.length) return null; const n = ts.filter(x => x.pick !== undefined).length; return !n ? 'v30' : n === ts.length ? 'new' : 'mixed'; }
 /* a leg's id: a team bet "gid|side|kind", or (nhl v18) a player's line "gid|p|pid|stat|over0.5" and the anytime goal "gid|p|pid|g|k1" */
 const LEG = /^\d{4,12}\|((home|away|over|under)\|(ml|pl|ou)|p\|\d{1,12}\|((pts|g|a|s|bs|sv)\|(over|under)\d+(\.\d+)?|g\|k1))$/;
 const r4 = x => Math.round(x * 1e4) / 1e4;
@@ -74,7 +88,8 @@ function daysOf(state) {
   }
   return first;
 }
-/* a day's set as the page gives it: { games, tiers: { safe: { legs, p, fair, dec, likeliest } | null, ... } } */
+/* a day's set as the page gives it: { games, tiers: { safe: { legs, p, fair, dec, pick, minDec, chance } | null, ... } }; the rule's
+   fields are copied only where the page gives them (every level it takes from nhl v31), and a level with none keeps v30's `likeliest` */
 function setOf(w, date) {
   const r = JSON.parse(w.eval(`JSON.stringify(pbDayLevels(${JSON.stringify(date)}))`));
   const tiers = {};
@@ -82,7 +97,9 @@ function setOf(w, date) {
     const t = r.levels[id];
     tiers[id] = t ? { legs: t.legs.map(L => Object.assign({ id: L.id, game: L.game, kind: L.kind, side: L.side, line: L.num, price: L.price, other: L.other, p: r4(L.p), fair: L.fair === null ? null : r4(L.fair), edge: L.edge === null ? null : r4(L.edge), thin: !!L.thin, mu: L.mu, start: L.start },
       L.kind === 'prop' ? { pid: String(L.pid), name: L.name, team: L.team, grp: L.grp, stat: L.stat, mk: L.mk, k: L.k } : {})),
-      p: r4(t.p), fair: t.fair === null ? null : r4(t.fair), dec: r4(t.dec), likeliest: !!t.likeliest } : null;
+      p: r4(t.p), fair: t.fair === null ? null : r4(t.fair), dec: r4(t.dec) } : null;
+    if (t && t.pick) Object.assign(tiers[id], { pick: t.pick, minDec: t.minDec, chance: t.chance });
+    else if (t) tiers[id].likeliest = !!t.likeliest;
   }
   return { games: r.games, tiers };
 }
@@ -142,25 +159,35 @@ function gradeAll(ledger, state, now) {
 }
 
 /* ---------- the record ---------- */
+/* each level over every rule it has had (the pill's record buries nothing, as the NFL sums its eras), and (nhl v31) each rule's own
+   days apart: eras[ruleKey] = { from, to, graded, won, lost, push, units, exp_model, exp_fair }, from and to the first and last day the
+   level was taken by that rule. `change`: the publish that first took a set by the new rule (the header's `changed`) and the first day
+   taken by it, for the tab's one dated line; null on a ledger that never changed rule */
 function summarize(ledger, season) {
   const tiers = {}; let pending = 0, days = 0, since = null;
-  for (const [id, label] of TIERS) tiers[id] = { label, graded: 0, won: 0, lost: 0, push: 0, pending: 0, none: 0, units: 0, exp_model: 0, exp_fair: 0, fair_n: 0, replay: 0 };
+  for (const [id, label] of TIERS) tiers[id] = { label, graded: 0, won: 0, lost: 0, push: 0, pending: 0, none: 0, units: 0, exp_model: 0, exp_fair: 0, fair_n: 0, replay: 0, eras: {} };
   for (const [date, e] of Object.entries(ledger.days).sort()) {
     if (seasonOf(date) !== season || !e.grade) continue;
     days++; if (!since) since = date;
     for (const id of IDS) {
       const s = tiers[id], t = e.tiers[id], g = e.grade[id];
       if (!t || !g) { s.none++; continue; }
+      const k = ruleKey(t), E = s.eras[k] || (s.eras[k] = { from: date, to: date, graded: 0, won: 0, lost: 0, push: 0, units: 0, exp_model: 0, exp_fair: 0 });
+      E.to = date;
       if (g.result === 'pending') { s.pending++; pending++; continue; }
-      if (g.result === 'push') { s.push++; continue; }
-      s.graded++; if (g.result === 'won') s.won++; else s.lost++;
-      s.units += (g.result === 'won' ? g.payout : 0) - 1;
-      s.exp_model += t.p; if (t.fair !== null) { s.exp_fair += t.fair; s.fair_n++; }
+      if (g.result === 'push') { s.push++; E.push++; continue; }
+      s.graded++; E.graded++; if (g.result === 'won') { s.won++; E.won++; } else { s.lost++; E.lost++; }
+      const u = (g.result === 'won' ? g.payout : 0) - 1; s.units += u; E.units += u;
+      s.exp_model += t.p; E.exp_model += t.p; if (t.fair !== null) { s.exp_fair += t.fair; s.fair_n++; E.exp_fair += t.fair; }
       if (e.src === 'replay') s.replay++;
     }
   }
-  for (const s of Object.values(tiers)) { s.units = r4(s.units); s.exp_model = r4(s.exp_model); s.exp_fair = r4(s.exp_fair); }
-  return { season, since, days, pending, tiers };
+  for (const s of Object.values(tiers)) {
+    s.units = r4(s.units); s.exp_model = r4(s.exp_model); s.exp_fair = r4(s.exp_fair);
+    for (const E of Object.values(s.eras)) { E.units = r4(E.units); E.exp_model = r4(E.exp_model); E.exp_fair = r4(E.exp_fair); }
+  }
+  const first = Object.keys(ledger.days).sort().find(d => ['new', 'mixed'].includes(ruleOfEntry(ledger.days[d]))) || null;
+  return { season, since, days, pending, tiers, change: ledger.changed ? { at: ledger.changed, from: first } : null };
 }
 
 /* the days the Suggested Parlays tab draws from the record (nhl v17): every entry from the day before the run's own (Eastern) on, as
@@ -172,15 +199,34 @@ function current(ledger, nowMs) {
   return out;
 }
 
-const HOW = 'The record of the suggested parlays (the Parlay Builder\'s Safe, Medium and Aggressive), written by tools/suggest.js in update.js\'s second pass, never by hand: each Eastern day\'s set as the page drew it by default at the last run before the day\'s first puck drop, locked then, graded on the final scores; src "replay" for the days before the record began, rebuilt by node tools/suggest.js --replay from the state the site published then.';
+const HOW = 'The record of the suggested parlays (the Suggested Parlays tab\'s Safe, Medium and Aggressive), written by tools/suggest.js in update.js\'s second pass, never by hand: each Eastern day\'s set as the page drew it at the last run before the day\'s first puck drop, locked then, graded on the final scores; src "replay" for the days before the record began, rebuilt by node tools/suggest.js --replay from the state the site published then. tiers: each level the likeliest parlay by the site\'s model of 2 to 12 legs, one leg a game, paying at least its decimal (Safe 2.1, Medium 4, Aggressive 8), every level carrying its rule (pick, minDec, chance); tiersBefore: the rule of the days taken before `changed` (nhl v15 to v30: Safe the likeliest pair, Medium and Aggressive the best return of 3 and 4 legs landing 25% and 12% by the model, else the likeliest of that size), whose levels carry no pick and stand as taken.';
 const blank = () => ({ v: 1, how: HOW, tiers: TIERS, days: {} });
-function readLedger(file) { try { const L = JSON.parse(fs.readFileSync(file, 'utf8')); if (L && L.v === 1 && L.days && typeof L.days === 'object') return L; } catch (e) { /* none yet */ } return blank(); }
-const write = (file, L) => fs.writeFileSync(file, JSON.stringify(L, null, 0).replace(/,"days":\{/, ',\n"days":{\n').replace(/\},"(\d{4}-\d{2}-\d{2})":/g, '},\n"$1":') + '\n');
+/* the ledger on disk: none yet is a blank one; anything else that is not a v1 ledger stops the run (a blank would erase the record) */
+function readLedger(file) {
+  if (!fs.existsSync(file)) return blank();
+  let L; try { L = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { throw new Error(`${file} is not JSON: the suggested parlays' record is left as it is (${e.message})`); }
+  if (!L || L.v !== 1 || !L.days || typeof L.days !== 'object') throw new Error(`${file} is not a v1 ledger (v ${L && L.v}): the suggested parlays' record is left as it is`);
+  return L;
+}
+/* the header first, in its own order, then a day a line */
+const write = (file, L) => {
+  const o = { v: L.v, how: L.how, tiers: L.tiers }; if (L.tiersBefore) o.tiersBefore = L.tiersBefore; if (L.changed) o.changed = L.changed; o.days = L.days;
+  fs.writeFileSync(file, JSON.stringify(o, null, 0).replace(/,"days":\{/, ',\n"days":{\n').replace(/\},"(\d{4}-\d{2}-\d{2})":/g, '},\n"$1":') + '\n');
+};
+/* the change of rule (nhl v31), the job's own write: a header still the v30 rule's becomes the new one, the old kept as tiersBefore
+   and the run's publish as `changed`; no day is touched (a day locked before stands as taken, and one still open is rewritten by the
+   run under the new rule like any open day) */
+function migrate(L, at) {
+  if (JSON.stringify(L.tiers) !== JSON.stringify(TIERS_V30)) return false;
+  Object.assign(L, { how: HOW, tiers: TIERS, tiersBefore: TIERS_V30, changed: at });
+  return true;
+}
 
 /* ---------- the job's step: take, rewrite, lock, grade; returns the state's `suggest` ---------- */
 async function step({ state, data, now, html, log = () => {} }) {
   const file = path.join(data, 'suggest_ledger.json'), L = readLedger(file), before = JSON.stringify(L);
   const nowMs = Date.parse(now), first = daysOf(state);
+  if (migrate(L, now)) log(`suggested parlays' record: the header moved to the rule of nhl v31 (the levels taken before it stand as taken)`);
   /* the days still to lock (their first puck drop to come) with a line read this run, or an entry to take back */
   const pubMin = Math.floor(Date.parse(state.published) / 60000);
   const lined = new Set((state.games || []).filter(g => g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 60000) === pubMin).map(g => g.date));
@@ -219,7 +265,16 @@ async function step({ state, data, now, html, log = () => {} }) {
 function check(L, prev, state, nowMs) {
   const bad = [];
   if (!L || L.v !== 1 || !L.days) return ['the ledger is not a v1 ledger'];
-  if (JSON.stringify(L.tiers) !== JSON.stringify(TIERS)) bad.push(`its levels are not ${TIERS.map(t => t[1]).join(', ')}`);
+  /* the header: the rule of nhl v31 (a ledger begun under it, or one moved to it, the old rule kept as tiersBefore with the publish that
+     moved it), or still the v30 rule's (an older job's, which no level of the new rule can be in); never moved back or re-dated */
+  const isNew = JSON.stringify(L.tiers) === JSON.stringify(TIERS), isOld = JSON.stringify(L.tiers) === JSON.stringify(TIERS_V30), moved = L.tiersBefore !== undefined;
+  if (!isNew && !isOld) bad.push(`its levels are not ${TIERS.map(t => t[1]).join(', ')} by either rule`);
+  if (moved && !(isNew && JSON.stringify(L.tiersBefore) === JSON.stringify(TIERS_V30) && isFinite(Date.parse(L.changed)))) bad.push('its rule before (tiersBefore) is not the v30 table under the new one with the publish that moved it (changed)');
+  if (!moved && L.changed !== undefined) bad.push('a change of rule dated with no rule before');
+  if (prev && JSON.stringify(prev.tiers) === JSON.stringify(TIERS) && !isNew) bad.push('its header went back to the rule before');
+  if (prev && prev.changed !== undefined && prev.changed !== L.changed) bad.push(`its change of rule moved from ${prev.changed} to ${L.changed}`);
+  /* no going back: a job's entry taken after the first job's entry carrying the new rule carries it too */
+  const firstNew = Math.min(...Object.values(L.days).filter(e => e.src === 'job' && ['new', 'mixed'].includes(ruleOfEntry(e))).map(e => Date.parse(e.taken)));
   for (const [d, e] of Object.entries(L.days)) {
     const tag = `${d}`;
     if (e.date !== d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) bad.push(`${tag}: keyed by another date (${e.date})`);
@@ -228,13 +283,32 @@ function check(L, prev, state, nowMs) {
     if (!(Date.parse(takenAt) < Date.parse(e.lock))) bad.push(`${tag}: taken at ${takenAt}, not before its lock ${e.lock}`);
     if (e.src === 'replay' && !(e.from && /^[0-9a-f]{40}$/.test(e.from.commit))) bad.push(`${tag}: a replay with no commit`);
     if (!['job', 'replay'].includes(e.src)) bad.push(`${tag}: src ${e.src}`);
-    for (const [id, , n] of TIERS) {
-      const t = e.tiers && e.tiers[id]; if (t === null) continue;
-      if (!t || !Array.isArray(t.legs) || t.legs.length !== n) { bad.push(`${tag} ${id}: not ${n} legs`); continue; }
+    const rule = ruleOfEntry(e);
+    if (rule === 'mixed') bad.push(`${tag}: an entry mixing the two rules (${IDS.map(id => e.tiers[id] ? `${id} ${ruleKey(e.tiers[id])}` : `${id} none`).join(', ')})`);
+    if (rule === 'v30' && !isOld && !moved) bad.push(`${tag}: a level of the v30 rule in a ledger begun under the new one`);
+    if (rule === 'new' && !isNew) bad.push(`${tag}: a level of the new rule under the v30 header`);
+    if (rule === 'v30' && e.src === 'job' && Date.parse(e.taken) > firstNew) bad.push(`${tag}: a v30 level taken (${e.taken}) after a job's level of the new rule (${new Date(firstNew).toISOString()})`);
+    for (const T of TIERS) {
+      const id = T[0], t = e.tiers && e.tiers[id]; if (t === null) continue;
+      if (!t || !Array.isArray(t.legs)) { bad.push(`${tag} ${id}: no legs`); continue; }
+      /* each level by its own rule: a v30 level its fixed size; one of the new rule its pick, its least price (its id's), its chance and
+         2 to 12 legs, at most one a game of the day, paying that price */
+      const n = t.legs.length;
+      if (t.pick === undefined) { const V = TIERS_V30.find(x => x[0] === id); if (n !== V[2]) { bad.push(`${tag} ${id}: not ${V[2]} legs`); continue; } }
+      else {
+        if (t.pick !== PICK) bad.push(`${tag} ${id}: pick ${t.pick}, not ${PICK}`);
+        if (t.minDec !== T[4]) bad.push(`${tag} ${id}: its least price ${t.minDec}, not ${T[1]}'s ${T[4]}`);
+        if (!CHANCES.includes(t.chance)) bad.push(`${tag} ${id}: ranked by ${t.chance}, not ${CHANCES.join(' or ')}`);
+        const cap = Math.min(CAP, Array.isArray(e.games) ? e.games.length : 0);
+        if (!(n >= 2 && n <= cap)) { bad.push(`${tag} ${id}: ${n} legs, not 2 to ${cap}`); continue; }
+      }
       if (t.legs.some(x => !LEG.test(x.id) || !e.games.includes(x.game))) bad.push(`${tag} ${id}: a leg not on the day's games`);
       if (new Set(t.legs.map(x => x.game)).size !== n) bad.push(`${tag} ${id}: two legs of one game`);
-      const p = t.legs.reduce((a, x) => a * x.p, 1), dec = t.legs.reduce((a, x) => a * decOf(x.price), 1);
+      /* its chance, fair chance and price its legs', the price worked in the legs' order (the record's, the page's leg order) */
+      const p = t.legs.reduce((a, x) => a * x.p, 1), dec = t.legs.reduce((a, x) => a * decOf(x.price), 1), fair = t.legs.reduce((a, x) => a === null || x.fair === null ? null : a * x.fair, 1);
       if (Math.abs(p - t.p) > 2e-4 * n || Math.abs(dec - t.dec) > 1e-3 * dec) bad.push(`${tag} ${id}: its chance or price is not its legs' (${t.p} ${t.dec} against ${r4(p)} ${r4(dec)})`);
+      if (t.pick !== undefined && (fair === null ? t.fair !== null : !(Math.abs(fair - t.fair) <= 2e-4 * n))) bad.push(`${tag} ${id}: its fair chance ${t.fair} is not its legs' (${fair === null ? null : r4(fair)})`);
+      if (t.pick !== undefined && !(dec >= t.minDec * (1 - TIE))) bad.push(`${tag} ${id}: pays ${r4(dec)}, under its least price ${t.minDec}`);
       const g = e.grade && e.grade[id];
       if (Date.parse(e.lock) > nowMs) { if (g) bad.push(`${tag} ${id}: graded before its lock`); continue; }
       if (!g) { if (seasonOf(d) === state.season) bad.push(`${tag} ${id}: locked and not graded`); continue; }
@@ -265,12 +339,13 @@ function check(L, prev, state, nowMs) {
   return bad;
 }
 
-module.exports = { TIERS, step, check, summarize, current, gradeLeg, gradeProp, levelOf, gradeAll, bootPage, setOf, daysOf, readLedger, blank, write, seasonOf };
+module.exports = { TIERS, TIERS_V30, step, check, summarize, current, gradeLeg, gradeProp, levelOf, gradeAll, bootPage, setOf, daysOf, readLedger, blank, write, migrate, ruleKey, ruleOfEntry, seasonOf };
 
 /* ---------- by hand: the replay of the days before the record ---------- */
 async function replay() {
   const file = path.join(process.env.NHL_DATA || path.join(ROOT, 'data'), 'suggest_ledger.json'), L = readLedger(file);
   const cur = JSON.parse(fs.readFileSync(process.env.NHL_STATE || path.join(ROOT, 'state.json'), 'utf8'));
+  migrate(L, cur.published);                                            // today's page takes the days by the new rule
   const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 });
   if (git('rev-parse', '--is-shallow-repository').trim() === 'true') throw new Error('this clone is shallow: git fetch --unshallow origin main first');
   const branch = process.env.SUGGEST_REF || 'origin/main';
@@ -310,7 +385,8 @@ if (require.main === module) {
   else if (a.includes('--check')) {
     const data = process.env.NHL_DATA || path.join(ROOT, 'data'), st = JSON.parse(fs.readFileSync(process.env.NHL_STATE || path.join(ROOT, 'state.json'), 'utf8'));
     let prev = null; try { prev = JSON.parse(execFileSync('git', ['show', 'HEAD:data/suggest_ledger.json'], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })); } catch (e) { /* none committed yet */ }
-    const bad = check(readLedger(path.join(data, 'suggest_ledger.json')), prev, st, Date.parse(st.published));
+    let L; try { L = readLedger(path.join(data, 'suggest_ledger.json')); } catch (e) { L = null; console.log('FAIL ' + e.message); }
+    const bad = L ? check(L, prev, st, Date.parse(st.published)) : ['the ledger could not be read'];
     for (const b of bad) console.log('FAIL ' + b);
     console.log(`suggest check: ${bad.length} failures`); process.exit(bad.length ? 1 : 0);
   } else console.log('node tools/suggest.js --replay | --check (the job runs it from update.js)');

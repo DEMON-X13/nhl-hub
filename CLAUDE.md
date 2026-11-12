@@ -231,7 +231,7 @@ steps stand on:
   (a source warning's bold words, "2 lines far off the market left out.", "Price est.: DraftKings prices same-game parlays its
   own way.", another book's prices, a leg to add by hand, a level with no parlay saying why). A new paragraph of explanation fails
   the smoke.
-- **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("Team Elo", "2026-27 through Nov 11",
+- **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("Elo ratings", "2026-27 through Nov 11",
   "3-leg parlay"): Team rankings and its absences, ELO Ratings' Rankings, the Pick'em's chart, its week grid and its bets
   record, the parlay tabs' panels, X Parlays. A stat strip stands bare over its cards, as the NFL's. The Games tab's
   card grid is not wrapped (its rows come with the next step).
@@ -562,7 +562,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   is pretty much perfect. i think there is a lot of clutter in the nhl one. I want you to match what the NFL hub has, the look, the
   layout and all the betting stuff + have models etc"): the NFL hub's Team Rankings in hockey's terms, one tab where the Standings
   (four division tables of fourteen columns, the cut lines, the wild cards) and Power Ratings (a conference select over one table)
-  were. Two cards and nothing else, no intro, control, key or note. **Team rankings**, with a "Team Elo" pill (the Elo's home ice
+  were. Two cards and nothing else, no intro, control, key or note. **Team rankings**, with an "Elo ratings" pill (nhl v32; "Team Elo" before) (the Elo's home ice
   and its Elo a goal of margin on the pill's title; the champion's pill, `#ratChamp`, beside it once the season has one): one table
   (`table.rt-v` in a `.wrap`) of the 32 clubs in order of the team Elo, eleven columns where the NFL has eight: `#`, Team, Record,
   PTS, Elo, Elo change, Vs average, GF/G, GA/G, Playoff, Cup, what each figure means on its heading's `title`. Record (W-L-OTL),
@@ -767,7 +767,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     legend entry, grid row and picks column) and off the game's Matchup window, where it was listed as a model's call. On the
     season's 291 finals it went 172-119 against DraftKings' 183-108 and the call's 184-107; where it and DraftKings parted, 19-30.
     The ratings themselves stay wherever they are used: the call blends them, Alpha uses them, the playoff odds simulate on them,
-    Team Rankings is them (its "Team Elo" pill names the ratings table), and the Matchup window's The clubs shows each club's, "Elo
+    Team Rankings is them (its pill, "Elo ratings" since nhl v32, names the ratings table, and its Elo column's title says "The Elo rating, and its tier"), and the Matchup window's The clubs shows each club's, "Elo
     rating". The state still carries `elo` beside a player-model call (a call field; no job change). History: from nhl v24 (11
     November 2026, the owner asking whether the "ELO model" at -7 should be improved or scrapped; it was this line, the ELO Model
     being at -2) it was drawn as a dashed baseline (`--m-base` ice, "· baseline" after its legend entry); a review that day found it
@@ -778,7 +778,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   record, its By confidence (other bands: 70+, 60-70, 50-60) gave way to the four band tiles, its line on the injury report is
   under the Bets record, and the Games tab's Season pill carries the straight-up record. `#record` and a stored `record` tab open
   the Pick'em Record. `fitRecord` and the two-column `.two` went with it.
-- **Headings** carry a small `.pill` for the two or three words that help ("Team Elo", "2026-27 through Nov 11", kept whole); the sentences
+- **Headings** carry a small `.pill` for the two or three words that help ("Elo ratings", "2026-27 through Nov 11", kept whole); the sentences
   beside a heading went in nhl v25.
 
 Since nhl v23 a card is the NBA's height: on 8 November 2026's published state at 390px, the day's cards to come 349 to

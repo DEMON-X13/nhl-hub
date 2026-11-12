@@ -11,8 +11,9 @@ Served by GitHub Pages from the repo root: https://demon-x13.github.io/nhl-hub/
 - **The page** is `index.html`, one hand-written file. It fetches `state.json` on every load, and
   DraftKings' latest lines from ESPN's scoreboard and DraftKings' player props from ESPN's propBets
   feed only when Refresh odds is pressed (in memory: a reload is the published state again). Each
-  game still to come has a Player props window: the props model's projections, and after a press
-  DraftKings' lines with the model's chance and DraftKings' fair chance beside each.
+  game opens a page of its own (the NFL hub's game page): the game's bets, each club's players with
+  the props model's projections, and DraftKings' player lines with DraftKings' fair chance and the
+  model's chance beside each; a box ticked puts the bet in the parlay.
 - **The data** comes from ESPN's public feeds (scoreboards with DraftKings' lines, box scores,
   the injury report) and DailyFaceoff's announced starting goalies. All free: no key, no credits.
 - **The job**, `.github/workflows/update.yml`, runs five times a day (queued at 06:17, 12:17, 15:17,

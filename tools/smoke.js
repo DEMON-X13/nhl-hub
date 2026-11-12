@@ -39,13 +39,18 @@
        (NHL_PREV_LEDGER, else git's HEAD:data/props_ledger.json), and the state's projections: games still to
        come only, every distribution whole, every player in his club's lineup and not out, each game the
        ledger's open call
-     - the look (THE LOOK, nhl v12, the card and the colours nhl v13, the NBA's Tonight card nhl v23): no image anywhere, every club's
-       colour at its contrast bar (3:1 for a badge, 4.5:1 for a pill), in a hue of its own and clear of every club outside its own colour,
-       every game card of every day on the strip worked out from the state, part by part (the confidence pill and key, the chips, no bet
-       on a card; each game's Game bets in its Player props window, each bet button its one line, its call's tag and edge, a side far off
-       the market said on its own button with both numbers, every piece that cannot wrap within the narrowest button's room, a row's two
-       buttons laid out alike; who is out cut to the goalies and the players worth OUT_ROW goals, the bar worked out again from the
-       model, every out player's row on the card or his status and figure in its Lineups, the day to day and the injury report there), and
+     - the game's page (THE GAME'S PAGE, nhl v27): the page every game's card opens and its three windows, by a model of this file's
+       own on any state the job can publish: the bar, the status line or the score's strip, the head, Game bets row by row (a box where
+       a fresh line of a game to come prices the side, DraftKings' fair chance, its band, the model's chance, the price, Value on the
+       state's picks, the grades once the puck has dropped), each club's outs and every player's row and lines, the keyboard and the
+       ways out, the layout's rules, and planted states (another book, a stale line, no line, the read's states, the trial's verdicts,
+       the puck dropping, a score and a final read here, a moved start, a final with and without its box score, no props model)
+     - the look (THE LOOK, nhl v12, the card and the colours nhl v13, the NBA's Tonight card nhl v23, cut to a button nhl v27): no image
+       anywhere, every club's tag by its own contrast sums, in a hue of its own and clear of every club outside its own colour,
+       every game card of every day on the strip worked out from the state, part by part (the confidence pill, its two chips, no bet,
+       price, out row, drawer or control on a card); the bets board of Pick your own legs, each bet button its one line, its call's tag
+       and edge, a side far off the market said on its own button with both numbers, every piece that cannot wrap within the narrowest
+       button's room, a row's two buttons laid out alike; a made-up game that takes every branch on its card, its page and its windows; and
        every table keeping every column at every width, scrolling sideways in its wrapper with its hidden names held
        inside it (Team Rankings' table fixed on its eleven columns' widths, laid out by its words on a phone); the figures' formats, no
        Playoff tab (nhl v14) and no Standings tab (nhl v26), and the Record's figures fitted to their tiles (jsdom lays nothing out: the
@@ -54,7 +59,8 @@
        from the state by rules of this file's own (the order, the shared ranks, each row word for word, the tier of the Elo shown by its
        own nine numbers, the Elo change and the rank moves over seven days from the game rows' rh and ra), the absences card, nothing
        stored or fetched, the old addresses, on the state and on made-up copies
-   NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page. */
+   NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page; NHL_SMOKE_ALL=1 lists every
+   failure; NHL_SMOKE_ONLY=page,look,... runs the named sections alone, a development aid that always ends as a failure. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const { execFileSync } = require('child_process');
@@ -77,26 +83,43 @@ const chk = (ok, msg) => { checks++; if (!ok) fails.push(msg); };
 process.on('unhandledRejection', e => { checks++; fails.push(`an unhandled rejection in the page: ${e && e.stack ? String(e.stack).split('\n').slice(0, 2).join(' ') : e}`); });
 const txt = el => el ? el.textContent.replace(/\s+/g, ' ').trim() : '';
 const wait = ms => new Promise(r => setTimeout(r, ms));
-/* nhl v23: a game's bets are in its Player props window (Game bets, #ppBets), as the NBA's, never on its card. The window opened on the
-   game from its card (the Games tab and the game's day shown first; the window shut first where it is open on another game), and the
-   bet button for a leg ("gid|side|kind") in it; null where the card offers no window or the window no such bet. The window is left
+/* nhl v27: a game's card opens the game's page (#gameModal): its bets are the page's Game bets (.gbets), a box a bet; a player's lines
+   are under his row there, one player open at a time. These find them: the day shown (openDay), a game's card (cardOf), the page opened
+   on a game from its card (betsOn: the Games tab and the game's day shown first, another game's page shut first; null where the game has
+   no card), the box of a leg "gid|side|kind" (betIn: null where the page offers no such bet), a player's box by its key (propBox: his
+   row opened first, All skaters ticked where the cut leaves him out), and whether a box or a button is on (isOn). The page is left
    open on the game: closeBets shuts it */
 const gameDoc = d => d.defaultView;
+const openDay = (d, date) => { const b = d.querySelector(`#days .day[data-day="${date}"]`); if (b && !b.classList.contains('on')) b.click(); return !!b; };
+const dayList = d => [...d.querySelectorAll('#days .day')].map(b => b.dataset.day);
+const cardOf = (d, gid) => d.querySelector(`#games .game[data-game="${gid}"]`);
+const pageOn = (d, gid) => { const m = d.getElementById('gameModal'), c = d.querySelector('#gameView .gbets'); return !!m && !m.hidden && !!c && (gid === undefined || c.dataset.game === gid); };
+const closeBets = d => { const m = d.getElementById('gameModal'); if (m && !m.hidden) d.getElementById('backBtn').click(); };
 function betsOn(d, g) {
-  const gid = typeof g === 'string' ? g : g.id, win = d.getElementById('ppWin'), pb = d.getElementById('ppBets');
-  if (!win.hidden && pb && !pb.hidden && pb.dataset.game === gid) return pb;
-  if (!win.hidden) d.getElementById('ppClose').click();
+  const gid = typeof g === 'string' ? g : g.id;
+  if (pageOn(d, gid)) return d.querySelector('#gameView .gbets');
+  closeBets(d);
   const tab = d.querySelector('#tabs button[data-tab="games"]'); if (tab && !tab.classList.contains('on')) tab.click();
   const date = typeof g === 'string' ? (gameDoc(d).eval(`(gameById()[${JSON.stringify(gid)}] || {}).date`) || null) : g.date;
-  const db = date && d.querySelector(`#days .day[data-day="${date}"]`); if (db && !db.classList.contains('on')) db.click();
-  const ob = d.querySelector(`#games .game[data-id="${gid}"] button[data-pp]`); if (!ob) return null;
+  if (date) openDay(d, date);
+  const ob = cardOf(d, gid); if (!ob) return null;
   ob.click();
-  return !win.hidden && pb && !pb.hidden && pb.dataset.game === gid ? pb : null;
+  return pageOn(d, gid) ? d.querySelector('#gameView .gbets') : null;
 }
-const betIn = (d, g, leg) => { const pb = betsOn(d, g); return pb ? pb.querySelector(`button[data-leg="${leg}"]`) : null; };
-const closeBets = d => { if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click(); };
-/* a bet tapped in its game's window, the window shut after and the tab open before it opened again; false where there is no such bet */
+const betIn = (d, g, leg) => { const pb = betsOn(d, g); return pb ? pb.querySelector(`input[data-leg="${leg}"]`) : null; };
+const isOn = el => !!el && (el.tagName === 'INPUT' ? el.checked : el.getAttribute('aria-pressed') === 'true');
+function propBox(d, key) {
+  if (!pageOn(d)) return null;
+  const pid = String(key).split('|')[0], row = () => [...d.querySelectorAll('#gameView .plrbtn[data-open]')].find(r => r.dataset.open === pid);
+  if (!row()) { const all = d.getElementById('allCb'); if (all && !all.checked) all.click(); }
+  if (!row()) return null;
+  if (row().getAttribute('aria-expanded') !== 'true') row().click();
+  return [...d.querySelectorAll('#gameView input[data-pp-add]')].find(x => x.dataset.ppAdd === key) || null;
+}
+/* a bet tapped on its game's page, the page shut after and the tab open before it opened again; false where there is no such bet */
 const tapBet = (d, g, leg) => { const t0 = d.querySelector('#tabs button.on'), b = betIn(d, g, leg); if (b) b.click(); closeBets(d); if (t0 && !t0.classList.contains('on')) t0.click(); return !!b; };
+/* the legs the builder draws now, by id (the page's own list: what a box should show as ticked) */
+const drawnIds = w => new Set(JSON.parse(w.eval('JSON.stringify(builderLegs(false).map(L => L.id))')));
 const PUB = Date.parse(S.published);
 const etDate = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
 const dayBefore = d => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10); };
@@ -1123,28 +1146,19 @@ async function parlayBuilder() {
       d.querySelector('#tabs button[data-tab="parlays"]').click();
     }
   } else console.log('  no suggested level open on this state (the tab says why): Add to builder, Finish and the builder from a level are held on the made-up slates below');
-  /* the bet block in each game's Player props window (Game bets, nhl v23): a button a priced side on every fresh game to come, its price
-     and chance, the call tagged, far off flagged; none on the card itself */
+  /* each fresh game's bets are on its page (nhl v27): a box a priced side, by the leg's own id, at the state's price; none on the card
+     itself (the page's every row is held in THE GAME'S PAGE) */
   d.querySelector('#tabs button[data-tab="games"]').click();
   for (const day of [...new Set(S.games.filter(g => !sStarted(g, AT) && sFresh(g)).map(g => g.date))].slice(0, 2)) {
-    const b = d.querySelector(`#days .day[data-day="${day}"]`); if (b) b.click();
+    openDay(d, day);
     for (const g of S.games.filter(x => x.date === day && !sStarted(x, AT) && sFresh(x))) {
-      const c = d.querySelector(`#games .game[data-id="${g.id}"]`); if (!c) { chk(false, `no card for ${g.id}`); continue; }
-      chk(!c.querySelector('button[data-leg]'), `${g.id}: no bet on the card itself, its bets are in its Player props window`);
-      const pb = betsOn(d, g); chk(!!pb, `${g.id}: its card's Player props opens the window on its Game bets`); if (!pb) continue;
-      const rowsH = [...pb.querySelectorAll('.pb-bets .pb-bk')].map(txt), L0 = g.line;
-      const rowsW = [['ml', 'Moneyline'], ['pl', 'Puck line'], ['ou', `Total ${L0.total}`]].filter(([k]) => (k !== 'ou' || (L0.total !== null && L0.total !== undefined)) && PBS.SIDES[k].some(sd => sLeg(g, sd, k))).map(x => x[1]);
-      chk(eqA(rowsH, rowsW) && txt(pb.querySelector('h3')) === 'Game bets' && !pb.querySelector('.pb-key') && pb.querySelector('h3').nextElementSibling === pb.querySelector('.pb-bets'),
-        `${g.id}: its Game bets, no key over them (nhl v25), and the board's rows ${JSON.stringify(rowsW)} (${JSON.stringify(rowsH)})`);
+      const c = cardOf(d, g.id); if (!c) { chk(false, `no card for ${g.id}`); continue; }
+      chk(!c.querySelector('[data-leg]'), `${g.id}: no bet on the card itself, its bets are on its page`);
+      const pb = betsOn(d, g); chk(!!pb, `${g.id}: its card opens the game's page on its Game bets`); if (!pb) continue;
       for (const k of PBS.KINDS) for (const s of PBS.SIDES[k]) {
-        const L = sLeg(g, s, k), btn = pb.querySelector(`button[data-leg="${g.id}|${s}|${k}"]`);
-        chk(!!L === !!btn, `${g.id} ${s} ${k}: a button exactly where DraftKings prices it`);
-        if (!L || !btn) continue;
-        const t = txt(btn), bw = betHave(btn), bad1 = betWrong(btn, L, s);
-        chk(bw.price === PBS.odds(L.price) && bw.chance === `· ${PBS.pctW(L.p)}`, `${g.id} ${s} ${k}: the button shows the state's price and model chance (${t})`);
-        chk(/^call · /.test(bw.tag || '') === (L.pick === s), `${g.id} ${s} ${k}: the call's side is tagged (${t})`);
-        chk(/far off/.test(bw.tag || '') === (L.fair !== null && L.p - L.fair >= 0.15), `${g.id} ${s} ${k}: flagged far off exactly at 15 points over the fair chance (${t})`);
-        chk(!bad1, `${g.id} ${s} ${k}: every part of the button exactly (${bad1})`);
+        const L = sLeg(g, s, k), box = pb.querySelector(`input[data-leg="${g.id}|${s}|${k}"]`);
+        chk(!!L === !!box, `${g.id} ${s} ${k}: a box exactly where DraftKings prices it`);
+        if (L && box) chk(txt(box.closest('tr').querySelector('.book')) === PBS.odds(L.price) && txt(box.closest('tr').querySelector('.est')) === `model ${PBS.pctW(L.p)}` && !!box.closest('tr').querySelector('.pb-valmark') === (L.pick === s), `${g.id} ${s} ${k}: its row shows the state's price and the model's chance, Value on the call's side alone (${txt(box.closest('tr'))})`);
       }
     }
   }
@@ -1467,18 +1481,13 @@ async function parlayEdges() {
         }
       }
       d.querySelector('#tabs button[data-tab="games"]').click();
-      const db = d.querySelector(`#days .day[data-day="${st.date}"]`); if (db) db.click();
-      const c = d.querySelector(`#games .game[data-id="${st.id}"]`);
-      chk(c && !c.querySelector('button[data-leg]') && txt(c.querySelector('.pb-stale')) === `line from ${clockOf(Date.parse(st.line.at))}: not on DraftKings at the last run`, `a stale line's card offers no bet and says why: ${c && txt(c.querySelector('.pb-stale'))}`);
-      /* and shows the market's lines as chips (nhl v23: the moneyline's side, a puck line only on a call, the total), every number the line's */
-      const mkW = chipsWantS(st, PUB + 60000).filter(x => ['ml', 'pl', 'ou'].includes(x[0])).map(x => x[1]);
-      const mkH = c ? [...c.querySelectorAll('.chip[data-ck="ml"], .chip[data-ck="pl"], .chip[data-ck="ou"]')].map(txt) : [];
-      chk(eqA(mkH, mkW), `the stale card's market chips are the line's numbers ${JSON.stringify(mkW)} (${JSON.stringify(mkH)})`);
+      openDay(d, st.date);
+      const c = cardOf(d, st.id);
       if (c) { const bad = cardWrongs(w, c, st, PUB + 60000, pageMap(w)); chk(!bad.length, `the stale card is the state's (${bad.slice(0, 3).join(' | ')})`); }
-      /* its window, where its card has one (the props model projects it), offers no game bet and says why */
-      const ppS = c && c.querySelector('button[data-pp]');
-      if (ppS) { ppS.click(); const gbS = d.getElementById('ppBets');
-        chk(!gbS.hidden && !gbS.querySelector('button[data-leg]') && txt(gbS.querySelector('h3')) === 'Game bets' && txt(gbS.querySelector('.pp-none')) === `No game bets: the line from ${clockOf(Date.parse(st.line.at))} was not on DraftKings at the last run.`, `a stale line's window offers no game bet and says why (${txt(gbS)})`); closeBets(d); }
+      /* its page draws the line's prices with no box, and says why under the bets and in its status line */
+      const badS = c ? gpWrongs(w, st, PUB + 60000, null, { noPlayers: true }) : ['no card'], vS = d.getElementById('gameView');
+      chk(!badS.length && !vS.querySelector('input[data-leg]') && vS.querySelectorAll('.gbets .book').length > 0 && txt(vS.querySelector('.gbets .gp-why')) === `Line from ${clockOf(Date.parse(st.line.at))}: not on DraftKings at the last run.`, `a stale line's page offers no bet and says why (${badS.slice(0, 2).join(' | ')}; ${txt(vS.querySelector('.gbets .gp-why'))})`);
+      closeBets(d);
       chk(!errs.length, 'no runtime error on a stale line: ' + errs.join(' | '));
     } finally { S = real; }
   }
@@ -1537,7 +1546,7 @@ async function parlayEdges() {
     chk(d.querySelector('#games').firstElementChild === first, 'the watch does not redraw the Games tab for legs already gone');
     if (mv) {
       const b = betIn(d, mv, `${mv.id}|under|ou`);
-      chk(!!b && !b.classList.contains('on') && b.getAttribute('aria-pressed') === 'false', `a leg stored at a total DraftKings has moved since is not shown as in the parlay (${b && txt(b)})`);
+      chk(!!b && !b.checked && !b.closest('tr').classList.contains('on'), `a leg stored at a total DraftKings has moved since is not shown as in the parlay (${b && txt(b.closest('tr'))})`);
       closeBets(d);
       d.querySelector('#tabs button[data-tab="parlays"]').click();
       chk(/left the builder: DraftKings' total is now /.test(txt(d.getElementById('bMsg'))), `and the builder says why (${txt(d.getElementById('bMsg'))})`);
@@ -2024,24 +2033,21 @@ async function refreshOddsChecks() {
       chk(txt(d.getElementById('pcNote')).startsWith(`DraftKings' lines as read ${PBS.etRead(oldest)}:`), `the card's note is dated by the oldest read among its legs (${txt(d.getElementById('pcNote')).slice(0, 80)})`);
       d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     }
-    /* each game's Game bets (its Player props window, nhl v23): every bet at its new price and chance, the call tagged on the new edges;
-       its card's chips on the new line */
+    /* each game's page after the press (nhl v27): its Game bets on the new line row by row (the new prices, fair chances and calls, a box
+       ticked exactly where the builder draws the leg), the lines' source saying Refresh odds read them, the status line this game's own,
+       at the clock the page is on since the read (T2: its player lines' words turn on the page's own day) */
     d.querySelector('#tabs button[data-tab="games"]').click();
     for (const g of [gA, gB, gC, gK, gN].filter(Boolean)) {
-      const pb = betsOn(d, g), eg = EXP.games.find(x => x.id === g.id), c = d.querySelector(`#games .game[data-id="${g.id}"]`);
-      if (!pb || !c) { chk(false, `no card or Game bets for ${g.id} after the press`); continue; }
-      for (const k of PBS.KINDS) for (const s of PBS.SIDES[k]) {
-        const L = sLeg(eg, s, k), btn = pb.querySelector(`button[data-leg="${g.id}|${s}|${k}"]`);
-        chk(!!L === !!btn, `${g.id} ${s} ${k}: after the press a button exactly where the new line prices it`);
-        if (L && btn) { const bad1 = betWrong(btn, L, s); chk(!bad1, `${g.id} ${s} ${k}: the new price, chance and call (${bad1})`); }
-      }
-      chk(txt(pb).includes(`as read from ESPN at ${clockOf(atMs)}`), `${g.id}: its Game bets say the prices were read from ESPN (${txt(pb.querySelector('.pb-rd'))})`);
-      const real2 = S; S = Object.assign({}, real2, { games: real2.games.map(x => x.id === g.id ? eg : x) });
-      try { const want = chipsWantS(eg, AT).filter(x => ['ml', 'pl', 'ou'].includes(x[0])).map(x => x[1]), have = [...c.querySelectorAll('.chips .chip[data-ck="ml"], .chips .chip[data-ck="pl"], .chips .chip[data-ck="ou"]')].map(txt);
-        chk(eqA(have, want), `${g.id}: its card's market chips on the new line ${JSON.stringify(want)} (${JSON.stringify(have)})`); } finally { S = real2; }
+      const eg = EXP.games.find(x => x.id === g.id), real2 = S; S = Object.assign({}, real2, { games: real2.games.map(x => x.id === g.id ? eg : x) });
+      try {
+        const badG = gpWrongs(w, eg, T2, sReads(w)[g.id] || null, { noPlayers: true, inB: drawnIds(w) }), pb = d.querySelector('#gameView .gbets');
+        chk(!badG.length, `${g.id}: after the press its page is on the new line, row by row (${badG.slice(0, 3).join(' | ')})`);
+        if (eg.line && eg.line.refreshed) chk(!!pb && txt(pb.querySelector('.gp-src')).includes(`read from ESPN by Refresh odds ${clockOf(atMs)}`), `${g.id}: its Game bets say the prices were read from ESPN by the press (${pb && txt(pb.querySelector('.gp-src'))})`);
+        const c = cardOf(d, g.id); if (c) { const bc = cardWrongs(w, c, eg, AT, pageMap(w)); chk(!bc.length, `${g.id}: its card after the press (${bc.slice(0, 2).join(' | ')})`); }
+      } finally { S = real2; }
     }
     closeBets(d);
-    for (const g of early.slice(0, 3)) { const db = d.querySelector(`#days .day[data-day="${g.date}"]`); if (db) db.click(); const c = d.querySelector(`#games .game[data-id="${g.id}"]`); chk(!!c && !c.querySelector('button[data-leg]') && !c.querySelector('button[data-pp]'), `${g.id}, started during the read, offers no bet and no window`); }
+    for (const g of early.slice(0, 3)) { const pb = betsOn(d, g); chk(!!pb && !d.querySelector('#gameView input[data-leg], #gameView input[data-pp-add]'), `${g.id}, started during the read, offers no bet`); closeBets(d); }
   } finally { S = real; }
   /* the store after the press: tabs visited (each a save) keep the builder's legs as they were before it, the moved price and
      the moved puck line included; a reload on that store is the builder on the published lines, with nothing said changed */
@@ -2192,78 +2198,15 @@ function propsAnswer(g) {
   const fw = pr.awayP.skaters.find(p => p.pos !== 'D'); if (fw) items.push(pIt('Total Blocked Shots', fw.id, 140, 0.5, 0.5));
   return { items, left, back: back && back.id };
 }
-/* the props window's numbers for one stat, by this smoke's own rules: the rows DraftKings prices (the job's parse), each player's
-   club, name, line, the projection, the model's chance and DraftKings' fair chance, and the Yes ladder without the main line's Over */
-function ppExpect(g, parsed, k) {
-  const pr = S.props && S.props.games[g.id], PL = (S.players && S.players.players) || {}, who = new Map();
-  if (pr) for (const side of ['away', 'home']) { const Q = pr[side + 'P']; for (const p of Q.skaters) who.set(p.id, { name: p.name, team: g[side], D: k === 'sv' ? null : p[k], mine: true }); if (Q.goalie) who.set(Q.goalie.id, { name: Q.goalie.name, team: g[side], D: k === 'sv' ? Q.goalie.sv : null, mine: true }); }
-  const info = id => who.get(id) || { name: PL[id] ? PL[id].name : null, team: PL[id] ? PL[id].team : null, D: null, mine: false };
-  const out = new Map();
-  for (const [a, st, L, po, pu] of (parsed ? parsed.main : [])) if (st === k) out.set(a, Object.assign({ id: a, M: { L, po, pu }, Y: [] }, info(a)));
-  for (const [a, st, n, price] of (parsed ? parsed.yes : [])) if (st === k) { if (!out.has(a)) out.set(a, Object.assign({ id: a, M: null, Y: [] }, info(a))); out.get(a).Y.push({ k: n, price }); }
-  for (const x of out.values()) {
-    x.club = [g.home, g.away].includes(x.team) ? x.team : '';
-    x.name = x.name || `ESPN athlete ${x.id}`;
-    const proj = x.D ? `projection ${ppMuS(k, x.D.mu)}` : `no projection (${!pr ? 'the props model has not projected this game' : k === 'sv' ? 'not the goalie the model expects' : x.mine ? 'no number for this stat' : "not in the model's expected lineup"})`;
-    x.cmp = x.M ? [proj, x.D ? `model ${ppPctS(atLeastS(x.D, Math.floor(x.M.L) + 1))}` : '', `DraftKings ${ppPctS(1 - PBS.imp(x.M.pu))}`].filter(Boolean).join(' · ') : proj;
-    x.chips = x.Y.filter(y => !x.M || y.k !== Math.floor(x.M.L) + 1).sort((a, b) => a.k - b.k).map(y => { const f = fairYesS(k, y.k, y.price); return `${k === 'g' && y.k === 1 ? 'Anytime goal' : y.k + '+'} ${PBS.odds(y.price)}${x.D ? ` · model ${ppPctS(atLeastS(x.D, y.k))}` : ''} · DraftKings ${f === null ? '—' : ppPctS(f) + ' est.'}`; });
-  }
-  const unpriced = [];
-  for (const [id, x] of who) if (!out.has(id) && x.D) unpriced.push({ id, club: x.team, cmp: `projection ${ppMuS(k, x.D.mu)}` });
-  return { priced: out, unpriced };
-}
-/* the window, stat by stat, against ppExpect: every row and every number */
-function ppHold(w, g, parsed, tag) {
-  const d = w.document, bad = [];
-  let rows = 0, alone = 0;
-  for (const k of PP_STATS_S) {
-    const tb = d.querySelector(`#ppStats button[data-pp-tab="${k}"]`); if (!tb) { bad.push(`no ${k} tab`); continue; }
-    tb.click();
-    const E2 = ppExpect(g, parsed, k), on = d.querySelector(`#ppStats button[data-pp-tab="${k}"]`);
-    if (!on || on.getAttribute('aria-pressed') !== 'true') bad.push(`${k}: its tab not pressed`);
-    if (parsed && txt(on.querySelector('small')) !== String(E2.priced.size)) bad.push(`${k}: the tab counts ${txt(on.querySelector('small'))}, DraftKings prices ${E2.priced.size}`);
-    const all = [...d.querySelectorAll(`#ppBody .pp-row[data-pp-stat="${k}"]`)], top = all.filter(r => !r.closest('details.pp-more')), more = all.filter(r => r.closest('details.pp-more'));
-    const shown = parsed ? top : [];
-    if (parsed && canon(top.map(r => r.dataset.ppRow).sort()) !== canon([...E2.priced.keys()].sort())) bad.push(`${k}: rows ${top.map(r => r.dataset.ppRow).sort().join(',').slice(0, 120)} where DraftKings prices ${[...E2.priced.keys()].sort().join(',').slice(0, 120)}`);
-    for (const r of shown) {
-      const x = E2.priced.get(r.dataset.ppRow); if (!x) continue; rows++;
-      const sec = r.closest('section.pp-team');
-      if (!sec || sec.dataset.ppTeam !== x.club) bad.push(`${k} ${x.name}: under ${sec && sec.dataset.ppTeam} not ${x.club || 'the unmatched'}`);
-      if (txt(r.querySelector('.pp-who b')) !== x.name) bad.push(`${k} ${x.id}: named ${txt(r.querySelector('.pp-who b'))}, not ${x.name}`);
-      if (txt(r.querySelector('.pp-cmp')) !== x.cmp) bad.push(`${k} ${x.name}: "${txt(r.querySelector('.pp-cmp'))}" where "${x.cmp}"`);
-      const mt = txt(r.querySelector('.pp-main'));
-      if (x.M ? !(mt.includes(`Over ${x.M.L} ${PBS.odds(x.M.po)}`) && mt.includes(`Under ${x.M.L} ${PBS.odds(x.M.pu)}`)) : !!r.querySelector('.pp-main')) bad.push(`${k} ${x.name}: the line "${mt}"`);
-      const chips = [...r.querySelectorAll('.pp-k')].map(txt);
-      if (canon(chips) !== canon(x.chips)) bad.push(`${k} ${x.name}: milestones ${chips.join(' | ')} where ${x.chips.join(' | ')}`);
-    }
-    /* the expected players with no DraftKings line: their projection alone (folded under their club once DraftKings has props) */
-    const rest = parsed ? more : top; alone += rest.length;
-    if (canon(rest.map(r => r.dataset.ppRow).sort()) !== canon(E2.unpriced.map(u => u.id).sort())) bad.push(`${k}: ${rest.length} rows with a projection alone where ${E2.unpriced.length} expected players have no DraftKings line`);
-    for (const u of E2.unpriced) { const r = rest.find(x => x.dataset.ppRow === u.id); if (r && (txt(r.querySelector('.pp-cmp')) !== u.cmp || r.querySelector('.pp-main, .pp-k') || r.closest('section.pp-team').dataset.ppTeam !== u.club)) bad.push(`${k} ${u.id}: "${txt(r.querySelector('.pp-cmp'))}" where "${u.cmp}" under ${u.club}`); }
-  }
-  d.querySelector('#ppStats button[data-pp-tab="pts"]').click();
-  console.log(`  ${tag}: ${rows} rows DraftKings prices and ${alone} with the projection alone, over six stats, held number for number`);
-  chk(!bad.length, `${tag}: every row of the props window is DraftKings' line, the projection, the model's chance and DraftKings' fair chance worked out here (${rows} priced rows over six stats; ${bad.length} wrong: ${bad.slice(0, 3).join(' | ')})`);
-}
-/* the trial note and the ledger's running numbers, by this smoke's own wording; never "model says", "edge" or a verdict before the bar */
-function ppTrialChecks(w, tag) {
-  /* nhl v25: the trial is one tag in the window's head (a model on trial against the book is a money warning, so the tag stays), the
-     ledger's running numbers on its title; the fold of sentences that said it went */
-  const d = w.document, win = txt(d.getElementById('ppWin')), tg = d.querySelector('#ppGame #ppTrial'), tr = tg ? tg.getAttribute('title') || '' : '';
-  chk(!!tg && txt(tg) === 'props model on trial' && tg.classList.contains('pill') && tg.classList.contains('bad') && tr.startsWith("Not yet shown to beat DraftKings' own prices.") && !d.querySelector('#ppWin details.pp-trial, #ppWin details.pp-how'), `${tag}: the window's head says the props model is on trial, in a tag, its title that it has not been shown to beat DraftKings; no fold of sentences says it (${tg ? txt(tg) : 'no tag'}: ${tr.slice(0, 80)})`);
-  const Lg = S.props.ledger, of = (+Lg.of || 0).toLocaleString('en-US'), f4 = v => (+v).toFixed(4);
-  const nums = Lg.model && Lg.market ? ` Log loss: model ${f4(Lg.model.logloss)}, DraftKings ${f4(Lg.market.logloss)}; Brier: model ${f4(Lg.model.brier)}, DraftKings ${f4(Lg.market.brier)} (lower is better).` : '';
-  const want = Lg.decision === 'PASS' || Lg.decision === 'FAIL' ? `Its shadow ledger was decided at ${of} graded lines: ${Lg.decision}.${nums}`
-    : `Its shadow ledger: ${(+Lg.compared || 0).toLocaleString('en-US')} of ${of} DraftKings main lines graded${+Lg.graded_games ? `, in ${Lg.graded_games} game${+Lg.graded_games === 1 ? '' : 's'}` : ''}.${nums} The verdict comes at ${of}, not before.`;
-  chk(tr.endsWith(want), `${tag}: the ledger's running numbers, quietly, on the tag's title ("${want}": ${tr.slice(-160)})`);
-  chk(Lg.decision || !/\bpass/i.test(tr), `${tag}: no word of passing before the bar is decided`);
-  /* the props part of the window (all of it but Game bets, whose bets are the game's own calls with their edges) and every button's
-     words on the props */
-  const ppBtns = [...d.querySelectorAll('button[data-pp]')], gb = d.getElementById('ppBets'), winP = win.replace(txt(gb), '');
-  chk(ppBtns.length > 0 && !/model says|\bedge/i.test(winP) && !ppBtns.some(b => /model says|\bedge/i.test(txt(b) + ' ' + b.title.replace(GB_TITLE, ''))), `${tag}: neither the window's props nor a Player props button says "model says" or "edge" on a prop (${ppBtns.length} buttons)`);
-  chk(!d.querySelector('#ppWin [data-sp-add], #ppWin [data-pc-finish]') && [...d.querySelectorAll('#ppWin button[data-leg]')].every(b => !!b.closest('#ppBets')), `${tag}: nothing in the window puts a level in a parlay, and a game's bet only from its Game bets`);
-  const rd = w.eval('PP && PROPS.games[PP.gid] ? PROPS.games[PP.gid].status : null');
-  if (rd !== 200) chk(!d.querySelector('#ppWin [data-pp-add]'), `${tag}: with no DraftKings price read, no price in the window can be added (${d.querySelectorAll('#ppWin [data-pp-add]').length})`);
+/* a Player props button of Pick your own legs (the one place the button is left: a game's card is the way in on the Games tab), by the
+   read it stands on: its word alone, the read on its title, lit where DraftKings priced the game; nothing on it says "model says" or "edge" */
+function plBtnsBad(d, of, AT) {
+  const tab0 = d.querySelector('#tabs button.on'), pt = d.querySelector('#tabs button[data-tab="parlays"]'); closeBets(d); pt.click();
+  const btns = [...d.querySelectorAll('#plLines button[data-pp]')], bad = [];
+  for (const b of btns) { const id = b.dataset.pp, gx = S.games.find(y => y.id === id), [word, title, has] = ppBtnWant(of(id), !!(S.props && S.props.games && S.props.games[id]), !!gx && sPropsAsk(AT).some(y => y.id === id));
+    if (txt(b) !== word || !ppTitleIs(b, title, undefined) || b.classList.contains('has') !== has || b.getAttribute('aria-haspopup') !== 'dialog' || /model says|\bedge/i.test(txt(b) + ' ' + b.title.replace(GB_TITLE, ''))) bad.push(`${id}: "${txt(b)}" | ${b.title}`); }
+  if (tab0 && tab0 !== pt) tab0.click();
+  return { n: btns.length, bad };
 }
 async function playerPropsChecks() {
   console.log('PLAYER PROPS');
@@ -2298,55 +2241,35 @@ async function playerPropsChecks() {
   const AT = PUB + 60000, ask = sPropsAsk(AT), projected = ask.filter(g => S.props && S.props.games && S.props.games[g.id]);
   {
     const errs = [], w = await boot(AT, errs, { hash: 'games' }), d = w.document, writes0 = w.__writes.length, st0 = w.localStorage.getItem('nhl_v1');
-    const allBtn = () => [...d.querySelectorAll('button[data-pp]')];
-    const days = [...d.querySelectorAll('#days .day')].map(b => b.dataset.day), seen = new Map();
-    const seenOk = new Map();
-    for (const dd of days) { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); for (const x of allBtn()) { seen.set(x.dataset.pp, txt(x) + ' | ' + x.title); const gx = S.games.find(y => y.id === x.dataset.pp), proj = !!(S.props && S.props.games && S.props.games[x.dataset.pp]); seenOk.set(x.dataset.pp, !!gx && txt(x) === 'Player props' && ppTitleIs(x, ppBtnWant(null, proj, sPropsAsk(AT).some(y => y.id === gx.id))[1], sFresh(gx))); } }
-    /* nhl v23: the window holds the game's bets too, so a game with a fresh line has the button though the props model does not project it */
-    const want = S.games.filter(g => days.includes(g.date) && !sStarted(g, AT) && ((S.props && S.props.games && S.props.games[g.id]) || sFresh(g))).map(g => g.id).sort();
-    chk(canon([...seen.keys()].sort()) === canon(want), `before a press a Player props button on every game still to come on the strip's days that the props model projects or that has a fresh line, and on no other (${seen.size} buttons, ${want.length} wanted: ${want.filter(id => !seen.has(id)).concat([...seen.keys()].filter(id => !want.includes(id))).join(', ')})`);
-    chk(seen.size > 0 === want.length > 0 && [...seenOk.values()].every(Boolean), `and each says Player props, on its title that it shows the model's projections, on trial, until Refresh odds (${[...seen.values()][0]})`);
-    for (const b of allBtn().slice(0, 1)) chk(w.getComputedStyle(b).minHeight === '44px' && b.getAttribute('aria-haspopup') === 'dialog', 'a Player props button is 44px tall and says it opens a window');
+    /* nhl v27: a game's card is the way in; the Player props button is left in Pick your own legs alone */
+    chk(!d.querySelector('#games button[data-pp]') && !d.querySelector('#gameModal button[data-pp]'), 'no Player props button on a game card: the card opens the game\'s page');
+    { const PB = plBtnsBad(d, () => null, AT); chk(!PB.bad.length, `before a press each Player props button of Pick your own legs says, on its title, that it shows the model's projections (on trial) until Refresh odds (${PB.n} buttons; ${PB.bad.slice(0, 2).join(' || ')})`); }
     let g0 = null;
     if (projected.length) {
       g0 = projected[0];
-      const db = d.querySelector(`#days .day[data-day="${g0.date}"]`); if (db) db.click();
-      const opener = d.querySelector(`#games .game[data-id="${g0.id}"] button[data-pp]`);
-      opener.click();
-      chk(!d.getElementById('ppWin').hidden && d.activeElement === d.getElementById('ppPanel'), `a Player props button opens the window on its game, the focus in it (${g0.away} @ ${g0.home})`);
-      chk(txt(d.getElementById('ppRead')) === 'Not read: try Refresh odds.', `before a press the window says DraftKings' props are not read, and to try Refresh odds (${txt(d.getElementById('ppRead'))})`);
-      ppHold(w, g0, null, 'before a press');
-      ppTrialChecks(w, 'before a press');
-      for (const el of [d.getElementById('ppClose'), d.getElementById('ppRefreshOdds'), ...d.querySelectorAll('#ppStats button')]) chk(!!el && w.getComputedStyle(el).minHeight === '44px', `the window's ${el ? (el.id || txt(el).slice(0, 20)) : 'control'} is 44px tall`);
-      /* Tab stays inside the window; Escape closes it and the focus goes back to the button */
-      d.getElementById('ppClose').focus();
-      d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
-      chk(d.getElementById('ppPanel').contains(d.activeElement) && d.activeElement !== d.getElementById('ppClose'), `Shift+Tab from the first control stays in the window (${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
-      d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
-      chk(d.activeElement === d.getElementById('ppClose'), 'and Tab from the last comes back to the first');
-      d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-      chk(d.getElementById('ppWin').hidden && d.activeElement === opener, 'Escape closes the window and the focus goes back to its button');
-      opener.click(); d.getElementById('ppWin').click();
-      chk(d.getElementById('ppWin').hidden, 'a click outside closes it');
-      opener.click(); d.getElementById('ppClose').click();
-      chk(d.getElementById('ppWin').hidden, 'and Close closes it');
-      /* Pick your own legs carries the button too, on a game with a fresh line the model projects */
+      /* the page before a press: every expected player's projection, no line, no box, the status line saying the player lines are not read */
+      const b0 = gpWrongs(w, g0, AT, null, {});
+      chk(!b0.length, `before a press the game's page shows the props model's projection for every expected player in every stat, no DraftKings line and no box, and says the player lines are not read yet (${g0.away} @ ${g0.home}: ${b0.opened} players opened; ${b0.length} wrong: ${b0.slice(0, 3).join(' | ')})`);
+      chk(pageOn(d, g0.id) && !d.querySelector('#gameView input[data-pp-add]') && /player lines not read yet\.$/.test(txt(d.getElementById('ppOddsNote'))), `with no DraftKings price read, no price on the page can be added (${txt(d.getElementById('ppOddsNote'))})`);
+      closeBets(d);
+      /* Pick your own legs carries the button, which opens the game's page; closed, the focus is back on the button */
       d.querySelector('#tabs button[data-tab="parlays"]').click();
       const pick = d.querySelector('#plLines .pb-pg button[data-pp]');
       if (pick) {
-        const pg = S.games.find(g => g.id === pick.dataset.pp); pick.click();
-        /* the window's head names the game by its clubs' pills, "PIT @ COL", as the NBA's sheet does */
-        chk(!d.getElementById('ppWin').hidden && txt(d.querySelector('#ppGame .mu')) === `${S.teams[pg.away].abbr} @ ${S.teams[pg.home].abbr}`, `Pick your own legs carries the Player props button, which opens its game (${txt(d.querySelector('#ppGame .mu'))})`);
-        d.getElementById('ppClose').click();
+        const pg = S.games.find(g => g.id === pick.dataset.pp); pick.focus(); pick.click();
+        chk(pageOn(d, pg.id) && d.activeElement === d.querySelector('#gameModal .modal-panel') && !d.getElementById('tab-parlays').hidden, `a Player props button of Pick your own legs opens its game's page over the tab, the focus in it (${pg.away} @ ${pg.home})`);
+        d.getElementById('backBtn').click();
+        chk(d.getElementById('gameModal').hidden && d.activeElement === d.querySelector(`#plLines button[data-pp="${pg.id}"]`), 'closed, the focus goes back to the button');
       }
       d.dispatchEvent(new w.Event('visibilitychange'));
       for (const t of ['ratings', 'games', 'players', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
-    } else console.log('  no game still to come today or tomorrow that the props model projects: the window before a press is not opened');
-    chk(!propReqs(w).length, `nothing asks ESPN for props without a press: load, the window, its stats, the watch and the tabs (${propReqs(w).length} asked)`);
+    } else console.log('  no game still to come today or tomorrow that the props model projects: the page before a press is not opened');
+    chk(!propReqs(w).length, `nothing asks ESPN for props without a press: load, a game's page and its players, the watch and the tabs (${propReqs(w).length} asked)`);
     const st1 = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}');
-    chk(!/pp|prop/i.test(JSON.stringify(Object.keys(st1).concat(Object.keys(st1.ui || {})))), `the window stores nothing: nhl_v1 holds no props key (${Object.keys(st1).join(', ')}; ui ${Object.keys(st1.ui || {}).join(', ')})`);
+    chk(!/pp|prop/i.test(JSON.stringify(Object.keys(st1).concat(Object.keys(st1.ui || {})))), `the page stores nothing of the props: nhl_v1 holds no props key (${Object.keys(st1).join(', ')}; ui ${Object.keys(st1.ui || {}).join(', ')})`);
     chk(!errs.length, 'no runtime error before a press: ' + errs.join(' | '));
     void st0; void writes0;
+    w.close();
   }
   if (!projected.length) { console.log('  no projected game to come today or tomorrow: the press with props is skipped'); return; }
   /* the press. Roles among the games it reads props for: one whose puck drops during the read (the clock passes the first puck drop
@@ -2422,40 +2345,30 @@ async function playerPropsChecks() {
   const panelT = ['builder', 'slip', 'plLines'].map(id => { const el = d.getElementById(id); if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('button[data-pp]').forEach(x => x.remove()); return txt(c); }).join(' ');
   chk(!names.some(n => panelT.includes(n)) && [...d.querySelectorAll('#legs .leg')].every(x => /^\d+\|(home|away|over|under)\|(ml|pl|ou)$/.test(x.dataset.id)), 'no player is put in the builder or Pick your own legs by a press: every leg there is a game\'s');
   chk(w.__writes.length === writes0 && w.localStorage.getItem('nhl_v1') === store0, `the press writes nothing to storage (${w.__writes.length - writes0} writes)`);
-  /* the window on the game read in two pages: every number worked out here */
+  /* the page of the game read in two pages: every row and every number worked out here (THE GAME'S PAGE's own model, on the job's parse
+     of the made-up answer), All skaters ticked so the player the model leaves out and the athlete nobody rates are listed */
   d.querySelector('#tabs button[data-tab="games"]').click();
-  const writesA = w.__writes.length;                       // the tab's own save; from here on nothing is written
-  const dayOn = dd => { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); };     // the strip is drawn again on each click
-  dayOn(G.date);
-  const opener = d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`);
-  const nG = parsedG.main.length, yG = parsedG.yes.length, wordG = nG ? `${nG} line${nG === 1 ? '' : 's'}` : `${yG} price${yG === 1 ? '' : 's'}`;
-  chk(!!opener && txt(opener) === 'Player props' && ppTitleIs(opener, `Player props: DraftKings: ${nG} main line${nG === 1 ? '' : 's'} and ${yG} milestone price${yG === 1 ? '' : 's'}, read ${clockOf(at)}`) && opener.classList.contains('has') && !!wordG, `after the press the game's button, its word alone, says on its title what DraftKings has, and when, lit (${opener && txt(opener) + ' | ' + opener.title})`);
-  for (const [g, word, title] of [[H, 'Player props', "Player props: DraftKings' props could not be read"]].concat(live.filter(g => !taken.has(g.id) && S.props.games[g.id]).slice(0, 1).map(g => [g, 'Player props', `Player props: DraftKings: none posted yet (read ${clockOf(at)})`]))) {
-    if (!g || !S.props.games[g.id]) continue;
-    const db = d.querySelector(`#days .day[data-day="${g.date}"]`); if (db) db.click();
-    const b = d.querySelector(`#games .game[data-id="${g.id}"] button[data-pp]`);
-    chk(!!b && txt(b) === word && ppTitleIs(b, title) && !b.classList.contains('has'), `${g.id}: its button says "${word}" ("${title}" on its title) (${b && txt(b) + ' | ' + b.title})`);
-  }
-  dayOn(G.date);
-  d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
-  chk(txt(d.getElementById('ppRead')) === `DraftKings, read ${clockOf(at)}.`, `the window says when DraftKings' props were read (${txt(d.getElementById('ppRead'))})`);
-  ppHold(w, G, parsedG, `${G.away} @ ${G.home} after the press`);
-  ppTrialChecks(w, 'after the press');
-  if (A.left) { d.querySelector('#ppStats button[data-pp-tab="s"]').click(); const r = d.querySelector(`#ppBody .pp-row[data-pp-row="${A.left}"]`); chk(!!r && /not in the model's expected lineup/.test(txt(r)), `a player DraftKings prices whom the model leaves out is matched by his ESPN id to his club, with no projection (${r && txt(r).slice(0, 100)})`); }
-  { d.querySelector('#ppStats button[data-pp-tab="pts"]').click(); const r = d.querySelector('#ppBody section.pp-team[data-pp-team=""] .pp-row[data-pp-row="990000001"]'); chk(!!r && txt(r.querySelector('.pp-who b')) === 'ESPN athlete 990000001', 'an athlete nobody rates is shown apart, by his ESPN id'); }
-  chk(w.__writes.length === writesA, `opening the window and its stats writes nothing (${w.__writes.length - writesA} writes)`);
-  /* the windows on a failed read and on none posted yet */
-  const winOn = g => { d.getElementById('ppClose').click(); const db = d.querySelector(`#days .day[data-day="${g.date}"]`); if (db) db.click(); const b = d.querySelector(`#games .game[data-id="${g.id}"] button[data-pp]`); if (b) b.click(); return !!b; };
-  if (H && S.props.games[H.id] && winOn(H)) chk(txt(d.getElementById('ppRead')) === `Not read at ${clockOf(at)} (HTTP 503): try Refresh odds.`, `a failed read says so, the projections shown (${txt(d.getElementById('ppRead'))})`);
+  const dayOn = dd => openDay(d, dd), iso = ms => new Date(ms).toISOString(), view = d.getElementById('gameView');
+  const rdG = { status: 200, at: iso(at), main: parsedG.main, yes: parsedG.yes };
+  { const PB = plBtnsBad(d, id => PR[id] || null, T2); chk(!PB.bad.length, `after the press each Player props button of Pick your own legs says what DraftKings has and when, lit where it priced the game (${PB.n} buttons; ${PB.bad.slice(0, 2).join(' || ')})`); }
+  const writesA = w.__writes.length;                       // the tabs' own saves; from here on nothing is written
+  const bG = gpWrongs(w, G, T2, rdG, { all: true });
+  chk(!bG.length, `${G.away} @ ${G.home} after the press: every row of its page is DraftKings' line, the projection, the props model's chance and DraftKings' fair chance worked out here (${bG.rows} rows, ${bG.opened} players opened; ${bG.length} wrong: ${bG.slice(0, 3).join(' | ')})`);
+  chk(bG.opened > 20 && view.querySelectorAll('.plrbtn').length > 30, `the made-up answer fills the page: ${bG.opened} players opened`);
+  if (A.left) { const r = view.querySelector(`.plrbtn[data-open="${A.left}"]`); chk(!!r && r.closest('#gameView') && !/projected|min\b/.test(txt(r)), `a player DraftKings prices whom the model leaves out is matched by his ESPN id to his club, listed last with All skaters, with no projection (${r && txt(r).slice(0, 100)})`); }
+  { const r = view.querySelector('.plrbtn[data-nohist="990000001"]'); chk(!!r && /^ESPN athlete 990000001/.test(txt(r)) && /not matched to either club/.test(txt(r)) && !r.querySelector('input'), 'an athlete nobody rates is shown apart, by his ESPN id, and not offered'); }
+  chk(w.__writes.length === writesA, `opening the page and its players writes nothing (${w.__writes.length - writesA} writes)`);
+  /* the pages on a failed read, on none posted yet, and on the games ESPN called off (their props not kept) */
+  const holdG = (g, rd, tag) => { const b = gpWrongs(w, g, T2, rd, { noPlayers: true }); chk(!b.length, `${tag} (${b.slice(0, 3).join(' | ')})`); return b; };
+  if (H && S.props.games[H.id]) { holdG(H, PR[H.id], 'a failed read says so in the status line, the projections shown'); chk(/couldn't read player lines\.$/.test(txt(d.getElementById('ppOddsNote'))) && PR[H.id].why === 'HTTP 503', `the failed read's status line (${txt(d.getElementById('ppOddsNote'))})`); }
   const g404 = live.find(g => !taken.has(g.id) && S.props.games[g.id]);
-  if (g404 && winOn(g404)) { chk(txt(d.getElementById('ppRead')) === `None posted yet: read ${clockOf(at)}.`, `a 404 says none posted yet (${txt(d.getElementById('ppRead'))})`); ppHold(w, g404, null, 'a game with none posted'); }
-  for (const g of [PO, CA].filter(Boolean)) if (winOn(g)) {
-    chk(!w.eval(`PROPS.games[${JSON.stringify(g.id)}]`) && txt(d.getElementById('ppRead')) === 'Not read: try Refresh odds.' && !d.querySelector('#ppBody .pp-main, #ppBody .pp-k'),
-      `${g.id}, ${g === PO ? 'postponed' : 'cancelled'} at ESPN: no DraftKings row in its window, though ESPN answered its props (${txt(d.getElementById('ppRead')).slice(0, 80)})`);
-    ppHold(w, g, null, `a game ${g === PO ? 'postponed' : 'cancelled'} at ESPN`);
+  if (g404) { holdG(g404, PR[g404.id], 'a 404 says no player lines yet'); chk(/no player lines yet\.$/.test(txt(d.getElementById('ppOddsNote'))), `none posted yet, said (${txt(d.getElementById('ppOddsNote'))})`); }
+  for (const g of [PO, CA].filter(Boolean)) {
+    holdG(g, null, `${g.id}, ${g === PO ? 'postponed' : 'cancelled'} at ESPN: no DraftKings row on its page, though ESPN answered its props`);
+    chk(!w.eval(`PROPS.games[${JSON.stringify(g.id)}]`) && !view.querySelector('input[data-pp-add]') && !view.querySelector('.plrbody'), `${g.id}: its props are not kept`);
   }
-  winOn(G);
-  /* a second press, the game read before failing now: its earlier read stands, said */
+  closeBets(d); betsOn(d, G);
+  /* a second press, from the page's own Refresh odds, the game read before failing now: its earlier read stands, said */
   const n1 = propReqs(w).length, T3 = T2 + 120000;
   if (!sStarted(G, T3)) {
     w.__setClock(T3);
@@ -2463,24 +2376,31 @@ async function playerPropsChecks() {
     const before2 = JSON.stringify(JSON.parse(w.eval('JSON.stringify(PROPS.games)'))[G.id]);
     const p2had = P2 ? w.eval(`PROPS.games[${JSON.stringify(P2.id)}] && PROPS.games[${JSON.stringify(P2.id)}].status`) : null;
     if (P2) offNow.set(P2.id, OFF);                                                          // ESPN now has the game read in its first page postponed
-    d.getElementById('ppRefreshOdds').click(); await oddsDone(w); await wait(20);           // the window's own Refresh odds: the same press
+    const rb = d.getElementById('ppRefreshOdds'); rb.focus(); rb.click();
+    chk(d.getElementById('ppRefreshOdds').getAttribute('aria-busy') === 'true' && txt(d.getElementById('ppOddsNote')) === 'reading…', `while the read runs the page's Refresh odds is busy and its status line says reading (${txt(d.getElementById('ppOddsNote'))})`);
+    await oddsDone(w); await wait(20);           // the page's own Refresh odds: the same press
     const ask3 = sPropsAsk(T3), after2 = JSON.stringify(JSON.parse(w.eval('JSON.stringify(PROPS.games)'))[G.id]);
     const off3 = ask3.filter(g => offNow.has(g.id) && g !== I);
     const q3 = { asked: ask3.length, none: ask3.filter(g => g !== G && g !== I && !offNow.has(g.id)).length, failed: 1, kept: 1, started: ask3.includes(I) ? 1 : 0, off: off3.length };
     if (P2 && ask3.includes(P2)) chk(p2had === 200 && !w.eval(`PROPS.games[${JSON.stringify(P2.id)}]`), `a game ESPN postpones after a read loses that earlier read: its props are no longer shown (${p2had} before, ${w.eval(`JSON.stringify(PROPS.games[${JSON.stringify(P2.id)}] || null)`)} after)`);
     chk(propReqs(w).length - n1 === ask3.length && after2 === before2, `a second press reads again, and a game whose read fails keeps this page's earlier read (${propReqs(w).length - n1} asked of ${ask3.length}; ${after2 === before2 ? 'kept' : 'changed'})`);
-    chk(txt(d.getElementById('ppOddsNote')).endsWith(sPropsText(q3)), `and the status line, beside the window's own Refresh odds, says so ("${sPropsText(q3).trim()}": ${txt(d.getElementById('ppOddsNote')).slice(-160)})`);
-    chk(!d.getElementById('ppWin').hidden && d.querySelectorAll('#ppBody .pp-row .pp-main').length > 0 && txt(d.getElementById('ppRead')) === `DraftKings, read ${clockOf(at)}.`, 'the window stays open through the press, on the read it keeps');
+    chk(txt(d.getElementById('oddsNote')).endsWith(sPropsText(q3)), `and the tabs' status line says so ("${sPropsText(q3).trim()}": ${txt(d.getElementById('oddsNote')).slice(-160)})`);
+    chk(pageOn(d, G.id) && d.activeElement === d.getElementById('ppRefreshOdds') && d.getElementById('ppRefreshOdds').getAttribute('aria-busy') === 'false', 'the page stays open through the press, the keyboard back on its Refresh odds, no longer busy');
+    const b3 = gpWrongs(w, G, T3, rdG, { noPlayers: true });
+    chk(!b3.length, `after the press the page is on the read it keeps, its status line this game's own (${txt(d.getElementById('ppOddsNote'))}; ${b3.slice(0, 2).join(' | ')})`);
   } else console.log('  the game read in two pages starts within two minutes: the second press is skipped');
-  /* the watch: the game's puck drops with the window open */
-  w.__setClock(Date.parse(G.start) + 60000);
+  /* the watch: the game's puck drops with the page open */
+  betsOn(d, G);
+  const tD = Date.parse(G.start) + 60000;
+  w.__setClock(tD);
   d.dispatchEvent(new w.Event('visibilitychange'));
-  chk(txt(d.getElementById('ppRead')) === 'The puck has dropped on this game.' && !d.querySelector('#ppBody .pp-row') && !d.querySelector('#ppStats button') && d.getElementById('ppBets').hidden && !d.querySelector('#ppWin button[data-leg]'), `the window on a game whose puck drops says so and shows nothing more (${txt(d.getElementById('ppRead'))})`);
-  d.getElementById('ppClose').click();
-  chk(!d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`), 'and its card no longer offers the props');
+  chk(pageOn(d, G.id) && !view.querySelector('input[data-leg], input[data-pp-add], #ppRefreshOdds') && !!view.querySelector('.gp-live'), `the page on a game whose puck drops is drawn again by the watch: no box left, the strip in (${txt(view.querySelector('.gp-live'))})`);
+  { const bD = gpWrongs(w, G, tD, rdG, { noPlayers: true }); chk(!bD.length, `and it is the page of a game under way (${bD.slice(0, 3).join(' | ')})`); }
+  closeBets(d);
   chk(w.__writes.length === writesA, `nothing in all of it is stored (${w.__writes.length - writesA} writes)`);
   holdRequests(w, 'the props press');
   chk(!errs.length, 'no runtime error through the props press: ' + errs.join(' | '));
+  const storeP = w.localStorage.getItem('nhl_v1'); w.close();
   /* a press whose props answer prices a projected game in full and whose scoreboard moves no line: no line moves, and the Top 30 and
      the suggested levels are worked again with that game's player lines (nhl v18), each by this smoke's own sums on the read */
   {
@@ -2496,15 +2416,15 @@ async function playerPropsChecks() {
     chk(canon(pool.filter(id => id.includes('|p|')).sort()) === canon(mine) && pool.filter(id => id.includes('|p|')).every(id => id.startsWith(G.id + '|p|')), `the pool holds exactly the read game's qualifying player lines, by this smoke's own sums (${mine.length}; the page ${pool.filter(id => id.includes('|p|')).length})`);
     void l0;
     chk(!errsS.length, 'no runtime error on the nothing-suggested press: ' + errsS.join(' | '));
+    wS.close();
   }
   /* a reload: the published page again, the projections alone */
   {
-    const errsR = [], wR = await boot(T2, errsR, { hash: 'games', store: w.localStorage.getItem('nhl_v1') }), dR = wR.document;
-    const db = dR.querySelector(`#days .day[data-day="${G.date}"]`); if (db) db.click();
-    const b = dR.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`);
-    chk(!!b && txt(b) === 'Player props' && ppTitleIs(b, "Player props: the model's projections (on trial) · press Refresh odds for DraftKings' props") && wR.eval('Object.keys(PROPS.games).length') === 0, `a reload is the published page: no DraftKings props, the button back to the projections (${b && txt(b)})`);
-    if (b) { b.click(); chk(txt(dR.getElementById('ppRead')) === 'Not read: try Refresh odds.' && !dR.querySelector('#ppBody .pp-main, #ppBody .pp-k'), 'and its window shows the projections alone until a press'); }
+    const errsR = [], wR = await boot(T2, errsR, { hash: 'games', store: storeP }), dR = wR.document;
+    const bR = gpWrongs(wR, G, T2, null, { noPlayers: true });
+    chk(wR.eval('Object.keys(PROPS.games).length') === 0 && !bR.length && !dR.querySelector('#gameView input[data-pp-add]'), `a reload is the published page: no DraftKings props, the game's page back to the projections alone (${bR.slice(0, 2).join(' | ')})`);
     chk(!propReqs(wR).length && !errsR.length, `and asks ESPN for no props (${propReqs(wR).length}; ${errsR.join(' | ')})`);
+    wR.close();
   }
   console.log(`  the press read props for ${ask.length} games (${ask.map(g => g.id).join(', ')}): ${G.id} in two pages (${parsedG.main.length} main lines, ${parsedG.yes.length} milestones), ${H ? H.id : 'none'} failed, ${N ? N.id : 'none'} a junk body, ${K ? K.id : 'none'} the wrong shape, ${P2 ? P2.id : 'none'} a page two 404, ${I ? I.id : 'none'} under way at ESPN, ${ask.filter(g => sStarted(g, T2)).length} dropping the puck during the read`);
 }
@@ -2693,18 +2613,9 @@ function ppBtnWant(rd, proj = true, askable = true) {
 const GB_TITLE = "Game bets: DraftKings' moneyline, puck line and total, tap one to add it to your parlay. ";
 /* gl: whether this smoke knows the game's line is fresh (true, false), or undefined where a press may have made it so */
 const ppTitleIs = (b, want, gl) => !!b && (gl === true ? b.title === GB_TITLE + want : gl === false ? b.title === want : (b.title === want || b.title === GB_TITLE + want)) && (b.title.startsWith(GB_TITLE) ? b.getAttribute('aria-label') === 'Player props and game bets' : !b.hasAttribute('aria-label'));
-/* the window's read line: the job's read said as the job's, a press's said as gone with a reload (the job's read back where the
-   state carries one) */
-function ppReadWant(rd) {      // the read's state in a line (nhl v25): whose read it is, when, and what it gave
-  const T = clockOf(Date.parse(rd.at)), job = rd.src === 'job';
-  if (rd.status === 200) return `DraftKings, read ${T}${job ? " at the job's last run" : ''}.`;
-  if (rd.status === 404) return `None posted yet: read ${T}${job ? " at the job's last run" : ''}.`;
-  return `Not read ${job ? `at the job's last run (${T}, ${rd.why})` : `at ${T} (${rd.why})`}: try Refresh odds.`;
-}
 async function holdJobRead(body, tag) {
   const J = JSON.parse(body), pg = (J.props && J.props.games) || {}, AT = PUB + 60000;
   const want = {}; for (const id of Object.keys(pg)) { const s = dkSeed(pg[id].dk); if (s) want[id] = s; }
-  const hasJob = id => !!(pg[id] && pg[id].dk);
   const sbFn = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; };
   let propsNow = url => ({ ok: false, status: 503, json: async () => ({}) });
   const errs = [], w = await boot(AT, errs, { hash: 'games', keepDk: true, state: body, espn: sbFn, props: url => propsNow(url) }), d = w.document;
@@ -2712,51 +2623,38 @@ async function holdJobRead(body, tag) {
   const PR0 = JSON.parse(w.eval('JSON.stringify(PROPS.games)'));
   chk(canon(PR0) === canon(want), `${tag}: the page starts from the job's read, every game as the state carries it (${Object.keys(want).length} games; the page holds ${Object.keys(PR0).length})`);
   chk(!propReqs(w).length, `${tag}: and asks ESPN for no props on load (${propReqs(w).length} asked)`);
-  /* every Player props button on the strip, by the read it stands on */
-  const buttons = () => { const seen = new Map(); for (const b0 of [...d.querySelectorAll('#days .day')]) { const dd = b0.dataset.day, b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); for (const x of d.querySelectorAll('#games button[data-pp]')) seen.set(x.dataset.pp, x); } return seen; };
-  const btnBad = (seen, of, pressed) => [...seen].filter(([id, b]) => { const gx = S.games.find(y => y.id === id), [word, title, has] = ppBtnWant(of(id), !!pg[id], !!gx && sPropsAsk(AT).some(y => y.id === id)); return txt(b) !== word || !ppTitleIs(b, title, pressed || !gx ? undefined : sFresh(gx)) || b.classList.contains('has') !== has; }).map(([id, b]) => `${id}: "${txt(b)}" | ${b.title}`);
-  {
-    /* nhl v23: a game with a fresh line has the button too (its window holds the game's bets), on the strip's days */
-    const strip = [...d.querySelectorAll('#days .day')].map(b => b.dataset.day);
-    const seen = buttons(), toCome = S.games.filter(g => strip.includes(g.date) && !sStarted(g, AT) && (pg[g.id] || want[g.id] || sFresh(g))).map(g => g.id).sort();
-    chk(canon([...seen.keys()].sort()) === canon(toCome), `${tag}: a Player props button on every game still to come on the strip that the props model projects, the job read or has a fresh line, and no other (${seen.size} buttons, ${toCome.length} games)`);
-    const bad = btnBad(seen, id => want[id] || null);
-    chk(!bad.length, `${tag}: each button says what the job's read has and when, lit where DraftKings priced the game (${seen.size} buttons; ${bad.length} wrong: ${bad.slice(0, 2).join(' || ')})`);
-  }
-  /* every window on a game still to come with a read, row for row */
-  const winOn = g => { if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click(); const db = d.querySelector(`#days .day[data-day="${g.date}"]`); if (db) db.click(); const b = d.querySelector(`#games .game[data-id="${g.id}"] button[data-pp]`); if (b) b.click(); return !!b && !d.getElementById('ppWin').hidden; };
+  /* each Player props button of Pick your own legs, by the read it stands on */
+  { const PB = plBtnsBad(d, id => want[id] || null, AT); chk(!PB.bad.length, `${tag}: each Player props button says what the job's read has and when, lit where DraftKings priced the game (${PB.n} buttons; ${PB.bad.length} wrong: ${PB.bad.slice(0, 2).join(' || ')})`); }
+  /* every page of a game still to come with a read, row for row */
   const read = S.games.filter(g => want[g.id] && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start) || (a.id < b.id ? -1 : 1));
   for (const g of read) {
-    if (!winOn(g)) { chk(false, `${tag}: ${g.id}'s window opens`); continue; }
-    const rd = want[g.id];
-    chk(txt(d.getElementById('ppRead')) === ppReadWant(rd, true), `${tag}, ${g.away} @ ${g.home}: the window says it shows the job's read and when ("${txt(d.getElementById('ppRead'))}")`);
-    ppHold(w, g, rd.status === 200 ? { main: rd.main, yes: rd.yes } : null, `${tag}, ${g.away} @ ${g.home} (the job's read, ${rd.status})`);
+    const rd = want[g.id], b = gpWrongs(w, g, AT, rd, {});
+    chk(!b.length, `${tag}, ${g.away} @ ${g.home} (the job's read, ${rd.status}): its page is the read's every line, the projection, the props model's chance and DraftKings' fair chance, its status line the read's state (${b.rows} rows, ${b.opened} opened; ${b.length} wrong: ${b.slice(0, 3).join(' | ')})`);
   }
-  if (read.length) ppTrialChecks(w, `${tag}, the job's read`);
   /* a price put in the parlay from the job's read: at its price and the read's time, and so after a reload */
   const G = read.find(g => want[g.id].status === 200);
   let store = null;
-  if (G && winOn(G)) {
-    const tb = d.querySelector('#ppStats button[data-pp-tab="pts"]'); if (tb) tb.click();
-    const btn = d.querySelector('#ppBody button[data-pp-add]');
+  if (G && betsOn(d, G)) {
+    let btn = null; for (const r of [...d.querySelectorAll('#gameView button.plrbtn')].map(x => x.dataset.open)) { [...d.querySelectorAll('#gameView button.plrbtn')].find(x => x.dataset.open === r).click(); btn = d.querySelector('#gameView .plrbody input[data-pp-add]'); if (btn) break; }
     if (btn) {
       const key = btn.dataset.ppAdd, [pid, stat, mk, a, b] = key.split('|'), rd = want[G.id];
       const m = mk === 'main' ? rd.main.find(r => r[0] === pid && r[1] === stat && r[2] === +b) : rd.yes.find(r => r[0] === pid && r[1] === stat && r[2] === +a);
       const price = mk === 'main' ? (a === 'over' ? m[3] : m[4]) : m[3];
-      btn.click();
+      btn.focus(); btn.click();
       const legs = JSON.parse(w.eval('JSON.stringify(P.legs)')), L = legs.find(l => l.kind === 'prop' && l.pid === pid && l.stat === stat);
-      chk(!!L && L.odds === price && L.at === rd.at && L.game === G.id, `${tag}: a price in the window's job read goes in the parlay at DraftKings' price as the job read it, dated by that read (${L ? `${L.odds} at ${L.at}` : 'none'}; the read ${price} at ${rd.at})`);
-      chk(txt(d.getElementById('ppMsg')).includes(`DraftKings as read ${clockOf(Date.parse(rd.at))}`), `${tag}: and the window says when it was read (${txt(d.getElementById('ppMsg')).slice(0, 160)})`);
+      chk(!!L && L.odds === price && L.at === rd.at && L.game === G.id, `${tag}: a price on the page's job read goes in the parlay at DraftKings' price as the job read it, dated by that read (${L ? `${L.odds} at ${L.at}` : 'none'}; the read ${price} at ${rd.at})`);
+      chk(txt(d.getElementById('ppMsg')).includes(`DraftKings as read ${clockOf(Date.parse(rd.at))}`) && !!propBox(d, key) && propBox(d, key).checked && propBox(d, key).closest('tr').classList.contains('on') && d.activeElement === propBox(d, key), `${tag}: the page says when it was read, the box drawn ticked with the keyboard on it (${txt(d.getElementById('ppMsg')).slice(0, 160)})`);
       store = w.localStorage.getItem('nhl_v1');
       const e2 = [], w2 = await boot(AT, e2, { hash: 'parlays', keepDk: true, state: body, store });
       const drawn = JSON.parse(w2.eval('JSON.stringify(builderLegs(false).filter(L => L.prop).map(L => [L.pid, L.stat, L.price, L.at]))'));
       chk(drawn.some(x => x[0] === pid && x[1] === stat && x[2] === price && x[3] === rd.at), `${tag}: a reload draws it at the job's price, the same read (${JSON.stringify(drawn).slice(0, 160)})`);
       chk(!e2.length, `${tag}: no runtime error on the reload: ${e2.join(' | ')}`);
-      d.querySelector(`#ppBody button[data-pp-add="${key}"]`).click();
-      chk(!JSON.parse(w.eval('JSON.stringify(P.legs)')).some(l => l.kind === 'prop'), `${tag}: a second tap takes it out`);
+      w2.close();
+      propBox(d, key).click();
+      chk(!JSON.parse(w.eval('JSON.stringify(P.legs)')).some(l => l.kind === 'prop') && !propBox(d, key).checked, `${tag}: a second tap takes it out`);
     } else console.log(`  ${tag}: no price on ${G.id} the builder can take: the add is not tried`);
   }
-  if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click();
+  closeBets(d);
   /* a press whose every props request fails: the job's read stands wherever it read or found none, a failed read is the press's */
   const ask = sPropsAsk(AT);
   if (ask.length) {
@@ -2772,12 +2670,11 @@ async function holdJobRead(body, tag) {
     }
     chk(!bad.length, `${tag}: a press whose props reads fail keeps the job's read on every game it read or found none, and says the rest failed (${ask.length} asked; ${bad.slice(0, 3).join('; ')})`);
     chk(txt(d.getElementById('oddsNote')).endsWith(sPropsText(q)), `${tag}: the status line counts the job's reads kept ("${sPropsText(q).trim()}": ${txt(d.getElementById('oddsNote')).slice(-160)})`);
-    const seen = buttons(), bb = btnBad(seen, id => PR1[id] || null, true);
-    chk(!bb.length, `${tag}: each button says the read it now stands on (${seen.size}; ${bb.slice(0, 2).join(' || ')})`);
-    if (G && winOn(G)) chk(txt(d.getElementById('ppRead')) === ppReadWant(want[G.id], true), `${tag}: the window still says it shows the job's read (${txt(d.getElementById('ppRead'))})`);
+    { const PB = plBtnsBad(d, id => PR1[id] || null, AT); chk(!PB.bad.length, `${tag}: each Player props button says the read it now stands on (${PB.n}; ${PB.bad.slice(0, 2).join(' || ')})`); }
+    if (G) { const b = gpWrongs(w, G, AT, want[G.id], { noPlayers: true }); chk(!b.length, `${tag}: the page still shows the job's read (${b.slice(0, 2).join(' | ')})`); }
     const Gf = ask.find(g => !want[g.id] || want[g.id].status === 'failed');
-    if (Gf && at1 && (pg[Gf.id] || PR1[Gf.id]) && winOn(Gf)) chk(txt(d.getElementById('ppRead')) === ppReadWant(PR1[Gf.id], hasJob(Gf.id), !!pg[Gf.id]), `${tag}: a game the press failed on and the job did not read says the press's failure (${txt(d.getElementById('ppRead'))})`);
-    if (!d.getElementById('ppWin').hidden) d.getElementById('ppClose').click();
+    if (Gf && at1 && (pg[Gf.id] || PR1[Gf.id])) { const b = gpWrongs(w, Gf, AT, PR1[Gf.id], { noPlayers: true }); chk(!b.length && /couldn't read player lines\.$/.test(txt(d.getElementById('ppOddsNote'))), `${tag}: a game the press failed on and the job did not read says the press's failure (${txt(d.getElementById('ppOddsNote'))}; ${b.slice(0, 2).join(' | ')})`); }
+    closeBets(d);
     /* a second press that answers: the press's read replaces the job's, said */
     const G2 = ask.find(g => pg[g.id] && want[g.id] && want[g.id].status === 200) || ask.find(g => pg[g.id]);
     if (G2) {
@@ -2790,12 +2687,9 @@ async function holdJobRead(body, tag) {
       chk(!!r2 && r2.status === 200 && !r2.src && canon(r2.main) === canon(parsed2.main) && canon(r2.yes) === canon(parsed2.yes) && Date.parse(r2.at) > Date.parse(want[G2.id] ? want[G2.id].at : 0),
         `${tag}: a press that answers replaces the job's read with its own (${G2.id}: ${r2 ? `${r2.main.length} main lines read ${r2.at}${r2.src ? ', still the job\'s' : ''}` : 'none'})`);
       chk(ask.filter(g => g !== G2).every(g => PR2[g.id] && PR2[g.id].status === 404 && !PR2[g.id].src), `${tag}: and a 404 now is none posted yet now, the job's read gone (${ask.filter(g => g !== G2 && (!PR2[g.id] || PR2[g.id].src)).map(g => g.id).join(', ')})`);
-      if (winOn(G2)) {
-        chk(txt(d.getElementById('ppRead')) === ppReadWant(r2, hasJob(G2.id)), `${tag}: the window says the press's read and that a reload brings back the job's (${txt(d.getElementById('ppRead'))})`);
-        ppHold(w, G2, parsed2, `${tag}, ${G2.away} @ ${G2.home} after a press`);
-      }
-      const seen = buttons(), bb2 = btnBad(seen, id => PR2[id] || null, true);
-      chk(!bb2.length, `${tag}: each button says the press's read (${seen.size}; ${bb2.slice(0, 2).join(' || ')})`);
+      { const b = gpWrongs(w, G2, AT, { status: 200, at: r2.at, main: parsed2.main, yes: parsed2.yes }, { all: true });
+        chk(!b.length, `${tag}, ${G2.away} @ ${G2.home} after a press: its page is the press's read row for row, its status line the press's time (${b.rows} rows, ${b.opened} opened; ${b.length} wrong: ${b.slice(0, 3).join(' | ')})`); closeBets(d); }
+      { const PB = plBtnsBad(d, id => PR2[id] || null, AT); chk(!PB.bad.length, `${tag}: each Player props button says the press's read (${PB.n}; ${PB.bad.slice(0, 2).join(' || ')})`); }
     }
   } else console.log(`  ${tag}: no game for a press to read: the presses are skipped`);
   /* the Top 30 and the suggested levels rank the job's player lines (nhl v18, the owner's call), each held by this smoke's own sums on the
@@ -2821,11 +2715,13 @@ async function holdJobRead(body, tag) {
       d4.getElementById('clearParlay').click();
     } else console.log(`  ${tag}: no suggested level holds a player line on this read`);
     chk(!e4.length, `${tag}: no runtime error ranking the job's player lines: ${e4.join(' | ')}`);
+    w4.close();
   }
   /* a reload: the job's read again, nothing asked */
   const e3 = [], w3 = await boot(AT, e3, { hash: 'games', keepDk: true, state: body });
   chk(canon(JSON.parse(w3.eval('JSON.stringify(PROPS.games)'))) === canon(want) && !propReqs(w3).length, `${tag}: a reload starts from the job's read again, asking ESPN for nothing`);
   chk(!errs.length && !e3.length, `${tag}: no runtime error: ${errs.concat(e3).join(' | ')}`);
+  w.close(); w3.close();
 }
 async function jobLinesChecks() {
   console.log("THE JOB'S PLAYER LINES");
@@ -2972,20 +2868,20 @@ async function gameLegsMax(M, G, H, AT) {
   chk(convOk && !e.refused && q.est && Math.abs(q.dec - e.dec) < 1e-9 && Math.abs(q.fair - e.fair) < 1e-12 && Math.abs(q.product - prod) < 1e-6 * prod && q.dec < q.product, `${MAX} legs of one game are priced by the rule, an estimate under the legs' prices multiplied, with a fair chance (${q.dec} vs ${q.product}, fair ${q.fair})`);
   /* a press, the window, and the 22nd */
   d.querySelector('#tabs button[data-tab="games"]').click();
-  const day = d.querySelector(`#days .day[data-day="${G.date}"]`); if (day) day.click();
-  d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+  openDay(d, G.date);
+  betsOn(d, G);
   $('ppRefreshOdds').click(); await oddsDone(w); await wait(20);
   chk(canon(ofG()) === canon(first), `the press re-reads the ${MAX} legs at their lines and keeps them (${ofG().length})`);
-  const tab = st => { d.querySelector(`#ppStats button[data-pp-tab="${st}"]`).click(); };
-  const btn = c => { tab(c.st); return d.querySelector(`#ppBody button[data-pp-add="${c.x.id}|${c.st}|main|over|${c.m[2]}"]`); };
+  const tab = st => { };
+  const btn = c => { tab(c.st); return propBox(d, `${c.x.id}|${c.st}|main|over|${c.m[2]}`); };
   const nth = cand[MAX], ref = `Not added: your parlay has ${MAX} legs of ${S.teams[G.away].abbr} @ ${S.teams[G.home].abbr} already, the most of one game this page can price.`;
   const b22 = btn(nth); if (b22) b22.click();
-  chk(!!b22 && canon(ofG()) === canon(first) && txt($('ppMsg')) === ref && btn(nth).getAttribute('aria-pressed') === 'false', `one more leg of a game holding ${MAX} is refused, said plainly, nothing added (${txt($('ppMsg'))})`);
+  chk(!!b22 && canon(ofG()) === canon(first) && txt($('ppMsg')) === ref && !btn(nth).checked, `one more leg of a game holding ${MAX} is refused, said plainly, nothing added (${txt($('ppMsg'))})`);
   btn(cand[0]).click();
   chk(ofG().length === MAX - 1, `one taken out leaves ${MAX - 1} (${ofG().length})`);
   btn(nth).click();
   chk(ofG().length === MAX && ofG().includes(nth.x.id + '|' + nth.st), `and makes room for the one refused (${ofG().length})`);
-  $('ppClose').click();
+  closeBets(d);
   /* a team bet past the most: refused on the slip bar, nothing stored */
   const legsNow = canon(JSON.parse(w.localStorage.getItem('nhl_v1')).legs);
   const ml = betIn(d, G, `${G.id}|home|ml`);
@@ -2995,8 +2891,8 @@ async function gameLegsMax(M, G, H, AT) {
     /* the refusal stands only until the parlay changes: a leg taken out (in the props window, or a bet tapped off) or one added after
        without a word of its own leaves the slip bar saying nothing of it */
     const leg = k => betIn(d, G, `${G.id}|${k}`);
-    d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
-    btn(cand[1]).click(); $('ppClose').click();
+    betsOn(d, G);
+    btn(cand[1]).click(); closeBets(d);
     chk(ofG().length === MAX - 1 && txt($('slipMsg')) === '', `a leg taken out in the props window ends the refusal on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
     leg('home|ml').click();
     chk(ofG().length === MAX && txt($('slipMsg')) === '', `the team bet then goes in, the slip bar saying nothing of the refusal (${ofG().length}; "${txt($('slipMsg'))}")`);
@@ -3022,16 +2918,16 @@ async function gameLegsMax(M, G, H, AT) {
       d.querySelector('#tabs button[data-tab="parlays"]').click();
       const refT = txt($('slipMsg')), x = d.querySelector(`#legs .leg[data-id="${G.id}|over|ou"] button.x`); if (x) x.click();
       chk(refT === ref && !!x && ofG().length === MAX - 1 && !ous().length && txt($('slipMsg')) === '', `the total taken out with its × in the builder ends the refusal on the slip bar (${ofG().length}; "${refT}" then "${txt($('slipMsg'))}")`);
-      d.querySelector('#tabs button[data-tab="games"]').click(); const dG = d.querySelector(`#days .day[data-day="${G.date}"]`); if (dG) dG.click();
+      d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, G.date);
       /* a replacement said on the slip bar goes the same way: at a player's price added in the props window without a word of its own,
          and at a level's Add to builder */
-      const pin = () => new Set(ofG()), pp = () => d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
-      pp(); const outC = cand.find(c => pin().has(c.x.id + '|' + c.st)); if (outC) btn(outC).click(); $('ppClose').click();
+      const pin = () => new Set(ofG()), pp = () => betsOn(d, G);
+      pp(); const outC = cand.find(c => pin().has(c.x.id + '|' + c.st)); if (outC) btn(outC).click(); closeBets(d);
       if (!ous().includes('over')) { if (ous().includes('under')) leg('under|ou').click(); leg('over|ou').click(); }
       leg('under|ou').click();
       const rep = txt($('slipMsg'));
       chk(!!outC && ofG().length === MAX - 1 && ous().join() === 'under' && /^Under [\d.]+ replaced Over [\d.]+ on .*: one total a game\.$/.test(rep), `the Under in place of the Over is said on the slip bar (${ofG().length}; ${rep})`);
-      pp(); const inC = cand.find(c => !pin().has(c.x.id + '|' + c.st)), nb = inC && btn(inC); if (nb) nb.click(); $('ppClose').click();
+      pp(); const inC = cand.find(c => !pin().has(c.x.id + '|' + c.st)), nb = inC && btn(inC); if (nb) nb.click(); closeBets(d);
       chk(!!nb && pin().has(inC.x.id + '|' + inC.st) && ofG().length === MAX && txt($('slipMsg')) === '', `a player's price added in the props window, without a word of its own, ends the replacement on the slip bar (${ofG().length}; "${txt($('slipMsg'))}")`);
       leg('over|ou').click();
       chk(ous().join() === 'over' && ofG().length === MAX && /^Over [\d.]+ replaced Under [\d.]+ on /.test(txt($('slipMsg'))), `the Over back in place of the Under at the most is said on the slip bar (${txt($('slipMsg'))})`);
@@ -3063,11 +2959,11 @@ async function hiddenLegs(M, G, AT, o) {
   const moveIn = (A, c) => { let n = 0; for (const it of A.items) if (it && it.athlete && it.athlete.$ref === PROP_REF(c.x.id) && it.type.name === NM[c.st] && /^[+-]\d+$/.test(it.odds.american.value)) { const L = c.m[2] + 1; it.odds.total = { value: String(L) }; it.current = { target: { value: L, displayValue: String(L) } }; n++; } return n; };
   const press = async w => {
     const d = w.document; d.querySelector('#tabs button[data-tab="games"]').click();
-    const day = d.querySelector(`#days .day[data-day="${G.date}"]`); if (day) day.click();
-    d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+    openDay(d, G.date);
+    betsOn(d, G);
     d.getElementById('ppRefreshOdds').click(); await oddsDone(w); await wait(20);
   };
-  const tap = (w, key, st) => { const d = w.document; d.querySelector(`#ppStats button[data-pp-tab="${st}"]`).click(); const b = d.querySelector(`#ppBody button[data-pp-add="${key}"]`); if (b) b.click(); return !!b; };
+  const tap = (w, key, st) => { const d = w.document; const b = propBox(d, `${key}`); if (b) b.click(); return !!b; };
   /* the most of one game: 21 stored, the press moves one of their lines (so 20 drawn), and one more is added */
   const mv = cand[1], refM = PROP_REF(mv.x.id), nm = { s: 'Total Shots on Goal', bs: 'Total Blocked Shots', pts: 'Total Points' }[mv.st], A2 = propsAnswer(G), L2 = mv.m[2] + 1;
   let movedN = 0;
@@ -3114,7 +3010,7 @@ async function hiddenLegs(M, G, AT, o) {
   await press(w7);
   chk(ofG(w7).length === MAX && ofG(w7, 'drawn').length === 0, `a press that finds no props posted on the game takes all ${MAX} out of the builder and keeps them stored (${ofG(w7).length} stored, ${ofG(w7, 'drawn').length} drawn)`);
   const ord7 = order(w7), last7 = cand.slice(0, MAX).sort((a, b) => ord7.indexOf(lid(b)) - ord7.indexOf(lid(a)))[0];
-  w7.document.getElementById('ppClose').click();
+  closeBets(w7.document);
   const ml7 = tapBet(w7.document, G, `${G.id}|home|ml`);
   const want7 = cand.slice(0, MAX).filter(c => c !== last7).map(lid).concat(['home|ml']).sort(), slip7 = txt(w7.document.getElementById('slipMsg'));
   chk(!!ml7 && canon(ofG(w7)) === canon(want7) && canon(inStore(w7)) === canon(want7) && canon(ofG(w7, 'drawn')) === canon(['home|ml']), `the home moneyline goes in beside them: one player leg, the last stored, leaves the store, the other ${MAX - 1} kept (${ofG(w7).length} stored, ${ofG(w7, 'drawn').length} drawn, ${inStore(w7).length} in nhl_v1)`);
@@ -3128,7 +3024,7 @@ async function hiddenLegs(M, G, AT, o) {
   const errs9 = [], w9 = await boot(AT, errs9, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: answer(A3), store: JSON.stringify({ legs: [ptsLeg], ui: { tab: 'parlays' } }) });
   await press(w9);
   const d9 = w9.document, slip9 = () => txt(d9.getElementById('slipMsg')), readSaid = slip9(), t9 = Date.now(), ptsK = `${NP.id}|pts|${npm[2]}`;
-  d9.getElementById('ppClose').click();
+  closeBets(d9);
   const tot = side => betIn(d9, G, `${G.id}|${side}|ou`);
   chk(readSaid.startsWith(`${NP.name} Over ${npm[2]} points left the builder: DraftKings had no points line on ${NP.name}`), `the slip bar says the read took his points Over out (${readSaid.slice(0, 200)})`);
   if (tot('over')) tot('over').click();
@@ -3141,7 +3037,7 @@ async function hiddenLegs(M, G, AT, o) {
   tot('under').click();
   if (live && Date.now() - t9 < 8000) chk(slip9() === readSaid, `the Under tapped off ends the replacement and the read's line comes back ("${slip9().slice(0, 160)}")`);
   else console.log('  the read\'s line ran out before it could be held (a slow run): not checked');
-  d9.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
+  betsOn(d9, G);
   const tapO = tap(w9, keyOf(other), other.st), msg9 = txt(d9.getElementById('ppMsg')), want9 = [ptsK, lid(other)].sort();
   chk(tapO && canon(ofG(w9)) === canon(want9) && canon(inStore(w9)) === canon(want9) && !/taken out|replaced/.test(msg9), `another player's line goes in beside it too, the points Over still stored, nothing said of it (${canon(ofG(w9))}; ${msg9.slice(0, 200)})`);
   const errs10 = [], w10 = await boot(AT, errs10, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props, store: w9.localStorage.getItem('nhl_v1') });
@@ -3166,7 +3062,7 @@ async function hiddenLegs(M, G, AT, o) {
     chk(msgB.startsWith(`${inPlace(desc(c5), desc(shownB))} Added to your parlay:`), `${bk}: the window says which leg it is in place of, and no other (${msgB.slice(0, 260)})`);
     /* a stored leg the read left out, its button not pressed: a tap puts it in again in place of the one drawn, never takes it out;
        the slip bar's line about the read no longer says it is left out */
-    const r1 = restB[1], bP = () => { const dd = wB.document; dd.querySelector(`#ppStats button[data-pp-tab="${r1.st}"]`).click(); const z = dd.querySelector(`#ppBody button[data-pp-add="${keyOf(r1)}"]`); return z && z.getAttribute('aria-pressed'); };
+    const r1 = restB[1], bP = () => { const dd = wB.document; const z = propBox(dd, `${keyOf(r1)}`); return z && String(z.checked); };
     const was = bP(), tR = tap(wB, keyOf(r1), r1.st), msgR = txt(wB.document.getElementById('ppMsg'));
     chk(was === 'false' && tR && canon(ofG(wB)) === canon(wantB) && canon(inStore(wB)) === canon(wantB) && canon(ofG(wB, 'drawn')) === canon([lid(r1)]) && bP() === 'true' && msgR.startsWith(`${inPlace(desc(r1), desc(c5))} Added to your parlay:`), `${bk}: a tap on a stored leg the builder leaves out puts it in place of the one drawn, every leg kept (${was}; ${canon(ofG(wB, 'drawn'))}; ${msgR.slice(0, 200)})`);
     if (live()) chk(!base(wB).includes(leftOut(desc(r1))) && base(wB).includes(leftOut(desc(restB[2]))), `${bk}: the read's line on the slip bar drops what it said of the leg now drawn and keeps the rest ("${base(wB).slice(0, 240)}")`);
@@ -3189,19 +3085,20 @@ async function hiddenLegs(M, G, AT, o) {
     const ov = { game: G.id, side: 'over', kind: 'ou', odds: G.line.overOdds, line: G.line.total, p: G.ou.over, label: mu, text: '', date: G.date, start: G.start };
     const wT = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbB, props, store: JSON.stringify({ legs: [ml, ov], ui: { tab: 'parlays' } }) });
     await press(wT); betsOn(wT.document, G);          // the window left open on G: its Game bets (nhl v23) are the card's bets
-    const tq = Date.now(), dT = wT.document, bet = (sel, k) => [...dT.querySelectorAll(`${sel} button[data-leg="${G.id}|${k}"]`)];
-    const pressed = (k, sel) => bet(sel || '#ppBets', k).map(b => b.getAttribute('aria-pressed') + (b.querySelector('.pb-bin') ? '+in' : '')).join();
+    /* a bet's box on the game's page (opened again where a change of tab shut it) or its button in Pick your own legs; ticked, or pressed with its check, is in the parlay */
+    const tq = Date.now(), dT = wT.document, bet = (sel, k) => { if (sel === '#gameView') betsOn(dT, G); return [...dT.querySelectorAll(`${sel} [data-leg="${G.id}|${k}"]`)]; };
+    const pressed = (k, sel) => bet(sel || '#gameView', k).map(b => b.tagName === 'INPUT' ? (b.checked ? 'true+in' : 'false') : b.getAttribute('aria-pressed') + (b.querySelector('.pb-bin') ? '+in' : '')).join();
     const tab = k => dT.querySelector(`#tabs button[data-tab="${k}"]`).click();      // each tab is drawn when shown
     const mlD = `${S.teams[G.home].short} to win`, ovD = `Over ${G.line.total}`, pg = [pressed('over|ou'), pressed('home|ml')];
     tab('parlays'); const pl = [bet('#plLines', 'over|ou').length, pressed('over|ou', '#plLines'), pressed('home|ml', '#plLines')]; tab('games');
-    chk(canon(ofG(wT, 'drawn')) === canon(['home|ml']) && canon(ofG(wT)) === canon(['home|ml', 'over|ou'].sort()) && bet('#ppBets', 'over|ou').length === 1 && pg.join(';') === 'false;true+in' && (!pl[0] || pl.slice(1).join(';') === 'false;true+in'), `${bk}: the moneyline drawn and the Over left out, the Over's button in its Game bets${pl[0] ? ' and in Pick your own legs' : ''} not pressed (Games ${pg}; Pick your own legs ${pl})`);
-    bet('#ppBets', 'over|ou')[0].click();
+    chk(canon(ofG(wT, 'drawn')) === canon(['home|ml']) && canon(ofG(wT)) === canon(['home|ml', 'over|ou'].sort()) && bet('#gameView', 'over|ou').length === 1 && pg.join(';') === 'false;true+in' && (!pl[0] || pl.slice(1).join(';') === 'false;true+in'), `${bk}: the moneyline drawn and the Over left out, the Over's button in its Game bets${pl[0] ? ' and in Pick your own legs' : ''} not pressed (Games ${pg}; Pick your own legs ${pl})`);
+    bet('#gameView', 'over|ou')[0].click();
     const sayT = inPlace(ovD, mlD);
     chk(canon(ofG(wT, 'drawn')) === canon(['over|ou']) && canon(inStore(wT)) === canon(['home|ml', 'over|ou'].sort()) && /^true\+in/.test(pressed('over|ou')) && /^false/.test(pressed('home|ml')) && txt(dT.getElementById('slipMsg')) === sayT, `${bk}: a tap on the Over puts it in place of the moneyline, both kept stored, said on the slip bar (${canon(inStore(wT))}; ${pressed('over|ou')}; "${txt(dT.getElementById('slipMsg'))}")`);
     if (Date.now() - tq < 8000) chk(!base(wT).includes(leftOut(ovD)), `${bk}: the read's line on the slip bar no longer says the Over is left out ("${base(wT).slice(0, 200)}")`);
     const wT2 = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbB, props, store: wT.localStorage.getItem('nhl_v1') });
     chk(canon(ofG(wT2, 'drawn')) === canon(['home|ml', 'over|ou'].sort()), `${bk}: a reload on the published DraftKings line opens on the moneyline and the Over (${canon(ofG(wT2, 'drawn'))})`);
-    bet('#ppBets', 'over|ou')[0].click();
+    bet('#gameView', 'over|ou')[0].click();
     const sayT2 = inPlace(mlD, ovD), slT2 = txt(dT.getElementById('slipMsg')); tab('parlays');
     chk(canon(inStore(wT)) === canon(['home|ml']) && canon(ofG(wT, 'drawn')) === canon(['home|ml']) && slT2 === sayT2 && txt(dT.getElementById('bMsg')).startsWith(sayT2), `${bk}: the Over tapped again comes out, the moneyline drawn in its place, said on the slip bar and in the builder (${canon(inStore(wT))}; "${slT2}"; "${txt(dT.getElementById('bMsg')).slice(0, 200)}")`);
   }
@@ -3211,9 +3108,9 @@ async function hiddenLegs(M, G, AT, o) {
     const ml = { game: G.id, side: 'home', kind: 'ml', odds: G.line.homeML, line: null, p: G.pHome, label: mu, text: '', date: G.date, start: G.start };
     const ov = { game: G.id, side: 'over', kind: 'ou', odds: G.line.overOdds, line: T0, p: G.ou.over, label: mu, text: '', date: G.date, start: G.start };
     const wM = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbM, props, store: JSON.stringify({ legs: [ml, ov], ui: { tab: 'parlays' } }) });
-    await press(wM); wM.document.getElementById('ppClose').click();
+    await press(wM); closeBets(wM.document);
     const ovB = () => betIn(wM.document, G, `${G.id}|over|ou`);
-    chk(canon(ofG(wM, 'drawn')) === canon(['home|ml']) && canon(ofG(wM)) === canon(['home|ml', 'over|ou'].sort()) && !!ovB() && ovB().getAttribute('aria-pressed') === 'false', `a read that moves the total to ${T0 + 1} takes the Over ${T0} out of the builder and keeps it stored, the Over's button not pressed (${canon(ofG(wM, 'drawn'))})`);
+    chk(canon(ofG(wM, 'drawn')) === canon(['home|ml']) && canon(ofG(wM)) === canon(['home|ml', 'over|ou'].sort()) && !!ovB() && !ovB().checked, `a read that moves the total to ${T0 + 1} takes the Over ${T0} out of the builder and keeps it stored, the Over's button not pressed (${canon(ofG(wM, 'drawn'))})`);
     if (ovB()) ovB().click();
     const lines = JSON.parse(wM.eval(`JSON.stringify(P.legs.filter(l => l.game === ${JSON.stringify(G.id)} && l.kind === 'ou').map(l => l.side + l.line))`)), sayM = `Over ${T0 + 1} replaced Over ${T0} on ${mu}: one total a game.`;
     const slM = txt(wM.document.getElementById('slipMsg')); wM.document.querySelector('#tabs button[data-tab="parlays"]').click();
@@ -3224,7 +3121,7 @@ async function hiddenLegs(M, G, AT, o) {
        rest of that level its own legs, so it holds whatever the read leaves the levels */
     for (const [legs, n] of [[[ml, ov], 1], [[ov], 0]]) {
       const wX = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sbM, props, store: JSON.stringify({ legs, ui: { tab: 'parlays' } }) });
-      await press(wX); wX.document.getElementById('ppClose').click();
+      await press(wX); closeBets(wX.document);
       const dX = wX.document;
       /* planted through the page's own spDay, so the tab draws the level and its Add to builder takes it as drawn */
       const id = wX.eval(`(() => { const D = spDay(${JSON.stringify(G.date)}), id = Object.keys(D.levels).find(k => { const r = D.levels[k]; return r && r.legs && r.legs.length >= 2; }); if (!id) return null;
@@ -3248,7 +3145,7 @@ async function hiddenLegs(M, G, AT, o) {
      stored, a press finds no props posted on the game (ESPN's 404), none drawn */
   {
     const wA = await boot(AT, errsB, { state: JSON.stringify(M), hash: 'parlays', espn: sb, props: PROPS_404, store: JSON.stringify({ legs: cand.slice(0, 5).map(legOf), ui: { tab: 'parlays' } }) });
-    await press(wA); wA.document.getElementById('ppClose').click();
+    await press(wA); closeBets(wA.document);
     const dA = wA.document, before = () => JSON.stringify((JSON.parse(wA.localStorage.getItem('nhl_v1') || '{}').legs || []));
     chk(ofG(wA).length === 5 && ofG(wA, 'drawn').length === 0, `a press that finds no props posted takes the 5 out of the builder and keeps them stored (${ofG(wA).length} stored, ${ofG(wA, 'drawn').length} drawn)`);
     dA.querySelector('#tabs button[data-tab="suggest"]').click();
@@ -3283,10 +3180,10 @@ async function builderPlayerLegs(M, G, H, AT) {
   const tiers0 = tiers();
   holdPanel(w, AT, 'before any player leg'); holdSuggest(w, AT, 'before any player leg');          // what the levels are held to below: the rules' own, by brute force
   /* before a press: no price in a window can be added */
-  const dayOn = dd => { const b = d.querySelector(`#days .day[data-day="${dd}"]`); if (b) b.click(); };
+  const dayOn = dd => openDay(d, dd);
   d.querySelector('#tabs button[data-tab="games"]').click(); dayOn(G.date);
-  d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
-  chk(!d.querySelector('#ppBody [data-pp-add]'), 'before a press the props window offers nothing to add');
+  betsOn(d, G);
+  chk(!d.querySelector('#gameView input[data-pp-add]'), "before a press the game's page offers no player's price to add");
   $('ppRefreshOdds').click(); await oddsDone(w); await wait(20);
   const readAt = w.eval(`PROPS.games[${JSON.stringify(G.id)}].at`), writes0 = w.__writes.length;
   chk(!!readAt && w.eval(`PROPS.games[${JSON.stringify(G.id)}].status`) === 200, `the press read DraftKings' props on ${G.id}`);
@@ -3294,33 +3191,35 @@ async function builderPlayerLegs(M, G, H, AT) {
   const mainOf = (pid, st) => parsed.main.find(r => r[0] === String(pid) && r[1] === st), yesOf = (pid, st, k) => parsed.yes.find(r => r[0] === String(pid) && r[1] === st && r[2] === k);
   const X = pr.awayP.skaters.find(p => p.pos !== 'D' && mainOf(p.id, 'pts') && yesOf(p.id, 'g', 1)), Y = pr.homeP.skaters.find(p => yesOf(p.id, 's', 3) && (!mainOf(p.id, 's') || mainOf(p.id, 's')[2] !== 2.5) && p.id !== (X && X.id)), Z = pr.homeP.goalie && mainOf(pr.homeP.goalie.id, 'sv') ? pr.homeP.goalie : null;
   if (!X || !Y) { chk(false, `the made-up answer prices an away forward's points and a home skater's shots 3+ (${X && X.id}, ${Y && Y.id})`); return; }
-  /* every DraftKings price a 44px button the keyboard reaches; none for an athlete matched to neither club */
-  const tab = st => { d.querySelector(`#ppStats button[data-pp-tab="${st}"]`).click(); };
-  let nBtn = 0; const badB = [];
-  for (const st of PP_STATS_S) {
-    tab(st);
-    for (const r of d.querySelectorAll('#ppBody .pp-row')) {
-      const id = r.dataset.ppRow, sec = r.closest('section.pp-team'), club = sec && sec.dataset.ppTeam, btns = [...r.querySelectorAll('[data-pp-add]')];
-      const priced = [...r.querySelectorAll('.pp-main > *, .pp-k')].length;
-      const should = !!club && [G.home, G.away].includes(club) && !r.closest('details.pp-more');
-      if (should ? btns.length !== priced : btns.length) badB.push(`${st} ${id}: ${btns.length} buttons of ${priced} prices under ${club || 'neither club'}`);
-      for (const b of btns) { nBtn++; if (b.tagName !== 'BUTTON' || b.type !== 'button' || b.disabled || b.tabIndex < 0 || w.getComputedStyle(b).minHeight !== '44px' || b.getAttribute('aria-pressed') !== 'false') badB.push(`${st} ${id}: ${b.dataset.ppAdd} not a 44px button the keyboard reaches, unpressed`); }
+  /* every DraftKings price of a player of the game's clubs a box the keyboard reaches, in a row 44px tall that takes the tap; none for
+     an athlete matched to neither club (All skaters ticked, each player opened in turn) */
+  const tab = () => { };
+  let nBtn = 0; const badB = [], vw = d.getElementById('gameView');
+  if (!d.getElementById('allCb').checked) d.getElementById('allCb').click();
+  for (const pid of [...vw.querySelectorAll('button.plrbtn')].map(r => r.dataset.open)) {
+    [...vw.querySelectorAll('button.plrbtn')].find(r => r.dataset.open === pid).click();
+    const body = vw.querySelector('.plrbody'), club = (() => { let n = [...vw.querySelectorAll('button.plrbtn')].find(r => r.dataset.open === pid); while (n && !n.classList.contains('teamhdr')) n = n.previousElementSibling; return n ? n.dataset.team : ''; })();
+    for (const tr of body ? body.querySelectorAll('table.rungs tr') : []) {
+      const b = tr.querySelector('input[data-pp-add]'), priced = !!txt(tr.querySelector('.book'));
+      if (priced !== !!b || ![G.home, G.away].includes(club)) { badB.push(`${pid}: ${txt(tr).slice(0, 40)} ${priced ? 'priced' : 'no price'}, ${b ? 'a box' : 'no box'} under ${club || 'neither club'}`); continue; }
+      nBtn++; if (b.type !== 'checkbox' || b.disabled || b.tabIndex < 0 || b.checked || !b.getAttribute('aria-label') || !tr.classList.contains('pickable') || w.getComputedStyle(tr).height !== '44px') badB.push(`${pid}: ${b.dataset.ppAdd} not an unticked box the keyboard reaches in a 44px row`);
     }
   }
-  chk(nBtn > 50 && !badB.length, `after the press every DraftKings price of a player of the game's clubs is a 44px button the keyboard reaches, and an athlete matched to neither club has none (${nBtn} buttons; ${badB.slice(0, 3).join(' | ')})`);
+  chk(!vw.querySelector('.plrbtn[data-nohist="990000001"] input') && !!vw.querySelector('.plrbtn[data-nohist="990000001"]'), 'an athlete matched to neither club is listed with no box');
+  chk(nBtn > 50 && !badB.length, `after the press every DraftKings price of a player of the game's clubs is a box the keyboard reaches, in a 44px row, and an athlete matched to neither club has none (${nBtn} boxes; ${badB.slice(0, 3).join(' | ')})`);
   /* the add: X's points Over, into the builder at DraftKings' price as read, dated by the read; the button pressed; said in the window */
   const xm = mainOf(X.id, 'pts');
   tab('pts');
-  const xb = () => d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|over|${xm[2]}"]`);
+  const xb = () => propBox(d, `${X.id}|pts|main|over|${xm[2]}`);
   xb().focus(); xb().click();
   const want1 = { game: G.id, kind: 'prop', pid: String(X.id), team: G.away, grp: 'F', stat: 'pts', mk: 'main', side: 'over', line: xm[2], k: null, odds: xm[3], other: xm[4], at: readAt };
   const s1 = (store().legs || []).find(l => l.kind === 'prop');
   chk(!!s1 && Object.keys(want1).every(k => canon(s1[k]) === canon(want1[k])) && s1.name === X.name, `a tap puts the leg in the builder at DraftKings' price as read, its line, side, player, game and read time (${canon(s1 || null).slice(0, 260)})`);
-  chk(xb() && xb().getAttribute('aria-pressed') === 'true' && d.activeElement === xb(), 'the price is pressed, the keyboard\'s focus kept on it');
+  chk(xb() && xb().checked && d.activeElement === xb(), 'the price is pressed, the keyboard\'s focus kept on it');
   chk(txt($('ppMsg')) === `Added to your parlay: ${X.name} Over ${xm[2]} points, ${PBS.odds(xm[3])}, DraftKings as read ${clockOf(Date.parse(readAt))}. Your parlay: 1 leg.`, `the window says what it added (${txt($('ppMsg'))})`);
   /* refused: X's goals beside his points; replaced: X's points Under in his Over's place */
   tab('g');
-  const xg = d.querySelector(`#ppBody button[data-pp-add="${X.id}|g|yes|1"]`), legs1 = canon(store().legs);
+  const xg = propBox(d, `${X.id}|g|yes|1`), legs1 = canon(store().legs);
   xg.click();
   chk(canon(store().legs) === legs1 && txt($('ppMsg')) === `Not added: ${X.name}'s points and his own goals are nearly one bet (every goal is a point). DraftKings may not take both on one ticket, so this page never puts them together.`.replace(`${X.name}'s`, /s$/.test(X.name) ? `${X.name}'` : `${X.name}'s`), `a player's goals beside his own points are refused, said plainly (${txt($('ppMsg'))})`);
   /* refused both ways round with assists: W's points beside his own assists, and his assists beside his own points (W another skater
@@ -3330,29 +3229,29 @@ async function builderPlayerLegs(M, G, H, AT) {
   if (!W) chk(false, `the made-up answer prices a skater's assists beside his points (${G.id})`);
   else {
     const wa = mainOf(W.id, 'a'), wp = mainOf(W.id, 'pts'), refA = `Not added: ${possS(W.name)} points and his own assists are nearly one bet (every assist is a point). DraftKings may not take both on one ticket, so this page never puts them together.`;
-    const wB = (st, m) => d.querySelector(`#ppBody button[data-pp-add="${W.id}|${st}|main|over|${m[2]}"]`);
+    const wB = (st, m) => propBox(d, `${W.id}|${st}|main|over|${m[2]}`);
     tab('a'); wB('a', wa).click();
     chk(store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id) && l.stat === 'a'), `${W.name}'s assists Over ${wa[2]} goes in beside ${X.name}'s points`);
     const legsA = canon(store().legs);
     tab('pts'); wB('pts', wp).click();
-    chk(canon(store().legs) === legsA && txt($('ppMsg')) === refA && wB('pts', wp).getAttribute('aria-pressed') === 'false', `a player's points beside his own assists are refused, said plainly, nothing stored (${txt($('ppMsg'))})`);
+    chk(canon(store().legs) === legsA && txt($('ppMsg')) === refA && !wB('pts', wp).checked, `a player's points beside his own assists are refused, said plainly, nothing stored (${txt($('ppMsg'))})`);
     tab('a'); wB('a', wa).click();
     tab('pts'); wB('pts', wp).click();
     const legsP = canon(store().legs);
     chk(store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id) && l.stat === 'pts') && !store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id) && l.stat === 'a'), `with his assists taken out, ${W.name}'s points go in`);
     tab('a'); wB('a', wa).click();
-    chk(canon(store().legs) === legsP && txt($('ppMsg')) === refA && wB('a', wa).getAttribute('aria-pressed') === 'false', `a player's assists beside his own points are refused the same way round, said, nothing stored (${txt($('ppMsg'))})`);
+    chk(canon(store().legs) === legsP && txt($('ppMsg')) === refA && !wB('a', wa).checked, `a player's assists beside his own points are refused the same way round, said, nothing stored (${txt($('ppMsg'))})`);
     tab('pts'); wB('pts', wp).click();
     chk(!store().legs.some(l => l.kind === 'prop' && l.pid === String(W.id)), `and ${W.name}'s points are taken out again`);
   }
   tab('pts');
-  d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|under|${xm[2]}"]`).click();
+  propBox(d, `${X.id}|pts|main|under|${xm[2]}`).click();
   chk(store().legs.filter(l => l.kind === 'prop').length === 1 && store().legs.find(l => l.kind === 'prop').side === 'under' && txt($('ppMsg')).startsWith(`${X.name} Under ${xm[2]} points replaced ${X.name} Over ${xm[2]} points on ${mu}: one leg a player a stat.`), `one leg a player a stat: his Under takes his Over's place, said (${txt($('ppMsg'))})`);
   chk(txt($('slipMsg')) === `${X.name} Under ${xm[2]} points replaced ${X.name} Over ${xm[2]} points on ${mu}: one leg a player a stat.`, `and said on the slip bar, as a side bet's replacement is (${txt($('slipMsg'))})`);
-  d.querySelector(`#ppBody button[data-pp-add="${X.id}|pts|main|under|${xm[2]}"]`).click();
+  propBox(d, `${X.id}|pts|main|under|${xm[2]}`).click();
   chk(!store().legs.some(l => l.kind === 'prop') && txt($('ppMsg')).startsWith(`Taken out of your parlay: ${X.name} Under ${xm[2]} points.`), `a second tap takes it out (${txt($('ppMsg'))})`);
   xb().click();
-  $('ppClose').click();
+  closeBets(d);
   /* the bet buttons by the same-game rule: the home moneyline joins X (a same-game pair moving against each other: priced at the product) */
   d.querySelector('#tabs button[data-tab="games"]').click(); dayOn(G.date);
   const gb = (side, kind) => betIn(d, G, `${G.id}|${side}|${kind}`);
@@ -3378,12 +3277,12 @@ async function builderPlayerLegs(M, G, H, AT) {
   chk(store().legs.length === 3 && store().legs.some(l => l.kind === 'ou' && l.side === 'under') && txt($('slipMsg')).includes(`on ${mu}: one total a game.`), `the other side of the total takes its place, said (${txt($('slipMsg'))})`);
   gb('over', 'ou').click();
   /* Y's shots 3+ and Z's saves from the window; then H's moneyline, another game */
-  dayOn(G.date); d.querySelector(`#games .game[data-id="${G.id}"] button[data-pp]`).click();
-  tab('s'); d.querySelector(`#ppBody button[data-pp-add="${Y.id}|s|yes|3"]`).click();
-  if (Z) { tab('sv'); const zm = mainOf(Z.id, 'sv'); d.querySelector(`#ppBody button[data-pp-add="${Z.id}|sv|main|under|${zm[2]}"]`).click(); }    // an Under: its fair chance its own implied
+  dayOn(G.date); betsOn(d, G);
+  tab('s'); propBox(d, `${Y.id}|s|yes|3`).click();
+  if (Z) { tab('sv'); const zm = mainOf(Z.id, 'sv'); propBox(d, `${Z.id}|sv|main|under|${zm[2]}`).click(); }    // an Under: its fair chance its own implied
   else console.log(`  ${G.id}: no home goalie projected, so no saves Under in the builder; the Under's fair chance is held on the rows that have one`);
   chk(txt($('ppMsg')).endsWith(`Your parlay: ${Z ? 5 : 4} legs.`), `the window counts the parlay's legs (${txt($('ppMsg'))})`);
-  $('ppClose').click();
+  closeBets(d);
   dayOn(H.date); tapBet(d, H, `${H.id}|home|ml`);
   d.querySelector('#tabs button[data-tab="parlays"]').click();
   /* the builder: a row a leg, "same game" on G's legs alone, each player leg's read time, fair chance and the props model's, on trial */
@@ -3693,11 +3592,6 @@ const betWrong = (btn, B, s) => { const on = btn.getAttribute('aria-pressed') ==
   const fit = betFit(btn); if (fit) return `${btn.dataset.leg}: ${fit}`;
   if (btn.getAttribute('aria-label') !== betAria(B, s, on)) return `${btn.dataset.leg}: named "${btn.getAttribute('aria-label')}" where "${betAria(B, s, on)}"`;
   return ''; };
-/* who is out (nhl v13): a row for a player worth OUT_ROW_S goals a game or more to his club, by the size of his figure; the bar is worked
-   out again in theLook from tools/elo.js's goals layer and the player model's blend: about a point of the club's chance to win */
-const OUT_ROW_S = 0.13;
-const isRowS = o => typeof o.cost === 'number' && Math.abs(o.cost) >= OUT_ROW_S - 1e-9;
-const orderS = list => list.map((o, i) => [o, i]).sort((a, b) => ((typeof b[0].cost === 'number' ? Math.abs(b[0].cost) : -1) - (typeof a[0].cost === 'number' ? Math.abs(a[0].cost) : -1)) || a[1] - b[1]).map(x => x[0]);
 /* confidence (nhl v23, the NBA's): the band of the chance the card shows, rounded to a whole percent as the card writes it, worked here on
    its own; each band's record the call's this season straight up, every graded game in the state */
 const CONF_S = { high: ['High', '65%+'], med: ['Med', '60-64%'], low: ['Low', '55-59%'], coin: ['50/50', 'under 55%'] };
@@ -3709,37 +3603,14 @@ function confRecS() {
 }
 const confSayS = (k, rec) => { const x = rec[k], wl = x[0] + x[1] ? `${x[0]}-${x[1]}` : '';
   return `Confidence: ${CONF_S[k][0]}, the model gives its pick ${CONF_S[k][1]}.${wl ? ` Its ${CONF_S[k][0]} picks this season: ${wl}.` : ''}`; };
-/* the card's chips (nhl v23), worked here: the margin, the goals; DraftKings' moneyline on the side the model took, else the favourite (the
-   larger implied chance, home where level); a puck line only where the model took one; the over/under; each call lit with "call · edge
-   +N" (an over/under's "under · edge +N"), or, unlit, "far off" where its side is 15 points over the fair chance on a fresh line still to
-   come, and plain with its grade after the game; the other model only 10 points or more from the call. [data-ck, text, lit] each */
+/* the card's chips (nhl v27): the model's margin and its goals, nothing else (DraftKings' prices, the calls and their grades are on the
+   game's page, its Game bets; the other model in its Matchup window). [data-ck, text, lit] each */
 const impS = am => am > 0 ? 100 / (am + 100) : -am / (-am + 100);
-function chipsWantS(g, ms) {
-  const L = g.line, R = g.result, started = sStarted(g, ms), fresh = sFresh(g), e = x => Math.round(x * 100), out = [];
-  const res = (k, word) => R && R[k] ? ` ${word} ${R[k]}` : '';
-  const far = (side, kind) => { if (started || !L || !fresh) return false; const B = sLeg(g, side, kind); return !!B && isFarS(B); };
-  out.push(['model', `Margin ${sMarginS(g)}`, false], ['xt', `Goals ${g.xt.toFixed(1)}`, false]);
-  if (L && (okPrice(L.awayML) || okPrice(L.homeML))) {
-    const fav = !okPrice(L.homeML) ? 'away' : !okPrice(L.awayML) ? 'home' : impS(L.homeML) >= impS(L.awayML) ? 'home' : 'away', side = g.mlPick || fav;
-    const call = g.mlPick ? ` ${far(side, 'ml') ? 'call · far off' : `call · edge +${e(g.mlEdge[side])}`}` : '';
-    out.push(['ml', `Moneyline ${ab(g[side])} ${oddsS(side === 'home' ? L.homeML : L.awayML)}${call}${res('ml', 'ML')}`, !!g.mlPick && !R && !far(side, 'ml')]);
-  }
-  if (g.plPick && L && L.homeLine !== null && L.homeLine !== undefined) {
-    const side = g.plPick;
-    out.push(['pl', `Puck line ${ab(g[side])} ${lineS(side === 'home' ? L.homeLine : -L.homeLine)} ${oddsS(side === 'home' ? L.homeSpreadOdds : L.awaySpreadOdds)} ${far(side, 'pl') ? 'call · far off' : `call · edge +${e(g.plEdge[side])}`}${res('pl', 'PL')}`, !R && !far(side, 'pl')]);
-  }
-  if (L && L.total !== null && L.total !== undefined) {
-    const call = g.ouPick ? ` ${g.ouPick} · ${far(g.ouPick, 'ou') ? 'far off' : `edge +${e(g.ouEdge[g.ouPick])}`}` : '';
-    out.push(['ou', `Over/under ${L.total}${call}${res('ou', g.ouPick || 'O/U')}`, !!g.ouPick && !R && !far(g.ouPick, 'ou')]);
-  }
-  const alt = g.by === 'players' ? (g.elo ? ['Team Elo', g.elo.pHome] : null) : g.pm ? ['Player model', g.pm.pHome] : null;
-  if (alt && typeof alt[1] === 'number' && Math.abs(alt[1] - g.pHome) >= 0.1) out.push(['alt', `${alt[0]} ${ab(alt[1] >= 0.5 ? g.home : g.away)} ${pctS(Math.max(alt[1], 1 - alt[1]))}`, false]);
-  return out;
-}
+const chipsWantS = g => [['model', `Margin ${sMarginS(g)}`, false], ['xt', `Goals ${g.xt.toFixed(1)}`, false]];
 /* one game card against the state: returns what is wrong, [] when nothing is */
 function cardWrongs(w, c, g, ms, MAP) {
   const bad = [], ck = (ok, m) => { if (!ok) bad.push(m); };
-  const L = g.line, started = sStarted(g, ms), fresh = sFresh(g);
+  const started = sStarted(g, ms);
   /* the top line: the puck drop and the date in the visitor's clock, a note after it; the tags */
   const top = c.querySelector('.top.when');
   ck(!!top && txt(top.firstElementChild) === `${clockOf(Date.parse(g.start))} · ${new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}${g.note ? ' · ' + g.note : ''}`, `the top line (${top && txt(top.firstElementChild)})`);
@@ -3775,95 +3646,636 @@ function cardWrongs(w, c, g, ms, MAP) {
   ck(!!prob && sameHex(styleVar(prob, '--ac'), tagOfS(MAP[g.away]).bg) && sameHex(styleVar(prob, '--hc'), tagOfS(MAP[g.home]).bg), 'the win bar in the clubs\' tag fills');
   ck(eqA([...c.querySelectorAll('.pline .wp')].map(txt), [pctS(1 - g.pHome), pctS(g.pHome)]), `each side's chance under the bar (${[...c.querySelectorAll('.pline .wp')].map(txt).join(' + ')})`);
   /* the chips, every one, in order, lit exactly on a call before its grade, each grade a pill in its colour */
-  const want = chipsWantS(g, ms), have = [...c.querySelectorAll('.chips > .chip')].map(x => [x.dataset.ck, txt(x), x.classList.contains('edge')]);
+  const want = chipsWantS(g), have = [...c.querySelectorAll('.chips > .chip')].map(x => [x.dataset.ck, txt(x), x.classList.contains('edge')]);
   ck(eqA(have, want), `the chips ${JSON.stringify(want)} (${JSON.stringify(have)})`);
-  ck([...c.querySelectorAll('.chips .res')].every(r => /^(win|loss|push)$/.test(r.className.replace('res', '').trim())), 'each grade a pill in its colour');
-  /* no bet on the card (the window's Game bets carry them); a stale line says so */
-  ck(!c.querySelector('button[data-leg]') && !c.querySelector('.pb-bets'), 'no bets board on the card: its bets are in its Player props window');
-  const stale = c.querySelector('.pb-stale'), wantStale = !started && !!L && !fresh;
-  ck(!!stale === wantStale && (!stale || txt(stale) === `line from ${clockOf(Date.parse(L.at))}: not on DraftKings at the last run`), `a stale line says so exactly where it is (${stale && txt(stale)})`);
-  /* who is out (nhl v23): the two goalies on one row, each one's how on his title; a row for each player worth OUT_ROW_S goals or more; a
-     club whose last box score is not read yet. Everyone out, the day to day and the injury report are in Lineups, where the card has it */
-  const PLT = S.players && S.players.teams, lu = !started && !!g.pm && !!PLT && !!PLT[g.away] && !!PLT[g.home];
-  const out = c.querySelector('.out');
-  ck(!!out === !!g.pm, 'who is out exactly where the player model lined the game up');
-  if (g.pm && out) {
-    const kids = [...out.children], sides = ['away', 'home'];
-    const gk1 = s => { const t = g.pm[s].goalie, a = ab(g[s]); return !t ? `${a} goalie unknown` : `${t.name} ${a}${t.debut ? ', first NHL start' : ''}`; };
-    const want2 = [['gk', `In goal: ${sides.map(gk1).join(' · ')}`]];
-    for (const s of sides) for (const o of orderS((g.pm[s].out || []).filter(isRowS))) want2.push(['orow', `${o.name} ${ab(g[s])} · ${o.status || 'Out'} ${v2S(o.cost).t} goals`]);
-    for (const s of sides) { const t = g.pm[s]; if (t.lastBox && t.lastFinal && t.lastFinal > t.lastBox) want2.push(['muted', `${ab(g[s])} lineup from ${t.lastBox}: the box score of ${t.lastFinal} not read yet`]); }
-    const have2 = kids.map(x => [x.className, txt(x)]);
-    ck(eqA(have2, want2), `who is out, row by row: ${JSON.stringify(want2).slice(0, 500)} (${JSON.stringify(have2).slice(0, 500)})`);
-    const gTitles = [...out.querySelectorAll('.gk .g1[title]')].map(x => x.getAttribute('title')), gWant = sides.filter(s => g.pm[s].goalie).map(s => { const t = g.pm[s].goalie; return `${t.name}, ${ab(g[s])}: ${t.how}${t.debut ? ', first NHL start' : ''}`; });
-    ck(eqA(gTitles, gWant), `each goalie's how on his title ${JSON.stringify(gWant)} (${JSON.stringify(gTitles)})`);
-    ck(kids.filter(x => x.classList.contains('orow')).every(x => { const wh = x.querySelector(':scope > .who'); return !!wh && wh.getAttribute('title') === txt(wh).replace(/ (\S+) · /, ' · $1 · ') && !!x.querySelector(':scope > .cost'); }), 'each player\'s row carries his name and status whole on its title, and his figure');
-    /* nothing lost: on a card with Lineups every player out is in it with his status and figure, and each club's day to day; a row's
-       player is on the card itself either way */
-    const lost = [], dr = c.querySelector(`#lu-${g.id}`);
-    for (const [i, s] of sides.entries()) for (const o of g.pm[s].out || []) {
-      const fig = typeof o.cost === 'number' ? v2S(o.cost).t : null, st = o.status || 'Out';
-      if (isRowS(o) && !kids.some(x => x.classList.contains('orow') && txt(x).startsWith(`${o.name} ${ab(g[s])} · `))) lost.push(`${o.name}: no row on the card`);
-      if (lu) {
-        const blk = dr && dr.querySelectorAll(':scope > div')[i], li = blk && [...blk.querySelectorAll('.lu-out li')].find(x => txt(x.querySelector(':scope > span > .nw')) === o.name);
-        if (!li || txt(li.querySelector(':scope > span > .muted')) !== st || txt(li.querySelector(':scope > .v')) !== (fig === null ? '—' : fig)) lost.push(`${o.name}: not in Lineups with ${st} and ${fig}`);
-      }
-    }
-    if (lu && dr) for (const [i, s] of sides.entries()) {
-      const blk = dr.querySelectorAll(':scope > div')[i], n = blk ? blk.querySelectorAll('.lu-out li').length : -1; if (n !== (g.pm[s].out || []).length) lost.push(`${ab(g[s])}: Lineups lists ${n} out where the report has ${(g.pm[s].out || []).length}`);
-      const dd = g.pm[s].dtd || [], dl = blk && blk.querySelector('.lu-dtd');
-      if (dd.length ? txt(dl) !== `Day to day, in the lineup: ${dd.map(o => o.name).join(', ')}` : !!dl) lost.push(`${ab(g[s])}: the day to day in Lineups (${txt(dl)})`);
-    }
-    ck(!lost.length, `every player out has his row on the card or his status and figure in its Lineups, the day to day there too (${lost.slice(0, 4).join(' | ')})`);
-    /* nothing cut (a phone shows no title): no rule of the page's, in any media query, ellipsing who is out, nor a name in Lineups' outs */
-    const ell = cssWith(w, 'text-overflow', /^ellipsis$/);
-    const cutBy = [out, ...out.querySelectorAll('*')].map(el => ell.find(([sel]) => hitsSel(el, sel))).find(Boolean);
-    ck(!cutBy, `no rule cuts who is out short with an ellipsis (${cutBy ? cutBy.join(' @media ') : 'none'})`);
-    ck(kids.filter(x => x.classList.contains('orow')).every(x => { const wh = x.querySelector('.who'), nm = wh && wh.querySelector(':scope > .nw'), st = wh && wh.querySelector(':scope > .muted.nw'); return !!nm && !!st && txt(wh) === `${txt(nm)} ${txt(st)}`; }), 'each row\'s name and his club and status each kept whole on a line, the two free to wrap between');
-    if (dr) for (const sp of dr.querySelectorAll('.lu-out li > span:first-child')) { const cs = w.getComputedStyle(sp); if (cs.whiteSpace === 'nowrap' || cs.overflow === 'hidden') { ck(false, `a name in Lineups' outs is cut: white-space ${cs.whiteSpace}, overflow ${cs.overflow}`); break; } }
-  }
-  /* the Lineups drawer and the foot */
-  const luB = c.querySelector('button[data-lu]'), dr = c.querySelector(`#lu-${g.id}`);
-  ck(!!luB === lu && !!dr === lu, `Lineups exactly on a game to come the player model lines up (${!!luB}, ${!!dr})`);
-  if (lu && luB && dr) {
-    ck(luB.getAttribute('aria-controls') === `lu-${g.id}` && luB.getAttribute('aria-expanded') === String(!dr.hidden) && txt(luB) === 'Lineups', `the Lineups toggle names its drawer, says by aria-expanded whether it is open, and keeps its word, Lineups, so the foot never rewraps (${txt(luB)})`);
-    ck(!dr.querySelector('button') && c.querySelectorAll('button[data-lu]').length === 1 && !!luB.closest('.foot'), 'one Lineups toggle, in the foot, as the NBA\'s: the drawer has no button of its own (it once ended on a second Hide lineups right over the foot\'s)');
-    /* the injury report the call stands on and whose call it is, in the drawer's key (nhl v23) */
-    const srcW = `${g.pm.inj ? `Injury report of ${new Date(g.pm.inj).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}` : 'No injury report applied'} · the ${g.by === 'players' ? "player model's" : "team Elo's"} call.`;
-    ck(txt(dr.querySelector(':scope > .lu-src')) === srcW && !dr.querySelector('.lu-key') && dr.querySelectorAll(':scope > p').length === 1, `Lineups names the injury report and whose call it is in one state line, no key of sentences over it (nhl v25) ("${srcW}") (${[...dr.querySelectorAll(':scope > p')].map(txt).join(' | ').slice(0, 200)})`);
-    for (const [i, s] of [[0, 'away'], [1, 'home']]) {
-      const blk = dr.querySelectorAll(':scope > div')[i], t = PLT[g[s]], gkp = g.pm[s].goalie;
-      const want3 = (gkp ? [`${gkp.name}G${v2S(gkp.gk).t}`] : []).concat((t.lineup || []).slice(0, 9).map(p => `${p.name}${Math.round(p.share * 60)}'${v2S(p.v).t}`));
-      const have3 = blk ? [...blk.querySelectorAll('.lu-in li')].map(txt) : [];
-      ck(blk && txt(blk.querySelector('h4')) === `${ab(g[s])} · expected` && eqA(have3, want3), `${ab(g[s])}'s goalie and nine skaters with the most ice time, minutes and goals ${JSON.stringify(want3).slice(0, 200)} (${JSON.stringify(have3).slice(0, 200)})`);
-      const cls = blk ? [...blk.querySelectorAll('.lu-in li .v')].map(x => x.classList.contains('pos') ? 'pos' : x.classList.contains('neg') ? 'neg' : '') : [];
-      ck(eqA(cls, (gkp ? [v2S(gkp.gk).c] : []).concat((t.lineup || []).slice(0, 9).map(p => v2S(p.v).c))), `${ab(g[s])}'s figures lime above zero, rose below, plain at 0.00`);
-      /* the goalie and how he was chosen, then the strength the state's own to the hundredth, half away from zero (the Players tab's
-         figure), and its three parts shown so they add up to it, each within a hundredth of its own value (worked here from the line
-         itself, not the page's apportioning) */
-      const coachT = txt(blk && blk.querySelector('.coach')), gkW = gkp ? `In goal ${gkp.name}, ${gkp.how}${gkp.debut ? ', first NHL start' : ''} · ` : '';
-      ck(coachT.startsWith(gkW + 'Strength '), `${ab(g[s])}'s goalie and how he was chosen lead the strength line ("${gkW}") (${coachT.slice(0, 120)})`);
-      const cm = coachT.slice(gkW.length).match(/^Strength ([+-]?\d+\.\d\d) goals a game: attack ([+-]?\d+\.\d\d) · defence ([+-]?\d+\.\d\d) · goalie ([+-]?\d+\.\d\d) · top 9 of (\d+) skaters shown$/);
-      ck(!!cm && +cm[5] === (t.lineup || []).length, `${ab(g[s])}'s strength line reads "Strength … goals a game: attack … · defence … · goalie … · top 9 of ${(t.lineup || []).length} skaters shown" (${coachT.slice(0, 160)})`);
-      const nums = cm ? cm.slice(1, 5).map(x => Math.round(parseFloat(x) * 100)) : [];
-      const own = Math.sign(g.pm[s].strength) * Math.round(Math.abs(g.pm[s].strength) * 100);
-      ck(nums.length === 4 && nums[0] === own, `${ab(g[s])}'s strength shown is the state's own ${g.pm[s].strength} to the hundredth, ${own / 100} (${nums[0] / 100})`);
-      ck(nums.length === 4 && nums[0] === nums[1] + nums[2] + nums[3], `${ab(g[s])}'s strength is the sum of the attack, defence and goalie shown beside it (${coachT.slice(0, 80)})`);
-      const trueP = [t.offence, t.defence, gkp ? gkp.gk : 0];
-      ck(nums.length === 4 && trueP.every((x, i2) => Math.abs(nums[i2 + 1] / 100 - x) < 0.0101), `${ab(g[s])}'s attack, defence and goalie each within a hundredth of the state's ${JSON.stringify(trueP)} (${nums.slice(1).map(x => x / 100).join(', ')})`);
-      ck(nums.length === 4 && cm.slice(1, 5).every((x, i2) => v2S(nums[i2] / 100).t === x), `${ab(g[s])}'s strength line signed and to two places as the drawer's other figures (${cm ? cm.slice(1, 5).join(' ') : ''})`);
-    }
-  }
-  const go = !started && fresh && sSlate(ms).days.includes(g.date), goB = c.querySelector('button[data-pbgo]');
-  ck(!!goB === go && (!goB || txt(goB) === 'Parlay Builder →'), `Parlay Builder → exactly on a game to come with a fresh line on a day the panel offers (${!!goB})`);
-  /* Player props, the NBA's word alone (nhl v23), on a game to come with the props model's projections, DraftKings' props read, or a
-     fresh line (its window holds the game's bets) */
-  const ppB = c.querySelector('button[data-pp]'), ppWant = !started && (!!(S.props && S.props.games && S.props.games[g.id]) || (!!L && fresh));
-  ck(!!ppB === ppWant && (!ppB || (txt(ppB) === 'Player props' && !!ppB.closest('.foot'))), `Player props, its word alone, in the foot exactly on a game to come with projections, a read or a fresh line (${ppB ? txt(ppB) : 'none'})`);
-  const foot = c.querySelector('.foot'), footed = !!luB || !!goB || !!ppB;
-  ck(!!foot === footed, 'a foot exactly where it holds a button');
+  /* the card is one button that opens the game's page (nhl v27): no bet, price, grade, out row, drawer, foot or control of its own */
+  ck(c.tagName === 'BUTTON' && c.getAttribute('type') === 'button' && c.dataset.game === g.id && c.dataset.id === g.id && c.getAttribute('aria-haspopup') === 'dialog', "the card is a button that opens its game's page");
+  ck(!c.querySelector('button, a, input, .pb-bets, .pb-stale, .out, .drawer, .foot, .res, [data-leg], [data-pp], [data-lu], [data-pbgo]') && !/\bedge\b|far off|[+-]\d{3}\b/.test(txt(c.querySelector('.chips'))), "no bet, price, edge, grade, out row, drawer or control on the card: they are on the game's page");
   ck(!c.querySelector('img'), 'no image on the card');
   return bad;
+}
+
+/* ---------- THE GAME'S PAGE (nhl v27) ----------
+   The page a game opens (#gameModal, the NFL hub's game page in hockey's numbers) and its three little windows (#gsModal), worked out
+   here from the state by this section's own rules, never the page's code, on any state the job can publish (no game, every game
+   started, no line, a stale line, another book, no props model, no box score, the offseason): what a rule needs and the state lacks is
+   said and skipped, never failed.
+   gpWrongs(w, g, ms, rd, o) opens the game's page from its card and returns what is wrong with it: the bar (Close, the trial's pill by
+   the ledger's decision, All skaters), the search, Refresh odds and this game's own status line or, once the puck has dropped, the
+   strip; the head's six cells; the windows' buttons; Game bets row by row (the bet, a box exactly where a fresh line of a game to come
+   prices the side, ticked exactly where `o.inB` has the leg, the fair chance, its band by 70 and 45, the model's chance, the price,
+   Value exactly on the state's picks; the grades from `result` once the puck has dropped); each club's head, its outs (the report's,
+   in its order), the box score not read; every player's row in order (the goalie, the forwards and the defencemen by expected ice
+   time, six and four before All skaters; a game not projected the player model's lineup, names alone; a final the box score's), his
+   role, his day-to-day chip, his figures; and, opened one at a time, every block and row of his lines (the projection and the line
+   on the heading, the Over and the Under at DraftKings' fair chance with all of the margin on the Over, each milestone but the main
+   line's Over at its price over the measured margin, est. drawn, the props model's chance, the box's key) */
+const GP_STATS_S = { F: ['pts', 'g', 's', 'a', 'bs'], D: ['pts', 'g', 's', 'a', 'bs'], G: ['sv'] }, GP_HEAD_S = { F: ['pts', 's', 'g'], D: ['pts', 's', 'bs'], G: ['sv'] };
+const GP_LBL_S = { pts: 'Points', g: 'Goals', s: 'Shots on goal', a: 'Assists', bs: 'Blocked shots', sv: 'Saves' }, GP_SHORT_S = { pts: 'points', g: 'goals', s: 'shots', a: 'assists', bs: 'blocks', sv: 'saves' };
+const GP_CUT_F = 6, GP_CUT_D = 4;
+const gpSgnS = (x, n) => { const r = +(+x).toFixed(n); return (r > 0 ? '+' : r < 0 ? '-' : '') + Math.abs(r).toFixed(n); };
+const gpTierS = p => p >= 0.7 ? 'High' : p >= 0.45 ? 'Med' : 'Low';
+const gpDayS = iso => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+const gpOrdS = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th');
+const gpShortS = n => { const p = String(n || '').split(' '); return p.length < 2 ? String(n || '') : p[0][0] + '. ' + p.slice(1).join(' '); };
+const gpBookS = L => !L ? 'DraftKings' : String(L.book || '').toLowerCase().replace(/\s+/g, '') === 'draftkings' ? 'DraftKings' : L.book ? String(L.book) : 'the book';
+const gpPossS = n => /s$/.test(n) ? n + "'" : n + "'s";
+const gpDateClockS = iso => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+const isO = x => !!x && typeof x === 'object' && !Array.isArray(x);
+/* the score as the page should know it: a read this browser made (lv) over the state's own */
+function gpScoreS(g, lv) {
+  const st = lv ? lv.state : g.state, hs = lv ? lv.hs : g.hs, as = lv ? lv.as : g.as, ok = (st === 'final' || st === 'live') && Number.isFinite(hs) && Number.isFinite(as);
+  return { st, hs, as, fin: st === 'final' && ok, live: st === 'live' && ok, detail: String((lv ? lv.detail : g.detail) || '') };
+}
+/* every player of a game: the props model's projections, DraftKings' lines of the read (rd), by ESPN's athlete id */
+function gpPeopleS(g, rd) {
+  const pr = S.props && isO(S.props.games) && isO(S.props.games[g.id]) ? S.props.games[g.id] : null, PL = (S.players && S.players.players) || {}, m = new Map();
+  const get = id => { id = String(id); if (!m.has(id)) { const p = PL[id]; m.set(id, { id, name: p ? p.name : null, pos: p ? p.pos : null, team: p ? p.team : null, toi: null, how: null, debut: false, proj: {}, main: {}, yes: {}, dk: false, mine: false }); } return m.get(id); };
+  if (pr) for (const side of ['away', 'home']) {
+    const Q = pr[side + 'P']; if (!isO(Q)) continue;
+    for (const p of Q.skaters || []) { if (!isO(p) || !p.id) continue; const x = get(p.id); Object.assign(x, { name: p.name, pos: p.pos, team: g[side], toi: p.toi, mine: true }); for (const k of ['pts', 'g', 's', 'a', 'bs']) if (isO(p[k]) && Array.isArray(p[k].d)) x.proj[k] = p[k]; }
+    if (isO(Q.goalie) && Q.goalie.id) { const x = get(Q.goalie.id); Object.assign(x, { name: Q.goalie.name, pos: 'G', team: g[side], how: Q.goalie.how || null, debut: !!Q.goalie.debut, mine: true }); if (isO(Q.goalie.sv) && Array.isArray(Q.goalie.sv.d)) x.proj.sv = Q.goalie.sv; }
+  }
+  if (rd && rd.status === 200) {
+    for (const [a, st, L, po, pu] of rd.main) { const x = get(a); x.main[st] = { L, po, pu }; x.dk = true; }
+    for (const [a, st, k, price] of rd.yes) { const x = get(a); (x.yes[st] = x.yes[st] || []).push({ k, price }); x.dk = true; }
+  }
+  return m;
+}
+const gpBoxS = (g, pid) => { const b = S.box && isO(S.box.games) ? S.box.games[g.id] : null; if (!isO(b)) return null; const s = isO(b.s) ? b.s[pid] : null; if (Array.isArray(s)) return { g: s[0], a: s[1], pts: s[0] + s[1], s: s[2], bs: s[3] }; for (const k of ['g', 'r', 'u']) if (isO(b[k]) && b[k][pid] !== undefined) return { sv: b[k][pid] }; return null; };
+/* a club's rows in order, and the players DraftKings prices on neither club */
+function gpRosterS(g, rd, all, sc, started) {
+  const people = [...gpPeopleS(g, rd).values()], box = S.box && isO(S.box.games) && isO(S.box.games[g.id]) ? S.box.games[g.id] : null, PL = (S.players && S.players.players) || {}, PT = (S.players && S.players.teams) || {};
+  const out = {}, bare = (id, name, pos, club, more) => Object.assign({ id: String(id), name, pos, team: club, toi: null, how: null, debut: false, proj: {}, main: {}, yes: {}, dk: false, mine: true }, more || {});
+  for (const side of ['away', 'home']) {
+    const club = g[side], pm = isO(g.pm) && isO(g.pm[side]) ? g.pm[side] : null;
+    let list = people.filter(x => x.team === club && x.mine);
+    if (!list.length && sc.fin && box) {
+      list = Object.keys(isO(box.s) ? box.s : {}).filter(id => PL[id] && PL[id].team === club).map(id => bare(id, PL[id].name, PL[id].pos, club, { boxed: true }));
+      for (const k of ['g', 'r', 'u']) for (const id of Object.keys(isO(box[k]) ? box[k] : {})) if (PL[id] && PL[id].team === club) list.push(bare(id, PL[id].name, 'G', club, { boxed: true, relief: k === 'r' }));
+    }
+    if (!list.length && !started && pm && isO(PT[club])) {
+      if (isO(pm.goalie) && pm.goalie.name) list.push(bare(pm.goalie.id || 'g-' + club, pm.goalie.name, 'G', club, { how: pm.goalie.how || null, debut: !!pm.goalie.debut }));
+      for (const p of PT[club].lineup || []) if (isO(p) && p.id) list.push(bare(p.id, p.name, p.pos, club, { toi: Math.round((+p.share || 0) * 600) / 10 }));
+    }
+    const bx = x => { const v = x.boxed && box && isO(box.s) ? box.s[x.id] : null; return Array.isArray(v) ? (v[0] + v[1]) * 100 + v[2] : 0; };
+    const by = (a, b) => (b.toi || 0) - (a.toi || 0) || bx(b) - bx(a) || (b.proj.pts ? b.proj.pts.mu : 0) - (a.proj.pts ? a.proj.pts.mu : 0) || sStr(String(a.name), String(b.name)) || sStr(a.id, b.id);
+    const G = list.filter(x => sGrp(x.pos) === 'G'), F = list.filter(x => sGrp(x.pos) === 'F').sort(by), D = list.filter(x => sGrp(x.pos) === 'D').sort(by);
+    const extra = all ? people.filter(x => x.team === club && !x.mine && x.dk).sort((a, b) => sStr(String(a.name), String(b.name)) || sStr(a.id, b.id)) : [];
+    const dtd = new Set((pm && Array.isArray(pm.dtd) ? pm.dtd : []).flatMap(o => [o.id ? String(o.id) : null, o.name]).filter(Boolean));
+    out[side] = { club, pm, cut: F.length + D.length - Math.min(F.length, GP_CUT_F) - Math.min(D.length, GP_CUT_D),
+      players: (all ? [...G, ...F, ...D] : [...G, ...F.slice(0, GP_CUT_F), ...D.slice(0, GP_CUT_D)]).concat(extra).map(x => Object.assign({}, x, { grp: sGrp(x.pos), dtd: dtd.has(String(x.id)) || dtd.has(x.name) })) };
+  }
+  out.other = all ? people.filter(x => x.dk && ![g.home, g.away].includes(x.team)) : [];
+  return out;
+}
+/* one row of a bet table as drawn, and as it should be */
+const gpRowS = tr => { const c = tr.children, inp = c[0].querySelector('input[type="checkbox"]'), res = c[0].querySelector('.res'), val = c[1].querySelector('.pb-valmark'), fill = c[2].querySelector('.bar-fill'), mk = c[5].querySelector('.mkt');
+  return { n: c.length, box: inp ? (inp.dataset.leg !== undefined ? 'L:' + inp.dataset.leg : 'P:' + inp.dataset.ppAdd) : null, on: !!inp && inp.checked, aria: inp ? inp.getAttribute('aria-label') : null, res: res ? txt(res) : null,
+    label: val ? txt(c[1]).slice(0, -txt(val).length) : txt(c[1]), value: val ? `${txt(val)}|${val.title}` : null, bar: fill ? `${fill.className.replace(/^bar-fill\s*/, '')} ${fill.style.width}` : c[2].querySelector('.bar-track') ? 'empty' : 'none',
+    pct: c[3].querySelector('em') ? txt(c[3]).slice(0, -txt(c[3].querySelector('em')).length) : txt(c[3]), est: c[3].querySelector('em') ? txt(c[3].querySelector('em')) : '', pctT: c[3].title || '', band: txt(c[4]), bandC: c[4].querySelector('.conf') ? c[4].querySelector('.conf').className : '',
+    model: txt(c[5]), modelT: mk ? mk.title : '', price: txt(c[6]), cls: tr.className.split(/\s+/).filter(Boolean).sort().join(' ') }; };
+const gpRowWant = o => { const f = o.fair === null || o.fair === undefined || !isFinite(o.fair) ? null : o.fair, t = f === null ? null : gpTierS(f), pc = o.pc || PBS.pctW, locked = !!o.locked, key = !locked && o.box ? o.box : null;
+  return { n: 7, box: key, on: !!key && !!o.on, aria: key ? o.aria : null, res: locked ? (o.res === 'win' ? '✓' : o.res === 'loss' ? '✗' : o.res === 'push' ? 'push' : '–') : null,
+    label: o.label, value: o.value ? `Value|${o.value}` : null, bar: f === null ? 'empty' : `${t.toLowerCase()} ${Math.max(2, Math.min(100, f * 100)).toFixed(0)}%`,
+    pct: f === null ? '–' : pc(f), est: f !== null && o.est ? 'est.' : '', pctT: f === null ? '' : `${gpPossS(o.book || 'DraftKings')} fair chance${o.est ? ', est.' : ''}`, band: f === null ? '' : t, bandC: f === null ? '' : `conf ${t.toLowerCase()}`,
+    model: o.model === null || o.model === undefined ? '' : `model ${pc(o.model)}`, modelT: o.model === null || o.model === undefined ? '' : o.modelT, price: PBS.ok(o.price) ? PBS.odds(o.price) : '',
+    cls: [o.cls || '', key && o.on ? 'on' : '', key ? 'pickable' : '', locked && o.res === 'win' ? 'hit' : locked && o.res === 'loss' ? 'miss' : ''].filter(Boolean).sort().join(' ') }; };
+const gpDiff = (have, want) => Object.keys(want).filter(k => have[k] !== want[k]).map(k => `${k} "${have[k]}" not "${want[k]}"`);
+const gpFlipS = r => r === 'win' ? 'loss' : r === 'loss' ? 'win' : r;
+/* Game bets as they should be: [block key, heading parts, rows] and the lines over and under them */
+function gpBetsS(g, sc, locked, inB) {
+  const L = g.line, R = isO(g.result) ? g.result : null, offer = !locked && !!L && sFresh(g), bk = gpBookS(L), on = id => !!inB && inB.has(id);
+  const won = sc.fin && sc.hs !== sc.as ? (sc.hs > sc.as ? 'home' : 'away') : null;
+  const valT = (pick, edge, side) => !locked && L && pick === side ? (isO(edge) && typeof edge[side] === 'number' ? `the model's call: its chance is ${Math.round(edge[side] * 100)} points above the chance ${gpPossS(bk)} price implies` : "the model's call") : '';
+  const blocks = [];
+  for (const side of ['away', 'home']) {
+    const id = g[side], nm = sh(id), B = sLeg(g, side, 'ml'), C = sLeg(g, side, 'pl'), pW = side === 'home' ? g.pHome : 1 - g.pHome, rows = [];
+    rows.push(gpRowWant({ label: 'To win', fair: B ? B.fair : null, book: bk, model: pW, modelT: "the model's chance to win, overtime included", price: B ? B.price : null, box: offer && B ? 'L:' + B.id : null, on: B && on(B.id), aria: `Add ${nm} to win`, locked, res: locked && won ? (won === side ? 'win' : 'loss') : null, value: B ? valT(g.mlPick, g.mlEdge, side) : '' }));
+    if (C) rows.push(gpRowWant({ label: `To cover ${lineS(C.num)}`, fair: C.fair, book: bk, model: C.p, modelT: "the model's chance to cover", price: C.price, box: offer ? 'L:' + C.id : null, on: on(C.id), aria: `Add ${nm} to cover ${lineS(C.num)}`, locked, res: locked && R && R.homeCover ? (side === 'home' ? R.homeCover : gpFlipS(R.homeCover)) : null, value: valT(g.plPick, g.plEdge, side) }));
+    blocks.push({ key: side, tag: id, ems: [`our margin ${gpSgnS(side === 'home' ? g.mu : -g.mu, 1)}`].concat(C ? [`book line ${lineS(C.num)}`] : []), head: `${ab(id)} ${nm}`, rows });
+  }
+  const O = sLeg(g, 'over', 'ou'), U = sLeg(g, 'under', 'ou');
+  if (O || U) blocks.push({ key: 'total', tag: null, ems: [`model's goals ${g.xt.toFixed(1)}`, `book line ${L.total}`], head: 'Game total', rows: [[O, 'over'], [U, 'under']].filter(x => x[0]).map(([B, side]) => gpRowWant({ label: `${side === 'over' ? 'Over' : 'Under'} ${B.num}`, fair: B.fair, book: bk, model: B.p, modelT: `the model's chance of the ${side}`, price: B.price, box: offer ? 'L:' + B.id : null, on: on(B.id), aria: `Add ${side} ${B.num} goals, ${sh(g.away)} at ${sh(g.home)}`, locked, res: locked && R && R.over ? (side === 'over' ? R.over : gpFlipS(R.over)) : null, value: valT(g.ouPick, g.ouEdge, side) })) });
+  return { blocks, src: !L ? null : `Lines: ${gpPossS(bk)}, read from ESPN ${L.refreshed ? 'by Refresh odds ' : ''}${clockOf(Date.parse(L.at))}.`, why: !L ? 'No DraftKings line yet.' : !locked && !sFresh(g) ? `Line from ${clockOf(Date.parse(L.at))}: not on DraftKings at the last run.` : null };
+}
+/* a player's open body: a block a stat, its heading's parts and its rows */
+function gpBodyS(x, g, inB, canAdd) {
+  const out = [], addOk = canAdd && [g.home, g.away].includes(x.team) && !!x.grp, nm = x.name || `ESPN athlete ${x.id}`, modelT = "the props model's chance (on trial)";
+  for (const st of GP_STATS_S[x.grp] || PP_STATS_S_ORDER) {
+    const D = x.proj[st], M = x.main[st], Y = (x.yes[st] || []).filter(y => !M || y.k !== Math.floor(M.L) + 1).sort((a, b) => a.k - b.k);
+    if (!D && !M && !Y.length) continue;
+    const blk = { stat: st, head: GP_LBL_S[st], ems: (D ? [`projected ${ppMuS(st, D.mu)}`] : []).concat(M ? [`DraftKings line ${M.L}`] : []), rows: [], none: !M && !Y.length };
+    if (M) for (const side of ['over', 'under']) { const word = side === 'over' ? 'Over' : 'Under', price = side === 'over' ? M.po : M.pu, id = `${g.id}|p|${x.id}|${st}|${side}${M.L}`;
+      blk.rows.push(gpRowWant({ cls: 'mainline', label: `${word} ${M.L}`, fair: side === 'over' ? 1 - PBS.imp(M.pu) : PBS.imp(M.pu), pc: ppPctS, model: !D ? null : side === 'over' ? atLeastS(D, Math.floor(M.L) + 1) : 1 - atLeastS(D, Math.ceil(M.L)), modelT, price, box: addOk ? `P:${x.id}|${st}|main|${side}|${M.L}` : null, on: !!inB && inB.has(id), aria: `Add ${nm}, ${word} ${M.L} ${S_STAT_NAME[st]}, ${PBS.odds(price)}` })); }
+    for (const y of Y) { const id = `${g.id}|p|${x.id}|${st}|k${y.k}`, any = st === 'g' && y.k === 1;
+      blk.rows.push(gpRowWant({ cls: 'rung', label: any ? 'Anytime goal' : `${y.k}+`, fair: fairYesS(st, y.k, y.price), est: true, pc: ppPctS, model: D ? atLeastS(D, y.k) : null, modelT, price: y.price, box: addOk ? `P:${x.id}|${st}|yes|${y.k}` : null, on: !!inB && inB.has(id), aria: `Add ${nm}, ${any ? 'Anytime goal' : `${y.k}+ ${S_STAT_NAME[st]}`}, ${PBS.odds(y.price)}` })); }
+    out.push(blk);
+  }
+  return out;
+}
+const PP_STATS_S_ORDER = ['pts', 'g', 'a', 's', 'bs', 'sv'];
+function gpRoleS(x) {
+  if (x.grp !== 'G') return { t: `${x.pos || ''}${x.toi ? ` · ${Math.round(x.toi)} min` : ''}`, title: x.toi ? 'his position · expected minutes on the ice' : '' };
+  const how = String(x.how || ''), m = /^(confirmed|likely|unconfirmed|named)\b/i.exec(how);
+  return { t: ['G', m ? m[1].toLowerCase() : how, x.debut ? 'first NHL start' : '', x.relief ? 'in relief' : ''].filter(Boolean).join(' · '), title: how };
+}
+/* this game's status line: whose line and when (none, or one DraftKings no longer lists), then its player lines where they are not simply in */
+function gpStatusS(g, rd, ms, failed) {
+  const L = g.line, parts = [], last = PBS.nextDay(etDate(ms));
+  parts.push(!L ? 'No DraftKings line yet' : !sFresh(g) ? `Line from ${clockOf(Date.parse(L.at))}: not on DraftKings at the last run` : `${gpBookS(L)} via ESPN, ${clockOf(Date.parse(L.at))}`);
+  if (!rd) parts.push(g.date <= last ? 'player lines not read yet' : 'player lines on game day');
+  else if (rd.status === 404) parts.push('no player lines yet');
+  else if (rd.status !== 200) parts.push("couldn't read player lines");
+  else if (L && sFresh(g) && Math.floor(Date.parse(rd.at) / 60000) !== Math.floor(Date.parse(L.at) / 60000)) parts.push(`player lines ${clockOf(Date.parse(rd.at))}`);
+  if (failed && failed.includes(g.date)) parts.push("couldn't reach ESPN");
+  return parts.join(' · ') + '.';
+}
+function gpTrialS() {
+  if (!S.props) return null;
+  const Lg = isO(S.props.ledger) ? S.props.ledger : null, f4 = v => (+v).toFixed(4), n = v => (+v || 0).toLocaleString('en-US');
+  const graded = Lg ? `${n(Lg.compared)} of ${n(Lg.of)} DraftKings main lines graded` : '', nums = Lg && isO(Lg.model) && isO(Lg.market) ? `; log loss: model ${f4(Lg.model.logloss)}, DraftKings ${f4(Lg.market.logloss)}` : '';
+  if (Lg && Lg.decision === 'FAIL') return { cls: 'bad', t: 'props model: failed its trial', title: `The props model did not beat DraftKings' own prices: ${graded}${nums}.` };
+  if (Lg && Lg.decision === 'PASS') return { cls: 'ok', t: 'props model: passed its trial', title: `${graded}${nums}.` };
+  return { cls: 'warn', t: 'props model on trial', title: `Not yet shown to beat DraftKings' own prices.${graded ? ` ${graded}${nums}; the verdict comes at ${n(Lg.of)}.` : ''}` };
+}
+/* the head's three: the biggest projected points, shots on goal and saves; a final with no projection its box score's leaders */
+function gpLeadS(g, rd, sc) {
+  const people = [...gpPeopleS(g, rd).values()].filter(x => x.mine), top = st => people.filter(x => x.proj[st]).sort((a, b) => b.proj[st].mu - a.proj[st].mu || sStr(a.id, b.id))[0];
+  const rows = [['pts', 'pts'], ['s', 'sog'], ['sv', 'sv']].map(([st, cat]) => { const x = top(st), act = x && sc.fin ? gpBoxS(g, x.id) : null, a = act && act[st] !== undefined ? act[st] : null;
+    return x ? [cat, gpShortS(x.name), `${ppMuS(st, x.proj[st].mu)}${cat}${a !== null ? `${a}${cat}` : sc.fin ? '–' : ''}`] : null; }).filter(Boolean);
+  if (rows.length || !sc.fin) return { lab: 'Biggest projections', rows, none: 'No projections for this game yet' };
+  const box = S.box && isO(S.box.games) && isO(S.box.games[g.id]) ? S.box.games[g.id] : null, PL = (S.players && S.players.players) || {}; if (!box) return { lab: 'Leaders', rows: [], none: 'Box score not read yet' };
+  const best = (o, f) => Object.keys(o).map(id => [id, f(o[id])]).sort((a, b) => b[1] - a[1] || sStr(a[0], b[0]))[0], nm = id => PL[id] && PL[id].name ? PL[id].name : `ESPN athlete ${id}`;
+  const L = [], sk = isO(box.s) ? box.s : {}, gk = isO(box.g) ? box.g : {};
+  if (Object.keys(sk).length) { const [a, v] = best(sk, x => x[0] + x[1]); L.push(['pts', gpShortS(nm(a)), `${v}pts`]); const [b, w2] = best(sk, x => x[2]); L.push(['sog', gpShortS(nm(b)), `${w2}sog`]); }
+  if (Object.keys(gk).length) { const [c, u] = best(gk, x => +x); L.push(['sv', gpShortS(nm(c)), `${u}sv`]); }
+  return { lab: 'Leaders', rows: L, none: 'Box score not read yet' };
+}
+/* what is wrong with the game's page, opened from its card. o: lv (a read of the score this browser made), inB (the leg ids the
+   builder should draw), failed (the days a press could not reach), noPlayers (the rows' order alone, no player opened), all */
+function gpWrongs(w, g, ms, rd, o = {}) {
+  const d = w.document, bad = [], ck = (ok, m) => { if (!ok) bad.push(m); }, MAP = o.MAP || pageMap(w);
+  const card = betsOn(d, g), view = d.getElementById('gameView'), modal = d.getElementById('gameModal');
+  if (!card) return [`the game's card did not open its page (${g.id})`];
+  const sc = gpScoreS(g, o.lv || null), started = sStarted(g, ms), locked = started || sc.st !== 'pre', future = g.state === 'pre' && Date.parse(g.start) > ms;
+  const fin = sc.fin || sc.st === 'final' || (locked && !future && ms - Date.parse(g.start) > 4 * 3600000), A = ab(g.away), H = ab(g.home);
+  const panel = modal.querySelector('.modal-panel');
+  ck(panel.getAttribute('role') === 'dialog' && panel.getAttribute('aria-modal') === 'true' && panel.getAttribute('aria-labelledby') === 'gpTitle' && !!d.getElementById('gpTitle') && d.body.classList.contains('modal-open'), 'the page is a modal dialog named by its matchup, the page under it locked');
+  /* the bar */
+  const bar = view.firstElementChild, all = d.getElementById('allCb'), tp = d.getElementById('ppTrial'), TW = S.props && isO(S.props.games) && isO(S.props.games[g.id]) ? gpTrialS() : null;
+  ck(!!bar && bar.classList.contains('bar') && bar.firstElementChild === d.getElementById('backBtn') && txt(d.getElementById('backBtn')) === '✕ Close' && !!all && all.type === 'checkbox' && txt(all.closest('label')) === 'All skaters' && !view.querySelector('select'), `the bar is Close, the trial's pill and All skaters; no Book's cut (${txt(bar)})`);
+  ck(TW ? !!tp && txt(tp) === TW.t && tp.classList.contains('pill') && tp.classList.contains(TW.cls) && tp.title === TW.title : !tp, `the props model's trial is one pill on a page that shows a projection, the ledger's numbers on its title (${tp ? `${txt(tp)}: ${tp.title}` : 'none'}; want ${TW ? `${TW.t}: ${TW.title}` : 'none'})`);
+  if (o.all !== undefined && all && all.checked !== o.all) all.click();
+  const allOn = d.getElementById('allCb').checked, sr = d.getElementById('gameSearch');
+  ck(!!sr && sr.type === 'search' && sr.placeholder === 'Find a player' && sr.getAttribute('aria-label') === 'Find a player in this game' && sr.closest('.gsearch') === view.children[1], 'Find a player under the bar');
+  /* Refresh odds and the status line, or the strip */
+  const rb = d.getElementById('ppRefreshOdds'), note = d.getElementById('ppOddsNote'), strip = view.querySelector('.gp-live'), msg = d.getElementById('ppMsg');
+  ck(!!msg && msg.getAttribute('role') === 'status' && msg.getAttribute('aria-live') === 'polite', 'the page has its one live status line (#ppMsg)');
+  if (!locked) {
+    const want = gpStatusS(g, rd, ms, o.failed);
+    ck(!!rb && rb.hasAttribute('data-odds') && txt(rb) === 'Refresh odds' && rb.getAttribute('aria-describedby') === 'ppOddsNote' && rb.getAttribute('aria-busy') === 'false' && !!note && note.getAttribute('role') === 'status' && !strip, 'a game to come has Refresh odds and its status line, no strip');
+    ck(!!note && txt(note) === want, `the status line is this game's state ("${want}": "${note ? txt(note) : ''}")`);
+  } else {
+    const ot = /\/(OT|SO)/.exec(sc.detail), want = sc.fin ? `Final${ot ? ` (${ot[1]})` : ''}: ${A} ${sc.as}, ${H} ${sc.hs}.` : sc.live ? `${A} ${sc.as}, ${H} ${sc.hs} · ${sc.detail}.` : future ? 'Start moved · call kept.' : fin ? 'Final.' : 'In progress.';
+    ck(!rb && !note && !!strip && txt(strip.querySelector('b')) === want && strip.classList.contains('fin') === fin && !!strip.querySelector('#gameScoresNow') === !sc.fin, `once the puck has dropped the strip says the score, Refresh scores until it is final, and Refresh odds is gone ("${want}": "${strip ? txt(strip) : ''}")`);
+    if (sc.live && !o.lv) ck(!!strip && /as of /.test(txt(strip)), 'a live score the job published says when it was read');
+    ck(!view.querySelector('input[data-leg], input[data-pp-add]'), 'no bet can be ticked once the puck has dropped');
+  }
+  /* the head */
+  const hd = view.querySelector('.ghead'), cells = hd ? [...hd.querySelector('.gh-grid').children] : [];
+  const L3 = gpLeadS(g, rd, sc), labs = cells.map(c => txt(c.querySelector('.gh-lab')));
+  ck(cells.length === 6 && eqA(labs, ['Puck drop', 'Matchup', L3.lab, 'Expected score', 'Total', 'Model pick']), `the head's six cells (${labs.join(' | ')})`);
+  if (cells.length === 6) {
+    const ot = /\/(OT|SO)/.exec(sc.detail), day = gpDayS(g.start), wb = cells[0].querySelector('.when');
+    const whenW = sc.fin || sc.st === 'final' ? `FINAL${ot ? ' · ' + ot[1] : ''}` : sc.live ? `${A} ${sc.as}–${sc.hs} ${H}${sc.detail}` : future && started ? `${clockOf(Date.parse(g.start))}start moved · call kept` : locked ? 'LIVE' : clockOf(Date.parse(g.start));
+    ck(txt(wb.querySelector('b')) === day && txt(wb).slice(day.length).trim() === whenW.trim(), `the puck drop cell: the day and the time on the visitor's clock, or where the game stands ("${day}" + "${whenW}": "${txt(wb)}")`);
+    const tags = [...cells[1].querySelectorAll('h2 .ttag')], won = sc.fin && sc.hs !== sc.as ? (sc.hs > sc.as ? g.home : g.away) : null, wk = [...cells[1].querySelectorAll('.wck')];
+    ck(tags.length === 2 && txt(tags[0]) === A && txt(tags[1]) === H && !tagWrong(tags[0], MAP[g.away]) && !tagWrong(tags[1], MAP[g.home]) && txt(cells[1].querySelector('.at')) === (g.neutral ? 'vs' : 'at'), `the matchup: the two clubs' tags in their colours, "${g.neutral ? 'vs' : 'at'}" between them (${txt(cells[1])})`);
+    ck(wk.length === (won ? 1 : 0) && (!won || wk[0].previousElementSibling === tags[won === g.away ? 0 : 1]), `a tick on the winner's tag alone, once final (${wk.length})`);
+    const noteW = [g.note, g.neutral ? 'neutral ice' : ''].filter(Boolean).join(' · '), nt = cells[1].querySelector('.gh-note');
+    ck(noteW ? !!nt && txt(nt) === noteW : !nt, `the game's note and neutral ice under the tags ("${noteW}": "${nt ? txt(nt) : ''}")`);
+    const lr = [...cells[2].querySelectorAll('.lead > div')].map(r => [txt(r.querySelector('.cat')), txt(r.querySelector('.nm')), txt(r.querySelector('.v'))]);
+    ck(L3.rows.length ? eqA(lr, L3.rows) : !lr.length && txt(cells[2].querySelector('.lead')) === L3.none, `the head's three (${L3.lab}: ${JSON.stringify(L3.rows)}; drawn ${JSON.stringify(lr)} ${txt(cells[2].querySelector('.lead')).slice(0, 40)})`);
+    const xa = Math.max(0.3, (g.xt - g.mu) / 2).toFixed(1), xh = Math.max(0.3, (g.xt + g.mu) / 2).toFixed(1);
+    const totW = `${xa} – ${xh}${A} / ${H}${sc.fin ? `(actual ${sc.as} – ${sc.hs})` : sc.live ? `live ${sc.as} – ${sc.hs}` : ''}`, totH = txt(cells[3]).slice('Expected score'.length);
+    ck(totH === totW, `the expected score: the goals layer's two rates to a tenth, away first ("${totW}": "${totH}")`);
+    const tpW = `${g.xt.toFixed(1)}goals${sc.fin ? `(actual ${sc.as + sc.hs})` : ''}`;
+    ck(txt(cells[4]).slice('Total'.length) === tpW, `the total: the model's expected goals ("${tpW}": "${txt(cells[4])}")`);
+    const pickId = g.pick ? g[g.pick] : (g.pHome >= 0.5 ? g.home : g.away), pc = pickId === g.home ? g.pHome : 1 - g.pHome, pt = cells[5].querySelector('.ttag'), acts = [...cells[5].querySelectorAll('small')];
+    const actW = won ? `${won === pickId ? '✓' : '✗'} ${ab(won)} by ${Math.abs(sc.hs - sc.as)}` : null;
+    ck(!!pt && txt(pt) === ab(pickId) && !tagWrong(pt, MAP[pickId]) && txt(acts[0]) === PBS.pctW(pc) && (actW ? acts.length === 2 && txt(acts[1]) === actW && acts[1].classList.contains(won === pickId ? 'right' : 'wrong') : acts.length === 1), `the model's pick: the state's call and its chance, right or wrong once final (${ab(pickId)} ${PBS.pctW(pc)} ${actW || ''}: ${txt(cells[5])})`);
+  }
+  /* the windows' buttons */
+  const wins = [...view.querySelectorAll('.gwin [data-gp-pop]')];
+  ck(eqA(wins.map(b => `${b.dataset.gpPop}:${txt(b)}`), ['units:Matchup', 'lineups:Lineups', 'stats:Team Stats']) && wins.every(b => b.tagName === 'BUTTON' && b.getAttribute('aria-haspopup') === 'dialog') && hd && hd.nextElementSibling === view.querySelector('.gwin'), `three buttons under the head: Matchup, Lineups, Team Stats (${wins.map(txt).join(', ')})`);
+  /* Game bets */
+  const BW = gpBetsS(g, sc, locked, o.inB || new Set()), blocks = [...card.querySelectorAll('.statblk')];
+  ck(txt(card.querySelector('h2')) === 'Game bets' && (BW.src ? txt(card.querySelector('.gp-src')) === BW.src : !card.querySelector('.gp-src')) && (BW.why ? txt(card.querySelector('.gp-why')) === BW.why : !card.querySelector('.gp-why')), `Game bets says where its lines were read and why it has none or offers none ("${BW.src}", "${BW.why}": ${txt(card.querySelector('.gp-src'))} | ${txt(card.querySelector('.gp-why'))})`);
+  ck(eqA(blocks.map(b => b.dataset.gb), BW.blocks.map(b => b.key)), `its blocks: each club, then the total where the line has one (${blocks.map(b => b.dataset.gb).join(', ')}; want ${BW.blocks.map(b => b.key).join(', ')})`);
+  BW.blocks.forEach((bw, i) => {
+    const el = blocks[i]; if (!el || el.dataset.gb !== bw.key) return;
+    const h4 = el.querySelector('h4'), ems = [...h4.querySelectorAll('em')].map(txt), tg = h4.querySelector('.ttag'), rows = [...el.querySelectorAll('table.rungs tr')];
+    ck(eqA(ems, bw.ems) && txt(h4).startsWith(bw.head) && (bw.tag ? !!tg && !tagWrong(tg, MAP[bw.tag]) : !tg), `Game bets, ${bw.key}: its heading (${bw.head} ${bw.ems.join(' | ')}: ${txt(h4)})`);
+    ck(rows.length === bw.rows.length, `Game bets, ${bw.key}: ${bw.rows.length} rows (${rows.length})`);
+    rows.forEach((tr, j) => { if (!bw.rows[j]) return; const df = gpDiff(gpRowS(tr), bw.rows[j]); ck(!df.length, `Game bets, ${bw.key}, ${bw.rows[j].label}: ${df.slice(0, 3).join('; ')}`); });
+  });
+  /* the clubs and their players */
+  const R = gpRosterS(g, rd, allOn, sc, started), kids = [...view.children], PT = (S.players && S.players.teams) || {};
+  const heads = kids.filter(k => k.classList.contains('teamhdr'));
+  const wantHeads = [g.away, g.home].concat(R.other.length ? [''] : []);
+  ck(eqA(heads.map(h => h.dataset.team), wantHeads), `a head a club, away first${R.other.length ? ', then Other players' : ''} (${heads.map(h => h.dataset.team).join(', ')})`);
+  let opened = 0, rowsN = 0; const toOpen = [];
+  ['away', 'home'].forEach((side, si) => {
+    const t = R[side], hdr = heads[si]; if (!hdr || hdr.dataset.team !== t.club) return;
+    const under = []; for (let n = hdr.nextElementSibling; n && !n.classList.contains('teamhdr'); n = n.nextElementSibling) under.push(n);
+    const opp = ab(g[side === 'home' ? 'away' : 'home']), htag = hdr.querySelector('.ttag');
+    ck(!!htag && txt(htag) === ab(t.club) && !tagWrong(htag, MAP[t.club]) && txt(hdr) === `${ab(t.club)} ${sh(t.club)} ${fin ? 'played' : 'playing'} ${opp}` && txt(hdr.querySelector('.pill')) === `${fin ? 'played' : 'playing'} ${opp}`, `${t.club}: its head, its tag, its name and who it ${fin ? 'played' : 'is playing'} (${txt(hdr)})`);
+    const outs = t.pm && Array.isArray(t.pm.out) ? t.pm.out : [], outEl = under.find(n => n.matches('[data-gp-out]')), boxEl = under.find(n => n.matches('[data-gp-box]'));
+    const outW = !locked && outs.length ? `Out: ${outs.map(x => `${x.name} (${[x.pos, String(x.status || 'Out').toLowerCase()].filter(Boolean).join(', ')})`).join(', ')}.` : null;
+    ck(outW ? !!outEl && txt(outEl) === outW && eqA([...outEl.querySelectorAll('b')].map(txt), outs.map(x => x.name)) : !outEl, `${t.club}: "Out:" is exactly the injury report's outs for the club, in its order, while the game is to come ("${outW}": "${outEl ? txt(outEl) : ''}")`);
+    const boxW = !locked && t.pm && t.pm.lastBox && t.pm.lastFinal && t.pm.lastFinal > t.pm.lastBox ? `Lineup from ${t.pm.lastBox}: the box score of ${t.pm.lastFinal} not read yet.` : null;
+    ck(boxW ? !!boxEl && txt(boxEl) === boxW : !boxEl, `${t.club}: a lineup built before its last box score was read says so ("${boxW}": "${boxEl ? txt(boxEl) : ''}")`);
+    const rows = under.filter(n => n.classList.contains('plrbtn')), empty = under.find(n => n.classList.contains('empty'));
+    if (!t.players.length) { const ew = !locked ? 'No players to project.' : S.box && S.box.from && g.date < S.box.from ? 'Box score no longer carried.' : 'Box score not read yet.'; ck(!rows.length && !!empty && txt(empty) === ew, `${t.club}: with nobody to list the club says why ("${ew}": "${empty ? txt(empty) : rows.length + ' rows'}")`); return; }
+    ck(eqA(rows.map(r => r.dataset.open || r.dataset.nohist), t.players.map(x => x.id)) && !empty, `${t.club}: its rows in order, the goalie, the forwards and the defencemen by expected ice time${allOn ? '' : `, ${GP_CUT_F} and ${GP_CUT_D} before All skaters`} (${rows.length} rows, want ${t.players.length}: ${rows.map(r => r.dataset.open || r.dataset.nohist).join(',').slice(0, 90)} | ${t.players.map(x => x.id).join(',').slice(0, 90)})`);
+    t.players.forEach((x, i) => {
+      const r = rows[i]; if (!r || (r.dataset.open || r.dataset.nohist) !== x.id) return; rowsN++;
+      const nProj = Object.keys(x.proj).length, act = sc.fin ? gpBoxS(g, x.id) : null, hasBody = locked ? (sc.fin && !!act) || nProj > 0 : nProj > 0 || x.dk, role = gpRoleS(x);
+      const who = r.querySelector('.who'), nmEl = [...who.childNodes].find(c => c.nodeType === 3 && c.textContent.trim()), inj = who.querySelector('.inj'), chip = who.querySelector('.stbtn'), rs = [...who.children].find(c => !c.classList.contains('inj') && !c.classList.contains('stbtn'));
+      const nmW = x.name || `ESPN athlete ${x.id}`;
+      ck((r.tagName === 'BUTTON') === hasBody && (hasBody ? r.dataset.open === x.id && r.hasAttribute('aria-expanded') : r.dataset.nohist === x.id), `${nmW}: a row that opens exactly where he has something under it`);
+      ck(!!nmEl && nmEl.textContent.trim() === nmW && !!rs && txt(rs) === role.t && (rs.getAttribute('title') || '') === role.title, `${nmW}: his name and his role ("${role.t}", title "${role.title}": "${txt(who)}")`);
+      ck(!!inj === (!locked && x.dtd) && (!inj || (txt(inj) === 'DTD' && /^Day to day/.test(inj.title))), `${nmW}: a DTD chip exactly where the report has him day to day and the game is to come`);
+      ck(hasBody ? !!chip && chip.getAttribute('role') === 'button' && chip.getAttribute('tabindex') === '0' && chip.dataset.stats === x.id && txt(chip) === (chip.getAttribute('aria-pressed') === 'true' ? 'Hide stats' : 'Show stats') : !chip, `${nmW}: Show stats on a row that opens`);
+      const sum = r.querySelector('.sum'), fc = sum.querySelector('.finchip');
+      const figs = sc.fin && !act ? 'did not play' : ((GP_HEAD_S[x.grp] || []).filter(st => act ? act[st] !== undefined : x.proj[st]).map(st => act ? `${act[st]} ${GP_SHORT_S[st]}${x.proj[st] ? ` (proj ${ppMuS(st, x.proj[st].mu)})` : ''}` : `${ppMuS(st, x.proj[st].mu)} ${GP_SHORT_S[st]}`).join(' · ') || 'No projection yet');
+      const sumW = !hasBody ? (locked ? 'did not play' : 'No lines yet') : `${locked ? (fin ? 'FINAL' : 'LIVE') : ''}${locked && !sc.fin && nProj ? 'projected ' : ''}${figs}`;
+      ck(txt(sum) === sumW && !!fc === (hasBody && locked), `${nmW}: his figures ("${sumW}": "${txt(sum)}")`);
+      if (hasBody && !o.noPlayers) toOpen.push({ x, nmW, act });
+    });
+  });
+  /* each player opened in turn (a tap draws the page again, so his row is found afresh): one open at a time, his lines under his row */
+  for (const { x, nmW, act } of toOpen) {
+    {
+      const r = [...view.querySelectorAll('.plrbtn[data-open]')].find(z => z.dataset.open === x.id); if (!r) { bad.push(`${nmW}: his row is gone`); continue; }
+      r.click(); opened++;
+      const r2 = [...view.querySelectorAll('.plrbtn[data-open]')].find(z => z.dataset.open === x.id), body = r2 && r2.nextElementSibling && r2.nextElementSibling.classList.contains('wkstats') ? r2.nextElementSibling.nextElementSibling : r2 && r2.nextElementSibling;
+      const openN = view.querySelectorAll('.plrbtn[aria-expanded="true"]').length;
+      if (!r2 || r2.getAttribute('aria-expanded') !== 'true' || openN !== 1 || !body || !body.classList.contains('plrbody') || view.querySelectorAll('.plrbody').length !== 1) { bad.push(`${nmW}: a tap opens him alone, his lines under his row (${openN} open)`); continue; }
+      if (locked) {
+        const tiles = [...body.querySelectorAll('.tile')], tw = (GP_STATS_S[x.grp] || []).filter(st => x.proj[st] || (act && act[st] !== undefined)).map(st => { const av = act && act[st] !== undefined ? act[st] : null, D = x.proj[st], df = av === null || !D ? null : av - D.mu; return `${GP_LBL_S[st]}${av === null ? '–' : av}${D ? `proj ${ppMuS(st, D.mu)}${df === null ? '' : ` · ${df >= 0 ? '+' : '-'}${Math.abs(df).toFixed(1)}`}` : ''}`; });
+        ck(eqA(tiles.map(txt), tw) && !body.querySelector('input') && (sc.fin && !act ? /Did not play: legs void\./.test(txt(body)) : true), `${nmW}: once the puck has dropped, a tile a stat, what he did beside what was projected, no bet (${tiles.map(txt).join(' | ')}; want ${tw.join(' | ')})`);
+        continue;
+      }
+      const BL = gpBodyS(x, g, o.inB, !!(rd && rd.status === 200)), bls = [...body.querySelectorAll('.statblk')];
+      ck(eqA(bls.map(b => b.dataset.ppStat), BL.map(b => b.stat)), `${nmW}: a block a stat of his group that has a projection or a price (${bls.map(b => b.dataset.ppStat).join(',')}; want ${BL.map(b => b.stat).join(',')})`);
+      BL.forEach((bw, bi) => {
+        const el = bls[bi]; if (!el || el.dataset.ppStat !== bw.stat) return;
+        const h4 = el.querySelector('h4'), ems = [...h4.querySelectorAll('em')].map(txt), trs = [...el.querySelectorAll('table.rungs tr')], nl = el.querySelector('[data-noline]');
+        ck(txt(h4).startsWith(bw.head) && eqA(ems, bw.ems), `${nmW}, ${bw.stat}: the heading's projection and line (${bw.ems.join(' | ')}: ${txt(h4)})`);
+        ck(bw.none ? !!nl && txt(nl) === 'No DraftKings line yet.' && !trs.length : !nl && trs.length === bw.rows.length, `${nmW}, ${bw.stat}: ${bw.none ? 'no line, said' : `${bw.rows.length} rows, the main line's two then each milestone`} (${trs.length} rows)`);
+        trs.forEach((tr, j) => { if (!bw.rows[j]) return; const df = gpDiff(gpRowS(tr), bw.rows[j]); ck(!df.length, `${nmW}, ${bw.stat}, ${bw.rows[j].label}: ${df.slice(0, 3).join('; ')}`); });
+      });
+    }
+  }
+  if (R.other.length) { const hdr = [...view.querySelectorAll('.teamhdr')][2], rows = []; for (let n = hdr && hdr.nextElementSibling; n; n = n.nextElementSibling) rows.push(n);
+    ck(!!hdr && txt(hdr) === 'Other players' && eqA(rows.map(r => r.dataset.nohist), R.other.map(x => x.id)) && rows.every(r => r.tagName === 'DIV' && /not matched to either club/.test(txt(r)) && !r.querySelector('input')), `a player DraftKings prices whom no table puts on either club is listed last, not offered (${rows.length}, want ${R.other.length})`); }
+  /* no description, and no word of an edge on a player's line */
+  const long = [...view.querySelectorAll('p, small')].filter(el => txt(el).length > 90 && !el.matches('.gp-out, .gp-msg'));
+  ck(!long.length && !/How these numbers|Tap a |model says/i.test(txt(view)) && ![...view.querySelectorAll('.plrbody, .plrbtn')].some(el => /\bedge\b|Value/i.test(txt(el))) && !view.querySelector('details, .pp-key, .pb-key, .pp-how'), `no description on the page, and nothing on a player's line says "edge", "Value" or "model says" (${long.map(el => txt(el).slice(0, 50)).join(' | ')})`);
+  bad.opened = opened; bad.rows = rowsN;
+  return bad;
+}
+/* the three little windows of a game, each worked out here: what is wrong with them. The game's page must be open on the game */
+function gpWindowWrongs(w, g, ms) {
+  const d = w.document, bad = [], ck = (ok, m) => { if (!ok) bad.push(m); }, MAP = pageMap(w), md = d.getElementById('gsModal'), A = ab(g.away), H = ab(g.home);
+  const PT = (S.players && S.players.teams) || {}, num = v => typeof v === 'number' && isFinite(v);
+  const open = kind => { const b = d.querySelector(`#gameView [data-gp-pop="${kind}"]`); if (!b) return null; b.click(); return md.hidden ? null : b; };
+  const close = () => { if (!md.hidden) d.getElementById('gsClose').click(); };
+  const title = kind => `${A}${g.neutral ? 'vs' : 'at'}${H}${kind} · ${gpDayS(g.start)}`;
+  const shell = (kind, name) => { const p = md.querySelector('.modal-panel'), sec = md.querySelector('.gs-sec');
+    ck(md.classList.contains('gs-one') && md.dataset.gsOnly === kind && p.getAttribute('role') === 'dialog' && p.getAttribute('aria-modal') === 'true' && p.getAttribute('aria-labelledby') === 'gsTitle' && txt(d.getElementById('gsTitle')) === title(name) && w.document.activeElement === d.getElementById('gsClose') && !!sec && sec.dataset.gsOnly === kind && !d.getElementById('gameModal').hidden,
+      `${name}: a dialog over the game's page, titled by the game and the day, its Close holding the focus (${txt(d.getElementById('gsTitle'))})`); };
+  /* Matchup */
+  if (open('units')) {
+    shell('units', 'Matchup');
+    const clubs = Object.keys(PT).filter(c => isO(PT[c]) && num(PT[c].offence) && num(PT[c].defence)), pm = side => isO(g.pm) && isO(g.pm[side]) ? g.pm[side] : null;
+    const gk = (c, side) => { const k = side && pm(side) && isO(pm(side).goalie) ? pm(side).goalie : PT[c].goalie; return isO(k) && num(k.gk) ? k.gk : 0; };
+    const units = [...md.querySelectorAll('.gs-unit')];
+    if (clubs.includes(g.away) && clubs.includes(g.home)) {
+      const offs = clubs.map(c => PT[c].offence), defs = clubs.map(c => PT[c].defence + gk(c)), sd = a => { const m = a.reduce((s, v) => s + v, 0) / a.length; return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+      const spread = Math.sqrt(sd(offs) ** 2 + sd(defs) ** 2) || 1, rank = (a, v) => 1 + a.filter(x => x > v + 1e-12).length;
+      const band = z => z >= 1.5 ? 'Easy' : z >= 0.5 ? 'Favorable' : z > -0.5 ? 'Even' : z > -1.5 ? 'Tough' : 'Very tough';
+      ck(units.length === 2, `Matchup: two blocks, each club's attack (${units.length})`);
+      [['away', 'home'], ['home', 'away']].forEach(([att, def], i) => {
+        const u = units[i]; if (!u) return;
+        const o1 = PT[g[att]].offence, d1 = PT[g[def]].defence + gk(g[def], def), e = o1 - d1, ro = rank(offs, o1), rd2 = rank(defs, d1), boxes = [...u.querySelectorAll('.gs-ubox')];
+        const want = [`${ab(g[att])} attack${gpOrdS(ro)} of ${clubs.length}${gpSgnS(o1, 2)}goals a game`, `${ab(g[def])} defence + goalie${gpOrdS(rd2)} of ${clubs.length}${gpSgnS(d1, 2)}goals a game`];
+        ck(u.dataset.gsPoss === `${g[att]}-${g[def]}` && txt(u.querySelector('h4')) === `${sh(g[att])} attack` && txt(u.querySelector('.dtag')) === band(e / spread) && !!u.querySelector('.dtag').title && txt(u.querySelector('.gs-hpts')) === `${gpSgnS(e, 2)} goals`, `Matchup, ${g[att]}'s attack: the gap between it and the defence and goalie it meets, tagged by the league's spread (${band(e / spread)} ${gpSgnS(e, 2)}: ${txt(u.querySelector('.gs-uhd'))})`);
+        ck(eqA(boxes.map(b => txt(b).replace(/\s+/g, '')), want.map(x => x.replace(/\s+/g, ''))) && boxes.length === 2 && boxes[0].classList.contains('gs-better') === (ro < rd2) && boxes[1].classList.contains('gs-better') === (rd2 < ro), `Matchup, ${g[att]}'s attack: each side's rank of ${clubs.length} and its goals a game, the better rank washed (${boxes.map(txt).join(' | ')}; want ${want.join(' | ')})`);
+      });
+    } else ck(!units.length, 'Matchup: no attack blocks where the player model has no parts for a club');
+    const prev = c => { let p = null; for (const x of S.games) if (x !== g && x.id !== g.id && (x.home === c || x.away === c) && x.date < g.date && (p === null || x.date > p)) p = x.date; return p === null ? null : Math.round((Date.parse(g.date + 'T12:00:00Z') - Date.parse(p + 'T12:00:00Z')) / 86400000) - 1; };
+    const restT = r => r === null ? '–' : r <= 0 ? 'back to back' : `${r} day${r === 1 ? '' : 's'}`, fig = v => num(v) ? gpSgnS(v, 2) : '–', last = n => String(n || '').split(' ').slice(1).join(' ') || String(n || '');
+    const ga = pm('away') && isO(pm('away').goalie) ? pm('away').goalie : null, gh = pm('home') && isO(pm('home').goalie) ? pm('home').goalie : null, sa = pm('away') ? pm('away').strength : null, shh = pm('home') ? pm('home').strength : null, ra = prev(g.away), rh = prev(g.home);
+    const rowsW = [].concat(ga || gh ? [['goal', 'In goal', fig(ga ? ga.gk : null), fig(gh ? gh.gk : null), ga ? ga.gk : null, gh ? gh.gk : null, `${ga ? last(ga.name) : '–'} · ${gh ? last(gh.name) : '–'}`]] : [],
+      num(sa) || num(shh) ? [['strength', 'Strength', fig(sa), fig(shh), sa, shh, 'goals a game']] : [], num(g.ra) && num(g.rh) ? [['elo', 'Team Elo', String(Math.round(g.ra)), String(Math.round(g.rh)), g.ra, g.rh, '']] : [], [['rest', 'Rest', restT(ra), restT(rh), ra, rh, '']]);
+    const rowsH = [...md.querySelectorAll('.ddrow[data-gs-row]')];
+    ck(eqA(rowsH.map(r => r.dataset.gsRow), rowsW.map(r => r[0])), `Matchup, the clubs: in goal, strength, the team Elo, rest (${rowsH.map(r => r.dataset.gsRow).join(', ')})`);
+    rowsW.forEach((rw, i) => { const r = rowsH[i]; if (!r || r.dataset.gsRow !== rw[0]) return; const el = [...r.querySelectorAll('.ddelo')], sn = [...r.querySelectorAll('.ddsn')].map(txt), both = num(rw[4]) && num(rw[5]);
+      ck(txt(r.querySelector('.ddunit')) === rw[1] && eqA(sn, [A, H]) && eqA(el.map(txt), [rw[2], rw[3]]) && el[0].classList.contains('gs-better') === (both && rw[4] > rw[5]) && el[1].classList.contains('gs-better') === (both && rw[5] > rw[4]) && txt(r.querySelector('.ddend')) === rw[6], `Matchup, ${rw[1]}: ${A} ${rw[2]} · ${H} ${rw[3]} ${rw[6]}, the higher marked (${txt(r)})`); });
+    /* the models: the Pick'em Record's reading of the same game (sPkPick, sPkModel), each model's side and its chance */
+    const dkp = sPkLined(g.line) ? sImp(+g.line.homeML) / (sImp(+g.line.homeML) + sImp(+g.line.awayML)) : null, mk = id => { const x = sPkModel(g, id, null); return x && num(x.c.pHome) ? x.c.pHome : null; };
+    const MW = [['The call', g.pHome, 'call'], ['Team Elo', g.by === 'players' && isO(g.elo) && num(g.elo.pHome) ? g.elo.pHome : g.pHome, 'elo'], ['Alpha', isO(g.models) ? mk('alpha') : null, 'alpha'], ['The Joker', isO(g.models) ? mk('joker') : null, 'joker'], ['ELO Model', isO(g.models) ? mk('elom') : null, 'elom'], ['DraftKings', dkp, 'dk']].filter(r => num(r[1]));
+    const MH = [...md.querySelectorAll('.ddrow[data-gs-model]')].map(r => [r.dataset.gsModel, txt(r.querySelector('.ttag')), txt(r.querySelector('.ddelo'))]);
+    ck(eqA(MH, MW.map(([n, p]) => [n, ab(p >= 0.5 ? g.home : g.away), PBS.pctW(Math.max(p, 1 - p))])), `Matchup, the models: each model's pick and its chance, the call first, DraftKings last where the game has both moneylines (${JSON.stringify(MH)})`);
+    /* each row's side is the Pick'em tab's own pick of the model on this game (but a call whose stored pick parts from its chance, which the tab reads off `pick`) */
+    for (const [n, p, id] of MW) { const pk = sPkPick(g, id), side = p >= 0.5 ? 'home' : 'away'; if (id !== 'call' && pk) ck(pk === side, `Matchup, ${n}: its side is the Pick'em Record's pick for the game (${side}, ${pk})`); }
+    ck(!md.querySelector('p') || [...md.querySelectorAll('p')].every(p => txt(p).length <= 90), 'Matchup: no description');
+    close();
+  } else ck(false, 'the Matchup window did not open');
+  /* Lineups */
+  if (open('lineups')) {
+    shell('lineups', 'Lineups');
+    const ok = isO(g.pm) && isO(g.pm.away) && isO(g.pm.home) && isO(PT[g.away]) && isO(PT[g.home]);
+    if (!ok) ck(txt(md.querySelector('.gs-msg')) === 'No lineup for this game yet.' && !md.querySelector('.lu-club'), `Lineups: with no lineup in the state it says so (${txt(md.querySelector('.gs-secbody'))})`);
+    else {
+      /* once the puck has dropped the window shows what the call was frozen on (its goalie, its strength, who was out), never today's skaters and parts */
+      const cols = [...md.querySelectorAll('.lu-club')], lockedL = sStarted(g, ms) || g.state !== 'pre';
+      ck(eqA(cols.map(c => c.dataset.luClub), [g.away, g.home]), `Lineups: a column a club, away first (${cols.map(c => c.dataset.luClub).join(', ')})`);
+      ['away', 'home'].forEach((side, i) => {
+        const c = cols[i]; if (!c) return;
+        const code = g[side], t = PT[code], pmS = g.pm[side], gkp = isO(pmS.goalie) ? pmS.goalie : null, lu = !lockedL && Array.isArray(t.lineup) ? t.lineup : [];
+        const inW = (gkp ? [[gkp.name, 'G', v2S(gkp.gk)]] : []).concat(lu.slice(0, 9).map(p => [p.name, `${Math.round(p.share * 60)}'`, v2S(p.v)]));
+        const inH = [...c.querySelectorAll('.lu-in li')].map(li => [txt(li.children[0]), txt(li.children[1]), txt(li.children[2]), li.children[2].className.replace(/^v\s*/, '')]);
+        ck(txt(c.querySelector('.gs-thn')) === `${ab(code)}${sh(code)}` && eqA(inH, inW.map(x => [x[0], x[1], x[2].t, x[2].c])), `Lineups, ${code}: its goalie and its nine skaters with the most ice time, minutes and goals a game, signed and coloured by the sign (${inH.length} rows, want ${inW.length})`);
+        /* the strength the state's own to the hundredth, its three parts as shown adding up to it, each within a hundredth of its own value */
+        const st = c.querySelector('.lu-str'), tot = Math.sign(pmS.strength) * Math.round(Math.abs(pmS.strength) * 100) / 100, m = (lockedL ? /Strength ([+-]?\d+\.\d\d)$/ : /Strength ([+-]?\d+\.\d\d): attack ([+-]?\d+\.\d\d) · defence ([+-]?\d+\.\d\d) · goalie ([+-]?\d+\.\d\d)$/).exec(txt(st));
+        const parts = [t.offence, t.defence, gkp ? gkp.gk : 0];
+        ck(!!m && Math.abs(+m[1] - tot) < 1e-9 && (lockedL || (Math.abs(+m[2] + +m[3] + +m[4] - +m[1]) < 1e-9 && [2, 3, 4].every(k => Math.abs(+m[k] - parts[k - 2]) <= 0.01 + 1e-9))), `Lineups, ${code}: the strength the state's own to the hundredth, its parts adding up to it, each within a hundredth of its own value (${txt(st)}; ${tot}: ${parts.join(', ')})`);
+        ck(gkp ? txt(st).startsWith(`In goal ${gkp.name}, ${gkp.how}${gkp.debut ? ', first NHL start' : ''} · Strength `) : txt(st).startsWith('Strength '), `Lineups, ${code}: led by the goalie and how he was chosen (${txt(st).slice(0, 80)})`);
+        const outs = (Array.isArray(pmS.out) ? pmS.out : []).map((x, k) => [x, k]).sort((a, b) => ((typeof b[0].cost === 'number' ? Math.abs(b[0].cost) : -1) - (typeof a[0].cost === 'number' ? Math.abs(a[0].cost) : -1)) || a[1] - b[1]).map(x => x[0]);
+        const outH = [...c.querySelectorAll('.lu-out li')].map(li => [txt(li.children[0]), txt(li.children[1])]), outW = outs.map(x => [`${x.name} ${x.status || 'Out'}`, typeof x.cost === 'number' ? v2S(x.cost).t : '–']);
+        ck(eqA(outH, outW) && (outs.length ? [...c.querySelectorAll('.gs-lab')].some(l => txt(l) === 'Out') : !c.querySelector('.lu-out')) && [...c.querySelectorAll('.lu-out li > span:first-child > span')].every(s => s.classList.contains('nw')), `Lineups, ${code}: everyone the report has out, his status and what he adds, most valuable first, each name and status whole (${JSON.stringify(outH).slice(0, 160)}; want ${JSON.stringify(outW).slice(0, 160)})`);
+        const dtd = Array.isArray(pmS.dtd) ? pmS.dtd : [], dd = c.querySelector('.lu-day');
+        ck(dtd.length ? !!dd && txt(dd) === `Day to day, in the lineup: ${dtd.map(x => x.name).join(', ')}` : !dd, `Lineups, ${code}: its day to day by name (${dd ? txt(dd) : 'none'})`);
+      });
+      const src = md.querySelector('.lu-src'), srcW = `${g.pm.inj ? `Injury report of ${gpDateClockS(g.pm.inj)}` : 'No injury report applied'} · the ${g.by === 'players' ? "player model's" : "team Elo's"} call.`;
+      ck(!!src && txt(src) === srcW && !md.querySelector('button:not(#gsClose)'), `Lineups: its foot names the injury report the lineup stands on and whose call it is; no button in it but Close ("${srcW}": "${src ? txt(src) : ''}")`);
+    }
+    close();
+  } else ck(false, 'the Lineups window did not open');
+  /* Team Stats */
+  if (open('stats')) {
+    shell('stats', 'Team Stats');
+    const TA = isO(S.teams[g.away]) ? S.teams[g.away] : {}, TH = isO(S.teams[g.home]) ? S.teams[g.home] : {}, po = c => S.playoff && isO(S.playoff.odds) && isO(S.playoff.odds[c]) && num(S.playoff.odds[c].playoff) ? Math.round(1000 * S.playoff.odds[c].playoff) / 10 : null;
+    const SR = [['ptp', 'Points percentage', t => t.gp ? Math.round(1000 * t.pts / (2 * t.gp)) / 10 : null, 0, 0, 1], ['gd', 'Goal differentialper game', t => t.gp ? Math.round(100 * (t.gf - t.ga) / t.gp) / 100 : null, 0, 1, 0], ['gf', 'Goals per game', t => t.gfRate, 0, 0, 0], ['ga', 'Goals allowedper game', t => t.gaRate, 1, 0, 0],
+      ['sf', 'Shots per game', t => t.sf, 0, 0, 0], ['sa', 'Shots allowedper game', t => t.sa, 1, 0, 0], ['rw', 'Regulation wins', t => t.rw, 0, 0, 0], ['po', 'Playoff chance', (t, c) => po(c), 0, 0, 1]];
+    const nv = v => v === null || v === undefined || v === '' || !isFinite(+v) ? null : +v, fmt = (v, sign, pc) => v === null ? '–' : (v < 0 ? '-' + Math.abs(v) : (sign && v > 0 ? '+' : '') + v) + (pc ? '%' : '');
+    let na = 0, nh = 0; const want = [];
+    for (const [k, lab, f, lo, sign, pc] of SR) {
+      const x = nv(f(TA, g.away)), y = nv(f(TH, g.home)); if (x === null && y === null) continue;
+      let pa = 0, ph = 0;
+      if (x !== null && y !== null && !(x === 0 && y === 0)) { if (lo) { const ix = 1 / Math.max(x, 0.01), iy = 1 / Math.max(y, 0.01); pa = ix / (ix + iy) * 100; } else { const mn = Math.min(x, y, 0), sx = x - mn, sy = y - mn; pa = sx + sy === 0 ? 50 : sx / (sx + sy) * 100; } pa = Math.round(pa * 10) / 10; ph = Math.round((100 - pa) * 10) / 10; }
+      const ba = x !== null && y !== null && x !== y && (lo ? x < y : x > y), bh = x !== null && y !== null && x !== y && !ba; if (ba) na++; if (bh) nh++;
+      want.push([k, lab, fmt(x, sign, pc), fmt(y, sign, pc), `${pa}%`, `${ph}%`, ba, bh]);
+    }
+    const bars = [...md.querySelectorAll('.gs-sbar')].map(r => { const i = r.querySelectorAll('.gs-shalf i'), v = r.querySelectorAll('.gs-v'); return [r.dataset.gsSrow, txt(r.querySelector('.gs-slb')), txt(v[0]), txt(v[1]), i[0].style.width, i[1].style.width, v[0].classList.contains('gs-better'), v[1].classList.contains('gs-better')]; });
+    if (!want.length) ck(txt(md.querySelector('.gs-msg')) === 'No team stats yet.', 'Team Stats: with no number for either club it says so');
+    else {
+      ck(eqA(bars, want), `Team Stats: a row a stat the state carries, each club's number, the pair split on its bar, the better marked (${JSON.stringify(bars).slice(0, 200)}; want ${JSON.stringify(want).slice(0, 200)})`);
+      ck(txt(md.querySelector('[data-gs-tsum]')) === `${A} better on ${na}, ${H} on ${nh}`, `Team Stats: how many each club is better on (${txt(md.querySelector('[data-gs-tsum]'))}; ${na}, ${nh})`);
+      let thru = null; for (const x of S.games) if (x.state === 'final' && (thru === null || x.date > thru)) thru = x.date;
+      const g1 = n => `${+n || 0} game${+n === 1 ? '' : 's'}`, footW = `${S.season - 1}-${String(S.season).slice(2)} season${thru ? ' through ' + new Date(thru + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : ''}: ${A} ${g1(TA.gp)}, ${H} ${g1(TH.gp)}.`;
+      ck(txt(md.querySelector('[data-gs-sbasis]')) === footW, `Team Stats: its foot, the season and each club's games ("${footW}": "${txt(md.querySelector('[data-gs-sbasis]'))}")`);
+      const fills = [...md.querySelectorAll('.gs-shalf i')].map(i => styleVar(i, '--gs-tc')), fw = [tagOfS(MAP[g.away]).bg, tagOfS(MAP[g.home]).bg];
+      ck(fills.every((c, i) => sameHex(c, fw[i % 2])), `Team Stats: each bar's halves in the two clubs' own colours (${fills.slice(0, 2).join(', ')}; ${fw.join(', ')})`);
+    }
+    close();
+  } else ck(false, 'the Team Stats window did not open');
+  return bad;
+}
+/* Show stats, by this section's own sums: a player's games in the box scores the state carries (his club's, by puck drop), a row a
+   game, and the foot's averages */
+function gpStatsS(x) {
+  const B = S.box && isO(S.box.games) ? S.box.games : {}, gk = x.grp === 'G';
+  const rows = Object.keys(B).map(id => [S.games.find(z => z.id === id), gk ? (isO(B[id].g) ? B[id].g : {})[x.id] : (isO(B[id].s) ? B[id].s : {})[x.id]]).filter(r => r[0] && r[1] !== undefined && [r[0].home, r[0].away].includes(x.team))
+    .sort((a, b) => (Date.parse(a[0].start) - Date.parse(b[0].start)) || sStr(`${ab(a[0].away)} @ ${ab(a[0].home)}`, `${ab(b[0].away)} @ ${ab(b[0].home)}`));
+  if (!rows.length) return { none: `No games in the last ${S.box && +S.box.days ? +S.box.days : 14} days.` };
+  const cols = gk ? [v => +v] : [v => v[0], v => v[1], v => v[0] + v[1], v => v[2], v => v[3]];
+  return { head: ['Date', 'Opp'].concat(gk ? ['SV'] : ['G', 'A', 'PTS', 'SOG', 'BLK']), body: rows.map(([r, v]) => [new Date(r.start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), ab(r.home === x.team ? r.away : r.home)].concat(cols.map(f => String(f(v))))),
+    foot: [`Per game (${rows.length})`].concat(cols.map(f => { const s = rows.reduce((t, r) => t + f(r[1]), 0) / rows.length; return s.toFixed(s < 10 ? 1 : 0); })) };
+}
+async function gamePageChecks() {
+  console.log("THE GAME'S PAGE");
+  const AT = PUB + 60000, errs = [], w = await boot(AT, errs, { keepDk: true }), d = w.document, MAP = pageMap(w), real = S, show = process.env.NHL_SMOKE_ALL ? 40 : 4;
+  const $ = id => d.getElementById(id), modal = $('gameModal'), view = $('gameView'), gs = $('gsModal');
+  const rdOf = g => S.props && isO(S.props.games) && isO(S.props.games[g.id]) ? dkSeed(S.props.games[g.id].dk) : null;
+  const key = (k, o = {}) => new w.KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true, cancelable: true }, o));
+  chk(!!modal && modal.hidden && modal.parentElement === d.body && !!gs && gs.hidden && gs.parentElement === d.body && !d.getElementById('ppWin') && !d.querySelector('.pp-row, .pp-add, #ppStats, #ppBody, #ppRead, .drawer, .orow, button[data-lu], button[data-pbgo]'),
+    "the game's page and its little window are children of the body, shut on load; the Player props window, the Lineups drawer, the out rows and Parlay Builder → are gone");
+  /* ---- every game of every day on the strip: its page and its three windows, worked out here ---- */
+  const days = [...d.querySelectorAll('#days .day')].map(b => b.dataset.day), req0 = w.__requests.length, wr0 = w.__writes.length;
+  let n = 0, opened = 0, rows = 0; const bad = [], badW = [], kinds = { come: 0, lined: 0, read: 0, proj: 0, live: 0, fin: 0, boxed: 0 };
+  for (const day of days) for (const g of S.games.filter(x => x.date === day)) {
+    const rd = rdOf(g), b = gpWrongs(w, g, AT, rd, { MAP });
+    n++; opened += b.opened || 0; rows += b.rows || 0;
+    kinds[sStarted(g, AT) ? (g.state === 'final' ? 'fin' : 'live') : 'come']++; if (!sStarted(g, AT) && g.line && sFresh(g)) kinds.lined++; if (rd && rd.status === 200) kinds.read++; if (S.props && isO(S.props.games) && S.props.games[g.id]) kinds.proj++; if (g.state === 'final' && S.box && isO(S.box.games) && S.box.games[g.id]) kinds.boxed++;
+    for (const m of b) bad.push(`${g.id} ${ab(g.away)} @ ${ab(g.home)}: ${m}`);
+    if (pageOn(d, g.id)) for (const m of gpWindowWrongs(w, g, AT)) badW.push(`${g.id} ${ab(g.away)} @ ${ab(g.home)}: ${m}`);
+  }
+  closeBets(d);
+  chk(!bad.length, `every game on the strip opens its page, and the page is the state's: the bar, the status line or the strip, the head, Game bets row by row, each club's outs and every player's row and lines (${n} games, ${rows} rows, ${opened} players opened; ${bad.length} wrong: ${bad.slice(0, show).join(' | ')})`);
+  chk(!badW.length, `each game's three windows are the state's: Matchup (both attacks' ranks and gaps, the clubs' rows, every model's pick as the Pick'em Record reads it), Lineups, Team Stats (${badW.length} wrong: ${badW.slice(0, show).join(' | ')})`);
+  chk(w.__requests.length === req0 && w.__writes.length === wr0, `opening a game's page, its players and its windows asks for nothing and stores nothing (${w.__requests.length - req0} requests, ${w.__writes.length - wr0} writes)`);
+  console.log(`  ${n} games on the strip's ${days.length} days: ${kinds.come} to come (${kinds.lined} with a fresh line, ${kinds.proj} projected, ${kinds.read} with DraftKings' player lines read), ${kinds.live} under way, ${kinds.fin} final (${kinds.boxed} boxed); ${rows} player rows held, ${opened} opened and held line by line`);
+  if (!n) console.log("  no game on the strip: the game's page is held on no game of this state");
+  /* ---- the keyboard, the focus, the ways out: on a game to come where the strip has one, else on its first game ---- */
+  const onStrip = S.games.filter(g => days.includes(g.date)), G0 = onStrip.find(g => !sStarted(g, AT) && rdOf(g) && rdOf(g).status === 200 && sFresh(g)) || onStrip.find(g => !sStarted(g, AT) && S.props && isO(S.props.games) && S.props.games[g.id]) || onStrip.find(g => !sStarted(g, AT)) || onStrip[0];
+  if (G0) {
+    openDay(d, G0.date); d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, G0.date);
+    const card = () => cardOf(d, G0.id), panel = modal.querySelector('.modal-panel');
+    chk(!!card() && card().tagName === 'BUTTON' && card().getAttribute('aria-haspopup') === 'dialog' && !card().querySelector('button, a, input'), 'a game card is one button, which opens the game\'s page; no control inside it');
+    card().focus(); card().click();
+    chk(pageOn(d, G0.id) && d.activeElement === panel && panel.getAttribute('tabindex') === '-1' && d.body.classList.contains('modal-open') && modal.scrollTop === 0, `the card opens the game's page, and the focus moves into it (on ${d.activeElement && (d.activeElement.id || d.activeElement.className)})`);
+    chk(w.location.hash === '#games', `the address does not change (${w.location.hash})`);
+    /* Tab stays inside: from the last control round to the first, and back */
+    const focusable = () => [...modal.querySelectorAll('button, a[href], input, select, [tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled && !x.closest('[hidden]'));
+    const f = focusable(); f[f.length - 1].focus(); const ev1 = key('Tab'); d.activeElement.dispatchEvent(ev1);
+    chk(d.activeElement === f[0] && ev1.defaultPrevented && f[0].id === 'backBtn', `Tab from the page's last control goes to its first, Close (${d.activeElement && d.activeElement.id})`);
+    const ev2 = key('Tab', { shiftKey: true }); d.activeElement.dispatchEvent(ev2);
+    chk(d.activeElement === f[f.length - 1] && ev2.defaultPrevented, 'Shift+Tab from the first goes to the last: Tab never leaves the page');
+    /* Escape closes it; the focus is back on the card */
+    d.activeElement.dispatchEvent(key('Escape'));
+    chk(modal.hidden && !d.body.classList.contains('modal-open') && d.activeElement === card() && !view.children.length, `Escape closes the page and the focus goes back to the game's card (${d.activeElement && (d.activeElement.dataset.game || d.activeElement.tagName)})`);
+    card().click(); $('backBtn').click();
+    chk(modal.hidden && d.activeElement === card(), 'Close closes it, the focus back on the card');
+    card().click(); modal.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+    chk(modal.hidden && d.activeElement === card(), 'a click on the backdrop closes it');
+    card().click(); view.querySelector('.ghead').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+    chk(!modal.hidden, 'a click inside the page does not');
+    d.querySelector('#tabs button[data-tab="record"]').click();
+    chk(modal.hidden && !d.body.classList.contains('modal-open'), 'a change of tab closes it');
+    d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, G0.date);
+    /* a window: Close holds the focus, Tab stays inside, Escape closes it alone and gives the focus back to its button; the next Escape closes the page */
+    card().click();
+    const wb = view.querySelector('[data-gp-pop="lineups"]'); wb.focus(); wb.click();
+    const e1 = key('Tab'); d.activeElement.dispatchEvent(e1);
+    chk(!gs.hidden && d.activeElement === $('gsClose') && e1.defaultPrevented, 'a window\'s Close holds the focus, and Tab stays inside the window');
+    const e2 = key('Escape'); d.activeElement.dispatchEvent(e2);
+    chk(gs.hidden && !modal.hidden && d.activeElement === view.querySelector('[data-gp-pop="lineups"]') && d.body.classList.contains('modal-open'), `Escape closes the window alone, the focus back on its button, the game's page still open (${d.activeElement && (d.activeElement.dataset.gpPop || d.activeElement.id)})`);
+    view.querySelector('[data-gp-pop="stats"]').click(); gs.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+    chk(gs.hidden && !modal.hidden, 'a click on the window\'s backdrop closes the window alone');
+    view.querySelector('[data-gp-pop="units"]').click(); $('backBtn').click();
+    chk(gs.hidden && modal.hidden, 'the window goes with the page');
+    card().click(); d.activeElement.dispatchEvent(key('Escape'));
+    chk(modal.hidden, 'and with no window open Escape closes the page');
+    /* All skaters and the search */
+    card().click();
+    const R0 = gpRosterS(G0, rdOf(G0), false, gpScoreS(G0, null), sStarted(G0, AT)), R1 = gpRosterS(G0, rdOf(G0), true, gpScoreS(G0, null), sStarted(G0, AT));
+    const cutN = R0.away.cut + R0.home.cut, ids = () => [...view.querySelectorAll('.plrbtn')].filter(r => !r.hidden).map(r => r.dataset.open || r.dataset.nohist);
+    $('allCb').focus(); $('allCb').click();
+    chk($('allCb').checked && d.activeElement === $('allCb') && eqA(ids(), R1.away.players.concat(R1.home.players, R1.other).map(x => x.id)), `All skaters lists every skater of both clubs, then the players DraftKings prices whom the model leaves out; the focus stays on the box (${ids().length} rows, ${R1.away.players.length + R1.home.players.length + R1.other.length} wanted)`);
+    $('allCb').click();
+    chk(!$('allCb').checked && eqA(ids(), R0.away.players.concat(R0.home.players).map(x => x.id)), `unticked, each club is back to its goalie, ${GP_CUT_F} forwards and ${GP_CUT_D} defencemen (${ids().length} rows)`);
+    const hid = R1.home.players.concat(R1.away.players).find(x => x.mine && !R0.home.players.concat(R0.away.players).some(y => y.id === x.id) && x.name);
+    if (hid) {
+      const q = hid.name.split(' ').slice(-1)[0].toLowerCase(), sb = $('gameSearch'); sb.focus(); sb.value = q; sb.dispatchEvent(new w.Event('input', { bubbles: true }));
+      const wantQ = R1.away.players.concat(R1.home.players, R1.other).filter(x => String(x.name || `ESPN athlete ${x.id}`).toLowerCase().includes(q)).map(x => x.id);
+      const hdrs = [...view.querySelectorAll('.teamhdr')].filter(h => h.dataset.team), shownH = hdrs.filter(h => !h.hidden).map(h => h.dataset.team), wantH = [G0.away, G0.home].filter(c => R1[c === G0.away ? 'away' : 'home'].players.some(x => wantQ.includes(x.id)));
+      chk(eqA(ids(), wantQ) && wantQ.includes(hid.id) && d.activeElement === $('gameSearch') && $('gameSearch').value === q && eqA(shownH, wantH) && [...view.querySelectorAll('.gp-out')].every(p => p.hidden), `the search finds a skater the cut leaves out ("${q}": ${ids().join(',')}; want ${wantQ.join(',')}), hides a club with no row left and the lines under the heads, and keeps the keyboard in the box`);
+      const sb2 = $('gameSearch'); sb2.value = ''; sb2.dispatchEvent(new w.Event('input', { bubbles: true }));
+      chk(eqA(ids(), R0.away.players.concat(R0.home.players).map(x => x.id)) && [...view.querySelectorAll('.teamhdr, .gp-out')].every(p => !p.hidden), 'cleared, the cut is back');
+    } else console.log(`  no skater past the cut on ${ab(G0.away)} @ ${ab(G0.home)}: the search finding one is not held here`);
+    /* Show stats: the chip toggles his games under his row without opening him, from a click and from the keyboard */
+    const xs = R0.away.players.concat(R0.home.players).find(x => view.querySelector(`.plrbtn[data-open="${x.id}"]`));
+    if (xs) {
+      const chip = () => view.querySelector(`.stbtn[data-stats="${xs.id}"]`), row = () => view.querySelector(`.plrbtn[data-open="${xs.id}"]`);
+      chip().focus(); chip().click();
+      const wk = row().nextElementSibling, SW = gpStatsS(xs);
+      const tbl = wk && wk.querySelector('table'), got = tbl ? { head: [...tbl.querySelectorAll('thead th')].map(txt), body: [...tbl.querySelectorAll('tbody tr')].map(tr => [...tr.children].map(txt)), foot: [...tbl.querySelectorAll('tfoot td')].map(txt) } : { none: wk ? txt(wk) : null };
+      chk(!!wk && wk.classList.contains('wkstats') && eqA(got, SW) && txt(chip()) === 'Hide stats' && chip().getAttribute('aria-pressed') === 'true' && chip().classList.contains('on') && row().getAttribute('aria-expanded') === 'false' && d.activeElement === chip(), `Show stats draws his games in the box scores the state carries under his row, without opening him, the focus kept on the chip (${JSON.stringify(got).slice(0, 160)}; want ${JSON.stringify(SW).slice(0, 160)})`);
+      const ek = key('Enter'); chip().dispatchEvent(ek);
+      chk(ek.defaultPrevented && txt(chip()) === 'Show stats' && chip().getAttribute('aria-pressed') === 'false' && !view.querySelector('.wkstats') && row().getAttribute('aria-expanded') === 'false', 'Enter on the chip is the chip\'s own: it hides them again and does not open the row');
+      const es = key(' '); chip().dispatchEvent(es);
+      chk(es.defaultPrevented && !!view.querySelector('.wkstats') && row().getAttribute('aria-expanded') === 'false', 'Space on it too');
+      chip().click();
+      /* a row opened from the keyboard keeps the focus; opening another shuts the first */
+      row().focus(); row().click();
+      chk(row().getAttribute('aria-expanded') === 'true' && d.activeElement === row() && txt(row().querySelector('.arrow')) === '⌃', 'a row opened keeps the keyboard on it');
+      const other = R0.away.players.concat(R0.home.players).find(x => x.id !== xs.id && view.querySelector(`.plrbtn[data-open="${x.id}"]`));
+      if (other) { view.querySelector(`.plrbtn[data-open="${other.id}"]`).click(); chk(row().getAttribute('aria-expanded') === 'false' && view.querySelectorAll('.plrbody').length === 1, 'one player open at a time'); view.querySelector(`.plrbtn[data-open="${other.id}"]`).click(); chk(!view.querySelector('.plrbody'), 'a second tap shuts him'); }
+    }
+    /* a tick: the leg in the builder by its own rules, said in the page's status line, the box redrawn ticked with the focus on it; the other
+       side of the total takes its place; a second tick takes it out */
+    const tk = !sStarted(G0, AT) && sFresh(G0) ? [['over', 'ou'], ['home', 'ml'], ['away', 'ml'], ['home', 'pl']].map(([s, k]) => sLeg(G0, s, k)).find(Boolean) : null;
+    if (tk) {
+      const box = id => [...view.querySelectorAll('input[data-leg]')].find(x => x.dataset.leg === id), stored = () => (JSON.parse(w.localStorage.getItem('nhl_v1') || '{}').legs || []).map(l => `${l.game}|${l.side}|${l.kind}`);
+      const st0 = stored();
+      box(tk.id).focus(); box(tk.id).click();
+      chk(box(tk.id).checked && box(tk.id).closest('tr').classList.contains('on') && d.activeElement === box(tk.id) && stored().includes(tk.id) && /^Added to your parlay: .+ Your parlay: \d+ legs?\.$/.test(txt($('ppMsg'))), `a box ticked puts the leg in the parlay, said in the page's status line, the box drawn ticked with the keyboard still on it (${txt($('ppMsg'))})`);
+      const oth = tk.kind === 'ou' ? sLeg(G0, 'under', 'ou') : null;
+      if (oth) { box(oth.id).click(); chk(box(oth.id).checked && !box(tk.id).checked && !box(tk.id).closest('tr').classList.contains('on') && stored().includes(oth.id) && !stored().includes(tk.id) && /replaced .+ one total a game\./.test(txt($('ppMsg'))), `the other side of the total takes its place, said (${txt($('ppMsg'))})`); box(oth.id).click(); }
+      else box(tk.id).click();
+      chk(!box(tk.id).checked && ![...view.querySelectorAll('input[data-leg]')].some(x => x.checked && !st0.includes(x.dataset.leg)) && /^Taken out of your parlay: /.test(txt($('ppMsg'))), `a second tick takes it out, said (${txt($('ppMsg'))})`);
+      /* a tap anywhere on the row is a tap on its box */
+      box(tk.id).closest('tr').querySelector('.thr').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+      chk(box(tk.id).checked, 'a tap anywhere on a bet\'s row ticks its box'); box(tk.id).click();
+    } else console.log('  no game to come with a fresh line on the strip: a tick is held on the made-up slates of the other sections');
+    closeBets(d);
+  }
+  /* ---- the layout, read from the stylesheet (jsdom lays nothing out) ---- */
+  if (G0) {
+    betsOn(d, G0); const cs = el => el ? w.getComputedStyle(el) : null, mh = el => { const c = cs(el); return c ? c.minHeight : 'none'; };
+    const row1 = view.querySelector('.rungs tr'), plr = view.querySelector('button.plrbtn'), ctl = [['#backBtn', $('backBtn')], ['the search', $('gameSearch')], ['a window button', view.querySelector('.gwin-btn')]].concat($('ppRefreshOdds') ? [['Refresh odds', $('ppRefreshOdds')]] : [], plr ? [["a player's row", plr]] : []);
+    const low = ctl.filter(([, el]) => mh(el) !== '44px').map(x => `${x[0]} ${mh(x[1])}`);
+    chk(!low.length && (!row1 || cs(row1).height === '44px') && mh($('gsClose')) === '44px', `every control of the page is 44px tall: Close, the search, Refresh odds, the windows' buttons, a bet's row, a player's row, a window's Close (${low.join(', ') || 'all'}; a row ${row1 ? cs(row1).height : 'none'})`);
+    /* Show stats is the one exception, named: the NFL's 22px chip inside the row's button */
+    const chipR = cssWith(w, 'min-height', /^44px$/).filter(([sel]) => /stbtn/.test(sel));
+    chk(!chipR.length, `Show stats stays the NFL's small chip inside a player's row, the page's one control under 44px (${chipR.length} rules give it 44px)`);
+    const tracks = v => { let dep = 0, nT = 0, cur = ''; for (const ch of String(v).trim()) { if (ch === '(') dep++; if (ch === ')') dep--; if (ch === ' ' && !dep) { if (cur) nT++; cur = ''; } else cur += ch; } return nT + (cur ? 1 : 0); };
+    const grid = cssWith(w, 'grid-template-columns', /./).filter(([sel]) => sel === '.ghead .gh-grid');
+    const wide = grid.find(([, m]) => !m), mid = grid.find(([, m]) => /max-width:\s*980px/.test(m));
+    const gv = (sel, media) => { for (const [s2, m2, st] of RULES.get(w)) if (s2 === sel && (media ? media.test(m2) : !m2) && st.getPropertyValue('grid-template-columns')) return st.getPropertyValue('grid-template-columns'); return ''; };
+    chk(!!wide && !!mid && tracks(gv('.ghead .gh-grid', null)) === 6 && /^repeat\(3,/.test(gv('.ghead .gh-grid', /max-width:\s*980px/).trim()), `the head is six columns, and three from 980px down (${gv('.ghead .gh-grid', null)} | ${gv('.ghead .gh-grid', /max-width:\s*980px/)})`);
+    /* at 760px and under the page is the whole screen and a bet's row drops its bar, which only draws the percentage beside it: no other cell of a bet's row is ever hidden */
+    const hides = cssWith(w, 'display', /^none$/).filter(([sel]) => /\.rungs|\.statblk|\.plrbody/.test(sel));
+    chk(hides.length === 2 && hides.some(([sel, m]) => sel === '.rungs .barcell' && /max-width:\s*760px/.test(m)) && hides.some(([sel, m]) => sel === '.rungs .conf::before' && /max-width:\s*760px/.test(m)), `on a phone a bet's row hides its bar and the band's dot, nothing else, at any width (${hides.map(x => `${x[0]} @ ${x[1] || 'all'}`).join('; ')})`);
+    const phone = RULES.get(w).filter(([sel, m]) => /max-width:\s*760px/.test(m) && (sel === '#gameModal' || sel === '#gameModal .modal-panel'));
+    const pv = (sel, p) => { const r = phone.find(x => x[0] === sel && x[2].getPropertyValue(p)); return r ? r[2].getPropertyValue(p).trim() : ''; };
+    chk(pv('#gameModal', 'padding') === '0px' && pv('#gameModal', 'overflow-y') === 'auto' && pv('#gameModal .modal-panel', 'min-height') === '100%' && pv('#gameModal .modal-panel', 'border-radius') === '0px' && pv('#gameModal .modal-panel', 'overflow') === 'visible', `at 760px and under the game's page is the whole screen, its backdrop scrolling (${pv('#gameModal', 'padding')}, ${pv('#gameModal .modal-panel', 'min-height')}, ${pv('#gameModal .modal-panel', 'border-radius')})`);
+    const z = sel => { for (const [s2, m2, st] of RULES.get(w)) if (s2 === sel && !m2 && st.getPropertyValue('z-index')) return +st.getPropertyValue('z-index'); return NaN; };
+    chk(z('.pb-slip') < z('#gameModal') && z('#gameModal') < z('#gsModal') && z('#gsModal') < z('.modal'), `the layers: the slip bar under the game's page, its window over it, the parlay card over both (${z('.pb-slip')}, ${z('#gameModal')}, ${z('#gsModal')}, ${z('.modal')})`);
+    const s16 = RULES.get(w).some(([sel, m, st]) => /max-width:\s*640px/.test(m) && sel.split(',').some(x => x.trim() === '.gsearch input') && st.getPropertyValue('font-size') === '16px');
+    chk(s16, 'on a phone the search box is 16px, so iOS does not zoom the page in on it');
+    closeBets(d);
+  }
+  /* ---- made-up copies of the state, planted in this page's memory and in this section's own copy alike ---- */
+  S = JSON.parse(JSON.stringify(real));
+  try {
+    const both = (fn, arg) => { fn(S, arg); w.eval(`(${fn.toString()})(S, ${JSON.stringify(arg === undefined ? null : arg)})`); };
+    const hold = (g, tag, o = {}) => { closeBets(d); const b = gpWrongs(w, g, o.at || AT, o.rd !== undefined ? o.rd : rdOf(g), Object.assign({ MAP, noPlayers: true }, o)); chk(!b.length, `${tag} (${b.length} wrong: ${b.slice(0, show).join(' | ')})`); return b; };
+    const come = onStrip.filter(g => !sStarted(g, AT)), gById = id => S.games.find(x => x.id === id);
+    const GL = come.find(g => g.line && sFresh(g) && sLeg(g, 'home', 'ml') && sLeg(g, 'over', 'ou'));
+    if (GL) {
+      /* another book: named in the source line, the status line and each fair chance's title */
+      both((St, id) => { St.games.find(x => x.id === id).line.book = 'ESPN BET'; }, GL.id);
+      hold(gById(GL.id), "a game priced at another book names the book where DraftKings' name stood: the lines' source, the status line, each fair chance");
+      both((St, id) => { St.games.find(x => x.id === id).line.book = 'Draft Kings'; }, GL.id);
+      /* a stale line: the rows and their prices drawn, no box, said under the bets and in the status line */
+      both((St, id) => { const L = St.games.find(x => x.id === id).line; L.at = new Date(Date.parse(L.at) - 6 * 3600000).toISOString().slice(0, 16) + 'Z'; delete L.refreshed; }, GL.id);
+      const bS = hold(gById(GL.id), 'a line DraftKings did not list at the last run is drawn with its prices and no box, and says so under the bets and in the status line');
+      chk(bS.length || (pageOn(d, GL.id) && !view.querySelector('.gbets input') && view.querySelectorAll('.gbets .book').length > 0), 'a stale line offers no box');
+      /* no line: each club's To win alone, the model's chance and no price, no total, said */
+      both((St, id) => { const g = St.games.find(x => x.id === id); g.line = null; for (const k of ['mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick']) delete g[k]; }, GL.id);
+      const bN = hold(gById(GL.id), "a game with no line draws each club's To win alone, the model's chance and no price or box, no total, and says there is no DraftKings line yet");
+      chk(bN.length || (view.querySelectorAll('.gbets tr').length === 2 && txt(view.querySelector('.gbets .gp-why')) === 'No DraftKings line yet.'), 'two rows and the line that says why');
+    } else console.log('  no game to come with a fresh moneyline and total on the strip: another book, a stale line and no line are not planted here');
+    const GP1 = come.find(g => S.props && isO(S.props.games) && isO(S.props.games[g.id]));
+    if (GP1) {
+      /* the read's three states and none, in the status line and the rows */
+      const dk0 = S.props.games[GP1.id].dk, at = new Date(PUB).toISOString();
+      for (const [dk, tag] of [[{ status: 404, at }, 'none posted yet'], [{ status: 'failed', at, why: 'HTTP 503' }, 'a read that failed'], [null, 'no read at all']]) {
+        both((St, a) => { if (a.dk) St.props.games[a.id].dk = a.dk; else delete St.props.games[a.id].dk; }, { id: GP1.id, dk }); w.eval('ppSeed()');
+        hold(gById(GP1.id), `DraftKings' player lines with ${tag}: the status line says so and every player's row is his projection, no box`, { noPlayers: false });
+      }
+      both((St, a) => { if (a.dk) St.props.games[a.id].dk = a.dk; else delete St.props.games[a.id].dk; }, { id: GP1.id, dk: dk0 || null }); w.eval('ppSeed()');
+      /* the trial decided, and no ledger: the pill's three states */
+      for (const dec of ['FAIL', 'PASS']) { both((St, v) => { St.props.ledger = Object.assign({}, St.props.ledger, { decision: v }); }, dec); hold(gById(GP1.id), `the trial decided ${dec}: the pill says so, and only then`); }
+      both(St => { delete St.props.ledger; }); hold(gById(GP1.id), 'with no ledger in the state the pill still says the props model is on trial');
+      both((St, v) => { St.props.ledger = v; }, real.props.ledger || null); if (!real.props.ledger) both(St => { delete St.props.ledger; });
+      /* the puck drops with the page open: the watch draws it again, the boxes go and the strip comes in; then a score this browser read, then its final in overtime */
+      closeBets(d); betsOn(d, gById(GP1.id));
+      const t1 = Date.parse(GP1.start) + 60000;
+      w.__setClock(t1); d.dispatchEvent(new w.Event('visibilitychange'));
+      chk(pageOn(d, GP1.id) && !view.querySelector('input[data-leg], input[data-pp-add], #ppRefreshOdds') && !!view.querySelector('.gp-live'), 'a page open at its game\'s puck drop is drawn again by the watch: no box left, the strip in');
+      hold(gById(GP1.id), 'past its puck drop with no score read, the page says In progress, LIVE on the head and every row, the projections still shown as projected', { at: t1, noPlayers: false });
+      const lv1 = { state: 'live', hs: 1, as: 2, detail: '8:12 - 2nd' }; w.eval(`LIVE[${JSON.stringify(GP1.id)}] = ${JSON.stringify(lv1)}`);
+      hold(gById(GP1.id), 'with a live score read in this browser the strip and the head carry it', { at: t1, lv: lv1 });
+      const lv2 = { state: 'final', hs: 3, as: 2, detail: 'Final/OT' }; w.eval(`LIVE[${JSON.stringify(GP1.id)}] = ${JSON.stringify(lv2)}`);
+      hold(gById(GP1.id), 'a final read in this browser: FINAL · OT, the winner ticked, the actual score beside the expected, To win graded by the score, played for playing', { at: t1, lv: lv2, noPlayers: false });
+      w.eval(`delete LIVE[${JSON.stringify(GP1.id)}]`); w.__setClock(AT); closeBets(d);
+      /* a start the feed moved after the first puck drop: the call kept, said, no box */
+      both((St, id) => { const g = St.games.find(x => x.id === id); g.before = new Date(Date.parse(St.published) - 3600000).toISOString().slice(0, 16) + 'Z'; g.frozen = g.frozen || new Date(Date.parse(St.published) - 7200000).toISOString().slice(0, 16) + 'Z'; g.start = new Date(Date.parse(St.published) + 3 * 3600000).toISOString().slice(0, 16) + 'Z'; }, GP1.id);
+      if (delayedAt(gById(GP1.id), gById(GP1.id).start, AT) && !startedAt(gById(GP1.id), AT)) hold(gById(GP1.id), 'a start moved after the first puck drop says so on the strip and the head, and offers no box');
+    } else console.log('  no projected game to come on the strip: the read\'s states, the trial\'s verdicts, the puck drop and a moved start are not planted here');
+    /* a final: with its box score (as published), then with none, then one older than the box window */
+    const GF = onStrip.find(g => g.state === 'final' && Number.isFinite(g.hs) && S.box && isO(S.box.games) && isO(S.box.games[g.id]));
+    if (GF) {
+      hold(gById(GF.id), "a final with its box score: the leaders, each club's players by points with what they did, a tile a stat when opened", { noPlayers: false });
+      both((St, id) => { delete St.box.games[id]; }, GF.id);
+      const bF = hold(gById(GF.id), 'a final whose box score is not read lists nobody and says so, on the head and under each club');
+      chk(bF.length || ([...view.querySelectorAll('.empty')].length === 2 && [...view.querySelectorAll('.empty')].every(e => txt(e) === 'Box score not read yet.') && !view.querySelector('.plrbtn')), 'no row, never a lineup of names marked did not play');
+      both((St, a) => { St.box.from = a; }, PBS.nextDay(GF.date));
+      hold(gById(GF.id), 'a final older than the box scores the state carries says they are no longer carried');
+    } else console.log('  no boxed final on the strip: a final\'s rows, a final with no box score and one past the box window are not planted here');
+    /* no props model in the state at all: no pill, the player model's lineup by name, no line, nothing thrown */
+    const GC = come[0];
+    if (GC) { both(St => { delete St.props; }); w.eval('ppSeed()'); const bP = hold(gById(GC.id), "with no props model in the state the page has no trial pill and lists the player model's lineup by name, no figures"); chk(bP.length || !$('ppTrial'), 'no pill'); }
+  } finally { S = real; }
+  chk(!errs.length, "no runtime error on a game's page: " + errs.join(' | '));
+  w.close();
 }
 
 async function theLook() {
@@ -3891,33 +4303,12 @@ async function theLook() {
   /* clubs that share a colour share their brand's: two clubs outside one family are 5 or more apart by CIEDE2000 */
   const famOf = {}; COLOR_FAMILIES.forEach((f, i) => f.forEach(k => { famOf[k] = i; }));
   const close = []; for (let i = 0; i < keys.length; i++) for (let j = i + 1; j < keys.length; j++) { const a = keys[i], b = keys[j]; if (!MAP[a] || !MAP[b] || (famOf[a] !== undefined && famOf[a] === famOf[b])) continue; const dd = de2000S(MAP[a][0], MAP[b][0]); if (!(dd >= 5)) close.push(`${a}-${b} ${dd.toFixed(1)}`); }
-  /* who is out's bar: the page's is the smoke's, and it is what it says, about a point of a club's chance to win. The card's chance on
-     a player model's call is its goals layer and the team Elo blended, the goals layer weighted 1 - params.blend (data/players.json; tools/players.js's
-     pHome = (1 - blend) * pG + blend * pE); a player out moves his
-     club's expected margin by what he is worth, and the goals layer (tools/elo.js, data/model.json's pull) turns a margin into a chance.
-     Only the median over the games to come is held, and loosely (0.5 to 2 points: "about a point" by a factor of two): the job never
-     moves the blend or the pull (players.js keeps its fitted params, fit.js is run by hand), and a lopsided game anywhere on the schedule
-     is the model's honest number, never a reason to stop a publish, so the ends are reported, not held. Holding them (0.7 to 1.3), as
-     v13's first draft did, failed a state whose one game a month out had its margin moved a third of a goal, and would have stopped the job */
-  chk(w.eval('OUT_ROW') === OUT_ROW_S, `the page's bar for a row of who is out is ${OUT_ROW_S} goals a game (${w.eval('OUT_ROW')})`);
-  {
-    const PJ = readJSON(path.join(DATA, 'players.json')), MJ = readJSON(path.join(DATA, 'model.json')), blend = PJ && PJ.params && PJ.params.blend;
-    const pts = S.games.filter(g => g.pm && typeof g.pm.mu === 'number' && typeof g.pm.xt === 'number' && typeof g.diff === 'number' && !sStarted(g, AT))
-      .map(g => (1 - blend) * (ELO.homeByGoals(ELO.goals(g.pm.xt, g.pm.mu + OUT_ROW_S, g.diff, MJ.pull)) - ELO.homeByGoals(ELO.goals(g.pm.xt, g.pm.mu, g.diff, MJ.pull)))).sort((a, b) => a - b);
-    const medP = pts.length ? pts[Math.floor((pts.length - 1) / 2)] : null;
-    if (!pts.length) console.log('  no game to come with the player model\'s numbers: the bar\'s meaning is not worked out on this state');
-    else {
-      chk(typeof blend === 'number' && medP >= 0.005 && medP <= 0.02, `${OUT_ROW_S} goals a game moves a club's chance to win by about a point at the median of the ${pts.length} games to come: ${(medP * 100).toFixed(2)} points (0.50 to 2.00 held; ${(pts[0] * 100).toFixed(2)} to ${(pts[pts.length - 1] * 100).toFixed(2)} at the ends, reported)`);
-      console.log(`  who is out's bar: ${OUT_ROW_S} goals a game moves a club's chance to win by ${(medP * 100).toFixed(2)} points at the median of ${pts.length} games to come (${(pts[0] * 100).toFixed(2)} to ${(pts[pts.length - 1] * 100).toFixed(2)})`);
-    }
-  }
   /* a bet button is one line where it fits and 44px tall (jsdom lays nothing out: the rules are read): it wraps between its side and its
      price and chance, never inside either, and the call's tag sits on its top edge, taking no line */
   const rule = (sel, prop) => { const r = RULES.has(w) ? RULES.get(w) : (cssWith(w, prop, /./), RULES.get(w)); const hit = r.filter(([sl, media]) => !media && sl.split(',').map(x => x.trim()).includes(sel)); return hit.length ? String(hit[hit.length - 1][2].getPropertyValue(prop)).trim() : null; };
   chk(rule('.pb-bs', 'white-space') === 'nowrap' && rule('.pb-bn', 'white-space') === 'nowrap' && rule('.pb-bet', 'flex-wrap') === 'wrap' && rule('.pb-bt.tg', 'position') === 'absolute' && rule('.pb-bet', 'position') === 'relative',
     `a bet button wraps only between its side and its price and chance, each kept whole, the call's tag on its edge taking no line (${['.pb-bs white-space', '.pb-bn white-space', '.pb-bet flex-wrap', '.pb-bt.tg position', '.pb-bet position'].map(x => { const [a2, b2] = x.split(' '); return `${x} ${rule(a2, b2)}`; }).join(', ')})`);
-  { const g44 = S.games.find(g => !sStarted(g, AT) && sFresh(g)), bb = g44 && betIn(d, g44, `${g44.id}|${sLeg(g44, 'home', 'ml') ? 'home|ml' : sLeg(g44, 'over', 'ou') ? 'over|ou' : 'home|pl'}`);
-    chk(!g44 || (!!bb && w.getComputedStyle(bb).minHeight === '44px'), `a bet button in a game's Game bets is 44px tall (${bb ? w.getComputedStyle(bb).minHeight : 'none'})`); closeBets(d); }
+  chk(cssWith(w, 'min-height', /^44px$/).some(([sel, m]) => !m && sel.split(',').map(x => x.trim()).includes('.pb-bet')), 'a bet button of the board (Pick your own legs) is 44px tall');
   /* a row's two bets laid out alike (nhl v13): the page reads each button's wrap (syncBetRows) and marks a row whose either button
      wrapped .st, whose rule puts both buttons' price and chance under the side; a row with neither wrapped stays one line, and each draw
      of the cards and of Pick your own legs reads them again. jsdom lays nothing out, so the wrap is planted, a price and chance 16px under
@@ -3938,12 +4329,7 @@ async function theLook() {
     };
     try {
       /* the strip is drawn again with each day, so a day's button is looked up afresh each time */
-      /* nhl v23: a game's bets are in its Player props window, drawn again by renderProps (each redraw while it is open) */
-      const gw = S.games.filter(g => !sStarted(g, AT) && sFresh(g)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
-      const pbw = gw && betsOn(d, gw);
-      if (!pbw || !pbw.querySelector('.pb-bb')) console.log('  no game to come with a fresh line: the rows laid out alike are held in Pick your own legs alone');
-      else held('#ppBets', () => w.eval('renderProps()'), "a game's Game bets");
-      closeBets(d);
+      /* the board is Pick your own legs' alone since nhl v27 (a game's page draws its bets as rows) */
       const pt = d.querySelector('#tabs button[data-tab="parlays"]');
       pt.click();
       if (d.querySelector('#plLines .pb-bb')) held('#plLines', () => pt.click(), 'Pick your own legs');
@@ -3969,55 +4355,60 @@ async function theLook() {
     /* nhl v25: no confidence key over the day's cards (the owner's "no descriptions anywhere"): each band's record stays on its pill's
        title, held card by card above, and in the Record's By confidence */
     chk(!d.getElementById('confKey') && !d.querySelector('#tab-games .confkey, #tab-games [data-confkey]'), `${day}: no confidence key over the cards`);
-    chk(!d.getElementById('gamesKey') && !d.getElementById('outKey') && !d.querySelector('#games .pb-bets'), `${day}: no bets' key, no who is out's key and no bets board on the Games tab`);
+    chk(!d.getElementById('gamesKey') && !d.getElementById('outKey') && !d.querySelector('#games .pb-bets, #games .out, #games .drawer, #games .foot'), `${day}: no bets' key, no who is out's key, no bets board, out row, drawer or foot on the Games tab`);
     /* Refresh scores only while the day has a game under way (nhl v23: the NBA's odds bar carries Refresh odds alone) */
     const under = S.games.some(g => g.date === day && g.state !== 'final' && sStarted(g, AT));
     chk(d.getElementById('refreshScores').hidden === !under, `${day}: Refresh scores exactly where the day has a game under way (${under})`);
   }
   console.log(`  ${held} game cards held to the state, every day on the strip`);
-  /* a made-up card that takes every branch, whatever the day holds (nhl v13): on a copy of the state, the first game to come with a fresh
-     line and both clubs lined up gets a call on its moneyline with its edge (said on its button, in no chip), a puck-line side far off the
-     market that is no call, a call on the total far off the market (said in a chip too, its button carrying the numbers), and an injury
-     list with a player worth more than the bar, one worth less of each status (out, suspended, another, injured reserve, and one the model
-     does not rate), a day to day, a goalie making his first start; then the same game at its puck drop, where the card has no drawer */
+  /* a made-up game that takes every branch, whatever the day holds (nhl v13; on its page since nhl v27): on a copy of the state, the first
+     game to come with a fresh line and both clubs lined up gets a call on its moneyline, a puck-line side far off the market that is no
+     call, a call on the total, and an injury list with players of every status (one the model does not rate), a day to day who is in the
+     projected lineup, a goalie making his first start; then the same game at its puck drop. Its card, its page and its windows are held
+     as any game's, and the marks these branches draw are counted */
   {
     const M = JSON.parse(STATE), G = M.games.filter(g => !sStarted(g, AT) && sFresh(g) && g.pm && S.players && S.players.teams && S.players.teams[g.away] && S.players.teams[g.home]).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
-    if (!G) console.log('  no game to come lined up with a fresh line: the made-up card is skipped');
+    if (!G) console.log('  no game to come lined up with a fresh line: the made-up game is skipped');
     else {
       Object.assign(G.line, { awayML: 150, homeML: -170, homeLine: -1.5, homeSpreadOdds: 200, awaySpreadOdds: -240, total: 6.5, overOdds: -110, underOdds: -110 });
       Object.assign(G, { pHome: 0.53, mlEdge: { away: 0.07, home: -0.1 }, mlPick: 'away', cover: { home: 0.5, push: 0, away: 0.5 }, plEdge: { home: 0.167, away: -0.206 }, plPick: null, ou: { over: 0.3, push: 0, under: 0.7 }, ouEdge: { over: -0.224, under: 0.176 }, ouPick: 'under' });
-      const nm = (k, i) => `Plant ${k}${i}`;
-      G.pm.away.out = [{ id: '9000001', name: nm('Row', 1), status: 'Out', cost: -0.16 }, { id: '9000002', name: nm('Susp', 1), status: 'Suspension', cost: 0.03 }, { id: '9000003', name: nm('Ir', 1), status: 'Injured Reserve', cost: 0.05 },
+      const nm = (k, i) => `Plant ${k}${i}`, PG = M.props && M.props.games && M.props.games[G.id], dtdP = PG && PG.homeP && PG.homeP.skaters && PG.homeP.skaters[0];
+      G.pm.away.out = [{ id: '9000001', name: nm('Row', 1), pos: 'C', status: 'Out', cost: -0.16 }, { id: '9000002', name: nm('Susp', 1), pos: 'D', status: 'Suspension', cost: 0.03 }, { id: '9000003', name: nm('Ir', 1), status: 'Injured Reserve', cost: 0.05 },
         { id: '9000004', name: nm('Ir', 2), status: 'Injured Reserve', cost: null }, { id: '9000005', name: nm('Out', 1), status: 'Out', cost: 0.01 }, { id: '9000006', name: nm('Q', 1), status: 'Questionable', cost: -0.04 }];
       G.pm.home.out = [{ id: '9000007', name: nm('Ir', 3), status: 'Injured Reserve', cost: 0.02 }];
-      G.pm.away.dtd = []; G.pm.home.dtd = [{ id: '9000008', name: nm('Dtd', 1), status: 'Day-To-Day' }];
+      G.pm.away.dtd = []; G.pm.home.dtd = [dtdP ? { id: dtdP.id, name: dtdP.name, status: 'Day-To-Day' } : { id: '9000008', name: nm('Dtd', 1), status: 'Day-To-Day' }];
       if (G.pm.away.goalie) G.pm.away.goalie.debut = true;
+      if (PG && PG.awayP && PG.awayP.goalie) PG.awayP.goalie.debut = true;
       const real = S; S = M;
       try {
-        for (const [ms, tag] of [[AT, 'to come, with its drawer'], [Date.parse(G.start) + 60000, 'at its puck drop, no drawer']]) {
+        for (const [ms, tag] of [[AT, 'to come'], [Date.parse(G.start) + 60000, 'at its puck drop']]) {
           const e3 = [], w3 = await boot(ms, e3, { state: JSON.stringify(M) }), d3 = w3.document;
-          const db = d3.querySelector(`#days .day[data-day="${G.date}"]`); if (db) db.click();
-          const c3 = d3.querySelector(`#games .game[data-id="${G.id}"]`);
-          if (!c3) { chk(false, `the made-up card ${tag}: no card for ${G.id}`); continue; }
+          openDay(d3, G.date);
+          const c3 = cardOf(d3, G.id);
+          if (!c3) { chk(false, `the made-up game ${tag}: no card for ${G.id}`); w3.close(); continue; }
           const bad = cardWrongs(w3, c3, G, ms, pageMap(w3));
           chk(!bad.length, `the made-up card ${tag}: ${bad.slice(0, 3).join(' | ')}`);
-          const drawn = c3.querySelector(`#lu-${G.id}`), kinds = [...c3.querySelectorAll('.out > span')].map(x => x.className);
-          const ckT = k => txt(c3.querySelector(`.chips .chip[data-ck="${k}"]`)), lit = k => !!c3.querySelector(`.chips .chip.edge[data-ck="${k}"]`);
+          const badP = gpWrongs(w3, G, ms, null, { noPlayers: ms !== AT }), v3 = d3.getElementById('gameView');
+          chk(!badP.length, `the made-up game's page ${tag}: ${badP.slice(0, 4).join(' | ')}`);
+          const vals = [...v3.querySelectorAll('.gbets .pb-valmark')].map(x => txt(x.closest('tr').querySelector('.thr')).replace(/Value$/, '') + '@' + x.closest('.statblk').dataset.gb);
           if (ms === AT) {
-            const pb = betsOn(d3, G);
-            chk(!!drawn && !!pb && pb.querySelectorAll('.pb-bt.tg:not(.far)').length === 1 && pb.querySelectorAll('.pb-bt.tg.far').length === 2
-              && /call · edge \+7$/.test(ckT('ml')) && lit('ml') && !c3.querySelector('.chips .chip[data-ck="pl"]') && /^Over\/under 6\.5 under · far off$/.test(ckT('ou')) && !lit('ou') && !!c3.querySelector('.chips .chip[data-ck="ou"] .far')
-              && kinds.length === 2 + (c3.querySelector('.out > .muted') ? c3.querySelectorAll('.out > .muted').length : 0) && kinds.filter(k => k === 'orow').length === 1 && drawn.querySelectorAll('.lu-out li').length === 7
-              && txt(drawn.querySelector('.lu-dtd')) === 'Day to day, in the lineup: Plant Dtd1' && (!G.pm.away.goalie || /first NHL start/.test(txt(c3.querySelector('.out .gk')))),
-              `the made-up card ${tag} takes every branch: the window's one call tag and two far-off tags, the moneyline's call lit with its edge, no puck-line chip for a side that is no call, the total's call far off and unlit, one row, seven in Lineups and the day to day there, a first start (${kinds.join(', ')}; ${ckT('ml')}; ${ckT('ou')})`);
-            /* and every planted button in the window part by part, its name for a screen reader too (the call's tag, the far-off tags and numbers) */
-            const badB = [];
-            if (pb) for (const k of PBS.KINDS) for (const sd of PBS.SIDES[k]) { const B = sLeg(G, sd, k), bt = pb.querySelector(`button[data-leg="${G.id}|${sd}|${k}"]`); if (!!B !== !!bt) badB.push(`${sd} ${k}: ${!!B} priced, ${!!bt} drawn`); else if (B) { const x = betWrong(bt, B, sd); if (x) badB.push(x); } }
-            chk(!!pb && !badB.length, `the made-up card ${tag}: every button of its Game bets exactly, part by part (${badB.slice(0, 2).join(' | ')})`);
-            closeBets(d3);
-          } else chk(!drawn && !c3.querySelector('button[data-pp]') && !c3.querySelector('.pb-bets') && kinds.filter(k => k === 'orow').length === 1 && !c3.querySelector('.out .also, .out .dtd, .out .src') && /call · edge \+7/.test(ckT('ml')) && !c3.querySelector('.chips .far'),
-            `the made-up card ${tag}: no drawer, no window, one row, the calls in their chips with their edges, nothing far off once under way (${kinds.join(', ')}; ${ckT('ml')}; ${ckT('ou')})`);
-          chk(!e3.length, `no runtime error on the made-up card ${tag}: ${e3.join(' | ')}`);
+            chk(eqA(vals, ['To win@away', 'Under 6.5@total']) && /7 points above/.test(v3.querySelector('.gbets .pb-valmark').title) && !/far off/i.test(txt(v3)) && v3.querySelectorAll('.gbets input[data-leg]').length === 6,
+              `the made-up game ${tag} takes every branch of Game bets: Value on the moneyline's call and the total's, none on a puck-line side that is no call, nothing called far off, six boxes (${vals.join(', ')})`);
+            const outA = v3.querySelector(`[data-gp-out="${G.away}"]`), outH = v3.querySelector(`[data-gp-out="${G.home}"]`);
+            chk(!!outA && outA.querySelectorAll('b').length === 6 && /Plant Row1 \(C, out\), Plant Susp1 \(D, suspension\), Plant Ir1 \(injured reserve\)/.test(txt(outA)) && !!outH && txt(outH) === 'Out: Plant Ir3 (injured reserve).' && !/-0\.16|goals/.test(txt(outA)), `"Out:" names everyone out with his position and status, no figure (${outA ? txt(outA) : 'none'})`);
+            if (dtdP) chk(v3.querySelectorAll('.plrbtn .inj').length === 1 && !!v3.querySelector(`.plrbtn[data-open="${dtdP.id}"] .inj`), `the day to day who is in the lineup wears the DTD chip on his row, and nobody else (${v3.querySelectorAll('.plrbtn .inj').length})`);
+            if (PG && PG.awayP && PG.awayP.goalie) chk(/first NHL start/.test(txt(v3.querySelector(`.plrbtn[data-open="${PG.awayP.goalie.id}"] .who`))), 'a goalie making his first start says so on his row');
+            const badW = gpWindowWrongs(w3, G, ms);
+            chk(!badW.length, `the made-up game's windows: ${badW.slice(0, 3).join(' | ')}`);
+            v3.querySelector('[data-gp-pop="lineups"]').click();
+            const lw = d3.getElementById('gsModal'), cols = [...lw.querySelectorAll('.lu-club')];
+            chk(cols.length === 2 && cols[0].querySelectorAll('.lu-out li').length === 6 && cols[1].querySelectorAll('.lu-out li').length === 1 && txt(cols[0].querySelector('.lu-out li')) === 'Plant Row1 Out-0.16' && [...cols[0].querySelectorAll('.lu-out li .v')].some(x => txt(x) === '–') && /^Day to day, in the lineup: /.test(txt(cols[1].querySelector('.lu-day'))) && (!G.pm.away.goalie || /first NHL start/.test(txt(cols[0].querySelector('.lu-str')))),
+              `its Lineups window lists the seven out with their figures, most valuable first, a dash for the one the model does not rate, the day to day and the first start (${cols.map(c => txt(c.querySelector('.lu-out'))).join(' | ').slice(0, 200)})`);
+            d3.getElementById('gsClose').click();
+          } else chk(!vals.length && !v3.querySelector('input[data-leg], input[data-pp-add], [data-gp-out], .inj') && !!v3.querySelector('.gp-live') && v3.querySelectorAll('.gbets .res').length === 6, `the made-up game ${tag}: no Value mark, no box, no outs line and no DTD chip once the puck has dropped; a grade to come in each box's place (${v3.querySelectorAll('.gbets .res').length})`);
+          closeBets(d3);
+          chk(!e3.length, `no runtime error on the made-up game ${tag}: ${e3.join(' | ')}`);
+          w3.close();
         }
       } finally { S = real; }
     }
@@ -4030,7 +4421,7 @@ async function theLook() {
   const tabWords = { games: 'Games', suggest: 'Suggested Parlays', parlays: 'Parlay Builder', xparlays: 'X Parlays', ratings: 'Team Rankings', players: 'Players', pickem: "Pick'em Record", xbets: 'X Bet Log', record: 'Record' };
   const bareTabs = dd => [...dd.querySelectorAll('#tabs button')].every(b => !b.children.length && txt(b) === tabWords[b.dataset.tab]) && !dd.getElementById('gameCount') && !dd.getElementById('legCount');
   chk(bareTabs(d), `every tab is its words alone, no count on any (${[...d.querySelectorAll('#tabs button')].map(txt).join(' | ')})`);
-  /* 44px: the toolbar, the tabs, the players' switch, a card's Lineups and Parlay Builder → */
+  /* 44px: the toolbar, the tabs, the players' switch */
   const tall = el => !!el && w.getComputedStyle(el).minHeight === '44px';
   chk(tall(d.getElementById('refreshScores')) && [...d.querySelectorAll('#tabs button')].every(tall) && [...d.querySelectorAll('#plKind button')].every(tall), 'Refresh scores, every tab and the Skaters/Goalies switch are 44px tall');
   /* nhl v25, the NFL hub's controls at the NHL's 44px: every button, select, text box, amount box, segmented choice and checkbox chip on
@@ -4039,80 +4430,6 @@ async function theLook() {
     chk(ctl.length >= 30 && !low.length && d.querySelectorAll('.btn').length >= 15 && d.querySelectorAll('.pb-chip').length === 5 && d.querySelectorAll('#pbMix button').length === 3, `every button, select, box, segmented choice and checkbox chip is 44px tall (${ctl.length} held; under: ${low.slice(0, 4).map(el => el.id || el.className || txt(el)).join(', ') || 'none'})`);
     const sw = d.querySelector('header [data-theme-toggle]'), cs = sw && w.getComputedStyle(sw);
     chk(!!cs && cs.minHeight === '44px' && cs.minWidth === '44px' && cs.width === '44px' && cs.height === '44px', `the light/dark switch is 44px by 44px (${cs && [cs.width, cs.height].join(' x ')})`); }
-  /* Lineups: shut, opened in place, kept open through a redraw (a bet tapped), never stored; the focus kept on it through the watch's redraw */
-  const luDay = [...d.querySelectorAll('#days .day')].map(b => b.dataset.day).find(dd => { d.querySelector(`#days .day[data-day="${dd}"]`).click(); return !!d.querySelector('#games button[data-lu]'); });
-  if (luDay) {
-    const b = d.querySelector('#games button[data-lu]'), id = b.dataset.lu, card = () => d.querySelector(`#games .game[data-id="${id}"]`);
-    chk(tall(b) && tall(d.querySelector('#games button[data-pbgo]') || b), 'a Lineups toggle and Parlay Builder → are 44px tall');
-    const w0 = w.__writes.length, s0 = w.localStorage.getItem('nhl_v1');
-    chk(b.getAttribute('aria-expanded') === 'false' && d.getElementById('lu-' + id).hidden, 'a Lineups drawer starts shut');
-    b.click();
-    chk(b.getAttribute('aria-expanded') === 'true' && !d.getElementById('lu-' + id).hidden && card().querySelector('button[data-lu]') === b && txt(b) === 'Lineups', 'Lineups opens its drawer in place, the toggle saying so by aria-expanded, its word kept');
-    chk(w.__writes.length === w0 && w.localStorage.getItem('nhl_v1') === s0, 'opening Lineups writes nothing');
-    b.focus(); w.eval('rerender()');
-    chk(d.activeElement && d.activeElement.dataset && d.activeElement.dataset.lu === id && !d.getElementById('lu-' + id).hidden && d.activeElement.getAttribute('aria-expanded') === 'true', 'a redraw keeps the drawer open and the keyboard on its toggle');
-    const pbw = betsOn(d, id), bet = pbw && pbw.querySelector('button[data-leg]');
-    if (bet) {
-      const cards0 = [...d.querySelectorAll('#games .game')];
-      const leg = bet.dataset.leg; bet.click();
-      chk(cards0.every(c => c.isConnected) && !!d.querySelector(`#ppBets button[data-leg="${leg}"][aria-pressed="true"]`), `a bet tapped in the window is pressed there, the day's ${cards0.length} cards left as they were (no bet on any)`);
-      chk(!d.getElementById('lu-' + id).hidden && card().querySelector('button[data-lu]').getAttribute('aria-expanded') === 'true', 'a bet tapped in the window leaves the card\'s drawer open');
-      const again = d.querySelector(`#ppBets button[data-leg="${leg}"]`); if (again) again.click();
-      closeBets(d);
-    }
-    card().querySelector('button[data-lu]').click();
-    chk(d.getElementById('lu-' + id).hidden && card().querySelector('button[data-lu]').getAttribute('aria-expanded') === 'false' && txt(card().querySelector('button[data-lu]')) === 'Lineups', 'and shuts it again, the toggle saying Lineups');
-    /* opened and shut from the keyboard: the one toggle keeps the focus, and the foot its buttons and their words throughout */
-    const w1 = w.__writes.length, s1 = w.localStorage.getItem('nhl_v1'), footW = () => [...card().querySelectorAll('.foot button')].map(txt).join(' | '), f0 = footW();
-    const kb = card().querySelector('button[data-lu]'); kb.focus(); kb.click();
-    chk(!d.getElementById('lu-' + id).hidden && footW() === f0 && !d.querySelector(`#lu-${id} button`), `open, the foot is as it was shut, one toggle and no second Hide lineups (${footW()})`);
-    kb.click();
-    chk(d.getElementById('lu-' + id).hidden && kb.getAttribute('aria-expanded') === 'false' && d.activeElement === kb && footW() === f0, 'shut again from the keyboard, the focus still on the toggle');
-    chk(w.__writes.length === w1 && w.localStorage.getItem('nhl_v1') === s1, 'opening and shutting Lineups writes nothing');
-    const g = S.games.find(x => x.id === id), errsP = [], wP = await boot(Date.parse(g.start) + 60000, errsP), dP = wP.document;
-    const bd = dP.querySelector(`#days .day[data-day="${g.date}"]`); if (bd) bd.click();
-    const cP = dP.querySelector(`#games .game[data-id="${id}"]`);
-    chk(!!cP && !cP.querySelector('button[data-lu]') && !cP.querySelector('.drawer') && !cP.querySelector('button[data-pbgo]'), `opened at its puck drop the card offers neither Lineups nor Parlay Builder → (${id})`);
-    chk(!errsP.length, 'no runtime error at the puck drop: ' + errsP.join(' | '));
-  } else console.log('  no game to come the player model lines up: the Lineups checks skipped');
-  /* nhl v23: a redraw of the page while the props window is open draws its Game bets alone, so a stat tab keeps the keyboard and a fold
-     the visitor opened stays open (the watch, a storage event); a bet tapped in the window keeps the fold open and the keyboard on it */
-  {
-    /* on the page with the job's read of DraftKings' props (boot strips it elsewhere), where a club's players DraftKings does not price fold */
-    const eF = [], wF = await boot(AT, eF, { keepDk: true }), dF = wF.document;
-    const gF = S.games.filter(g => !sStarted(g, AT) && sFresh(g)).find(g => { const pb = betsOn(dF, g); return !!pb && !!dF.querySelector('#ppBody details.pp-more'); });
-    if (!gF) { console.log('  no props window with a fold on this state: its fold and focus through a redraw are not held here'); closeBets(dF); }
-    else {
-      const f = dF.querySelector('#ppBody details.pp-more'), tabB = dF.querySelector('#ppStats button[data-pp-tab].on');
-      f.open = true; tabB.focus(); wF.eval('rerender()');
-      chk(f.isConnected && f.open && dF.activeElement === tabB, `a redraw with the props window open leaves its stat tab with the keyboard and its open fold open (${dF.activeElement && (dF.activeElement.dataset.ppTab || dF.activeElement.tagName)}, ${f.isConnected && f.open})`);
-      const bet = dF.querySelector('#ppBets button[data-leg]');
-      if (bet) {
-        const leg = bet.dataset.leg; bet.focus(); bet.click();
-        chk(!!dF.activeElement && dF.activeElement.dataset.leg === leg && dF.activeElement.getAttribute('aria-pressed') === 'true' && [...dF.querySelectorAll('#ppBody details.pp-more')].some(x => x.open),
-          `a bet tapped in the window keeps the keyboard on it, pressed, and the fold open (${dF.activeElement && (dF.activeElement.dataset.leg || dF.activeElement.tagName)})`);
-        const again = dF.querySelector(`#ppBets button[data-leg="${leg}"]`); if (again) again.click();
-      }
-      closeBets(dF);
-    }
-    chk(!eF.length, 'no runtime error on the props window through a redraw: ' + eF.join(' | '));
-  }
-  /* Parlay Builder → : the panel on that game's day, the game ticked though it was unticked, the keyboard on the panel's heading */
-  const goG = S.games.filter(g => !sStarted(g, AT) && sFresh(g) && sSlate(AT).days.includes(g.date)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
-  for (const [g, day] of goG.length ? [[goG[0], undefined]].concat(sSlate(AT).both ? [[goG[goG.length - 1], 'both']] : []) : []) {
-    const store = JSON.stringify({ ui: { pb: Object.assign({ off: [g.id] }, day ? { day } : {}) } });
-    const errsG = [], wG = await boot(AT, errsG, { store }), dG = wG.document;
-    const bd = dG.querySelector(`#days .day[data-day="${g.date}"]`); if (bd) bd.click();
-    const b = dG.querySelector(`#games .game[data-id="${g.id}"] button[data-pbgo]`);
-    if (!b) { chk(false, `Parlay Builder → on ${g.id}`); continue; }
-    b.click();
-    const ui = (JSON.parse(wG.localStorage.getItem('nhl_v1') || '{}').ui || {}).pb || {}, wantDay = day === 'both' && sSlate(AT, 'both').pick === 'both' ? 'both' : g.date;
-    const tile = dG.querySelector(`#pbGrid input[data-g="${g.id}"]`);
-    chk(!dG.getElementById('tab-parlays').hidden && wG.location.hash === '#parlays' && ui.day === wantDay && !(ui.off || []).includes(g.id), `Parlay Builder → on ${g.id} opens the panel on ${wantDay}, the game no longer unticked (day ${ui.day}, off ${JSON.stringify(ui.off)})`);
-    chk(!!tile && tile.checked && txt(dG.getElementById('pbSlate')) === sSlate(AT, wantDay).text, `and its tile is ticked on the slate shown (${txt(dG.getElementById('pbSlate'))})`);
-    chk(dG.activeElement === dG.getElementById('pbTitle'), 'and the keyboard is on the panel\'s heading');
-    chk(!errsG.length, 'no runtime error on Parlay Builder →: ' + errsG.join(' | '));
-  }
   /* a puck drop on the watch, on another tab: the bar stays words alone */
   { const nextToday = S.games.filter(g => g.date === today && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
     if (nextToday) {
@@ -4288,17 +4605,17 @@ async function theLook() {
   chk(!farBad.length, `Pick your own legs: each button its one line, the call's tag with its edge, a side far off the market saying so on its button with model and market in view (${farB} buttons, ${farN} far; ${farBad.slice(0, 3).join(' | ')})`);
   console.log(`  Pick your own legs: ${farB} bet buttons held, ${farN} of them far off the market`);
   if (bothB && day0) { const b0 = d.querySelector(`#pbDay button[data-day="${day0}"]`); if (b0) b0.click(); }
-  /* no image after every tab, every day, a drawer, the props window and the card window */
+  /* no image after every tab, every day, a game's page, its windows and the card window */
   d.querySelector('#tabs button[data-tab="pickem"]').click();
   chk(!d.querySelectorAll('#tab-pickem img').length && (sPkData(S).weeks.length ? !!d.querySelector('#pkChart svg.pk-chart') : /No game graded yet/.test(txt(d.querySelector('#pkChart')))), "the Pick'em tab: its chart drawn inline (or, before any final, said not to be), no image");
   d.querySelector('#tabs button[data-tab="games"]').click();
-  for (const b of [...d.querySelectorAll('#days .day')]) { b.click(); const l = d.querySelector('#games button[data-lu]'); if (l) l.click(); }
-  const ppB = [...d.querySelectorAll('#days .day')].map(b => { b.click(); return d.querySelector('#games button[data-pp]'); }).find(Boolean);
-  if (ppB) { ppB.click(); chk(!d.getElementById('ppWin').hidden && [...d.querySelectorAll('#ppBody .pp-team h3')].every(h => !h.querySelector('img')), 'the props window opens, its clubs\' headings without an image'); chk(!d.querySelectorAll('img').length, 'no image with the props window open'); d.getElementById('ppClose').click(); }
+  for (const dd of dayList(d)) openDay(d, dd);
+  const gI = S.games.filter(g => dayList(d).includes(g.date)).find(g => S.props && S.props.games && S.props.games[g.id]) || S.games.find(g => dayList(d).includes(g.date));
+  if (gI && betsOn(d, gI)) { const v = d.getElementById('gameView'), r1 = v.querySelector('button.plrbtn'); if (r1) r1.click(); for (const k of ['units', 'lineups', 'stats']) { v.querySelector(`[data-gp-pop="${k}"]`).click(); chk(!d.querySelectorAll('img').length, `no image with a game's page and its ${k} window open`); d.getElementById('gsClose').click(); } closeBets(d); }
   d.querySelector('#tabs button[data-tab="suggest"]').click();
   const fin = d.querySelector('[data-sp-finish]');
   if (fin) { fin.click(); chk(!d.getElementById('pcWin').hidden && !d.querySelectorAll('img').length, 'no image with the parlay card open'); d.getElementById('pcClose').click(); }
-  chk(!d.querySelectorAll('img').length, `no image anywhere after every tab, day, drawer and window (${d.querySelectorAll('img').length})`);
+  chk(!d.querySelectorAll('img').length, `no image anywhere after every tab, day, page and window (${d.querySelectorAll('img').length})`);
   /* a suggested leg's Add and a Top 30 line's: a word, Add or Added, never an icon */
   for (const sel of ['#spBody button.sp-add', '#pbBody button.t30-add']) {
     if (sel.startsWith('#pbBody')) d.querySelector('#tabs button[data-tab="parlays"]').click();
@@ -4535,6 +4852,9 @@ function sTrRows(St) {
   for (const x of rows) { x.rank = 1 + rows.filter(y => y.elo > x.elo).length; x.rankWas = x.was === null ? null : 1 + rows.filter(y => y.then > x.then).length; }
   return { rows, from };
 }
+/* the bar an out has a row at, the page's OUT_ROW: 0.13 goals a game or more to his club, either way */
+const OUT_ROW_S = 0.13;
+const isRowS = o => typeof o.cost === 'number' && Math.abs(o.cost) >= OUT_ROW_S - 1e-9;
 /* what an out is worth on the card, or null where he has no row: a player with a cost by the player model, that cost at the Games card's
    bar; a goalie (players.js gives him none), the gap to his replacement, as the NFL sizes a quarterback: his save rating less that of the
    goalie in net for his club's next game, in whole hundredths (worked in thousandths, as the state writes a rating), at the bar or over
@@ -4618,6 +4938,8 @@ async function holdRankings(St, ms, tag, opts = {}) {
   ck(d.querySelectorAll('#peDefs').length === (trs.length ? 1 : 0) && d.querySelectorAll('[id="tg-gold"]').length === 1 && !sec.querySelector('img, image, [style*="url("]') && ![...sec.querySelectorAll('*')].some(e => /gradient|defs/i.test(e.localName)), `the shields' gradients are defined once a page, outside the tab (#peDefs ${d.querySelectorAll('#peDefs').length}, #tg-gold ${d.querySelectorAll('[id="tg-gold"]').length})`);
   /* the absences card: exactly the outs worth a row, the most first */
   const outs = sTrOuts(St), card = d.getElementById('injCard'), box = d.getElementById('injSuggest'), aBad = [];
+  { let bar; try { bar = w.eval('OUT_ROW'); } catch (e) { bar = String(e && e.message || e); }
+    ck(bar === OUT_ROW_S, `the page's bar for an absence's row is ${OUT_ROW_S} goals a game (${bar})`); }
   if (!outs.length) ck(!!card && card.hidden && !!box && !box.children.length && w.getComputedStyle(card).display === 'none', `no out is worth ${OUT_ROW_S} goals${St.players ? '' : ' (no player model in the state)'}: the absences card is hidden and empty`);
   else {
     const at = card.querySelectorAll('table'), ar = at[0] ? [...at[0].querySelectorAll('tbody tr')] : [], pulled = St.players.injuries && St.players.injuries.pulled, stamp = [...card.querySelectorAll('p')];
@@ -4808,21 +5130,22 @@ async function lightDarkChecks() {
      to speak for itself"): the classes the cut texts wore are gone from the page and its stylesheet, and on every tab no paragraph or
      small print of main that shows is a sentence over 90 characters, but for the kept few: a warning that a call stands on old data,
      the builder's and the panel's money warnings, a notice the watch said, an error line */
-  const GONE = ['tagline', 'intro', 'pb-sub', 'pb-ctlnote', 'pb-hint', 'pb-rules', 'pp-how', 'pp-trial', 'lu-key', 'confkey', 'pb-key', 'pb-tap', 'pc-own'];
+  const GONE = ['tagline', 'intro', 'pb-sub', 'pb-ctlnote', 'pb-hint', 'pb-rules', 'pp-how', 'pp-trial', 'lu-key', 'confkey', 'pb-key', 'pb-tap', 'pc-own', 'pp-key', 'pp-more', 'pp-none', 'pp-read', 'coach'];
   const inCss = GONE.filter(c => new RegExp(`\\.${c}(?![\\w-])`).test(css));
   const wP = w, dP = d;      // the page booted above, dark again
   const inDom = GONE.filter(c => dP.querySelector('.' + c));
-  chk(!inCss.length && !inDom.length && !dP.querySelector('main details:not(.pb-games):not(.pb-pick):not(.pp-more)') && !dP.querySelector('#spRules, #pbRules, #ppHow, #fitNote, #pkNote, #bHint, #pcOwn, #pbStakeH'),
+  chk(!inCss.length && !inDom.length && !dP.querySelector('main details:not(.pb-games):not(.pb-pick)') && !dP.querySelector('#gameModal details, #gsModal details') && !dP.querySelector('#spRules, #pbRules, #ppHow, #fitNote, #pkNote, #bHint, #pcOwn, #pbStakeH'),
     `the classes and folds the cut descriptions wore are gone from the page and its stylesheet (in the CSS: ${inCss.join(', ') || 'none'}; in the page: ${inDom.join(', ') || 'none'})`);
-  /* kept: the source warnings, the builder's and the panel's money warnings and notices, another book's prices, an error line, a stale
-     line; and two that are not descriptions: a level with no parlay says why (.pb-tier.none), Lineups lists a club's day to day by name */
-  const KEPT = ['#sourceNote', '#bNotes', '#pbNotes', '#pbRead', '#spRead', '#xpNote', '#xbNote', '#bMsg', '.pb-stale', '.pb-tier.none', '.lu-dtd'];
+  /* kept: the source warnings, the builder's and the panel's money warnings and notices, another book's prices, an error line; and one
+     that is not a description: a level with no parlay says why (.pb-tier.none). A game's page and its windows are outside main: THE
+     GAME'S PAGE holds them to the same rule, game by game */
+  const KEPT = ['#sourceNote', '#bNotes', '#pbNotes', '#pbRead', '#spRead', '#xpNote', '#xbNote', '#bMsg', '.pb-tier.none'];
   const showing = el => { for (let x = el; x && x !== dP.body; x = x.parentElement) if (x.hidden) return false; return true; };
   const long = [];
   const sweep = tag => { for (const el of dP.querySelectorAll('main p, main small, main .intro')) { if (!showing(el) || KEPT.some(k => el.closest(k))) continue; const t = txt(el); if (t.length > 90) long.push(`${tag}: ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : el.className ? '.' + String(el.className).split(' ')[0] : ''} "${t.slice(0, 70)}…" (${t.length})`); } };
   for (const b of [...dP.querySelectorAll('#tabs button')]) {
     b.click(); sweep(b.dataset.tab);
-    if (b.dataset.tab === 'games') { for (const day of [...dP.querySelectorAll('#days .day')].map(x => x.dataset.day)) { dP.querySelector(`#days .day[data-day="${day}"]`).click(); for (const lu of dP.querySelectorAll('#games button[data-lu]')) if (lu.getAttribute('aria-expanded') !== 'true') lu.click(); sweep(`games ${day}`); } }
+    if (b.dataset.tab === 'games') { for (const day of dayList(dP)) { openDay(dP, day); sweep(`games ${day}`); } }
     if (b.dataset.tab === 'pickem' && dP.querySelector('#pkPicksW').hidden) { dP.querySelector('#pkShow').click(); sweep('pickem, every pick'); }
     if (b.dataset.tab === 'parlays') { if (!dP.getElementById('pbPick').open) dP.getElementById('pbPick').open = true; sweep('parlays, Pick your own legs'); }
   }
@@ -5155,15 +5478,15 @@ async function main() {
     /* the card, worked out here: the margin, goals and overtime chips, the calls and their grades or why there is none, every part (THE LOOK) */
     if (g) { const bad = cardWrongs(w, c, g, PUB + 60000, MAP0); chk(!bad.length, `${g.id}: the card is the state's (${bad.slice(0, 3).join(' | ')})`); }
     if (g && g.state === 'live') chk(/as of/.test(txt(c.querySelector('.when'))), `a live score the job published says when it was read: ${g.id}`);
-    if (g && startedAt(g, PUB + 60000)) chk(!c.querySelector('button[data-leg]') && !c.querySelector('button[data-pp]'), `no bet and no Player props window offered on a game that has started: ${g.id}`);
-    if (g && g.pm && g.pm.inj && c.querySelector('.drawer')) chk(/^Injury report of /.test(txt(c.querySelector('.drawer .lu-src'))), `a card's Lineups names the injury report its lineup was built on: ${g.id}`);
+    if (g && startedAt(g, PUB + 60000)) { const pb = betsOn(d, g); chk(!!pb && !d.querySelector('#gameView input[data-leg], #gameView input[data-pp-add]'), `no bet offered on the page of a game that has started: ${g.id}`); closeBets(d); }
   }
   /* a game whose start the feed moved after its puck drop keeps the call made before it: its day opened,
      the card offers no bet and says why */
   for (const g of S.games.filter(g => !startedAt(g, PUB + 60000) && delayedAt(g, g.start, PUB + 60000))) {
     const b = d.querySelector(`#days .day[data-day="${g.date}"]`); if (b) b.click();
     const c = d.querySelector(`#games .game[data-id="${g.id}"]`);
-    chk(c && !c.querySelector('button[data-leg]') && !c.querySelector('button[data-pp]') && /start moved/.test(txt(c.querySelector('.when'))), `no bet and no window offered on a game whose start moved after its puck drop, and the card says so: ${g.id}`);
+    const pbM = c && betsOn(d, g);
+    chk(c && !!pbM && !d.querySelector('#gameView input[data-leg], #gameView input[data-pp-add]') && /start moved/.test(txt(c.querySelector('.when'))) && /start moved · call kept/.test(txt(d.querySelector('#gameView .ghead .when'))), `no bet offered on a game whose start moved after its puck drop, and its card and its page say so: ${g.id}`); closeBets(d);
   }
   /* a score the job published while a game was under way says when it was read */
   const liveGames = S.games.filter(g => g.state === 'live');
@@ -5185,16 +5508,17 @@ async function main() {
   /* a leg can be added from a game that has a line and is still to come; a second leg in the same slot of the same game (a second side
      bet, or the other side of the total) replaces it, and with no same-game table in the state any second leg of the game does */
   const gB0 = S.games.filter(g => !startedAt(g, PUB + 60000) && !delayedAt(g, g.start, PUB + 60000) && sFresh(g)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
-  const bw0 = gB0 && betsOn(d, gB0), btn = bw0 && bw0.querySelector('button[data-leg]');
-  chk(!gB0 || !!btn, `the first game to come with a fresh line offers its bets in its Player props window (${gB0 ? gB0.id : 'none'})`);
+  const bw0 = gB0 && betsOn(d, gB0), btn = bw0 && bw0.querySelector('input[data-leg]');
+  chk(!gB0 || !!btn, `the first game to come with a fresh line offers its bets on its page, a box a bet (${gB0 ? gB0.id : 'none'})`);
   if (!gB0) console.log('  no game to come with a fresh line: adding a leg from the Games tab is not held on the published state');
   if (btn) {
     btn.click();
-    chk(w.localStorage.getItem('nhl_v1') && JSON.parse(w.localStorage.getItem('nhl_v1')).legs.length === 1, 'clicking a line in a game\'s Game bets adds a leg to the browser store');
+    const leg0 = btn.dataset.leg, box0 = () => [...d.querySelectorAll('#gameView input[data-leg]')].find(b => b.dataset.leg === leg0);
+    chk(w.localStorage.getItem('nhl_v1') && JSON.parse(w.localStorage.getItem('nhl_v1')).legs.length === 1 && !!box0() && box0().checked, 'ticking a bet in a game\'s Game bets adds a leg to the browser store, the box drawn ticked');
     chk(txt(d.querySelector('#tabs button[data-tab="parlays"]')) === 'Parlay Builder' && !$('legCount'), 'the tab bar stays words alone with a leg in the builder (nhl v25: no count)');
-    chk(/Added to your parlay: .+ Your parlay: 1 leg\.$/.test(txt($('ppMsg'))), `and the window says so in its own status line (${txt($('ppMsg'))})`);
-    const same = btn.dataset.leg.split('|')[0], slot = b => b.dataset.leg.split('|')[2] === 'ou' ? 'tot' : 'side';
-    const other = [...d.querySelectorAll('#ppBets button[data-leg]')].find(b => b.dataset.leg.split('|')[0] === same && b.dataset.leg !== btn.dataset.leg && !b.classList.contains('on') && slot(b) === slot(btn));
+    chk(/Added to your parlay: .+ Your parlay: 1 leg\.$/.test(txt($('ppMsg'))), `and the page says so in its own status line (${txt($('ppMsg'))})`);
+    const same = leg0.split('|')[0], slot = b => b.dataset.leg.split('|')[2] === 'ou' ? 'tot' : 'side';
+    const other = [...d.querySelectorAll('#gameView input[data-leg]')].find(b => b.dataset.leg.split('|')[0] === same && b.dataset.leg !== leg0 && !b.checked && slot(b) === slot(box0()));
     if (other) { other.click(); chk(JSON.parse(w.localStorage.getItem('nhl_v1')).legs.length === 1, 'a second leg in the same slot of the same game replaces the first'); }
   }
   closeBets(d);
@@ -5311,7 +5635,8 @@ async function main() {
     d2.querySelector(`#days .day[data-day="${next.date}"]`) && d2.querySelector(`#days .day[data-day="${next.date}"]`).click();
     for (const g of startedNow.filter(g => g.date === next.date)) {
       const c = d2.querySelector(`#games .game[data-id="${g.id}"]`);
-      chk(c && !c.querySelector('button[data-leg]'), `opened at ${new Date(at).toISOString().slice(0, 16)}Z, the page still offers a bet on ${g.away}@${g.home}, which started at ${g.start}`);
+      const pbD = c && betsOn(d2, g);
+      chk(c && !!pbD && !d2.querySelector('#gameView input[data-leg], #gameView input[data-pp-add], #gameView #ppRefreshOdds') && !!d2.querySelector('#gameView .gp-live'), `opened at ${new Date(at).toISOString().slice(0, 16)}Z, the page still offers a bet on ${g.away}@${g.home}, which started at ${g.start}`); closeBets(d2);
       chk(c && /under way/.test(txt(c.querySelector('.when'))), `a game past its puck drop with no score yet says it is under way: ${g.id}`);
     }
     const t2 = [...d2.querySelectorAll('#days .day')].find(b => /today/i.test(txt(b.querySelector('.dw'))));
@@ -5323,20 +5648,15 @@ async function main() {
   }
 
   holdRequests(w, 'the page as published');
-  try { await theLook(); } catch (e) { chk(false, `THE LOOK stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  await parlayBuilder();
-  await parlayEdges();
-  try { await suggestRecord(); } catch (e) { chk(false, `THE SUGGESTED PARLAYS' RECORD stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  try { await xParlaysChecks(); } catch (e) { chk(false, `X PARLAYS AND THE X BET LOG stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  try { modelsChecks(); } catch (e) { chk(false, `THE PICK'EM MODELS stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  try { await lightDarkChecks(); } catch (e) { chk(false, `THE LOOK: LIGHT AND DARK stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  try { await teamRankingsChecks(); } catch (e) { chk(false, `TEAM RANKINGS stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  try { await pickemChecks(); } catch (e) { chk(false, `THE PICK'EM RECORD stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  await refreshOddsChecks();
-  await playerPropsChecks();
-  try { await jobLinesChecks(); } catch (e) { chk(false, `THE JOB'S PLAYER LINES stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
-  /* a page that breaks this section's steps (a button missing, a leg not where it should be) fails it, never ends the smoke unheard */
-  try { await sameGameChecks(); } catch (e) { chk(false, `SAME-GAME PARLAYS AND PLAYER LEGS stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
+  /* NHL_SMOKE_ONLY=page,look,...: a development aid that runs the named sections alone (after the walk above). A partial run says so
+     and never passes: the gate is the whole run */
+  const ONLY = process.env.NHL_SMOKE_ONLY ? process.env.NHL_SMOKE_ONLY.split(',').map(x => x.trim()).filter(Boolean) : null;
+  const SECTIONS = [['page', "THE GAME'S PAGE", gamePageChecks], ['look', 'THE LOOK', theLook], ['builder', 'THE PARLAY BUILDER', parlayBuilder], ['edges', "THE PARLAY BUILDER's edges", parlayEdges], ['suggest', "THE SUGGESTED PARLAYS' RECORD", suggestRecord],
+    ['x', 'X PARLAYS AND THE X BET LOG', xParlaysChecks], ['models', "THE PICK'EM MODELS", async () => modelsChecks()], ['theme', 'THE LOOK: LIGHT AND DARK', lightDarkChecks], ['teams', 'TEAM RANKINGS', teamRankingsChecks], ['pickem', "THE PICK'EM RECORD", pickemChecks], ['odds', 'REFRESH ODDS', refreshOddsChecks],
+    ['props', 'PLAYER PROPS', playerPropsChecks], ['job', "THE JOB'S PLAYER LINES", jobLinesChecks], ['sgp', 'SAME-GAME PARLAYS AND PLAYER LEGS', sameGameChecks]];
+  /* a page that breaks a section's steps (a button missing, a leg not where it should be) fails it, never ends the smoke unheard */
+  for (const [key, name, fn] of SECTIONS) { if (ONLY && !ONLY.includes(key)) continue; try { await fn(); } catch (e) { chk(false, `${name} stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 3).join(' ')}`); } }
+  if (ONLY) { checks++; fails.push(`a partial run (NHL_SMOKE_ONLY=${ONLY.join(',')}): the gate is the whole run`); }
 
   /* written synchronously: process.exit (the page's timers would keep Node up) must not cut a piped log short */
   const shown = process.env.NHL_SMOKE_ALL ? fails : fails.slice(0, 60);

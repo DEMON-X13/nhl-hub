@@ -210,13 +210,13 @@ steps stand on:
   `--tx`, `--tb` on the `.team`), and the win bar is the two fills. The lifted, outlined colours of nhl v13 below are gone.
 - **No descriptions** (the owner's rule on the NFL page, 22 October 2026: "i dont want any descriptions anywhere. i want the site
   to speak for itself"). Cut in v25: the tagline; the confidence key over the cards (each band's record stays on its pill's
-  title and in the Record's By confidence); Lineups' key but its state line (`.lu-src`); the opening countdown's small print; the
+  title and in the Record's By confidence); Lineups' key but its state line (`.lu-src`, the Lineups window's foot since nhl v27); the opening countdown's small print; the
   folds "How the levels are chosen", "How the list is chosen", "How these numbers are worked out" and "The props model is on
-  trial" (the rose tag in the props window's head stays, the ledger's running numbers on its title: a model on trial against the
-  book is a money warning); every tab's intro paragraph; the builder's lesson and its "Add one more leg" line; the Top 30's lead
+  trial" (the trial stays as one pill in the bar of a game's page, the ledger's running numbers on its title: a model on trial
+  against the book is a money warning); in nhl v27, with the Player props window, its read sentence, its stat tabs' key and its
+  folds of unpriced players; every tab's intro paragraph; the builder's lesson and its "Add one more leg" line; the Top 30's lead
   and its "as read" sentence (the Refresh odds line says it); the card's "Yours alone"; the Record's fit paragraph. **Kept**:
-  headings, labels, numbers, buttons, `title=` tooltips (where each cut fact worth keeping went), state lines ("DraftKings, read
-  1:15 PM EDT.", "None posted yet: read …", "Not read: try Refresh odds.", "No DraftKings lines yet for Thu, Nov 12.", "61 calls
+  headings, labels, numbers, buttons, `title=` tooltips (where each cut fact worth keeping went), state lines ("DraftKings via ESPN, 2:40 PM UTC · no player lines yet.", "Out: Brayden Point (C, injured reserve).", "No DraftKings lines yet for Thu, Nov 12.", "61 calls
   predate the injury report.", "Injury report Nov 11, 2:40 PM UTC · goalies Nov 11, 2:40 PM UTC") and money warnings in a few words
   (a source warning's bold words, "2 lines far off the market left out.", "Price est.: DraftKings prices same-game parlays its
   own way.", another book's prices, a leg to add by hand, a level with no parlay saying why). A new paragraph of explanation fails
@@ -277,70 +277,137 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   in a hue (CIELAB chroma 15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
   icons left are the drawn ones (the puck, the folds' chevrons, the players' sparklines, and since nhl v19 the Pick'em chart); a leg's Add (a suggested level's, a
   Top 30 line's) is a word, Add or Added.
-- **The game card** (`gameCard`; since nhl v23, 8 November 2026, the owner's "i want the nhl games tab to match what the nba
-  tonight tab shows. i feel like there is too many options and information, needs to be cleaner", the NBA's Tonight card): the
-  top line (puck drop and date in the visitor's clock, a note after them; tags: live in ice, the job's live score "as of" in
-  gold, Final, start moved, under way, neutral ice, call right or wrong, replayed); the two badges, the state's straight-up
-  call (`g.pick`) filled and kept after the game, the name, the score where one is known (the loser's muted), no record; the
-  call's chance in the middle, its club, and its **confidence pill** (`confPill`; since nhl v25 the NFL's pill, a soft fill and a dot, in the NFL's colours: High 65%+ lime, Med 60-64% gold,
-  Low 55-59% grey, 50/50 under 55% rose, on the Pick'em's cut-offs applied to the chance rounded as the card writes it (the Pick'em
-  bands the raw chance), so a pill and the percentage beside it never disagree, each band's record this
-  season straight up on its title and for a screen reader); the win bar and each side's chance; the chips (`data-ck`, the
-  NBA's): Margin (the goals layer's, "even" under 0.05: the win chance blends it with the team Elo, so on a close game the two
-  can favour different clubs, and the chip is never called Model), Goals (the model's expected total), Moneyline (DraftKings'
-  price on the side the model took, else the favourite's), a Puck line only where the model took one, Over/under (the total),
-  each call lit lime with "call · edge +N" (the total's "under · edge +N"), or, where its side is 15 points over DraftKings'
-  fair chance on a fresh line still to come, unlit with a solid rose pill, "call · far off" (rose text on a chip falls under
-  4.5:1), and plain with its grade as a solid pill after
-  the game; the other model (Team Elo, or the player model where the team Elo makes the call) only where its chance is 10
-  points or more from the call's, as the NBA's Team model; the stale-line note; a badge 22px at 380px and under, so WPG and
-  WSH stay in their column; who is out (the NBA's rows, cut to what moves the call): the two goalies on one line, "In goal:
-  Jake Allen NJ · Logan Thompson WSH" (how each was chosen on his title and in Lineups, a first NHL start said); a row for each
-  player worth `OUT_ROW`, 0.13 goals a game or more to his club by the player model, "-0.16 goals" at the right, whatever his
-  status (the card's chance on a player model's call is half its goals layer, where a goal of margin is about 15 points of
-  chance at the league's scoring: 0.13 goals is about a point, 1.00 at the median of 17 October's games to come, 0.76 to 1.20
-  at the ends, and the smoke works it out again from `tools/elo.js` and `data/players.json` on every state); a club whose last
-  box score is not read yet; the rest (the day to day, the smaller outs, injured reserve) and the injury report the call stands
-  on are in Lineups on a game to come, and a game under way or over shows the rows alone (it has no Lineups). A phrase is never broken across lines and nothing cut, since a phone shows no title and an ellipsis there
-  could never be read. The Lineups drawer; the foot, the NBA's: Lineups and Player props (`.btn.ghost`, the word alone,
-  outlined ice once DraftKings' lines are in, what was read and when and the game's bets on its title) on the left, Parlay
-  Builder → on the right, one row from 360px (a count beside Player props put Parlay Builder → on a second row at 390).
-  **The game's bets** (the NBA's Game bets) are in its Player props window, which every game to come with a fresh line,
-  projections or a read offers: `#ppBets` over the player props, "Game bets", the key ("Tap a bet to add it to your parlay:
-  DraftKings' price · the model's chance. Edge: the model's less the price's, in points.") and the bets board (`betBlock`: the
-  NBA's Game lines rows, the label beside its two buttons, over them only where the board is under 260px, a container query;
-  each button 44px and one line where it fits, "PIT +170 · 34%", the side, DraftKings' price and the model's chance, and where
-  a phone has no room for the three, the price and the chance under the side at the right in the same 44px, never broken inside
-  a side or a price; a row's two buttons laid out alike, both on one line or both with the price under the side (`syncBetRows`
-  reads the browser's wrap after each draw of the window and of Pick your own legs, when a board's width changes, `BET_RO`, and
-  once the fonts are in, and marks a row whose either button wrapped `.st`); the model's call lit lime with a tag on the
-  button's top edge, "call · edge +N", taking no line; a side far off the market a rose tag, "far off" or the call's "call ·
-  far off", and both numbers under its line, "model 74% · market 47%" (the call's "· left out of the levels"), wrapping between
-  words with each number whole; every piece that cannot wrap fits the narrowest button the page draws (94px at 320, 76 inside: a
-  tag at most "call · edge +99", 84px); in the parlay an ice fill and a check before the side; the button's name for a screen
-  reader says all of it; a board on a line Refresh odds read says so, dated), or why there is none (a stale line, no line yet).
-  A bet tapped there is said in the window's own status line as a player's price is, and draws the whole window again (where a
-  game takes one leg, a bet put in can leave a player's price out), its open folds kept and the keyboard on the bet; any other
-  redraw while the window is open (`rerender`: the watch, a storage event) draws its Game bets alone (`ppBetsRedraw`), so its
-  stat tab, its open folds and the keyboard's place in them stay as they are. The confidence key over the day's cards (nhl v23) went in nhl v25: no descriptions. Refresh
-  scores shows only while the day shown has a game under way (the NBA's odds bar carries Refresh odds alone). A redraw
-  replaces only the cards whose markup changed (`CARD_HTML`).
-- **Lineups** (`luDrawer`, on a game to come the player model lines up): each club's goalie and its nine skaters with
-  the most ice time (`S.players.teams[club].lineup`), minutes and goals a game, the club's strength line (the strength
-  is the state's own, `g.pm[side].strength`, to the hundredth, half away from zero, the figure the Players tab shows;
-  attack, defence and goalie are shown so they add up to it, largest remainder: each part's hundredths taken down and
-  the ones left given to the parts with the most cut off, so each is within a hundredth of its own value. Rounded each on
-  its own, the parts missed the total by a hundredth in about 40% of lines), led by the goalie and how he was chosen ("In goal
-  Jake Allen, confirmed by DailyFaceoff · Strength ...", nhl v23); under each club (nhl v13), everyone the report has out, his status
-  and what he adds to his club in a game ("—" where the model does not rate him), most valuable first, each name and status
-  whole, then (nhl v23) the club's day to day, who stay in the lineup; its one state line (`.lu-src`: the key of sentences over it went in nhl v25) names the injury report the call stands on and
-  whose call it is ("Injury report of Oct 17, 6:57 AM EDT · the player model's call."). Opened in place, never redrawn to open; open in this
-  page's memory alone (`LU_OPEN`), so a redraw keeps it open; never stored. One toggle, in the foot, as the NBA's: its
-  word stays Lineups, so the foot never rewraps, and `aria-expanded` and an ice outline say it is open (the drawer once
-  ended on a second Hide lineups right over the foot's); shut, the page scrolls so the toggle stands where the finger
-  was (the drawer is some 600px tall on a phone) and the keyboard stays on it.
-- **Parlay Builder →** (a game to come with a fresh line on a day the panel offers): the panel on that game's day (Both
-  days kept where chosen and holding it), the game ticked, the keyboard on its heading.
+- **The game card** (`gameCard`; the NBA's Tonight card of nhl v23, cut in nhl v27 to what a list shows, until the Games tab's
+  rows come): **one button a game, which opens the game's page** (below). The top line (puck drop and date in the visitor's
+  clock, a note after them; tags: live in ice, the job's live score "as of" in gold, Final, start moved, under way, neutral ice,
+  call right or wrong, replayed); the two badges, the state's straight-up call (`g.pick`) filled and kept after the game, the
+  name, the score where one is known (the loser's muted), no record; the call's chance in the middle, its club, and its
+  **confidence pill** (`confPill`; the NFL's pill, a soft fill and a dot, in the NFL's colours: High 65%+ lime, Med 60-64% gold,
+  Low 55-59% grey, 50/50 under 55% rose, on the Pick'em's cut-offs applied to the chance rounded as the card writes it, so a pill
+  and the percentage beside it never disagree, each band's record this season on its title and for a screen reader); the win bar
+  and each side's chance; two chips (`data-ck`): Margin (the goals layer's, "even" under 0.05: the win chance blends it with the
+  team Elo, so on a close game the two can favour different clubs, and the chip is never called Model) and Goals (the model's
+  expected total). Nothing else: no bet, price, edge, grade, out row, drawer, foot or control of its own (the smoke holds it).
+  Until nhl v27 the card also carried DraftKings' moneyline, puck line and total as chips with the calls' edges and grades, the
+  other model where it parted from the call, the stale-line note, who is out (the goalies and a row for each player worth
+  `OUT_ROW`, 0.13 goals), the Lineups drawer and a foot of three buttons (Lineups, Player props, Parlay Builder →): each is on
+  the game's page now, or gone with a reason (below). Refresh scores shows only while the day shown has a game under way. A
+  redraw replaces only the cards whose markup changed (`CARD_HTML`); a card still to come is watched (`SHOWN`), so it is drawn
+  again at its puck drop.
+- **The game's page** (`#gameModal`, `openGame`, `renderGame`; nhl v27, 12 November 2026: the second step of the owner's ask
+  above, the NFL hub's game page, the page a row of its Props list opens, in hockey's numbers). It took the place of the Player
+  props window (`#ppWin`, the NBA's sheet with six stat tabs), the card's bet chips, who is out and the Lineups drawer: one page
+  a game, every game's (a final's too), opened from its card and from a Player props button in Pick your own legs. **What kind
+  of thing**: the NFL's `.modal` and `.modal-panel`, a child of `<body>`, 1,100px at the most and 28px from the top, the backdrop
+  scrolling and the page under it locked (`body.modal-open`); at 760px and under the whole screen. The address does not change
+  and nothing of it is stored (`GP`: the game, the open player, whose stats show, All skaters, the search, the status line): a
+  reload is the Games tab. Close (`#backBtn`), Escape, a click on the backdrop or a change of tab close it, and the focus goes
+  back to what opened it (the card, found again where the list was redrawn). The focus moves into it on opening, Tab stays
+  inside, and a redraw (a tick, the watch, a storage event, a Refresh odds read: `rerender` draws it wherever it is open) keeps
+  the scroll, the open player and the keyboard on the same control, found again by what it names; listeners are bound once, on
+  `#gameView`. Layers: the slip bar (40) under the page (50), its windows (55) over it, the parlay card (80) over both; what
+  the slip bar would say while the page is open is said in the page's own status line. **Top to bottom**:
+  - **The bar**: `✕ Close`; the props model's trial as one pill (`trialPill`, `#ppTrial`, only on a page that shows a projection:
+    "props model on trial", gold, until the ledger's bar is decided, then "props model: failed its trial" rose or "passed its
+    trial" lime; the ledger's running numbers on its title, never a verdict or a word of passing before the bar); **All
+    skaters** (`#allCb`). No Book's cut (the NFL's sets the margin on prices its page has to estimate; every price here is
+    DraftKings' own). Then **Find a player** (`#gameSearch`: rows whose name does not hold what is typed are hidden, a club's
+    head with none left and the lines under the heads too; while anything is typed every skater is listed, so a name the cut
+    leaves out is found).
+  - **Refresh odds** (`#ppRefreshOdds`, the page's one press: under Refresh odds) with **this game's own status line**
+    (`gpStatus`, `#ppOddsNote`), a state in a line: whose line and when ("DraftKings via ESPN, 2:40 PM UTC."), "No DraftKings line
+    yet", "Line from 9:12 PM EST: not on DraftKings at the last run", another book by its name; then its player lines where they
+    are not simply in ("· no player lines yet", "· couldn't read player lines", "· player lines not read yet", "· player lines on
+    game day" for a game past tomorrow, "· player lines 9:12 PM EST" where they were read at another time than the line); "·
+    couldn't reach ESPN" after a press that could not; "reading…" and `aria-busy` while one runs. Under it the page's one live
+    status line (`#ppMsg`, empty until a tick has something to say). **Once the puck has dropped** the bar and its line give way
+    to the strip (`.gp-live`, lime once final): "TB 2, BUF 1 · 8:12 - 2nd." (a score the job read says "as of" its time),
+    "Final (OT): TB 3, BUF 2.", "Start moved · call kept.", "In progress." with nothing read ("Final." four hours on), and
+    **Refresh scores** (`#gameScoresNow`: `readLive` for the game's day) until it is final.
+  - **The head** (`gameHeadCard`), the NFL's six cells: **Puck drop** (the day and time on the visitor's clock; under way the
+    score and clock, or LIVE; "start moved · call kept"; FINAL, FINAL · OT, FINAL · SO); **Matchup** (the two tags, "at", or "vs"
+    on neutral ice, a ✓ on the winner's once final, the game's note under them); **Biggest projections** (the highest
+    projected points, shots on goal and saves over both clubs; on a final the state no longer carries the projections, so the
+    label is **Leaders** and the three are its box score's, or "Box score not read yet"); **Expected score** (the goals
+    layer's two rates, `max(0.3, (xt ∓ mu) / 2)`, each rounded once to a tenth, away first: whole goals come out level on two
+    games in three; the actual score beside it once known); **Total** (`xt`, goals); **Model pick** (the state's call and its
+    chance; "✓ TB by 1" or "✗ BUF by 2" once final). The pick can be the club the expected score has behind on a close game:
+    the call blends the goals layer with the team Elo.
+  - **Three buttons**, one row (`gameWinBtns`; the row takes a fourth): Matchup, Lineups, Team Stats, each a little window (below).
+  - **Game bets** (`gameBetsCard`, `rungRow`): where its lines were read ("Lines: DraftKings', read from ESPN 2:40 PM UTC.",
+    "… by Refresh odds 9:12 PM EST."), then a block a club ("our margin +0.5", the goals layer's; "book line -1.5") with **To
+    win** and **To cover**, and **Game total** ("model's goals 5.8", "book line 6.5") with Over and Under. A row is seven cells,
+    the NFL's: the box, the bet, a bar, the percentage, the band, the model's chance, the price. **The bar and the big
+    percentage are DraftKings' fair chance** (the two prices with the margin out; the NFL's since its v138), its band the NFL's
+    for a bet (High 70%+, Med 45%+, Low: not the card's 65/60/55, which band a favourite's chance); **the model's own chance**
+    sits beside it, small ("model 54%", its title saying whose), in the cell the NFL leaves empty; the price is the book's, lime.
+    **Value** (the NFL's mark, gold) on the side the state's call takes (`mlPick`, `plPick`, `ouPick`: the model 5 points or
+    more over the price), its edge on its title: the one mark of a call, in place of the card's "call · edge +N" and "far off".
+    A box (`input[data-leg]`, the builder's own leg id) only on a fresh line of a game to come, ticked (and its row washed ice)
+    exactly where the builder draws the leg; a tap anywhere on the row ticks it. A stale line draws its prices with no box and
+    says why at the card's foot; no line draws each club's To win alone, the model's chance and no price, and "No DraftKings
+    line yet."; once the puck has dropped each box is a grade (✓, ✗, push, – until the final: To win by the score, the puck
+    line and the total from `result`).
+  - **Each club** (`rosterFor`): its tag, name and "playing BUF" ("played" once final); **"Out:"** everyone the injury report
+    has out for the club, in the report's order, his position and status, no figure (the figures are in the Lineups window; the
+    card's 0.13-goal rule went); "Lineup from 2026-11-08: the box score of 2026-11-10 not read yet." where it is so. Then **a
+    row a player**: the goalie, the forwards by expected ice time, the defencemen by theirs, the six forwards and four
+    defencemen who play most before All skaters (22 rows a game, the NFL's 21), all eighteen skaters with it, then any player
+    DraftKings prices whom the model leaves out, and last, under "Other players", an athlete no table puts on either club (named
+    by his ESPN id, never offered). A row: his name, a gold DTD chip where the report has him day to day, his role ("C · 22
+    min"; a goalie's "G · confirmed", "G · likely", "G · most starts, 7 of the last 10", the whole of how he was chosen on its
+    title, "first NHL start" said), **Show stats** (the NFL's 22px chip inside the row: the one control under 44px, since a
+    44px target there takes taps meant for the row; Enter and Space work on it), and three figures of his group (a forward's
+    points, shots, goals; a defenceman's points, shots, blocks; a goalie's saves). A game the props model does not project
+    (past tomorrow) lists the player model's lineup, names and roles alone, "No lines yet"; a final lists who its box score
+    has, by points ("FINAL 2 points · 3 shots · 2 goals"), or says "Box score not read yet." / "Box score no longer carried.";
+    a game under way whose projections the state still carries shows them as "LIVE projected …".
+  - **A player open** (`playerBody`; one at a time, his row kept where it stood): a block a stat of his group (Points, Goals,
+    Shots on goal, Assists, Blocked shots; Saves), its heading "projected 0.92" and "DraftKings line 0.5"; **the main line's
+    two rows** (Over, Under) and **every milestone under them** (2+, 3+, Anytime goal; the one that is the main line's Over
+    drawn once, as the line: the NFL stopped drawing ladders, hockey keeps them, since its goal market is nothing but
+    milestones), each row as a game bet's: DraftKings' fair chance (a main line: all of the margin on the Over; a Yes price: its
+    implied chance over DraftKings' measured margin, **est. drawn under the figure**, since a phone shows no title), the props
+    model's chance beside it ("model 60%", its title "the props model's chance (on trial)"), DraftKings' price, and a box
+    (`input[data-pp-add]`) where the player is on one of the game's clubs. A stat with no price says "No DraftKings line yet."
+    Nothing on a player's line says Value, edge or "model says". Once the puck has dropped the body is a tile a stat (what he
+    did, the projection and the difference where the page still has one), no bet. **Show stats** draws his games in the box
+    scores the state carries (14 days) under his row, a row a game and a foot of averages.
+  - **A tick** is the builder's own: `legTap` (a game bet; the handler every leg button on the page calls) and `ppAdd` (a
+    player's price) put the leg in or take it out by `placeLeg` and `takeOut` (under The Parlay Builder, the same-game rule),
+    and the page says what happened in `#ppMsg` ("Added to your parlay: … Your parlay: 3 legs.", a replacement, a refusal),
+    drawn again with the box ticked only where the builder draws the leg, so a refusal leaves it unticked.
+  No description anywhere on it: what a number means is on its `title`. On a phone a bet's row drops its bar (it only draws the
+  percentage beside it); no figure is hidden. Measured on 12 November's state, a game to come with DraftKings' player lines is
+  2,370px at 1280 and 3,259px at 390 with every row shut (the NFL's page 2,306 and 3,423), where the Player props window ran
+  3,412px for one of its six stat tabs.
+- **The game's three windows** (`#gsModal`, `gameWindow`: the NFL's window, one card over the game's page, 720px at the most,
+  "a little window with 10px of the page round it" on a phone; its Close takes the focus, Escape closes it alone before the
+  page, Tab stays inside, the focus goes back to its button; drawn from the state, nothing fetched):
+  - **Matchup** (`unitsBody`): each club's attack against the defence and goalie it meets, by the player model's own parts
+    (goals a game against an average club: `S.players.teams[club].offence`; `.defence` and this game's goalie's `gk`), each
+    ranked among the clubs ("6th of 32", the better rank washed lime), the gap between them in goals and a tag, the NFL's
+    cut-offs on the gap in league standard deviations (Easy 1.5, Favorable 0.5, Even, Tough, Very tough; a reading of the
+    model's own gap, said on its title, not a new model); **The clubs** (in goal, strength, the team Elo, rest in days or "back
+    to back", the higher marked); **Models**: every model's pick and chance on the game as the Pick'em Record reads them (the
+    call, the Team Elo, Alpha, the Joker, the ELO Model, DraftKings with its margin out), where the card showed the other
+    model only when it parted from the call by 10 points.
+  - **Lineups** (`lineupsBody`, where the NFL's middle window is Mismatches: hockey has no player-against-unit figure to rank;
+    should one be built its window takes the middle and these lists move into Matchup): the drawer's lists, a club a column
+    (one over the other on a phone): the goalie and the nine skaters with the most ice time, minutes and goals a game; "In
+    goal Jake Allen, confirmed by DailyFaceoff · Strength +0.48: attack -0.04 · defence +0.26 · goalie +0.26" (the strength is
+    the state's own, `g.pm[side].strength`, to the hundredth, half away from zero; attack, defence and goalie are shown so they
+    add up to it, largest remainder: each part's hundredths taken down and the ones left given to the parts with the most cut
+    off, so each is within a hundredth of its own value; rounded each on its own, the parts missed the total by a hundredth in
+    about 40% of lines); **Out**, everyone the report has out, his status and what he adds to his club in a game ("–" where the
+    model does not rate him), most valuable first, each name and status whole; the day to day, who stay in the lineup; and at
+    the foot the injury report the call stands on and whose call it is ("Injury report of Oct 17, 6:57 AM EDT · the player
+    model's call."). Once the puck has dropped it shows what the call was frozen on (its goalie, its strength, who was out),
+    never today's skaters and parts, which are the next game's.
+  - **Team Stats** (`teamStatsBody`, the NFL's bars: `SROWS`, `statSplit`): a row a stat the state carries (points percentage,
+    goal differential a game, goals a game, goals allowed, regulation wins, the playoff chance; shots for and against as soon
+    as the job writes `sf` and `sa`), each club's number at its side, the pair split on a bar in the two clubs' colours, the
+    better marked, "TB better on 6, BUF on 0", and the season and each club's games at the foot.
 - **The Suggested Parlays tab** (`#suggest`, the second tab since nhl v17, the owner's ask of 25 October 2026 to build the NFL
   hub's Parlay Builder and its Suggested Parlays tab here), drawn since nhl v22 (7 November 2026, the owner's "i feel like the
   suggested parlays are really hard to read. i want it to match the visuals of the nfl one") as the NFL hub's own, its values
@@ -381,11 +448,6 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   your own legs and the saved parlays. An empty builder or saved list is a plain paragraph, as the NBA's. The builder's tiles
   are fitted to the fraction of a pixel (`tooWide`: a figure 0.3px over its tile once wrapped "$158.4" over "1"). The parlay
   card's leg-by-leg DraftKings links are 44px chips, "Leg 1", "Leg 2", on a line of their own.
-- **The Player props window**: the NBA's sheet: 900px wide, 28px from the top, as tall as the screen allows and scrolling
-  inside itself (full screen on a phone) under a head that stays put (the title, the game by its clubs' pills, the time,
-  a rose "props model on trial" tag, the ledger's running numbers on its title, and Close, a word); since nhl v25 the NFL's Refresh odds
-  control (`.btn.quiet`) and under it the read's state in a line ("DraftKings, read 1:15 PM EDT at the job's last run.", "None posted
-  yet: read …", "Not read: try Refresh odds."); the trial's fold and the "how these numbers are worked out" fold went.
 - **No Playoff tab** (nhl v14, the owner's call of 25 October 2026: "can you get rid of the playoff tab, i dont see the
   need for it"): its bracket and its odds table (expected points, division and conference chances) went with it. The job's
   simulation stays, read by Team Rankings' Playoff and Cup columns, and an old `#playoff` link (or a stored tab) opens Team
@@ -557,13 +619,13 @@ toward neither rule, leaving the store for good, said, when a leg goes in beside
 as bring it back to 21, the last stored (three of 21 out and one added leave two stored, a 404 on the game's props and the
 moneyline added leave 20), and staying stored, nothing said, below 21, a reload opening on what the parlay showed; a read
 alone naming another book for the game, or none, a leg added drawn alone in place of the one drawn and every leg kept stored,
-a tap on a stored leg left out putting it in (a player's in the props window; the Over beside the moneyline in the game's Game bets,
+a tap on a stored leg left out putting it in (a player's on the game's page; the Over beside the moneyline in the game's Game bets,
 not pressed there or in Pick your own legs while left out), the leg drawn taken out bringing the next one in, said in the
 window, the builder and on the slip bar, the read's slip line dropping what it said of a leg now drawn, and a reload on the
 published line opening on them all; the same total at a number a read moved replacing the stored one, said; a level's Add to
 builder and Clear all asking first with only legs left out stored and beside one drawn, No keeping them, and Add to builder asking
 where a level holds that total only at the number the read moved it to, with the moneyline drawn beside it and alone; a refusal or a
-replacement on the slip bar gone at the next leg taken out or added, a player's price in the props window and a level's Add to builder among them, and what it
+replacement on the slip bar gone at the next leg taken out or added, a player's price on a game's page and a level's Add to builder among them, and what it
 says of a read standing through an add with no word of its own and back when a replacement said over it goes), the price worked out again from the table and
 the hold (an exact integral for two legs, two million draws beyond), never above the product, est. everywhere, the fair
 chance (an Under main line's its own implied chance among the legs), no thin edge on a team leg beside a player leg (a
@@ -591,38 +653,62 @@ whole-number total, a game priced at another book and one with no book named, an
 games it plants on or clicks are taken from the day the panel shows (the Day control set where it needs a
 day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
-DraftKings' player props and the props window (under The props model) on answers it makes from the state's own
-projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19) works the Pick'em tab out from the state by rules of its own (the picks, the weeks, the tiles and bands, the legend, the chart's weekly sums, every cell of the week grid and its shading, every pick of the day it opens on and of a past day), on the state and on a copy planting an unlined final, a game whose two ratings part and a level price, and holds the call's season to the state's SU record. Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
-source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, drawer and window finds none),
+DraftKings' player props and the game's page on them (under The props model) on answers it makes from the state's own
+projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19) works the Pick'em tab out from the state by rules of its own (the picks, the weeks, the tiles and bands, the legend, the chart's weekly sums, every cell of the week grid and its shading, every pick of the day it opens on and of a past day), on the state and on a copy planting an unlined final, a game whose two ratings part and a level price, and holds the call's season to the state's SU record. Its section THE GAME'S PAGE (nhl v27) holds the page a game opens and its three windows by a model of its own, on any
+state the job can publish (what a rule needs and the state lacks is said and skipped): for every game of every day on the strip,
+opened from its card, the bar (Close, the trial's pill by the ledger's decision, All skaters, no Book's cut), the search, Refresh
+odds and this game's own status line or, once the puck has dropped, the strip; the head's six cells (the day and time or where the
+game stands, the tags in their colours and "vs" on neutral ice, a tick on the winner alone, the note, the three projections or the
+box score's leaders, the expected score to a tenth, the total, the pick with its chance and its result); the three buttons; Game
+bets row by row (the bet, a box exactly where a fresh line of a game to come prices the side and ticked exactly where the builder
+draws the leg, DraftKings' fair chance as the bar and the percentage, its band by 70 and 45, the model's chance and whose it is on
+its title, the price, Value exactly on the state's picks with the edge on its title, the lines' source, why there is no line or no
+box, every grade from `result` once the puck has dropped); each club's head, "Out:" exactly the report's outs in its order, a box
+score not read; every player's row in order (the goalie, the forwards and the defencemen by expected ice time, six and four before
+All skaters; the player model's lineup by name for a game not projected; a final's box score by points), his role and its title,
+the DTD chip, Show stats, his figures; and every player with something under his row opened in turn, one open at a time: each
+block's projection and line, the main line's two rows then each milestone but the main line's Over, each row's fair chance (the
+Over 1 - the Under's implied, the Under its implied, a milestone over `fair.yes` with est. drawn), the props model's chance, the
+price and the box's key, or a tile a stat once the puck has dropped; no description, and nothing on a player's line saying edge,
+Value or "model says". Each game's Matchup (both attacks' values, ranks and gap by its own ranking, the tag by the league's spread,
+the clubs' four rows, each model's pick and chance equal to the Pick'em Record's reading of the game), Lineups (every row, the
+strength the state's own with its parts adding up to it and each within a hundredth of its own value, the outs with their figures
+most valuable first, each name and status whole, the day to day, the foot; what the call was frozen on once the puck has dropped)
+and Team Stats (every row's two numbers, the split, the better marks and counts, the foot, the bars in the clubs' colours). Then
+the keyboard and the ways out on one game (the focus into the page, Tab kept inside both ways, Escape, Close, the backdrop and a
+change of tab each closing it with the focus back on the card, the address unchanged; a window's Close holding the focus, Escape
+closing the window alone and the next the page), All skaters and the search finding a skater the cut leaves out, Show stats from a
+click, Enter and Space with his games in the box scores by its own sums, one player open at a time, a tick (said in `#ppMsg`, the
+box drawn ticked with the keyboard on it, the other side of the total taking its place, a second tick taking it out, a tap on the
+row), nothing asked and nothing stored by any of it; the layout read from the stylesheet (44px on Close, the search, Refresh odds,
+the windows' buttons, a bet's row and a player's row, Show stats the one named exception; the head six columns and three from
+980px; a bet's row hiding its bar and the band's dot on a phone and nothing else; the page the whole screen at 760px; the layers;
+a 16px search box on a phone); and, planted in the page's memory and in the section's own copy alike: another book, a stale line,
+no line, DraftKings' player lines none posted, failed and not read, the trial decided FAIL and PASS and no ledger, the puck
+dropping with the page open (the watch), a live score and a final in overtime read in this browser, a start moved after the first
+puck drop, a final with its box score, with none and past the box window, and no props model in the state at all.
+Its section THE LOOK (nhl v12; the card and the colours nhl v13) holds the page's look with its own code: no image (the
+source names none, no CSS `url()`, no club logo or colour read from the state; a walk of every tab, day, a game's page, its windows and the parlay card finds none),
 `TEAM_COLORS` (nhl v25: every club a palette of hex colours; each club's tag worked out again by the smoke's own code, the fill
 darkened until white or `#1E2230` reads on it at 4.5:1, the text whichever reads better, the border the fill at 72%: the text 4.5:1 on
 the fill and no fill needing darkening, by its own WCAG sums; the surfaces the outlined pill and badge were held on went with them; every club but the Kings in a hue of its own by its own CIELAB sums; any two clubs outside one
 brand colour, the reds, the navies, the golds, the two oranges, 5 or more apart by its own CIEDE2000), every game card of every day
 on the strip worked out from the state (badges, colours, the filled pick, chances, the confidence pill by its own bands and this
-season's record, no record on a club, every chip in order by its `data-ck` with its text, its call, its edge or far off and its light,
-the tags, the stale line, no bet on a card), each game's Game bets in its Player props window (every bet button part by part (its side,
-a check in the parlay, its price, its chance, the call's tag with its edge, far off the market's tag and both numbers, nothing else) and
-its name for a screen reader, the rules that keep it one line where it fits (the side and the price and chance each whole, the call's
-tag on its edge taking no line, 44px), every piece of it that cannot wrap within the narrowest button's room (counted, since jsdom lays
-nothing out: a tag 15 characters at most, a word or number under the line 11, with any rule that keeps the far line or the button whole
-read too), a row's two buttons laid out alike (the wrap planted in a row's first button, its second or neither: a row marked exactly
-where either wraps, in the window and in Pick your own legs, and no mark kept once drawn again unwrapped), a stale line's window saying
-why it has none), no confidence key over the cards (nhl v25) and Refresh scores exactly where the day has a game under way, who is out row
-by row and word for word: the goalies' line with each one's how on his title, a row exactly for each player worth `OUT_ROW` (the page's
-is the smoke's 0.13, and the smoke works out on every game to come from `tools/elo.js`'s goals layer and `data/players.json`'s blend
-that 0.13 goals moves a club's chance about a point, held only at the median and loosely, 0.5 to 2 points, the ends reported and never
-held: the job never moves the blend or the pull, and one lopsided game on the schedule is the model's honest number, never a reason to
-stop a publish), a club's last box score not read yet, nothing else; every player worth a row with his row on the card, and on a card with Lineups
-every player out with his status and figure in it (worked out on its own: one dropped from Lineups or a figure missing fails), each
-club's day to day in Lineups,
-every row's title, each name and status kept whole and no rule in any media query ellipsing a row or a name in Lineups' outs; the
-Lineups drawer's every row, its goalie and how he was chosen, and its strength line the state's own to the hundredth with its parts as
-shown adding up to it, each within a hundredth of its own value, the injury report and whose call it is in its key, its one toggle in
-the foot keeping its word and no button in the drawer, Player props (its word alone, the read on its title),
-Parlay Builder → and the foot exactly where they belong), the tab bar words alone on every tab and after a puck drop on the watch (the counts went in nhl v25), Lineups (shut, opened in place,
-kept open through a redraw and a bet tapped in the window, the focus kept, opened and shut from the keyboard with the foot as it was, nothing
-written, gone at the puck drop),
-Parlay Builder → (the day, the game ticked again, the slate, the focus, Both days kept), every tag (`.ttag`) its club's abbreviation filled in its club's colour by the smoke's own sums (its text and its edge with it), its club's name beside it, and no club in a `.pill`, each table's marked columns (`#` and its order), every table keeping every column at every width (no
+season's record, no record on a club, its two chips, Margin and Goals, by their `data-ck`, the tags; a button that opens its game's
+page, with no bet, price, edge, grade, out row, drawer, foot or control of its own), no confidence key over the cards and Refresh
+scores exactly where the day has a game under way; the bets board, which is Pick your own legs' alone since nhl v27 (every bet button
+part by part (its side, a check in the parlay, its price, its chance, the call's tag with its edge, far off the market's tag and both
+numbers, nothing else) and its name for a screen reader, the rules that keep it one line where it fits (the side and the price and
+chance each whole, the call's tag on its edge taking no line, 44px), every piece of it that cannot wrap within the narrowest
+button's room (counted, since jsdom lays nothing out: a tag 15 characters at most, a word or number under the line 11, with any
+rule that keeps the far line or the button whole read too), a row's two buttons laid out alike (the wrap planted in a row's first
+button, its second or neither: a row marked exactly where either wraps, and no mark kept once drawn again unwrapped)); a made-up
+game that takes every branch, on its card, its page and its windows (a call on the moneyline and on the total marked Value, a
+puck-line side far off the market that is no call and says nothing, "Out:" with players of every status and no figure, the day
+to day in the projected lineup wearing the DTD chip and nobody else, a first NHL start on the goalie's row and in Lineups, seven
+out in the Lineups window with a dash for the one the model does not rate; then the same game at its puck drop, no Value, no box
+and a grade to come in each box's place), the tab bar words alone on every tab and after a puck drop on the watch (the counts went
+in nhl v25), every tag (`.ttag`) its club's abbreviation filled in its club's colour by the smoke's own sums (its text and its edge with it), its club's name beside it, and no club in a `.pill`, each table's marked columns (`#` and its order), every table keeping every column at every width (no
 rule in the page's CSS, in any media query, hides a table, row or cell; each scrolls sideways in its wrapper with its club or player
 column the one held; each has the columns it had before the restyle; every name a table hides for a screen reader held by a
 positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), each player's name in bold
@@ -630,8 +716,8 @@ and his club in the Club column, the Players' figures (ratings and strengths uns
 coloured by the sign shown), Team Rankings' table laid out fixed on its eleven columns' widths, never squeezed under them and no cell
 broken, and by its own words on a phone, its two tables' columns and held columns (Team; the absences' Player), no lit heading on it, no
 Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
-side far off the market said on its own button with both numbers exactly and every other part of the button (in each game's Game
-bets and in Pick your own legs, Both days included), the props window's head naming its game by its pills, the Record's tiles, the lock's words, the card's
+side far off the market said on its own button with both numbers exactly and every other part of the button (in Pick your own
+legs, Both days included), the Record's tiles, the lock's words, the card's
 leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE LOOK: LIGHT AND DARK (nhl v25) holds the two looks and the owner's no-descriptions rule, all of it in jsdom by
 rules of its own: the theme script first in the head, after the stylesheet and before the body, `nhlhub_theme_v1` named in it alone;
 both palettes read from the stylesheet's text, every colour token of `:root` with a light value; each text token 4.5:1 on each ground
@@ -641,9 +727,10 @@ for now** by its attribute and the stylesheet; a press (jsdom presses a hidden b
 `nhl_v1` as it was, a second dark; another tab's switch followed with nothing written, another key's event ignored; and, on a bare page
 of the script and the switch's own markup, light kept is light as the body starts to be parsed, every kept value but exactly `light` is
 dark, storage that throws is dark and a press still switches. Then no descriptions: the classes the cut texts wore are gone from the
-page and its stylesheet, and on every tab (every day's cards with Lineups open, every pick shown) no paragraph or small print of
+page and its stylesheet, and on every tab (every day's cards, every pick shown) no paragraph or small print of
 `main` that shows is over 90 characters but the kept few (the source warnings, the builder's and the panel's money warnings and
-notices, another book's prices, an error line, a stale line, a level with no parlay saying why, Lineups' day to day by name).
+notices, another book's prices, an error line, a level with no parlay saying why); a game's page and its windows, which are outside
+`main`, are held to the same rule game by game in THE GAME'S PAGE.
 `main()` holds the header to the wordmark, the stamp ("Updated" and the state's `published` in the visitor's clock, zone named), the
 build tag and the tabs' words, nothing else; X PARLAYS that the owner's two tabs are not in a visitor's page at all; THE LOOK every
 button, select, box, segmented choice and checkbox chip at 44px and the switch 44px by 44px, and every table in its wrapper let out of
@@ -777,11 +864,11 @@ building ... i want to add the suggested parlays tab to show suggested parlays a
 then the Top 30 lines on the visitor's picks, then Pick your own legs and the saved parlays; the suggested levels are the
 Suggested Parlays tab's, the site's own pick each day on every game and bet type, locked and graded in the record.
 Three bet kinds (moneyline, puck line, total) and, since nhl v11 (15 October 2026, the owner's "go for it"),
-DraftKings' player lines from the props window; one Eastern day as the slate. **The suggested levels keep one leg a
+DraftKings' player lines from a game's page; one Eastern day as the slate. **The suggested levels keep one leg a
 game**, and since nhl v18 (below) a leg can be a player's line. **The builder takes more than one leg of a game**: one side bet a game (the
 moneyline or the puck line, either club), its total, and player legs, one a player a stat (two stats of one player
 allowed). A second side bet on a game replaces the first, as the other side of the total does and a player's second
-line in the same stat does, each said in the builder and on the slip bar (a player's in the props window too); a player's
+line in the same stat does, each said in the builder and on the slip bar (on a game's page too, in its status line); a player's
 points beside his own goals or assists are refused, said ("nearly one bet": every goal or assist is a point; DraftKings
 may not take both on one ticket, and where this page is unsure what DraftKings allows it refuses); and a game takes at
 most 21 legs (`GAME_LEGS_MAX`, tools/sgp.js's `MAX_GAME_LEGS`: the most its lattice prices; a 22nd is refused, said, and
@@ -798,8 +885,8 @@ builder draws that leg. A game priced at another book, or a publish with no same
 where only a Refresh odds read puts a game's lines at another book (or names none), the builder draws one of its legs (its
 first, or the one the visitor last put in) and keeps the rest stored: a leg added is drawn alone in place of the one drawn,
 which stays stored like the rest (said), every leg held to the published line's rule as above, and the leg drawn taken out
-puts the next stored one in its place (said). A bet or a price is shown as in the parlay (pressed, in a game's Game bets, in Pick
-your own legs and in the props window) only where the builder draws it; a tap on one stored and left out puts it in, never takes
+puts the next stored one in its place (said). A bet or a price is shown as in the parlay (a box ticked on a game's page, a button pressed in Pick
+your own legs) only where the builder draws it; a tap on one stored and left out puts it in, never takes
 it out. A level's Add to builder asks first wherever a leg kept on this device would go (a stored leg the level holds only at a
 number a read has moved it to among them: that is another bet), and Clear all wherever two or more would or any the builder
 leaves out of the parlay; each says how many, those left out apart. A row's × in the builder takes out the leg the row names, never
@@ -832,7 +919,7 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   best chance times decimal that lands 25% and 12% by the model's chance, else the likeliest of that size
   (`likeliest`); Extreme, the 5-leg parlay at 5%, went in nhl v14 (the owner's call, as the NFL hub's had). A leg qualifies with both prices, the model at 45% to 97%, its edge 0
   or more (the margin left in), no push (a whole-number line never goes in a level), and under 15 points over
-  the fair chance (`FAR_OFF`; those are counted in the far-off note and flagged in each game's Game bets, and a call's on its card's chip). It is
+  the fair chance (`FAR_OFF`; those are counted in the far-off note and flagged on their buttons in Pick your own legs; a game's page marks the call Value and says nothing of far off). It is
   preferred at the site's own bar (`S.edge`, so preferred is exactly the Games cards' call) and thin below it,
   used only where the calls cannot make a level, the fewest first. The search is exact (`pbSearch`/`pbBest`:
   branch and bound over every parlay of the size, pruning only what cannot reach the floor or the best found;
@@ -855,13 +942,13 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   draw, a game started, called off or gone, a stale line or a moved number taken out and a moved price
   updated, each said in its live line. The same pruning runs when the page loads and when the watch looks
   (every half minute, and on coming back into view) on any tab, said on the slip bar, so a game's Game bets never
-  show a bet as in the parlay that the builder would drop, and the Games tab is redrawn once when a leg
+  show a bet as ticked that the builder would drop, and the Games tab is redrawn once when a leg
   leaves, not at every look. The summary's figures step down to fit their tiles (two by two up to 1100px; 13px the
   least, and a figure that still will not fit takes the whole row), so none is ever cut. Four tiles: the fair chance (or the model's), DraftKings' price, what
   the stake pays, the confidence on the fair chance. Finish parlay and Save on this device (two legs or more
   each; Save keeps the builder, and reads Saved, off, whenever the builder is a parlay already in this
   device's list, so a reload never lets it be saved twice), Clear all. Pick your own legs (`#plLines`) lists the slate's
-  games with a fresh line, each with the same bet block a game's Game bets carry. The slip bar (`#slip`) shows
+  games with a fresh line, each with its bet block (the board: `betBlock`) and a Player props button that opens the game's page. The slip bar (`#slip`) shows
   the builder on every other tab, and on this one while the builder is out of view; with no leg left it
   shows only for a few seconds after the clock took the last ones out, saying why, and that reason is kept
   in the store (`ui.bmsg`) until the builder has been drawn, so a builder emptied on another tab or before
@@ -957,17 +1044,18 @@ nhl v15 on the NFL hub's (`props/build/suggest_ledger.js`), with hockey's unit, 
 The owner's call, 15 October 2026: "Player props in the Parlay Builders: player legs need a same-game pricing table
 (correlation) and, on NHL, a change to the one-leg-a-game rule", answered "go for it". Built in nhl v11.
 
-- **Adding a player leg.** After a Refresh odds press each DraftKings price in the Player props window (a main line's
-  Over and Under, each milestone k+, the anytime goal) is a 44px button (`.pp-add`, `aria-pressed`): a tap puts that leg
+- **Adding a player leg.** Each DraftKings price read for a game (the job's read, or a Refresh odds press's) is a row with a
+  box on the game's page (a main line's Over and Under, each milestone k+, the anytime goal: `input[data-pp-add]`, the row
+  44px and taking the tap): a tick puts that leg
   in the builder at DraftKings' price as read, its line, side, the player, the game and the read's time, by the same-game
-  rule (`placeLeg`), said in the window's own status line (`#ppMsg`); a second tap takes it out. Points, goals (anytime
+  rule (`placeLeg`), said in the page's own status line (`#ppMsg`); a second takes it out. Points, goals (anytime
   and k+), assists, shots on goal, blocked shots and saves. A player matched to neither club, or with no position, is
   shown and not offered. Nothing from the props read is stored but the legs added.
 - **Its price after.** A stored player leg keeps the price it was added at, dated by its read ("DraftKings, as read 9:12
   PM EDT"), through reloads; a later press that reads its line again draws it at the new price, or takes it out where
   DraftKings has moved the line or pulled it (or has no props on the game), each said once and never stored, as with a
   game's line (`propNow`). It leaves the builder at its game's puck drop like any leg. Its fair chance is DraftKings' as
-  the window says it (a main line's Over 1 - the Under's implied, its Under its own implied; a Yes price over
+  a game's page says it (a main line's Over 1 - the Under's implied, its Under its own implied; a Yes price over
   `fair.yes`, est.); the props model's chance beside it is on trial, "model 65%, on trial", never an edge: with a player
   leg in the builder no leg is called thin or an edge, and nothing says "model says".
 - **The same-game price.** `SGP` in the page is `tools/sgp.js` word for word between its two marks (the smoke holds the
@@ -1051,7 +1139,7 @@ for four, and the cap at the product binds on 0-5% of tickets.
 The job reads DraftKings' game lines only when it runs, so a line on the page can be hours old by puck drop
 (the owner's ask, 15 October 2026: "a refresh odds button that will pull the live lines on demand ... rather
 than like a constant job"). **Refresh odds** (on the Games tab's odds bar, on the Parlay Builder tab's over its
-panel, since nhl v22 on the Suggested Parlays tab's under its heading, and, since nhl v10, in the Player props window, 44px, with one `aria-live` status line beside each) reads
+panel, since nhl v22 on the Suggested Parlays tab's under its heading, and, since nhl v10, on a game's page (the Player props window's until nhl v27), 44px, with one `aria-live` status line beside each: the tabs' three share one sentence, a game's page says its own game's state) reads
 ESPN's free scoreboard in the browser (`?dates=YYYYMMDD&limit=100&_=<now>`, no-store, no custom header, so no
 preflight: ESPN answers with `access-control-allow-origin: *`) for every day the Games strip shows from today on
 with a game still to come, and, at the same time, DraftKings' player props for the games still to come today and
@@ -1113,7 +1201,7 @@ club), never one who is out or elsewhere; on the second night of a back to back 
 game, played or not, the day before) the other goalie from the one who started that game (its box
 score), or is expected to (the same choice, while it is to come, under way or not yet boxed). The team
 Elo's gap it blends is its own replay of every final, this run's. The card says which goalie (how he was chosen
-on his title and in Lineups, whose key names the injury report the lineup was built on), and says when a club's last box score is not
+on his row's title on the game's page and in its Lineups window, whose foot names the injury report the lineup was built on), and says when a club's last box score is not
 read yet; the page says when the injury
 report or DailyFaceoff could not be read. The Players tab shows the rankings with a five-season line
 each, and which report and goalies the clubs stand on.
@@ -1130,7 +1218,7 @@ worse probability on log loss and Brier; its Unders at 5 points or more above th
 - **Player lines as legs** (`propLegsOf` in the page): DraftKings' main lines, the Over and the Under, and the anytime goal
   (not where it is the goals line's Over; no k+ ladders, as the NFL hub's Top 30 lists none), on a read of the game's props
   that is fresh (`propRead`: the job's within 15 minutes of the publish, `PROP_FRESH`, or a Refresh odds press's; a read an
-  earlier run kept is shown in the window and never ranked), each on a player the model projects for one of the game's clubs,
+  earlier run kept is shown on the game's page and never ranked), each on a player the model projects for one of the game's clubs,
   in a stat of his group. A line qualifies as a team leg does (`propQual`: the model's chance 45% to 97%, at or above the
   price's implied chance, a main line with both prices, no whole-number line, under 15 points over DraftKings' fair chance,
   the anytime goal's fair chance its price over DraftKings' measured margin, est.); a value pick at 5 points or more. The
@@ -1140,9 +1228,10 @@ worse probability on log loss and Brier; its Unders at 5 points or more above th
 - **The levels** still take one leg a game, chosen on every qualifying leg of the game, team bet or player line, by the same
   exact search; their price is the legs' prices multiplied. The record takes them as the tab draws them and grades a player
   leg on the box score the state carries (under The suggested parlays' record).
-- **What stays**: the window's numbers and the ledger's bar are as they were; nothing says "edge" on a prop, and the props
-  window says the model is on trial and has not been shown to beat DraftKings, and that the Top 30 and the suggested parlays
-  rank player lines on it.
+- **What stays**: the numbers beside each DraftKings line and the ledger's bar are as they were; nothing says "edge" on a prop, and
+  a game's page says the model is on trial in one pill, on whose title it has not been shown to beat DraftKings (the sentence that
+  said the Top 30 and the suggested parlays rank player lines on it went with the note in nhl v25: no descriptions; those tabs
+  say "props model" and "on trial" on every line they rank).
 Since nhl v11 a visitor can put DraftKings' own player lines in the Parlay Builder (under The Parlay Builder, Same-game parlays
 and player legs), at DraftKings' price as read.
 
@@ -1314,78 +1403,77 @@ and player legs), at DraftKings' price as read.
   parse reads: none posted yet) or `{ status: 'failed', at, why }`, where a failed read keeps the last run's read of the game if that
   was one (with its own `at`); `dk` beside `games` counts the run's reads (`asked`, `read`, `none`, `failed`, `kept`, `lines`).
   `at` is the run's clock in full ISO. `update.js` copies them into the state with the projections. The page starts from it on
-  every load (`ppSeed`, `src: 'job'`): the Player props buttons (on their titles) and the window say what the job read and when ("DraftKings, read 1:15 PM EDT
-  at the job's last run."), and its prices can go in the parlay at once, at the job's
+  every load (`ppSeed`, `src: 'job'`): a game's page draws the job's read as it draws a press's (its status line the read's state, the Player props buttons of Pick your own legs saying on their titles what was read and when), and its prices can go in the parlay at once, at the job's
   price, dated by its read. A press reads them again: an answer or a 404 replaces the job's read ("A reload brings back the job's
   read"), a failed request keeps it, counted as kept. `sources.js` fails the run (after the commit) when every game projected
   failed to read, and notes some failing. The smoke's THE JOB'S PLAYER LINES holds the read's shape on the state as published and
   the page on it (and always on a copy with a read, none posted and a failure planted): the page's read equal to the state's,
-  nothing asked on load, every button's words, every window row for row, a price added at the job's read and drawn so after a
+  nothing asked on load, every Player props button's words, every game's page row for row, a price added at the job's read and drawn so after a
   reload, a press that fails keeping it and one that answers replacing it, a reload the job's read again, and (nhl v18) the Top
   30 and the suggested levels on it by the smoke's own sums with a player line's Add and a level's Add to builder; the other props
   sections boot on the state without it (`noDk`), so they hold the press as before. The simulation plants an answer, a 404 and
   failures on the games to come and holds props.js's read, the state's copy and sources.js on both kinds of failure.
-- **The props view** (nhl v10, `index.html`, every class `pp-`; the owner's ask, 15 October 2026: DraftKings' props on the
-  Refresh odds press, the model on trial beside them). Each game card still to come that the props model projects, that
-  the job or a press read props for, or (nhl v23) that has a fresh line, carries a 44px **Player props** button (since nhl v23 the
-  word alone, as the NBA's, outlined ice once DraftKings' lines are in, the read and the game's bets said on its title), and so does
-  each game in Pick your own legs; it opens a window over the page (the parlay card's: a sheet on a phone; Escape, Close or a click outside close it, Tab stays
-  inside, the focus goes back to the button), its Game bets (under The look) over the player props, with six stats (Points, Goals, Shots, Assists, Blocks, Saves), each club
-  apart. **Before any read** (a state with no job read of the game) it says to press Refresh odds for DraftKings' props and shows
-  the props model's projection (the published mean) for every expected player (a game the model does not project, offered for its
-  Game bets, shows none; one past tomorrow says DraftKings posts player props on game day, which a press reads for today and
-  tomorrow); with the job's read it shows that read as a
-  press's (below), said as the job's. **The press** (any of the four Refresh odds buttons: the Suggested Parlays tab's, the Games
-  tab's odds bar, the Parlay Builder tab's, the window's own) reads, at the same time as the scoreboards, ESPN's DraftKings
-  propBets for every game still to come today and tomorrow (Eastern: DraftKings posts player props on game day, and a game
-  further off answers 404): `limit=1000`, one request a game (a second page only where ESPN pages the answer, at most
-  three), GET, no-store, a cache-buster, no custom header (ESPN answers `access-control-allow-origin: *`, its 404s too).
-  `PROPS_FEED` in the page is `tools/espn.js`'s `propsOf` word for word, so the first item of a pair is the Over,
-  checked with its ladder. A 404 or an answer with nothing the parse reads is none posted yet; a failed request, a body
-  that is not JSON or not the feed's shape is a failed read, which keeps the page's earlier read of that game (the job's
-  or a press's) if it had one; a game whose puck drops during the read (the visitor's clock) or that ESPN's scoreboard has under way, over,
-  postponed or cancelled is not kept. The status line beside each button adds what the props read gave ("DraftKings'
-  player props: 11 games read (415 main lines), 2 games with none posted yet."). **After a read** the window shows,
-  for each player DraftKings prices in the stat, matched by ESPN's athlete id (the id the model projects; a player the
-  model does not expect to play has no projection and says why, and an athlete no table names is shown apart by his
-  id): DraftKings' main line with its Over and Under prices, then "projection 1.04 · model 65% · DraftKings 60%", the
-  props model's mean, its chance of the Over (`pOver`, `tools/props.js`'s word for word, on the distribution the job
-  published) and DraftKings' fair chance of the Over (all of the margin on the Over, 1 - the Under's implied); then each
-  milestone (k+, and the anytime goal) at its Yes price with the model's chance of reaching it and DraftKings' fair
-  chance from `fair.yes`, marked est. (the milestone that is the main line's Over is shown once, as the main line).
-  Expected players DraftKings does not price fold under their club with their projection alone. On the live feed
-  (15 October 2026, BUF at TOR) that read, for example, Tage Thompson's points Over 0.5 -205, Under 0.5 +150, projection
-  1.04 · model 65% · DraftKings 60%, and his anytime goal +140 · model 39% · DraftKings 36% est. **On trial**: the window
-  says so on its head, in a rose tag ("props model on trial"; since nhl v25 the tag alone, its title "Not yet shown to beat
-  DraftKings' own prices." and the ledger's running numbers, quietly: graded lines of 12,000, the model's log loss and Brier beside
-  DraftKings', never a verdict or a word of passing before the bar is decided). Nothing in the window's props (its Game
-  bets are the game's own calls, edge and all), on a Player props button or anywhere else on a prop says "model says" or "edge", and nothing the props read touches moves a line,
-  a level or the levels' cache (`ODDS.v`); it redraws only a player leg the visitor added, at the read's price or out where
-  DraftKings moved or pulled its line, said once and never stored (`propNow`). **In memory only** (`PROPS`, `PP`,
-  `PP_STAT`): nothing is stored but the legs a visitor adds (under The Parlay Builder), a reload is the published page with
-  the projections and the job's read and those legs at the prices they were added at (or at the job's read's, where it is newer),
-  and the page asks ESPN for props only on a press (the job reads them on every run). The watch
-  (every half minute and on coming back into view) draws the window again once its game's puck drops, saying so, and
-  the card's button goes.
+- **The props view** (nhl v10; since nhl v27 the game's page, under The look, where it was a window of its own with six stat
+  tabs; the owner's ask, 15 October 2026: DraftKings' props on the Refresh odds press, the model on trial beside them). A
+  game's card opens its page (every game's), and so does the **Player props** button of each game in Pick your own legs (its
+  word alone, outlined ice once DraftKings' lines are in, the read and the game's bets said on its title). On the page a
+  player is a row and his stats are blocks under it, every market of one player in one place. **Before any read** (a state
+  with no job read of the game) each expected player's row shows the props model's projection (the published mean), his
+  blocks say "No DraftKings line yet." and the status line "… · player lines not read yet." (a game past tomorrow: "player
+  lines on game day", and its rows are the player model's lineup by name); with the job's read it shows that read as a
+  press's (below). **The press** (any of the four Refresh odds buttons: the Suggested Parlays tab's, the Games tab's odds bar,
+  the Parlay Builder tab's, the game's page's own) reads, at the same time as the scoreboards, ESPN's DraftKings propBets for
+  every game still to come today and tomorrow (Eastern: DraftKings posts player props on game day, and a game further off
+  answers 404): `limit=1000`, one request a game (a second page only where ESPN pages the answer, at most three), GET,
+  no-store, a cache-buster, no custom header (ESPN answers `access-control-allow-origin: *`, its 404s too). `PROPS_FEED` in
+  the page is `tools/espn.js`'s `propsOf` word for word, so the first item of a pair is the Over, checked with its ladder. A
+  404 or an answer with nothing the parse reads is none posted yet; a failed request, a body that is not JSON or not the
+  feed's shape is a failed read, which keeps the page's earlier read of that game (the job's or a press's) if it had one; a
+  game whose puck drops during the read (the visitor's clock) or that ESPN's scoreboard has under way, over, postponed or
+  cancelled is not kept. The status line beside each tab's button adds what the props read gave ("DraftKings' player props: 11
+  games read (415 main lines), 2 games with none posted yet."); the page's own line says its game's state. **After a read**
+  the page shows, for each player DraftKings prices, matched by ESPN's athlete id (the id the model projects; a player the
+  model does not expect to play comes with All skaters and has no projection, and an athlete no table names is listed apart
+  by his id): in each stat's block the heading's "projected 1.04" (the props model's mean) and "DraftKings line 0.5", the
+  Over and the Under at their prices, each row DraftKings' fair chance (all of the margin on the Over: the Over 1 - the
+  Under's implied, the Under its own implied) with the props model's chance beside it (`pOver`, `tools/props.js`'s word for
+  word, on the distribution the job published), then each milestone (k+, and the anytime goal) at its Yes price with
+  DraftKings' fair chance from `fair.yes`, est., and the model's chance of reaching it (the milestone that is the main
+  line's Over is shown once, as the main line). On the live feed (15 October 2026, BUF at TOR) that read, for example, Tage
+  Thompson's points Over 0.5 at -205 and Under 0.5 at +150, projected 1.04, the Over's fair chance 60% beside the model's 65%,
+  and his anytime goal at +140, 36% est. beside the model's 39%. **On trial**: the page says so in one pill in its bar
+  ("props model on trial", its title "Not yet shown to beat DraftKings' own prices." and the ledger's running numbers:
+  graded lines of 12,000, the model's log loss beside DraftKings', the verdict at 12,000 and never a word of passing before
+  it), and every "model NN%" on a player's row is titled "the props model's chance (on trial)". Nothing on a player's line, on
+  a Player props button or anywhere else on a prop says "model says", "edge" or Value (Game bets, the game's own calls,
+  carry the Value mark), and nothing the props read touches moves a line, a level or the levels' cache (`ODDS.v`); it redraws
+  only a player leg the visitor added, at the read's price or out where DraftKings moved or pulled its line, said once and
+  never stored (`propNow`). **In memory only** (`PROPS`, `GP`): nothing is stored but the legs a visitor adds (under The
+  Parlay Builder), a reload is the published page with the projections and the job's read and those legs at the prices they
+  were added at (or at the job's read's, where it is newer), and the page asks ESPN for props only on a press (the job reads
+  them on every run). The watch (every half minute and on coming back into view) draws the page again once its game's puck
+  drops: the boxes go and the strip comes in.
 - **The page's tests.** The smoke's PLAYER PROPS, with rules of its own and never the real feed: the page's parse equal
   to `tools/espn.js`'s `propsOf` on the recorded answer and ten variants (every pair swapped, swapped with no ladder,
   junk inside, a pair split, a pair of three, reversed, empty and not a list), the first item of a pair the Over by its
-  ladder on the recorded answer and every pair the ladder contradicts left out when swapped; before a press a button
-  on exactly the games still to come on the strip that are projected or have a fresh line, saying so on its title, the window's projection for every expected player in every
-  stat by its own sums, the trial note and the ledger's sentence, 44px controls, the Tab loop, Escape, Close and a
-  click outside with the focus back on the button, Pick your own legs' button, and not one props request on load, on
-  opening, on the watch or on the tabs; then a press on a made-up answer built from the state's own projections (every
-  projected skater and goalie priced, a pair its ladder says was read backwards, an athlete nobody rates, a club's
-  player the model leaves out, junk) read in two pages, beside a 503, a junk body, a body of the wrong shape, a page two
-  that 404s, a game ESPN has under way, one it has postponed and one cancelled (each with a full answer that would
-  otherwise be kept) and the clock passing the first puck drop during the read: one request a game
-  today and tomorrow, GET, no-store, a cache-buster each, a second page only where paged, each game keeping what its
-  answer gave, the status line, every row of the window number for number by its own sums, each button's words, the
-  failed and none-posted windows, a press that moves no line and re-ranks the Top 30 and the levels with the read game's
-  player lines (by its own sums, the pool exactly that game's qualifying lines), no player in the builder or Pick your own legs, the postponed and cancelled games not kept, counted
-  as called off in the status line and their windows the projections alone, a second press from the window's own button
-  where the game's read fails keeping the earlier read and a game ESPN postponed since the first press losing its
-  earlier read, the watch at the puck drop, nothing stored, and a reload that is the published page again. REFRESH ODDS holds the props sentence in every status line it words.
+  ladder on the recorded answer and every pair the ladder contradicts left out when swapped; before a press no Player
+  props button on a card, each one in Pick your own legs saying so on its title and opening its game's page (the focus in
+  it, and back on the button when it closes), the page's projection for every expected player in every stat by its own
+  sums with no line and no box, and not one props request on load, on opening, on the watch or on the tabs; then a press
+  on a made-up answer built from the state's own projections (every projected skater and goalie priced, a pair its ladder
+  says was read backwards, an athlete nobody rates, a club's player the model leaves out, junk) read in two pages, beside
+  a 503, a junk body, a body of the wrong shape, a page two that 404s, a game ESPN has under way, one it has postponed and
+  one cancelled (each with a full answer that would otherwise be kept) and the clock passing the first puck drop during the
+  read: one request a game today and tomorrow, GET, no-store, a cache-buster each, a second page only where paged, each game
+  keeping what its answer gave, the tabs' status line, every row of the game's page number for number by its own sums (All
+  skaters ticked, every player opened), each Player props button's words, the pages of a failed read and of none posted, a
+  press that moves no line and re-ranks the Top 30 and the levels with the read game's player lines (by its own sums, the
+  pool exactly that game's qualifying lines), no player in the builder or Pick your own legs, the postponed and cancelled
+  games not kept, counted as called off in the status line and their pages the projections alone, a second press from the
+  page's own button (busy and "reading…" while it runs, the keyboard back on it after) where the game's read fails keeping
+  the earlier read and a game ESPN postponed since the first press losing its earlier read, the watch at the puck drop,
+  nothing stored, and a reload that is the published page again. REFRESH ODDS holds the props sentence in every tab's status
+  line it words, and each read game's page on the new line.
 - **Tests.** `node tools/test_props.js` (about a minute): the parse (the first item the Over, checked with the
   ladders on the recorded answer and on made-up pairs, swapped pairs left out, pages joined, a 404 none, a junk body and
   a failed request each asked again, every athlete by his ESPN id), the distributions (whole, ladders never rising,

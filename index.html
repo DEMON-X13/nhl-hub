@@ -5260,7 +5260,9 @@ function renderPickem() {
       return `<td class="c" data-pick="${p}"${bt ? ' data-bt="1" title="backtest: called afterwards on what was known before the puck drop"' : ''}><span class="pickcell">${tag(g[p], 'mini win')}${win ? `<span class="res ${p === win ? 'ok' : 'bad'}" aria-label="${p === win ? 'right' : 'wrong'}">${p === win ? '✓' : '✗'}</span>` : ''}${bt ? '<span class="pk-btm" aria-label="backtest">bt</span>' : ''}</span></td>`; };
     /* the game, the NFL's: the two clubs, and under them its day and puck drop on the visitor's clock, then how it ended */
     const when = g => `${new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} ${hhmm(g.start)}`;
-    const how = g => { const win = g.state === 'final' ? pkWinner(g) : null; return win ? ` · ${T(g[win]).abbr} won ${g.as}–${g.hs}` : hasStarted(g) ? ' · under way' : ''; };
+    /* how it ended, or where it stands: under way from its puck drop; a start the feed moved after the puck drop its call was made
+       before (the job's delay rule: the call is kept) says so until the new puck drop, as the Games list does */
+    const how = g => { const win = g.state === 'final' ? pkWinner(g) : null; return win ? ` · ${T(g[win]).abbr} won ${g.as}–${g.hs}` : !hasStarted(g) ? '' : g.state === 'pre' && Date.parse(g.start) > Date.now() ? ' · start moved' : ' · under way'; };
     $('pkPicks').innerHTML = `<thead><tr><th class="sk">Game</th>${cols.map(m => `<th class="c" title="${esc(m.sub)}">${esc(m.name)}</th>`).join('')}</tr></thead><tbody>`
       + gs.map(g => `<tr data-id="${esc(g.id)}"><td class="gm sk"><b>${esc(T(g.away).abbr)}</b> at <b>${esc(T(g.home).abbr)}</b><small>${esc(when(g) + how(g))}</small></td>${cols.map(m => cell(g, m.id)).join('')}</tr>`).join('') + '</tbody>';
   } else $('pkPicks').innerHTML = '';

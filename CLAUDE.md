@@ -104,7 +104,12 @@ node tools/fetch_box.js --refill # once after a change to the box columns: every
 node tools/fetch_box.js --starters # once: every stored game in which a side used two goalies read again for its plays, the starter marked (under a minute)
 ```
 
-The smoke test runs from the repo root or, as `node smoke.js`, from `tools/`. DailyFaceoff answers
+The smoke test runs from the repo root or, as `node smoke.js`, from `tools/`. It closes every window a section
+opened when the section ends, runs itself again with a 6 GB heap ceiling and `--expose-gc`, whoever starts it (the job, `simulate.js`,
+a hand), and says its peak and what it still holds on the line before the count ("heap: peak 1141 MB, 341 MB held at the end"): on
+12 November 2026 the run was within 4% of Node's default 2 GB and growing with each new section, because older sections left their
+jsdom windows open (a window closed is given back whole; one left open keeps its page's timers and its realm). A gate that dies of
+memory takes every publish with it, so a new section closes its own windows too, and a peak that creeps is a fault to fix. DailyFaceoff answers
 GitHub's runners but not every sandbox: `starters.js` failing to read it there, for that alone, is not
 a fault (it says so in `data/starters.json`, and the model chooses the goalies).
 

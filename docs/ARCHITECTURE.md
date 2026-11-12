@@ -195,20 +195,27 @@ at 72%; the smoke works each tag out again and keeps every two clubs outside one
 carries no descriptions (the tagline, the keys, the "how" folds and the intro paragraphs cut; state lines, tooltips and money warnings
 kept). The tabs' insides are still the NBA Hub's components of nhl v12 to v23 on the new tokens until each is rebuilt, no image
 anywhere. THE GAMES LIST (nhl v28, `#slateView`: `listDays`, `daySelect`, `renderGames`, `gameRow`, `slateCall`, `slateCols`,
-`slateOutcome`, `slateResult`, `slatePred`, `setDay`, `readLive`, `liveOnce`, `slateStamp`), the NFL hub's game list: a bar (the Day
-select and its steppers, the day's and the season's record of the call, Refresh scores with its stamp), the source note, Refresh
-odds on a day with a game to come, six heads and a row a game, one button that opens the game's page (the date, the two tags with
-the pick's raised and a tick or a cross on the winner's once final, the two chances on a bar in the clubs' colours, the confidence
-band HIGH 65%+, MED 60-64, LOW 55-59, 50/50 with its percentage, the predicted score, where the game stands; no bet, price or
-control of its own; the list drawn again only when its markup changed); THE GAME'S PAGE (nhl v27, `#gameModal`: `openGame`, `renderGame`, `gameHeadCard`, `gameBetsCard`, `rungRow`, `rosterFor`,
+`slateOutcome`, `slateResult`, `slatePred`, `calledOff`, `bandRecs`, `setDay`, `readLive`, `liveOnce`, `slateStamp`, `oddsIdleText`),
+the NFL hub's game list: a bar (the Day select and its steppers, the day's and the season's record of the call, Refresh scores
+with its stamp, zone named), the source note (a warning, its meaning on its title), Refresh odds on a day with a game to come (its
+idle line naming the books), six heads and a row a game, one button that opens the game's page (the date, the two tags with the
+pick's raised and a tick or a cross on the winner's once final, the two chances by the one rounding of the call on a bar in the
+clubs' colours, the confidence band HIGH 65%+, MED 60-64, LOW 55-59, 50/50 with its percentage and its record on its title, the
+predicted score, where the game stands in two whole parts that wrap and are never cut, ESPN's word for a game it has called off,
+"no call yet" for a game the state has not called; no bet, price or control of its own; the list drawn again only when its markup
+changed; a day shown read once from ESPN where it has a game under way); THE GAME'S PAGE (nhl v27, `#gameModal`: `openGame`, `renderGame`, `gameHeadCard`, `gameBetsCard`, `rungRow`, `rosterFor`,
 `playerBody`, `gpStatus`, `trialPill`, `legTap`, `ppAdd`), the NFL hub's game page in hockey's numbers, where the Player props window,
 the card's bet chips, who is out and the Lineups drawer were: a window over the page (the whole screen on a phone), its bar (Close,
-the props model's trial as one pill, All skaters), Find a player, Refresh odds with the game's own status line (the score's strip
-once the puck has dropped), the head's six cells, three buttons, Game bets (a row a bet: a box, DraftKings' fair chance as the bar
-and the percentage, its band, the model's chance beside it, the price, Value on the state's call) and each club's players, a row
-each, opened to a block a stat with DraftKings' main line and every milestone as rows with boxes; a tick is the builder's own
-`placeLeg`; nothing of it stored; and its three little windows (`#gsModal`: `gameWindow`, `unitsBody`, `lineupsBody`,
-`teamStatsBody`): Matchup (the player model's attack against the defence and goalie it meets, the clubs, every model's call),
+the props model's trial as one pill, All skaters), Find a player, Refresh odds with the game's own status line (whose line and
+when, the last press's word on this game, its player lines; the score's strip once the puck has dropped), the head's six cells,
+three buttons, Game bets (a row a bet: a box, DraftKings' fair chance as the bar and the percentage, its band, the model's chance
+beside it, the price, Value on the state's call, Call beside its grade once the puck has dropped) and each club's players, a row
+each, opened to a block a stat with DraftKings' main line and every milestone as rows with boxes (a final the state has no box
+score for keeps its projections and says so; nobody "did not play" without a box score that lacks him); a tick is the builder's own
+`placeLeg`, the box kept where it stood, said in the status line at the foot of the screen (`#ppMsg`), which follows the builder
+when a read, the puck drop or another tab changes this game's legs; nothing of it stored; and its three little windows (`#gsModal`: `gameWindow`, `unitsBody`, `lineupsBody`,
+`teamStatsBody`): Matchup (the player model's attack against the defence and goalie it meets, the clubs, every model's call as the Pick'em Record
+reads it, a backtest said),
 Lineups (the drawer's lists) and Team Stats (the NFL's bars on what the state carries); the bets board (`betBlock`, `syncBetRows`)
 is Pick your own legs' alone; every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (Team Rankings'

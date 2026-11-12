@@ -222,7 +222,7 @@ html[data-theme="light"] .stat::before{background:linear-gradient(90deg,var(--ic
 .bar .day-step{display:inline-flex;gap:4px}
 .bar .day-step .btn{min-width:44px;padding:9px 0;font-family:var(--display);font-weight:700;line-height:1}
 .src-note{margin:-6px 0 12px;font-size:12px;color:var(--ink-2)}
-.src-note b{color:var(--ink);font-weight:700}
+.src-note b{color:var(--gold-ink);font-weight:700}      /* a warning, in the page's warning ink: the calls stand on a source that is not the latest */
 .gamehead,.game{display:grid;grid-template-columns:120px 175px minmax(274px,358px) 138px 136px 136px;gap:14px;align-items:center;justify-content:space-between}
 .gamehead{padding:0 16px 8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
 .gamehead .c{text-align:center}
@@ -258,7 +258,10 @@ html[data-theme="light"] .stat::before{background:linear-gradient(90deg,var(--ic
 .sl-tier{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px 4px 8px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
 .sl-tier::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.75}
 .sl-tier.sl-high{background:var(--pick-soft);color:var(--pick)} .sl-tier.sl-med{background:var(--gold-soft);color:var(--gold-ink)} .sl-tier.sl-coin{background:var(--miss-soft);color:var(--miss)}
-.sl-pred,.sl-result{text-align:center;line-height:1.2;white-space:nowrap}
+.sl-pred,.sl-result{text-align:center;line-height:1.2}
+.sl-pred{white-space:nowrap}
+.sl-result{min-width:0}      /* its words wrap between whole parts ("WPG leading" over "4–1"), so nothing is cut at the row's edge at any width */
+.sl-result .sl-mwin span,.sl-sc{white-space:nowrap}
 .sl-pred .sl-psc{display:block;font-family:var(--display);font-size:17px;font-weight:700;color:var(--ink-2);letter-spacing:-.3px;font-variant-numeric:tabular-nums;margin-bottom:3px}
 .sl-pred .sl-plab{display:none}
 .sl-pred .sl-pby{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--muted);line-height:1.3}
@@ -765,8 +768,12 @@ html[data-theme="light"] .pc-card{--bg:#2A3043;--bg-2:#30374B;--panel:#363D52;--
 .gsearch{margin:0 0 12px}
 .gsearch input{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:15px}
 @media(max-width:640px){.gsearch input{font-size:16px}}
-.gp-msg{margin:-4px 0 12px;font-size:12px;line-height:1.45;color:var(--ink-2)}
+/* the page's status line: the last thing on the page and held at the foot of the screen while the page is longer than it (sticky), so
+   a tick's word, a refusal or what the builder said of this game's legs is in view wherever the visitor is, and no row moves when it
+   comes or goes */
+.gp-msg{position:sticky;bottom:12px;z-index:3;margin:14px 0 0;padding:10px 14px;font-size:13px;line-height:1.45;color:var(--ink);background:var(--panel-3);border:1px solid var(--line-2);border-radius:var(--r-md);box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .gp-msg:empty{display:none}
+@media(max-width:760px){ .gp-msg{bottom:calc(10px + env(safe-area-inset-bottom));font-size:12.5px;padding:9px 12px} }
 /* the strip over a game whose puck has dropped: its score, Refresh scores */
 .gp-live{border-left:4px solid var(--ice);padding:12px 16px}
 .gp-live.fin{border-left-color:var(--pick)}
@@ -855,6 +862,10 @@ html[data-theme="light"] .pc-card{--bg:#2A3043;--bg-2:#30374B;--panel:#363D52;--
 .rungs input[type=checkbox]:focus-visible{outline:2px solid var(--ink);outline-offset:2px;box-shadow:none}
 .rungs tr.on td{background:var(--ice-soft)}
 .rungs tr.hit td{background:var(--pick-soft)} .rungs tr.miss td{background:var(--miss-soft)}
+/* on a ticked or graded row the band stands on the panel, not on its own soft fill over the row's wash (gold on gold over ice or lime fell
+   to 3.6:1 in the dark look), and the model's figure is in --ink */
+.rungs tr.on .conf,.rungs tr.hit .conf,.rungs tr.miss .conf{background:var(--panel)}
+.rungs tr.on .mkt,.rungs tr.hit .mkt,.rungs tr.miss .mkt{color:var(--ink)}
 .rungs .res{display:inline-block;min-width:20px;text-align:center;font-weight:700;color:var(--muted)}
 .rungs .res.win{color:var(--pick)} .rungs .res.loss{color:var(--miss)}
 .rungs .thr .pb-valmark{display:table;margin:3px 0 0;font-family:var(--body);line-height:1.6}      /* the model's call: Value, on a line of its own under the bet */
@@ -869,6 +880,16 @@ html[data-theme="light"] .pc-card{--bg:#2A3043;--bg-2:#30374B;--panel:#363D52;--
   .rungs .est .mkt{white-space:normal;display:inline-block;line-height:1.15;font-size:10.5px}
   .rungs .book{width:auto}
   .statblk h4 em.mline{margin-left:8px}
+}
+/* the narrowest phones: a bet table fits its box with a five-figure price in it ("Anytime goal" on two lines, the cells a little closer) */
+@media(max-width:340px){
+  .rungs td{padding:7px 2px}
+  .rungs td.pick{width:26px;padding-left:0}
+  .rungs .thr{width:62px;font-size:12.5px;line-height:1.15}
+  .rungs .pct{width:40px;font-size:13px}
+  .rungs .conf{padding:3px 5px;letter-spacing:.03em}
+  .rungs .est{width:50px}
+  .rungs .book{font-size:13px}
 }
 /* a club's head, its outs, its players: a row a player, opened to his lines */
 .teamhdr{font-family:var(--display);font-size:18px;font-weight:600;letter-spacing:-.3px;margin:20px 0 10px;display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
@@ -1507,15 +1528,29 @@ function slateCols(a, h) {
   }
   return [{ bg: ca, ink: textOn(ca) }, { bg: ch, ink }];
 }
-/* the call the row draws, the state's own: the two chances as whole percentages that add to 100, the side picked, its confidence */
+/* the call as it is written, one rule wherever it is (the list's row, the game's page and its windows): the pick's own chance rounded to
+   a whole percentage, the other side the rest, so the two add to 100 and a half-point (0.695) reads 70% everywhere; null where the
+   state has no call for the game (a game new to the feed, which the job's second pass calls) */
 function slateCall(g) {
   if (typeof g.pHome !== 'number' || !isFinite(g.pHome)) return null;
-  const side = g.pick === 'home' || g.pick === 'away' ? g.pick : (g.pHome >= 0.5 ? 'home' : 'away'), pa = Math.round((1 - g.pHome) * 100), ph = 100 - pa;
-  return { pa, ph, side, pick: g[side], conf: Math.max(pa, ph) };
+  const side = g.pick === 'home' || g.pick === 'away' ? g.pick : (g.pHome >= 0.5 ? 'home' : 'away'), conf = Math.round((side === 'home' ? g.pHome : 1 - g.pHome) * 100);
+  return { pa: side === 'away' ? conf : 100 - conf, ph: side === 'home' ? conf : 100 - conf, side, pick: g[side], conf };
 }
+/* a game ESPN has postponed or cancelled, by a scoreboard read this browser made: 'postponed', 'cancelled' or null. It is not a final
+   and has no score: the job takes it off the schedule at its next run */
+const calledOff = g => { const L = LIVE[g.id]; return L && L.state === 'off' ? L.off : null; };
+/* each band's record this season, the call straight up (the pill's title) */
+const SL_SAY = { high: '65% or more', med: '60 to 64%', low: '55 to 59%', coin: 'under 55%' };
+function bandRecs() {
+  const t = {}; for (const x of SL_TIERS) t[x[1]] = [0, 0];
+  for (const g of S.games) { const c = isObj(g.result) && typeof g.result.su === 'boolean' ? slateCall(g) : null; if (c) t[SL_TIERS.find(x => c.conf >= x[0])[1]][g.result.su ? 0 : 1]++; }
+  return t;
+}
+let SL_REC = null;
 /* where a game stands: this browser's read of ESPN, else the state's own score (a live one the job read says when); null with none */
 function slateOutcome(g) {
   const L = LIVE[g.id], ok = x => typeof x === 'number' && isFinite(x);
+  if (L && L.state === 'off') return null;                  // called off at ESPN: no score, never a final
   if (L && L.state !== 'pre' && ok(L.hs) && ok(L.as)) return { final: L.state === 'final', live: L.state === 'live', as: L.as, hs: L.hs, clock: L.detail || '' };
   if (g.state === 'final' && ok(g.hs) && ok(g.as)) return { final: true, live: false, as: g.as, hs: g.hs, clock: g.detail || 'Final' };
   if (g.state === 'live' && ok(g.hs) && ok(g.as)) return { final: false, live: true, as: g.as, hs: g.hs, clock: `${g.detail || ''} · as of ${hhmm(g.scoreAt || S.published)}` };
@@ -1523,23 +1558,27 @@ function slateOutcome(g) {
 }
 const startMoved = g => g.state === 'pre' && Date.parse(g.start) > Date.now() && hasStarted(g);
 /* over: a final score known, or the state's word, or four hours past a puck drop with no score read */
-const rowFinal = g => { const o = slateOutcome(g); return o ? o.final : g.state === 'final' || (hasStarted(g) && !startMoved(g) && Date.now() >= Date.parse(g.start) + 4 * 3600000); };
+const rowFinal = g => { if (calledOff(g)) return false; const o = slateOutcome(g); return o ? o.final : g.state === 'final' || (hasStarted(g) && !startMoved(g) && Date.now() >= Date.parse(g.start) + 4 * 3600000); };
 /* hit, miss or null: the job's grade, else the same rule on the final this browser read */
 function rowHit(g, c, o) { if (isObj(g.result) && typeof g.result.su === 'boolean') return g.result.su; if (!o || !o.final || !c || o.as === o.hs) return null; return c.pick === (o.as > o.hs ? g.away : g.home); }
 function slateResult(g, c) {
-  const o = slateOutcome(g);
+  const o = slateOutcome(g), off = calledOff(g);
+  if (off) return `<span class="sl-mwin sl-tie"><span>${off === 'cancelled' ? 'Cancelled' : 'Postponed'}</span></span><span class="sl-sub">at ESPN</span>`;      // ESPN's word, not a score
   if (!o) return startMoved(g) ? '<b class="sl-sc sl-pend">0 : 0</b><span class="sl-sub">start moved · call kept</span>'
     : rowFinal(g) ? '<b class="sl-sc sl-pend">Final</b>' : hasStarted(g) ? '<b class="sl-sc sl-pend">LIVE</b>' : '<b class="sl-sc sl-pend">0 : 0</b>';
   const win = o.as > o.hs ? g.away : o.hs > o.as ? g.home : null, score = `${o.as}–${o.hs}`, ab = win ? esc(T(win).abbr) : '';
-  if (o.live) { const cls = !c || !win ? 'tie' : c.pick === win ? 'ok' : 'bad'; return `<span class="sl-mwin sl-${cls}">${win ? `${ab} leading ${score}` : `Tied ${score}`}</span><span class="sl-sub">${esc(o.clock)}</span>`; }
+  /* the words and the score are two whole parts: where the cell has no room for both on a line the score goes under the words, never cut */
+  const two = (words, sc2) => `<span>${words}</span> <span>${sc2}</span>`;
+  if (o.live) { const cls = !c || !win ? 'tie' : c.pick === win ? 'ok' : 'bad'; return `<span class="sl-mwin sl-${cls}">${win ? two(`${ab} leading`, score) : two('Tied', score)}</span><span class="sl-sub">${esc(o.clock)}</span>`; }
   const hit = rowHit(g, c, o), ot = /SO/.test(o.clock) ? ' · SO' : /OT/.test(o.clock) ? ' · OT' : '';
   const replay = isObj(g.result) && !g.frozen ? ' title="the call is the replay\'s: this game was over before the job first ran"' : '';
-  return `<span class="sl-mwin sl-${hit === null ? 'tie' : hit ? 'ok' : 'bad'}">${win ? `${ab} won ${score}` : `Tied ${score}`}</span><span class="sl-sub"${replay}>${hit === null ? '' : hit ? 'Pick hit' : 'Pick missed'}${ot}</span>`;
+  return `<span class="sl-mwin sl-${hit === null ? 'tie' : hit ? 'ok' : 'bad'}">${win ? two(`${ab} won`, score) : two('Tied', score)}</span><span class="sl-sub"${replay}>${hit === null ? '' : hit ? 'Pick hit' : 'Pick missed'}${ot}</span>`;
 }
 /* the score prediction: the goals layer's two rates (xgOf), each rounded once to a tenth, away first; the margin is the difference of
    the two numbers shown, so "3.2–2.6" never reads "by 0.5" */
 function slatePred(g) {
-  const X = xgOf(g), d = Math.round(Math.abs(X.a - X.h) * 10) / 10, lead = X.a > X.h ? g.away : g.home;
+  const X = xgOf(g); if (!X) return '<span class="sl-plab">Predicted</span><span class="sl-psc">–</span>';      // no goals layer for the game yet: no number
+  const d = Math.round(Math.abs(X.a - X.h) * 10) / 10, lead = X.a > X.h ? g.away : g.home;
   const by = d === 0 ? '<span class="sl-pby">even</span>' : `<span class="sl-pby">${tag(lead, 'sl-mini')} by ${d.toFixed(1)}</span>`;
   return `<span class="sl-plab">Predicted</span><span class="sl-psc" title="${esc(T(g.away).abbr)} ${X.a.toFixed(1)}, ${esc(T(g.home).abbr)} ${X.h.toFixed(1)}: the model's expected goals">${X.a.toFixed(1)}–${X.h.toFixed(1)}</span>${by}`;
 }
@@ -1549,16 +1588,17 @@ function gameRow(g) {
   const pick = c ? c.pick : null, win = o && o.final && o.as !== o.hs ? (o.as > o.hs ? g.away : g.home) : null, hit = win ? rowHit(g, c, o) : null;
   const mk = t => win === t && hit !== null ? `<span class="sl-res ${hit ? 'sl-ok' : 'sl-bad'}" title="${hit ? 'Pick hit' : 'Pick missed'}">${hit ? '✓' : '✗'}</span>` : '';
   const tg = t => tag(t, pick === t ? 'sl-win' : ''), tier = c ? SL_TIERS.find(x => c.conf >= x[0]) : null, pa = c ? c.pa : 50, ph = c ? c.ph : 50;
+  const rec = tier && SL_REC ? SL_REC[tier[1]] : null, tierT = tier ? `${tier[2]}: the model gives its pick ${SL_SAY[tier[1]]}.${rec && rec[0] + rec[1] ? ` Its ${tier[2]} picks this season: ${rec[0]}–${rec[1]}.` : ''}` : '';
   if (!started) SHOWN.add(g.id);                              // the watch redraws the list when its puck drops
   return `<button type="button" class="game${fin ? ' final' : started ? ' locked' : ''}" data-game="${esc(g.id)}" aria-haspopup="dialog">
     <div class="when"${g.note ? ` title="${esc(g.note)}"` : ''}><b>${esc(day)}</b>${esc(hhmm(g.start))}</div>
     <div class="matchup"><span class="sl-tw sl-away">${tg(g.away)}${mk(g.away)}</span>${g.neutral ? '<span class="at neutral" title="Neutral site">vs</span>' : '<span class="at">at</span>'}<span class="sl-tw sl-home">${tg(g.home)}${mk(g.home)}</span></div>
-    <div class="sl-probrow" aria-label="${ta} ${pa}%, ${th} ${ph}%" title="the model's chance to win, overtime included">
+    <div class="sl-probrow" aria-label="${c ? `${ta} ${pa}%, ${th} ${ph}%` : `${ta} at ${th}: no call yet`}" title="the model's chance to win, overtime included">
       <span class="sl-tlab${pick === g.away ? ' sl-win' : ''}">${ta}</span>
-      <div class="sl-prob"><div class="sl-a" style="width:${pa}%;background:${pc[0].bg};color:${pc[0].ink}"><span${pick === g.away ? ' class="sl-w"' : ''}>${pa >= 14 ? pa + '%' : ''}</span></div><div class="sl-h" style="width:${ph}%;background:${pc[1].bg};color:${pc[1].ink}"><span${pick === g.home ? ' class="sl-w"' : ''}>${ph >= 14 ? ph + '%' : ''}</span></div></div>
+      ${!c ? '<div class="sl-prob"></div>' : `<div class="sl-prob"><div class="sl-a" style="width:${pa}%;background:${pc[0].bg};color:${pc[0].ink}"><span${pick === g.away ? ' class="sl-w"' : ''}>${pa >= 14 ? pa + '%' : ''}</span></div><div class="sl-h" style="width:${ph}%;background:${pc[1].bg};color:${pc[1].ink}"><span${pick === g.home ? ' class="sl-w"' : ''}>${ph >= 14 ? ph + '%' : ''}</span></div></div>`}
       <span class="sl-tlab${pick === g.home ? ' sl-win' : ''}">${th}</span>
     </div>
-    <div class="sl-conf">${c ? `<span class="sl-tier sl-${tier[1]}">${tier[2]} ${c.conf}%</span>` : '<span class="sl-tier">no call yet</span>'}</div>
+    <div class="sl-conf">${c ? `<span class="sl-tier sl-${tier[1]}" title="${esc(tierT)}">${tier[2]} ${c.conf}%</span>` : '<span class="sl-tier">no call yet</span>'}</div>
     <div class="sl-pred">${slatePred(g)}</div>
     <div class="sl-result">${slateResult(g, c)}</div>
   </button>`;
@@ -1602,6 +1642,8 @@ function emptyDay() {
 }
 function renderGames() {
   daySelect();
+  liveOnce(DAY);                                           // the one read of a day shown, wherever the tab is first drawn for it (a page opened on another tab too)
+  SL_REC = bandRecs();
   const today = etToday(), gs = S.games.filter(g => g.date === DAY).sort(gameCmp);
   /* the two pills: the call straight up on the day shown, as its rows show it, and the season's published record */
   let hit = 0, miss = 0; for (const g of gs) { const r = rowHit(g, slateCall(g), slateOutcome(g)); if (r === true) hit++; else if (r === false) miss++; }
@@ -1621,16 +1663,17 @@ function renderGames() {
    one kind of note the page keeps): an injury report that could not be read on the last runs, DailyFaceoff's goalies not read */
 function sourceNote() {
   const PL = S.players, msgs = [];
-  if (PL && PL.injuries && PL.injuries.pulled && ago(PL.injuries.pulled) > STALE_H) msgs.push(`<b>Injury report from ${esc(dateClock(PL.injuries.pulled))}.</b>`);
-  if (PL && PL.injuries === null && PL.teams) msgs.push('<b>No injury report.</b>');
-  if (PL && PL.starters && PL.starters.ok === false && S.games.some(g => g.date === etToday() && !hasStarted(g))) msgs.push('<b>No announced goalies this run.</b>');
-  $('sourceNote').hidden = !msgs.length; $('sourceNote').innerHTML = msgs.join(' ');
+  const why = [];      // what each means for the calls, on the note's title
+  if (PL && PL.injuries && PL.injuries.pulled && ago(PL.injuries.pulled) > STALE_H) { msgs.push(`<b>Injury report from ${esc(dateClock(PL.injuries.pulled))}.</b>`); why.push('The injury report could not be read at the last run: the lineups the calls stand on leave out who that report had out.'); }
+  if (PL && PL.injuries === null && PL.teams) { msgs.push('<b>No injury report.</b>'); why.push('No injury report could be read: every lineup is who dressed last.'); }
+  if (PL && PL.starters && PL.starters.ok === false && S.games.some(g => g.date === etToday() && !hasStarted(g))) { msgs.push('<b>No announced goalies this run.</b>'); why.push('DailyFaceoff could not be read at the last run: the model chose each goalie.'); }
+  $('sourceNote').hidden = !msgs.length; $('sourceNote').innerHTML = msgs.join(' '); $('sourceNote').title = why.join(' ');
 }
 /* a day chosen, by the select or a stepper: the list drawn for it, the keyboard left on the control used (a stepper at its end hands
    it to the select), and the day's scoreboard read once where it has a game under way */
 function setDay(d, from) {
   if (!d || !DAYS.includes(d)) { $('daySel').value = DAY; return; }
-  DAY = d; renderGames(); liveOnce(DAY);
+  DAY = d; renderGames();
   if (from && from.disabled) $('daySel').focus();
 }
 $('daySel').addEventListener('change', e => setDay(e.target.value, null));
@@ -1642,16 +1685,22 @@ $('gamesList').addEventListener('click', e => { const b = e.target.closest('butt
    where it has a game under way that the job has no final for; never on a timer, nothing stored */
 async function readLive(day) {
   const r = await fetch(`${ESPN_SB}?dates=${day.replace(/-/g, '')}&limit=100`, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
-  const j = await r.json(); let n = 0;
+  const j = await r.json(), at = new Date().toISOString(); let n = 0;
   for (const ev of j.events || []) {
     const c = ev.competitions && ev.competitions[0]; if (!c) continue;
     const h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
-    const st = c.status && c.status.type || {}; const state = st.state === 'post' ? 'final' : st.state === 'in' ? 'live' : 'pre';
-    if (state === 'pre') continue;
-    LIVE[ev.id] = { state, hs: +h.score, as: +a.score, detail: st.shortDetail || st.detail || '' }; n++;
+    const st = c.status && c.status.type || {}, word = `${st.name || ''} ${st.description || ''}`;
+    /* postponed or cancelled (ESPN's state for both is 'post', a final's): a game called off, as the job's gameRow reads it, never a
+       final with a score */
+    if (/POSTPONED|CANCEL/i.test(word)) { LIVE[ev.id] = { state: 'off', off: /CANCEL/i.test(word) ? 'cancelled' : 'postponed', at }; n++; continue; }
+    const state = st.state === 'post' ? 'final' : st.state === 'in' ? 'live' : 'pre';
+    if (state === 'pre') { if (LIVE[ev.id] && LIVE[ev.id].state === 'off') { delete LIVE[ev.id]; n++; } continue; }      // on again: ESPN's earlier word goes
+    LIVE[ev.id] = { state, hs: +h.score, as: +a.score, detail: st.shortDetail || st.detail || '', at }; n++;
   }
   return n;
 }
+/* when a scoreboard was read, to the second, in the visitor's clock with its zone (every time on the page names its zone) */
+const stampNow = () => new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
 const SCORES = { busy: false, at: '', bad: false, read: new Set() };
 /* the stamp beside Refresh scores, the NFL's words: nothing before a read, "reading…" while one runs, when it was read, or that it failed */
 function slateStamp() {
@@ -1665,7 +1714,7 @@ $('slateNow').addEventListener('click', async () => {
   const day = DAY; let bad = false;
   try { await readLive(day); } catch (e) { bad = true; }
   SCORES.busy = false; SCORES.bad = bad; SCORES.read.add(day);
-  if (!bad) SCORES.at = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  if (!bad) SCORES.at = stampNow();
   slateStamp();
   if (!$('tab-games').hidden) renderGames();
   if (gameOpen()) renderGame();
@@ -1674,9 +1723,9 @@ $('slateNow').addEventListener('click', async () => {
 function liveOnce(day) {
   if (!day || SCORES.read.has(day) || !S.games.some(g => g.date === day && g.state !== 'final' && hasStarted(g))) return;
   SCORES.read.add(day);
-  readLive(day).then(n => { if (!n) return; if (!$('tab-games').hidden) renderGames(); if (gameOpen()) renderGame(); }, () => {});
+  /* the read the page makes itself says when too: the stamp beside Refresh scores, as after a press */
+  readLive(day).then(n => { if (!SCORES.busy) { SCORES.at = stampNow(); SCORES.bad = false; slateStamp(); } if (!n) return; if (!$('tab-games').hidden) renderGames(); if (gameOpen()) renderGame(); }, () => {});
 }
-const autoLive = () => liveOnce(DAY);
 
 /* ---------- Team Rankings (nhl v26: the NFL hub's tab of that name, its ratingsViz(), in hockey's terms) ----------
    The owner's ask of 11 November 2026: "match what the NFL hub has, the look, the layout". One table of the 32 clubs in order of the
@@ -2964,6 +3013,7 @@ function legTap(leg0, b) {
   const prop = /\|p\|/.test(leg0), [gid, side, kind] = leg0.split('|'), id = prop ? leg0 : `${gid}|${side}|${kind}`; const g = gameById()[gid];
   const cur = g && (prop ? propLegById(id) : legOf(g, side, kind));
   const inWin = !!b.closest('#gameView'), tell = t => { if (inWin) { GP.msg = t; renderGame(); } };
+  if (inWin) GP.sig = null;                             // a tick on a game's page: what it says stands at the next draw
   let said = '';
   if (builderLegs(false).some(B => B.id === id)) { const m = takeOut(gid, l => legIdOf(l) !== id); said = `Taken out of your parlay: ${cur ? cur.desc : 'that bet'}.${m ? ' ' + m : ''}`; }   // a refusal or a replacement said before no longer stands
   else {
@@ -3003,8 +3053,12 @@ const storeLeg = L => L.prop
 function builderLegs(say) {
   const gb = gameById(), out = [], msgs = [], kept = [], keptSaid = [];
   let moved = 0, movedHere = null, movedPub = 0, movedProp = 0, propAt = null;
-  const tell = (m, rf) => { if (msgs.includes(m)) return; if (!rf) { msgs.push(m); keptSaid.push(m); } else { if (!say || !RSAID.has(m)) msgs.push(m); if (say) RSAID.add(m); } };      // said once, though a game's every leg leaves
+  /* why: what is said of each game's stored legs on this reading (every time, whatever was said before), which a game's page says of its own */
+  const why = {}; let cur = null;
+  const tell = (m, rf) => { if (cur !== null) { const a = why[cur] = why[cur] || []; if (!a.includes(m)) a.push(m); }
+    if (msgs.includes(m)) return; if (!rf) { msgs.push(m); keptSaid.push(m); } else { if (!say || !RSAID.has(m)) msgs.push(m); if (say) RSAID.add(m); } };      // said once, though a game's every leg leaves
   for (const l of P.legs) {
+    cur = String(l.game);
     const g = gb[l.game], name = g ? matchup(g) : (typeof l.label === 'string' ? l.label : 'A leg');
     if (!g) { const r = (S.removed || []).find(x => x.id === l.game); tell(`${name} left the builder: ${r && /postponed|cancelled/.test(r.why) ? 'the game was ' + r.why : 'it is no longer on the schedule'}.`); continue; }
     if (hasStarted(g)) { tell(`${name} left the builder: the puck dropped.`); continue; }
@@ -3030,8 +3084,9 @@ function builderLegs(say) {
   for (const L of out) { if (!sgWhyNot(L.g)) continue; if (!one[L.game] || L.id === SG_ONE.get(L.game)) one[L.game] = L; }
   for (let i = out.length - 1; i >= 0; i--) {
     const L = out[i], k = one[L.game]; if (!k || k === L) continue;
-    tell(leftOutMsg(L), true); out.splice(i, 1);
+    cur = String(L.game); tell(leftOutMsg(L), true); out.splice(i, 1);
   }
+  cur = null;
   const pr = n => `${n} price${n > 1 ? 's have' : ' has'} changed since you added ${n > 1 ? 'them' : 'it'}`;
   if (movedPub) tell(`${pr(movedPub)}: the builder shows DraftKings' price at the job's last run.`);
   if (moved) tell(`${pr(moved)}: the builder shows DraftKings' price as read from ESPN at ${hhmm(movedHere)}.`, true);
@@ -3044,8 +3099,9 @@ function builderLegs(say) {
        changed, which a reload undoes) */
     if (changed) { P.legs = next; if (keptSaid.length) P.ui.bmsg = keptSaid.slice(0, 8); save(); }
     if (msgs.length) BMSG = msgs;
+    if (gameOpen() && why[GP.gid]) GP.why = why[GP.gid].slice();      // a leg of the open game left with this reading (a read, the clock): its page says why at its next draw
   }
-  out.msgs = msgs; out.kept = kept.map(e => e.s);
+  out.msgs = msgs; out.kept = kept.map(e => e.s); out.why = why;
   return out;
 }
 /* a builder row. A leg of a game with more than one leg in the builder wears "same game"; a player leg says when DraftKings' price was
@@ -3802,7 +3858,7 @@ const MODEL = (() => {
   }
   return { goals, coverProbs, totalProbs };
 })();
-const ODDS = { busy: false, v: 0, said: null, failed: null };      // v: the reads that moved what the levels stand on, which the Parlay Builder's cache keys on
+const ODDS = { busy: false, v: 0, said: null, failed: null, words: {}, at: null, kept: [] };      // words: the last press's word on each game it asked ESPN about, at: when, kept: the games whose earlier props read stands (a game's page says its own)      // v: the reads that moved what the levels stand on, which the Parlay Builder's cache keys on
 const PRICE_KEYS = ['book', 'homeML', 'awayML', 'homeLine', 'homeSpreadOdds', 'awaySpreadOdds', 'total', 'overOdds', 'underOdds'];
 /* when a set of games' prices were read: the job's run, or Refresh odds here (the oldest of its reads), said once */
 function readText(gs) {
@@ -3857,7 +3913,14 @@ async function readOddsDay(day) {
 }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 function oddsSay(text) { ODDS.said = text; for (const id of ['oddsNote', 'pbOddsNote', 'spOddsNote']) if ($(id)) $(id).textContent = text; }      // a game's page says its own game's state (gpStatus)
-function oddsIdle() { if (!ODDS.said && S) oddsSay(`DraftKings via ESPN, ${hhmm(S.published)}.`); }      // the job's own read, until a press
+/* before a press: whose lines the page holds for the games still to come on the days listed, and when the job read them. Another book's
+   price is never called DraftKings': each book is named, and with no line there is no claim of one */
+function oddsIdleText() {
+  const today = etToday(), days = new Set(listDays().filter(d => d >= today)), when = hhmm(S.published);
+  const names = [...new Set(S.games.filter(g => days.has(g.date) && !hasStarted(g) && g.line).map(g => { const b = bookName(g.line); return b === 'the book' ? 'a book ESPN does not name' : b; }))].sort((a, b) => (b === 'DraftKings') - (a === 'DraftKings') || strCmp(a, b));
+  return names.length ? `${names.join(', ')} via ESPN, ${when}.` : `No lines yet at the job's last run, ${when}.`;
+}
+function oddsIdle() { if (!ODDS.said && S) oddsSay(oddsIdleText()); }      // the job's own read, until a press
 function oddsBusy(on) { ODDS.busy = on; for (const b of document.querySelectorAll('[data-odds]')) { if (on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); b.setAttribute('aria-busy', String(on)); } if (on && $('ppOddsNote')) $('ppOddsNote').textContent = 'reading…'; }
 function oddsText(r) {
   const when = hhmm(r.at);
@@ -3905,6 +3968,7 @@ async function refreshOdds(btn) {
   const at = new Date().toISOString(), byDay = {}; days.forEach((d, i) => { byDay[d] = answers[i]; });
   ODDS.failed = days.filter((d, i) => !answers[i]);     // the days ESPN did not answer for, which a game's page says of its own
   const espnSt = {};                                      // ESPN's word on each game it answered for: 'started' (under way or over) or 'off' (postponed, cancelled)
+  const words = {};                                       // this press's word on each game, which the game's page says in its own status line (gpStatus)
   const r = { at, read: 0, moved: 0, first: 0, noLine: 0, unread: 0, started: 0, postponed: 0, cancelled: 0, older: 0, books: new Set(), answered: answers.some(Boolean), lined: come.some(g => g.line), days: days.length, silent: days.filter(d => !byDay[d]) };
   /* what the levels stand on, game by game: a read that changes none of it leaves their cache (and the visitor's place) as it is */
   const poolOf = g => JSON.stringify([freshLine(g), g.line ? PRICE_KEYS.map(k => g.line[k]) : null, ['mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'].map(k => g[k])]);
@@ -3913,25 +3977,26 @@ async function refreshOdds(btn) {
   try {
   for (const g of come) {
     const had = !!g.line, evs = byDay[g.date];
-    if (hasStarted(g)) { r.started++; continue; }        // the puck dropped while ESPN was being read: as published
+    if (hasStarted(g)) { r.started++; words[g.id] = 'dropped'; continue; }        // the puck dropped while ESPN was being read: as published
     const ev = Array.isArray(evs) ? evs.find(e => isObj(e) && String(e.id) === g.id) : null, comp = ev && Array.isArray(ev.competitions) ? ev.competitions[0] : null;
-    if (!isObj(comp)) { if (had) r.unread++; continue; }
+    if (!isObj(comp)) { if (had) r.unread++; words[g.id] = Array.isArray(evs) ? 'missing' : 'silent'; continue; }
     /* ESPN's word on the game, as the job's gameRow reads it: postponed or cancelled is a game called off (the job takes it
        off the schedule at its next run), state 'in' or 'post' one under way or over; either way the published line stands */
     const st = isObj(comp.status) && isObj(comp.status.type) ? comp.status.type : {}, word = `${st.name || ''} ${st.description || ''}`;
-    if (/POSTPONED|CANCEL/i.test(word)) { espnSt[g.id] = 'off'; if (/CANCEL/i.test(word)) r.cancelled++; else r.postponed++; continue; }
-    if (st.state === 'in' || st.state === 'post') { espnSt[g.id] = 'started'; r.started++; continue; }
+    if (/POSTPONED|CANCEL/i.test(word)) { espnSt[g.id] = 'off'; if (/CANCEL/i.test(word)) { r.cancelled++; words[g.id] = 'cancelled'; } else { r.postponed++; words[g.id] = 'postponed'; } continue; }
+    if (st.state === 'in' || st.state === 'post') { espnSt[g.id] = 'started'; r.started++; words[g.id] = 'started'; continue; }
     let odds = null; try { odds = ESPN.oddsOf(comp); } catch (e) { odds = null; }
-    if (!odds) { if (had) r.noLine++; continue; }
-    if (had && !(Date.parse(at) > Date.parse(g.line.at))) { r.older++; continue; }
+    if (!odds) { if (had) r.noLine++; words[g.id] = 'noLine'; continue; }
+    if (had && !(Date.parse(at) > Date.parse(g.line.at))) { r.older++; words[g.id] = 'older'; continue; }
     const { line } = ESPN.carryDk(Object.assign({}, odds, { at, refreshed: true }), g.line);
     if (!PUB_LINE.has(g.id)) PUB_LINE.set(g.id, g.line || null);      // the published line, which a reload draws the store by (sgWhyNotPub)
     if (!had) r.first++; else if (PRICE_KEYS.some(k => g.line[k] !== line[k])) r.moved++;
     oddsCall(g, line);
-    r.read++; r.books.add(line.book || '');
+    r.read++; r.books.add(line.book || ''); words[g.id] = 'read';
   }
   } catch (e) { broke = true; }                            // never left busy: what was taken stands, the rest as shown
   const pq = ppTake(pgames, pans, espnSt, at);           // the props read: in memory alone, never a level, a pick or a leg
+  ODDS.words = words; ODDS.at = at; ODDS.kept = pq.keptIds;
   if (come.some(g => poolOf(g) !== pool0.get(g.id))) ODDS.v++;
   oddsBusy(false);
   /* redrawn where the visitor is: the pressed button stays where it was on the screen, the builder draws its legs on the new
@@ -4082,7 +4147,7 @@ async function readPropsGame(event) {
 }
 /* a press's answers into PROPS, game by game, and the counts the status line says */
 function ppTake(pgames, pans, espnSt, at) {
-  const q = { asked: pgames.length, got: 0, lines: 0, none: 0, failed: 0, kept: 0, started: 0, off: 0 };
+  const q = { asked: pgames.length, got: 0, lines: 0, none: 0, failed: 0, kept: 0, started: 0, off: 0, keptIds: [] };
   pgames.forEach((g, i) => {
     const a = isObj(pans && pans[i]) ? pans[i] : { status: 'failed', why: 'no answer' }, was = PROPS.games[g.id];
     if (hasStarted(g) || espnSt[g.id] === 'started') { q.started++; delete PROPS.games[g.id]; return; }      // the puck dropped: not shown
@@ -4092,7 +4157,7 @@ function ppTake(pgames, pans, espnSt, at) {
     if (a.status === 404 || (parsed && !parsed.main.length && !parsed.yes.length)) { q.none++; PROPS.games[g.id] = { status: 404, at }; return; }
     if (!parsed) {
       q.failed++;
-      if (was && was.status !== 'failed') q.kept++;                                                             // this page's earlier read stands
+      if (was && was.status !== 'failed') { q.kept++; q.keptIds.push(g.id); }                                   // this page's earlier read stands
       else PROPS.games[g.id] = { status: 'failed', at, why: a.why || 'an answer that could not be read' };
       return;
     }
@@ -4167,7 +4232,7 @@ const ppDist = D => ({ lo: +D.lo || 0, d: D.d });
    a stat: DraftKings' main line (Over, Under) and every milestone under it, each a row as a game bet's. A box ticked is that leg
    in the parlay by the builder's own rules (legTap, ppAdd: placeLeg, the same-game rule), said in the page's status line (#ppMsg).
    Everything of the page is in memory (GP): a reload is the Games tab. The props model is on trial: its chance is never an edge */
-const GP = { gid: null, open: null, stats: new Set(), all: false, q: '', msg: '', opener: null, locked: false };
+const GP = { gid: null, open: null, stats: new Set(), all: false, q: '', msg: '', opener: null, locked: false, sig: null, why: null, pin: null };
 const STAT_LBL = { pts: 'Points', g: 'Goals', s: 'Shots on goal', a: 'Assists', bs: 'Blocked shots', sv: 'Saves' };
 const STAT_SHORT = { pts: 'points', g: 'goals', s: 'shots', a: 'assists', bs: 'blocks', sv: 'saves' };
 const GRP_STATS = { F: ['pts', 'g', 's', 'a', 'bs'], D: ['pts', 'g', 's', 'a', 'bs'], G: ['sv'] };
@@ -4180,12 +4245,16 @@ const gameOpen = () => !!GP.gid && !$('gameModal').hidden;
 /* the score as the page knows it: this browser's read of ESPN (LIVE) over the state's own */
 function scoreOf(g) {
   const lv = LIVE[g.id], st = lv ? lv.state : g.state, hs = lv ? lv.hs : g.hs, as = lv ? lv.as : g.as, n = v => typeof v === 'number' && isFinite(v);
+  if (st === 'off') return { st, hs: null, as: null, ok: false, fin: false, live: false, detail: '', off: lv.off, offAt: lv.at };      // called off at ESPN: no score, never a final
   const ok = (st === 'final' || st === 'live') && n(hs) && n(as);
-  return { st, hs, as, ok, fin: st === 'final' && ok, live: st === 'live' && ok, detail: String((lv ? lv.detail : g.detail) || '') };
+  return { st, hs, as, ok, fin: st === 'final' && ok, live: st === 'live' && ok, detail: String((lv ? lv.detail : g.detail) || ''), off: null };
 }
 /* the goals layer's two rates (tools/elo.js's goals: half the total either side of half the margin, 0.3 the least), each rounded once to a tenth */
-const xgOf = g => ({ a: +Math.max(0.3, (g.xt - g.mu) / 2).toFixed(1), h: +Math.max(0.3, (g.xt + g.mu) / 2).toFixed(1) });
+const xgOf = g => typeof g.xt === 'number' && isFinite(g.xt) && typeof g.mu === 'number' && isFinite(g.mu) ? { a: +Math.max(0.3, (g.xt - g.mu) / 2).toFixed(1), h: +Math.max(0.3, (g.xt + g.mu) / 2).toFixed(1) } : null;      // null: no goals layer for the game
 const boxGame = g => S.box && isObj(S.box.games) && isObj(S.box.games[g.id]) ? S.box.games[g.id] : null;
+/* what a finished game's page says where the state has no box score for it: the job has not read it yet (it does at its next run), or
+   the game is older than the box scores the state carries. Nobody "did not play" on the word of a box score that is not there */
+const boxWord = g => S.box && S.box.from && g.date < S.box.from ? 'Box score no longer carried' : 'Box score not read yet';
 /* a final's box line for a player, from the box scores the state carries: { g, a, pts, s, bs } or { sv } */
 function boxOf(g, pid) {
   const b = boxGame(g); if (!b) return null;
@@ -4244,7 +4313,8 @@ function gameHeadCard(g) {
   const sc = scoreOf(g), X = xgOf(g), started = hasStarted(g), lab = t => `<span class="gh-lab">${t}</span>`, ta = esc(T(g.away).abbr), th = esc(T(g.home).abbr);
   const day = new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   const ot = /\/(OT|SO)/.exec(sc.detail), moved = g.state === 'pre' && Date.parse(g.start) > Date.now() && started;
-  const when = sc.fin || sc.st === 'final' ? `<span class="pill ok">FINAL${ot ? ' · ' + ot[1] : ''}</span>`
+  const when = sc.off ? (started ? `<span class="pill warn">${sc.off === 'cancelled' ? 'CANCELLED' : 'POSTPONED'}</span>` : `${esc(hhmm(g.start))}<span class="cl">${sc.off} at ESPN</span>`)
+    : sc.fin || sc.st === 'final' ? `<span class="pill ok">FINAL${ot ? ' · ' + ot[1] : ''}</span>`
     : sc.live ? `<span class="sc">${ta} ${sc.as}–${sc.hs} ${th}</span><span class="cl">${esc(sc.detail)}</span>`
     : moved ? `${esc(hhmm(g.start))}<span class="cl">start moved · call kept</span>`
     : started ? '<span class="pill warn">LIVE</span>' : esc(hhmm(g.start));
@@ -4253,15 +4323,16 @@ function gameHeadCard(g) {
   const lead = H.rows.map(r => r.done !== undefined
     ? `<div><span class="cat">${r.cat}</span><span class="nm" title="${esc(r.name)}">${esc(shortName(r.name))}</span><span class="v">${r.done}<em>${r.cat}</em></span></div>`
     : `<div><span class="cat">${r.cat}</span><span class="nm" title="${esc(r.name)}">${esc(shortName(r.name))}</span><span class="v">${ppMu(r.stat, r.mu)}<em>${r.cat}</em>${r.act !== null ? `<span class="va ${hitBand(r.act, r.mu)}">${r.act}<em>${r.cat}</em></span>` : (sc.fin ? '<span class="va pend">–</span>' : '')}</span></div>`).join('');
-  const pickId = g.pick ? g[g.pick] : (g.pHome >= 0.5 ? g.home : g.away), pc = pickId === g.home ? g.pHome : 1 - g.pHome, right = won ? won === pickId : null;
-  const pick = tag(pickId) + `<small title="the model's chance to win, overtime included">${whole(pc)}</small>` + (won ? `<small class="act ${right ? 'right' : 'wrong'}">${right ? '✓ ' : '✗ '}${esc(T(won).abbr)} by ${Math.abs(sc.hs - sc.as)}</small>` : '');
+  /* the pick and its chance as the list writes them (slateCall: one rounding everywhere); a game the state has no call for says so */
+  const C = slateCall(g), right = won && C ? won === C.pick : null;
+  const pick = !C ? '<small class="muted">no call yet</small>' : tag(C.pick) + `<small title="the model's chance to win, overtime included">${C.conf}%</small>` + (won ? `<small class="act ${right ? 'right' : 'wrong'}">${right ? '✓ ' : '✗ '}${esc(T(won).abbr)} by ${Math.abs(sc.hs - sc.as)}</small>` : '');
   const note = [g.note, g.neutral ? 'neutral ice' : ''].filter(Boolean).join(' · ');
   return `<div class="card ghead" data-ghead="${esc(g.id)}"><div class="gh-grid">
     <div class="gh-when">${lab('Puck drop')}<div class="when"><b>${esc(day)}</b>${when}</div></div>
     <div class="gh-match">${lab('Matchup')}<h2 id="gpTitle">${tag(g.away)}${wck(g.away)} <span class="at">${g.neutral ? 'vs' : 'at'}</span> ${tag(g.home)}${wck(g.home)}</h2>${note ? `<small class="gh-note">${esc(note)}</small>` : ''}</div>
-    <div class="gh-lead">${lab(H.lab)}<div class="lead">${lead || `<span class="muted">${H.lab === 'Leaders' ? 'Box score not read yet' : 'No projections for this game yet'}</span>`}</div></div>
-    <div class="tot">${lab('Expected score')}<b title="${ta} ${X.a.toFixed(1)}, ${th} ${X.h.toFixed(1)}: the model's expected goals">${X.a.toFixed(1)} – ${X.h.toFixed(1)}</b><small>${ta} / ${th}</small>${sc.fin ? `<small class="act">(actual ${sc.as} – ${sc.hs})</small>` : sc.live ? `<small class="lv">live ${sc.as} – ${sc.hs}</small>` : ''}</div>
-    <div class="totpts">${lab('Total')}<b>${g.xt.toFixed(1)}</b><small>goals</small>${sc.fin ? `<small class="act">(actual ${sc.as + sc.hs})</small>` : ''}</div>
+    <div class="gh-lead">${lab(H.lab)}<div class="lead">${lead || `<span class="muted">${H.lab === 'Leaders' ? boxWord(g) : started ? 'No projections for this game' : 'No projections for this game yet'}</span>`}</div></div>
+    <div class="tot">${lab('Expected score')}${X ? `<b title="${ta} ${X.a.toFixed(1)}, ${th} ${X.h.toFixed(1)}: the model's expected goals">${X.a.toFixed(1)} – ${X.h.toFixed(1)}</b>` : '<b>–</b>'}<small>${ta} / ${th}</small>${sc.fin ? `<small class="act">(actual ${sc.as} – ${sc.hs})</small>` : sc.live ? `<small class="lv">live ${sc.as} – ${sc.hs}</small>` : ''}</div>
+    <div class="totpts">${lab('Total')}<b>${X ? g.xt.toFixed(1) : '–'}</b><small>goals</small>${sc.fin ? `<small class="act">(actual ${sc.as + sc.hs})</small>` : ''}</div>
     <div class="winner">${lab('Model pick')}${pick}</div>
   </div></div>`;
 }
@@ -4283,37 +4354,40 @@ const gpFlip = r => r === 'win' ? 'loss' : r === 'loss' ? 'win' : r;
 function rungRow(o) {
   const box = o.locked ? gpMark(o.res) : o.key ? `<input type="checkbox"${o.on ? ' checked' : ''} ${o.attr}="${esc(o.key)}" aria-label="${esc(o.aria)}">` : '';
   const cls = [o.cls || '', o.on && !o.locked && o.key ? 'on' : '', !o.locked && o.key ? 'pickable' : '', o.locked && o.res === 'win' ? 'hit' : o.locked && o.res === 'loss' ? 'miss' : ''].filter(Boolean).join(' ');
-  return `<tr${cls ? ` class="${cls}"` : ''}><td class="pick">${box}</td><td class="thr">${o.label}${o.value ? `<i class="pb-valmark" title="${esc(o.value)}">Value</i>` : ''}</td>${gpChance(o.fair, o.est, o.book, o.pc)}<td class="num est">${o.model === null || o.model === undefined ? '' : `<span class="mkt" title="${esc(o.modelT)}">model ${(o.pc || whole)(o.model)}</span>`}</td><td class="num book real">${priced(o.price) ? fmtOdds(o.price) : ''}</td></tr>`;
+  return `<tr${cls ? ` class="${cls}"` : ''}><td class="pick">${box}</td><td class="thr">${o.label}${o.value ? `<i class="pb-valmark" title="${esc(o.value)}">Value</i>` : o.call ? '<i class="pb-valmark" title="the model\'s call, made before the puck drop">Call</i>' : ''}</td>${gpChance(o.fair, o.est, o.book, o.pc)}<td class="num est">${o.model === null || o.model === undefined ? '' : `<span class="mkt" title="${esc(o.modelT)}">model ${(o.pc || whole)(o.model)}</span>`}</td><td class="num book real">${priced(o.price) ? fmtOdds(o.price) : ''}</td></tr>`;
 }
 /* Game bets: each club to win and to cover, then the total, at the book's prices; a box only on a fresh line of a game still to
-   come, ticked exactly where the builder draws the leg; the grades in the boxes' place once the puck has dropped */
+   come, ticked exactly where the builder draws the leg; the grades in the boxes' place once the puck has dropped, the side the
+   model's call took still marked (Value before the puck drop, Call after it) */
 function gameBetsCard(g, locked) {
-  const L = g.line, sc = scoreOf(g), R = isObj(g.result) ? g.result : null, offer = !locked && !!L && freshLine(g), bk = bookName(L);
+  const L = g.line, sc = scoreOf(g), R = isObj(g.result) ? g.result : null, offer = !locked && !!L && freshLine(g), bk = bookName(L), CP = slateCall(g), XG = xgOf(g);
   const inB = offer ? new Set(builderLegs(false).filter(B => B.game === g.id).map(B => B.id)) : new Set();
   const won = sc.fin && sc.hs !== sc.as ? (sc.hs > sc.as ? 'home' : 'away') : null;
   const valueT = e => typeof e === 'number' ? `the model's call: its chance is ${Math.round(e * 100)} points above the chance ${poss(bk)} price implies` : "the model's call";
   const val = (pick, edge, side) => !locked && L && pick === side ? valueT(isObj(edge) ? edge[side] : null) : '';
+  const call = (pick, side) => locked && !!L && pick === side;      // once the puck has dropped the side the call took stays marked, beside its grade
   const teams = ['away', 'home'].map(side => {
-    const id = g[side], nm = T(id).short, mu = side === 'home' ? g.mu : -g.mu, B = legOf(g, side, 'ml'), C = legOf(g, side, 'pl'), pW = side === 'home' ? g.pHome : 1 - g.pHome;
-    let h = `<div class="statblk" data-gb="${side}"><h4>${tag(id)} ${esc(nm)} <em title="the model's expected goal margin, from its goals layer">our margin ${sgnd(mu, 1)}</em>${C ? `<em class="mline">book line ${fmtLine(C.num)}</em>` : ''}</h4><table class="rungs"><tbody>`;
+    const id = g[side], nm = T(id).short, mu = side === 'home' ? g.mu : -g.mu, B = legOf(g, side, 'ml'), C = legOf(g, side, 'pl'), pW = CP ? (side === 'home' ? CP.ph : CP.pa) / 100 : null;      // the call's chance as it is written everywhere
+    let h = `<div class="statblk" data-gb="${side}"><h4>${tag(id)} ${esc(nm)}${XG ? ` <em title="the model's expected goal margin, from its goals layer">our margin ${sgnd(mu, 1)}</em>` : ''}${C ? `<em class="mline">book line ${fmtLine(C.num)}</em>` : ''}</h4><table class="rungs"><tbody>`;
     h += rungRow({ label: 'To win', fair: B ? B.fair : null, book: bk, model: pW, modelT: "the model's chance to win, overtime included", price: B ? B.price : null, key: offer && B ? B.id : null, attr: 'data-leg', on: !!B && inB.has(B.id), aria: `Add ${nm} to win`,
-      locked, res: locked && won ? (won === side ? 'win' : 'loss') : null, value: B ? val(g.mlPick, g.mlEdge, side) : '' });
+      locked, res: locked && won ? (won === side ? 'win' : 'loss') : null, value: B ? val(g.mlPick, g.mlEdge, side) : '', call: !!B && call(g.mlPick, side) });
     if (C) h += rungRow({ label: `To cover ${fmtLine(C.num)}`, fair: C.fair, book: bk, model: C.p, modelT: "the model's chance to cover", price: C.price, key: offer ? C.id : null, attr: 'data-leg', on: inB.has(C.id), aria: `Add ${nm} to cover ${fmtLine(C.num)}`,
-      locked, res: locked && R && R.homeCover ? (side === 'home' ? R.homeCover : gpFlip(R.homeCover)) : null, value: val(g.plPick, g.plEdge, side) });
+      locked, res: locked && R && R.homeCover ? (side === 'home' ? R.homeCover : gpFlip(R.homeCover)) : null, value: val(g.plPick, g.plEdge, side), call: call(g.plPick, side) });
     return h + '</tbody></table></div>';
   }).join('');
   const O = legOf(g, 'over', 'ou'), U = legOf(g, 'under', 'ou');
   const trow = (B, side) => !B ? '' : rungRow({ label: `${side === 'over' ? 'Over' : 'Under'} ${B.num}`, fair: B.fair, book: bk, model: B.p, modelT: `the model's chance of the ${side}`, price: B.price, key: offer ? B.id : null, attr: 'data-leg', on: inB.has(B.id),
-    aria: `Add ${side} ${B.num} goals, ${T(g.away).short} at ${T(g.home).short}`, locked, res: locked && R && R.over ? (side === 'over' ? R.over : gpFlip(R.over)) : null, value: val(g.ouPick, g.ouEdge, side) });
-  const tot = O || U ? `<div class="statblk" data-gb="total"><h4>Game total <em class="mpts" title="The model's expected goals, both clubs">model's goals ${g.xt.toFixed(1)}</em><em class="mline">book line ${L.total}</em></h4><table class="rungs"><tbody>${trow(O, 'over')}${trow(U, 'under')}</tbody></table></div>` : '';
+    aria: `Add ${side} ${B.num} goals, ${T(g.away).short} at ${T(g.home).short}`, locked, res: locked && R && R.over ? (side === 'over' ? R.over : gpFlip(R.over)) : null, value: val(g.ouPick, g.ouEdge, side), call: call(g.ouPick, side) });
+  const tot = O || U ? `<div class="statblk" data-gb="total"><h4>Game total${XG ? ` <em class="mpts" title="The model's expected goals, both clubs">model's goals ${g.xt.toFixed(1)}</em>` : ''}<em class="mline">book line ${L.total}</em></h4><table class="rungs"><tbody>${trow(O, 'over')}${trow(U, 'under')}</tbody></table></div>` : '';
   const src = !L ? '' : `Lines: ${poss(bk)}, read from ESPN ${L.refreshed ? 'by Refresh odds ' : ''}${hhmm(L.at)}.`;
   const why = !L ? 'No DraftKings line yet.' : !locked && !freshLine(g) ? `Line from ${hhmm(L.at)}: not on DraftKings at the last run.` : '';
   return `<div class="card gbets" data-game="${esc(g.id)}"><h2>Game bets</h2>${src ? `<p class="gp-src">${esc(src)}</p>` : ''}${teams}${tot}${why ? `<p class="gp-why">${esc(why)}</p>` : ''}</div>`;
 }
-/* a player's shut row: the three figures of his group, the box score's once the game is over */
+/* a player's shut row: the three figures of his group, the box score's once the game is over and the state carries its box score
+   (he "did not play" only where that box score lacks him: a final the job has not boxed yet keeps his projection) */
 function summaryOf(x, g, sc) {
-  const want = HEADLINE[x.grp] || [], act = sc.fin ? boxOf(g, x.id) : null;
-  if (sc.fin && !act) return '<span class="muted">did not play</span>';
+  const want = HEADLINE[x.grp] || [], box = sc.fin ? boxGame(g) : null, act = box ? boxOf(g, x.id) : null;
+  if (box && !act) return '<span class="muted">did not play</span>';
   const bits = want.filter(s => act ? act[s] !== undefined : x.proj[s]).map(s => act
     ? `<b>${act[s]}</b> ${STAT_SHORT[s]}${x.proj[s] ? ` <span class="muted">(proj ${ppMu(s, x.proj[s].mu)})</span>` : ''}`
     : `<b>${ppMu(s, x.proj[s].mu)}</b> ${STAT_SHORT[s]}`);
@@ -4337,11 +4411,12 @@ function weekStats(x) {
 function playerBody(x, g, sc, locked, inB) {
   let h = '<div class="plrbody">';
   if (locked) {
-    const act = sc.fin ? boxOf(g, x.id) : null;
+    const box = sc.fin ? boxGame(g) : null, act = box ? boxOf(g, x.id) : null;
     h += '<div class="tiles">' + (GRP_STATS[x.grp] || []).filter(s => x.proj[s] || (act && act[s] !== undefined)).map(s => {
       const av = act && act[s] !== undefined ? act[s] : null, D = x.proj[s], band = D ? hitBand(av, D.mu) : (av === null ? 'pend' : ''), diff = av === null || !D ? null : av - D.mu;
       return `<div class="tile" data-pp-stat="${s}"><span class="tl">${STAT_LBL[s]}</span><b class="tv${band ? ' ' + band : ''}">${av === null ? '–' : av}</b>${D ? `<span class="tp">proj ${ppMu(s, D.mu)}${diff === null ? '' : ` · <span class="td ${band}">${diff >= 0 ? '+' : '-'}${Math.abs(diff).toFixed(1)}</span>`}</span>` : ''}</div>`; }).join('') + '</div>';
-    if (sc.fin && !act) h += '<p class="noline">Did not play: legs void.</p>';
+    if (box && !act) h += '<p class="noline">Did not play: legs void.</p>';
+    else if (sc.fin && !box) h += `<p class="noline">${boxWord(g)}.</p>`;      // a final the state has no box score for: his projection, nothing graded
     return h + '</div>';
   }
   const addOk = !!inB && [g.home, g.away].includes(x.team) && !!x.grp, nm = x.name || `ESPN athlete ${x.id}`, modelT = "the props model's chance (on trial)";
@@ -4366,16 +4441,29 @@ function playerBody(x, g, sc, locked, inB) {
   }
   return h + '</div>';
 }
-/* this game's state beside Refresh odds, in a line: whose line and when it was read (none yet, or one DraftKings no longer lists),
-   then its player lines where they are not simply in (none posted yet, not read, a game past tomorrow), then a press that could
-   not reach ESPN */
+/* this game's state beside Refresh odds, in a line: whose line and when it was read (none yet, or one DraftKings no longer lists);
+   the last press's word on this game where ESPN did not simply give its line (postponed, cancelled or under way there, no line
+   there, the game not in its answer, a read older than the line shown); then its player lines where they are not simply in (none
+   posted yet, a read that failed, an earlier read kept by a press that could not read them, not read, a game past tomorrow: none
+   of it for a game ESPN has called off or under way, whose player lines are not shown); then a press that could not reach ESPN */
 function gpStatus(g) {
-  const L = g.line, rd = PROPS.games[g.id], parts = [];
+  const L = g.line, rd = PROPS.games[g.id], parts = [], lo = LIVE[g.id] && LIVE[g.id].state === 'off' ? LIVE[g.id] : null, stands = L ? ': the published line stands' : '';
+  let W = isObj(ODDS.words) ? ODDS.words[g.id] : null, when = ODDS.at ? hhmm(ODDS.at) : '';
+  if (lo && W !== 'postponed' && W !== 'cancelled') { W = lo.off; when = hhmm(lo.at); }      // a scoreboard read found it called off: said here too
   parts.push(!L ? 'No DraftKings line yet' : !freshLine(g) ? `Line from ${hhmm(L.at)}: not on DraftKings at the last run` : `${bookName(L)} via ESPN, ${hhmm(L.at)}`);
-  if (!rd) parts.push(ppAsk([g]).length ? 'player lines not read yet' : 'player lines on game day');
-  else if (rd.status === 404) parts.push('no player lines yet');
-  else if (rd.status !== 200) parts.push("couldn't read player lines");
-  else if (L && freshLine(g) && Math.floor(Date.parse(rd.at) / 60000) !== Math.floor(Date.parse(L.at) / 60000)) parts.push(`player lines ${hhmm(rd.at)}`);
+  const off = W === 'postponed' || W === 'cancelled' || W === 'started';
+  if (W === 'postponed' || W === 'cancelled') parts.push(`${W} at ESPN, read ${when}${L ? ': the published line stands until the job takes the game off' : ''}`);
+  else if (W === 'started') parts.push(`under way at ESPN, read ${when}${stands}`);
+  else if (W === 'noLine') parts.push(`no line at ESPN, read ${when}${stands}`);
+  else if (W === 'missing') parts.push(`not in ESPN's answer, read ${when}${stands}`);
+  else if (W === 'older') parts.push(`ESPN's read of ${when} is older than the line shown`);
+  if (!off) {
+    if (!rd) parts.push(ppAsk([g]).length ? 'player lines not read yet' : 'player lines on game day');
+    else if (rd.status === 404) parts.push('no player lines yet');
+    else if (rd.status !== 200) parts.push("couldn't read player lines");
+    else if (Array.isArray(ODDS.kept) && ODDS.kept.includes(g.id)) parts.push(`couldn't read player lines at ${when}: the read of ${hhmm(rd.at)} stands`);
+    else if (L && freshLine(g) && Math.floor(Date.parse(rd.at) / 60000) !== Math.floor(Date.parse(L.at) / 60000)) parts.push(`player lines ${hhmm(rd.at)}`);
+  }
   if (ODDS.failed && ODDS.failed.includes(g.date)) parts.push("couldn't reach ESPN");
   return parts.join(' · ') + '.';
 }
@@ -4401,17 +4489,24 @@ function renderGame() {
   if (!S || !GP.gid) return;
   const g = gameById()[GP.gid];
   if (!g) { closeGame(); return; }
-  const m = $('gameModal'), view = $('gameView'), sc = scoreOf(g), locked = hasStarted(g) || sc.st !== 'pre', fin = sc.fin || sc.st === 'final' || (locked && !(g.state === 'pre' && Date.parse(g.start) > Date.now()) && Date.now() - Date.parse(g.start) > 4 * 3600000);
+  /* a game ESPN has called off is neither under way nor over: locked only by the clock, never FINAL. And a game is over by the clock (four
+     hours past its puck drop) only where no score is known: a live score four hours on (a long overtime, a score the job kept) is a game
+     still under way, as the list's row has it (rowFinal) */
+  const m = $('gameModal'), view = $('gameView'), sc = scoreOf(g), locked = hasStarted(g) || (sc.st !== 'pre' && sc.st !== 'off'), fin = !sc.off && (sc.fin || sc.st === 'final' || (!sc.live && locked && !(g.state === 'pre' && Date.parse(g.start) > Date.now()) && Date.now() >= Date.parse(g.start) + 4 * 3600000));
   GP.locked = locked;
+  /* the status line follows the builder: where its legs (of this game, or their number) are no longer what the last tick here left, by a
+     Refresh odds read, the puck drop or another tab, the tick's words go and the page says what the builder says of this game's legs */
+  { const now = builderLegs(false), sig = JSON.stringify([now.filter(L => L.game === g.id).map(L => `${L.id}@${L.price}`), now.length]);
+    if (GP.sig !== null && GP.sig !== sig) { const said = now.why[g.id] || GP.why || []; GP.msg = said.length ? `${said.join(' ')} Your parlay: ${plural(now.length, 'leg', 'legs')}.` : ''; }
+    GP.sig = sig; GP.why = null; }
   const all = GP.all || !!GP.q.trim(), R = rosterFor(g, all), rd = PROPS.games[g.id];
   const inB = !locked && rd && rd.status === 200 ? new Set(builderLegs(false).filter(L => L.prop && L.game === g.id).map(L => L.id)) : null;
   let html = `<div class="bar"><button type="button" class="btn quiet" id="backBtn">✕ Close</button><span class="grow"></span>${ppProj(g.id) ? trialPill() : ''}<label class="muted"><input type="checkbox" id="allCb"${GP.all ? ' checked' : ''}> All skaters</label></div>`;
   html += `<div class="gsearch"><input type="search" id="gameSearch" placeholder="Find a player" aria-label="Find a player in this game" autocomplete="off" value="${esc(GP.q)}"></div>`;
   if (!locked) html += `<div class="espn-ctl"><button type="button" class="btn quiet espn-btn" id="ppRefreshOdds" data-odds aria-describedby="ppOddsNote" aria-busy="${ODDS.busy}"${ODDS.busy ? ' aria-disabled="true"' : ''} title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="espn-st" id="ppOddsNote" role="status" aria-live="polite">${ODDS.busy ? 'reading…' : esc(gpStatus(g))}</span></div>`;
-  html += '<p class="gp-msg" id="ppMsg" role="status" aria-live="polite"></p>';
   if (locked) {
     const ot = /\/(OT|SO)/.exec(sc.detail), ta = esc(T(g.away).abbr), th = esc(T(g.home).abbr);
-    const say = sc.fin ? `Final${ot ? ` (${ot[1]})` : ''}: ${ta} ${sc.as}, ${th} ${sc.hs}.` : sc.live ? `${ta} ${sc.as}, ${th} ${sc.hs} · ${esc(sc.detail)}.` : g.state === 'pre' && Date.parse(g.start) > Date.now() ? 'Start moved · call kept.' : fin ? 'Final.' : 'In progress.';
+    const say = sc.off ? `${sc.off === 'cancelled' ? 'Cancelled' : 'Postponed'} at ESPN.` : sc.fin ? `Final${ot ? ` (${ot[1]})` : ''}: ${ta} ${sc.as}, ${th} ${sc.hs}.` : sc.live ? `${ta} ${sc.as}, ${th} ${sc.hs} · ${esc(sc.detail)}.` : g.state === 'pre' && Date.parse(g.start) > Date.now() ? 'Start moved · call kept.' : fin ? 'Final.' : 'In progress.';
     html += `<div class="card gp-live${fin ? ' fin' : ''}"><div class="gp-strip"><b>${say}</b><span class="grow"></span>${GP.sAt ? `<span class="livestamp${GP.sBad ? ' bad' : ''}">${GP.sBad ? 'scores not loading' : `read ${esc(GP.sAt)}`}</span>` : sc.live && !LIVE[g.id] ? `<span class="livestamp" title="the score when the job last read it; Refresh scores reads ESPN now">as of ${esc(hhmm(g.scoreAt || S.published))}</span>` : ''}${sc.fin ? '' : `<button type="button" class="btn quiet" id="gameScoresNow"${GP.sBusy ? ' aria-disabled="true"' : ''} title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>`}</div></div>`;
   }
   html += gameHeadCard(g) + gameWinBtns(g) + gameBetsCard(g, locked);
@@ -4420,17 +4515,21 @@ function renderGame() {
     html += `<div class="teamhdr" data-team="${esc(t.club)}">${tag(t.club)} ${esc(T(t.club).short)} <span class="pill">${fin ? 'played' : 'playing'} ${esc(T(t.opp).abbr)}</span></div>`;
     if (!locked && t.outs.length) html += `<p class="gp-out" data-gp-out="${esc(t.club)}">Out: ${t.outs.map(o => `<b>${esc(o.name)}</b> (${esc([o.pos, String(o.status || 'Out').toLowerCase()].filter(Boolean).join(', '))})`).join(', ')}.</p>`;
     if (!locked && pm && pm.lastBox && pm.lastFinal && pm.lastFinal > pm.lastBox) html += `<p class="gp-out" data-gp-box="${esc(t.club)}">Lineup from ${esc(pm.lastBox)}: the box score of ${esc(pm.lastFinal)} not read yet.</p>`;
-    if (!t.players.length) { html += `<div class="empty">${!locked ? 'No players to project.' : S.box && S.box.from && g.date < S.box.from ? 'Box score no longer carried.' : 'Box score not read yet.'}</div>`; continue; }
+    if (!t.players.length) { html += `<div class="empty">${!locked ? 'No players to project.' : fin ? boxWord(g) + '.' : 'Under way: the box score comes after the final.'}</div>`; continue; }
+    if (fin && !boxGame(g)) html += `<p class="gp-out" data-gp-nobox="${esc(t.club)}">${boxWord(g)}.</p>`;      // the rows under it are still his projections
     for (const x of t.players) {
-      const open = GP.open === x.id, stOpen = GP.stats.has(x.id), nProj = Object.keys(x.proj).length, hasBody = locked ? (sc.fin && !!boxOf(g, x.id)) || nProj > 0 : nProj > 0 || x.dk, role = gpRole(x);
+      const open = GP.open === x.id, stOpen = GP.stats.has(x.id), nProj = Object.keys(x.proj).length, boxed = sc.fin && !!boxGame(g), hasBody = locked ? (boxed && !!boxOf(g, x.id)) || nProj > 0 : nProj > 0 || x.dk, role = gpRole(x);
       const who = `${esc(x.name || `ESPN athlete ${x.id}`)}${!locked && x.dtd ? '<span class="inj" title="Day to day: in the lineup the call expects">DTD</span>' : ''}<span${role.title ? ` title="${esc(role.title)}"` : ''}>${esc(role.t)}</span>`;
-      if (!hasBody) { html += `<div class="plrbtn" data-nohist="${esc(x.id)}"><div class="who">${who}</div><div class="sum"><span class="muted">${locked ? 'did not play' : 'No lines yet'}</span></div><div></div></div>`; continue; }
-      html += `<button type="button" class="plrbtn" data-open="${esc(x.id)}" aria-expanded="${open}"><div class="who">${who}<span class="stbtn${stOpen ? ' on' : ''}" role="button" tabindex="0" data-stats="${esc(x.id)}" aria-pressed="${stOpen}">${stOpen ? 'Hide stats' : 'Show stats'}</span></div><div class="sum">${locked ? `<span class="finchip${fin ? '' : ' live'}">${fin ? 'FINAL' : 'LIVE'}</span>` : ''}${locked && !sc.fin && nProj ? '<span class="muted">projected</span> ' : ''}${summaryOf(x, g, sc)}</div><div class="arrow" aria-hidden="true">${open ? '⌃' : '⌄'}</div></button>`;
+      if (!hasBody) { html += `<div class="plrbtn" data-nohist="${esc(x.id)}"><div class="who">${who}</div><div class="sum"><span class="muted">${boxed ? 'did not play' : locked ? 'No projection' : 'No lines yet'}</span></div><div></div></div>`; continue; }
+      html += `<button type="button" class="plrbtn" data-open="${esc(x.id)}" aria-expanded="${open}"><div class="who">${who}<span class="stbtn${stOpen ? ' on' : ''}" role="button" tabindex="0" data-stats="${esc(x.id)}" aria-pressed="${stOpen}">${stOpen ? 'Hide stats' : 'Show stats'}</span></div><div class="sum">${locked && !sc.off ? `<span class="finchip${fin ? '' : ' live'}">${fin ? 'FINAL' : 'LIVE'}</span>` : ''}${locked && !boxed && nProj ? '<span class="muted">projected</span> ' : ''}${summaryOf(x, g, sc)}</div><div class="arrow" aria-hidden="true">${open ? '⌃' : '⌄'}</div></button>`;
       if (stOpen) html += weekStats(x);
       if (open) html += playerBody(x, g, sc, locked, inB);
     }
   }
   if (R.other.length) { html += '<div class="teamhdr" data-team="">Other players</div>'; for (const x of R.other) html += `<div class="plrbtn" data-nohist="${esc(x.id)}"><div class="who">${esc(x.name || `ESPN athlete ${x.id}`)}<span>${esc(x.pos || '')}</span></div><div class="sum"><span class="muted">not matched to either club</span></div><div></div></div>`; }
+  /* the page's one status line, last: it is held at the foot of the screen (sticky), so what a tick says is in view wherever the tick
+     was made and its coming and going moves no row */
+  html += '<p class="gp-msg" id="ppMsg" role="status" aria-live="polite"></p>';
   /* the reader's place and the keyboard's kept through the draw: the scroll as it was, a row just tapped pinned where it stood, the
      focus back on the same control (found again by what it names) */
   const keepY = m.scrollTop, a = document.activeElement, ds = a && view.contains(a) && a.dataset ? a.dataset : null;
@@ -4440,6 +4539,8 @@ function renderGame() {
   $('ppMsg').textContent = GP.msg || '';
   m.scrollTop = keepY;
   if (pinTop !== null) { const nb = view.querySelector(`[data-open="${anchor}"]`); if (nb) m.scrollTop += nb.getBoundingClientRect().top - pinTop; }
+  /* a box just ticked stays under the finger: wherever the draw put it, the page is scrolled back by as much (GP.pin, set by the tick) */
+  if (GP.pin) { const nb = view.querySelector(GP.pin.sel); if (nb) m.scrollTop += nb.getBoundingClientRect().top - GP.pin.top; }
   if (ds) { const nb = (fk && view.querySelector(fk)) || $('gameModal').querySelector('.modal-panel'); if (nb) { try { nb.focus({ preventScroll: true }); } catch (e) { nb.focus(); } if (nb.id === 'gameSearch') try { nb.setSelectionRange(nb.value.length, nb.value.length); } catch (e) {} } }
   gameSearchApply();
 }
@@ -4461,7 +4562,7 @@ function openGame(gid, opener) {
   if (!S || !gameById()[String(gid)]) return;
   const m = $('gameModal');
   closeWindow(false);
-  Object.assign(GP, { gid: String(gid), open: null, stats: new Set(), q: '', msg: '', opener: opener || document.activeElement || null, sAt: '', sBad: false, sBusy: false });
+  Object.assign(GP, { gid: String(gid), open: null, stats: new Set(), q: '', msg: '', sig: null, why: null, pin: null, opener: opener || document.activeElement || null, sAt: '', sBad: false, sBusy: false });
   m.hidden = false; document.body.classList.add('modal-open'); m.scrollTop = 0;
   renderGame();
   if (!GP.gid) return;
@@ -4493,8 +4594,9 @@ $('gameView').addEventListener('click', e => {
 $('gameView').addEventListener('change', e => {
   const cb = e.target;
   if (cb.id === 'allCb') { GP.all = cb.checked; renderGame(); return; }
-  if (cb.dataset.leg !== undefined) legTap(cb.dataset.leg, cb);
-  else if (cb.dataset.ppAdd !== undefined) ppAdd(cb.dataset.ppAdd);
+  const sel = cb.dataset.leg !== undefined ? `input[data-leg="${cb.dataset.leg}"]` : cb.dataset.ppAdd !== undefined ? `input[data-pp-add="${cb.dataset.ppAdd}"]` : null; if (!sel) return;
+  GP.pin = { sel, top: cb.getBoundingClientRect().top };      // where the box stood when it was ticked: every draw of this tick puts it back there
+  try { if (cb.dataset.leg !== undefined) legTap(cb.dataset.leg, cb); else ppAdd(cb.dataset.ppAdd); } finally { GP.pin = null; }
 });
 $('gameView').addEventListener('input', e => {
   if (e.target.id !== 'gameSearch') return;
@@ -4520,7 +4622,7 @@ async function gameScores() {
   GP.sBusy = true; const gid = GP.gid; renderGame();
   let bad = false; try { await readLive(g.date); } catch (e) { bad = true; }
   if (GP.gid !== gid) return;
-  GP.sBusy = false; GP.sBad = bad; GP.sAt = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  GP.sBusy = false; GP.sBad = bad; GP.sAt = stampNow();
   if (!$('tab-games').hidden) renderGames();
   renderGame();
 }
@@ -4542,9 +4644,11 @@ function restOf(g, club) {
 }
 /* every model's chance for the home side on a game, as the Pick'em Record reads them, the call first; DraftKings' with its margin out */
 function gameModels(g) {
-  const L = g.line, dk = L && priced(L.homeML) && priced(L.awayML) ? implied(L.homeML) / (implied(L.homeML) + implied(L.awayML)) : null, M = isObj(g.models) ? g.models : {};
-  const ph = k => isObj(M[k]) && typeof M[k].pHome === 'number' ? M[k].pHome : null;
-  return [['The call', g.pHome], ['Team Elo', g.by === 'players' && isObj(g.elo) && typeof g.elo.pHome === 'number' ? g.elo.pHome : g.pHome], ['Alpha', ph('alpha')], ['The Joker', ph('joker')], ['ELO Model', ph('elo')], ['DraftKings', dk]].filter(r => typeof r[1] === 'number' && isFinite(r[1]));
+  const L = g.line, dk = L && priced(L.homeML) && priced(L.awayML) ? implied(L.homeML) / (implied(L.homeML) + implied(L.awayML)) : null;
+  /* the NFL's three as the Pick'em Record reads them (pkCall): the call frozen with the game's own, else, for a final from before the
+     models existed, its backtest, which the row says */
+  const ph = id => { const x = pkCall(g, id); return x && typeof x.c.pHome === 'number' ? [x.c.pHome, x.bt] : [null, false]; };
+  return [['The call', g.pHome], ['Team Elo', g.by === 'players' && isObj(g.elo) && typeof g.elo.pHome === 'number' ? g.elo.pHome : g.pHome], ['Alpha', ...ph('alpha')], ['The Joker', ...ph('joker')], ['ELO Model', ...ph('elom')], ['DraftKings', dk]].filter(r => typeof r[1] === 'number' && isFinite(r[1]));
 }
 /* Matchup: each club's attack against the other's defence and goalie, by the player model's own parts (goals a game against an
    average club: the club's offence; its defence and this game's goalie), each ranked among the clubs, the gap between them tagged;
@@ -4575,7 +4679,8 @@ function unitsBody(g) {
     num(g.ra) && num(g.rh) ? duo('elo', 'Team Elo', g.ra, g.rh, Math.round(g.ra), Math.round(g.rh), '') : '',
     duo('rest', 'Rest', ra, rh, restT(ra), restT(rh), ''),
   ].join('');
-  const models = gameModels(g).map(([n, p]) => `<div class="ddrow" data-gs-model="${esc(n)}"><span class="ddunit">${n}</span> <span class="ddrks">${tag(p >= 0.5 ? h : a, 'mini')} <b class="ddelo">${whole(Math.max(p, 1 - p))}</b></span> <span class="ddend"></span></div>`).join('');
+  const CM = slateCall(g);      /* the call's row reads as the list and the page write it */
+  const models = gameModels(g).map(([n, p, bt]) => `<div class="ddrow" data-gs-model="${esc(n)}"><span class="ddunit">${n}</span> <span class="ddrks">${tag(n === 'The call' && CM ? CM.pick : p >= 0.5 ? h : a, 'mini')} <b class="ddelo">${n === 'The call' && CM ? CM.conf + '%' : whole(Math.max(p, 1 - p))}</b></span> <span class="ddend"${bt ? ' title="called afterwards, on what was known before the puck drop: the game was played before this model existed"' : ''}>${bt ? 'backtest' : ''}</span></div>`).join('');
   return `${units}<div class="gs-dd"><span class="gs-lab">The clubs</span><div class="dd">${clubsRows}</div></div>
     <div class="gs-dd"><span class="gs-lab" title="each model's pick to win and its chance">Models</span><div class="dd">${models}</div></div>`;
 }
@@ -4685,6 +4790,7 @@ document.addEventListener('click', e => { const b = e.target.closest('button[dat
    page's own status line; the page drawn again with its place and the keyboard's kept, a refusal leaving the box unticked */
 function ppAdd(key) {
   if (!gameOpen() || !S) return;
+  GP.sig = null;                                        // a tick here: what it says stands at the next draw
   const g = gameById()[GP.gid];
   if (!g || hasStarted(g)) { renderGame(); return; }
   const rd = PROPS.games[g.id]; if (!rd || rd.status !== 200) { renderGame(); return; }
@@ -5035,7 +5141,6 @@ async function boot() {
   const again = () => navTo($('tabs').querySelector('button.on'));
   window.addEventListener('load', again, { once: true });
   if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(again, () => {});
-  autoLive();
 }
 boot();
 </script>

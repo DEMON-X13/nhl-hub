@@ -4634,20 +4634,23 @@ function gpWindowWrongs(w, g, ms) {
     const restT = r => r === null ? '–' : r <= 0 ? 'back to back' : `${r} day${r === 1 ? '' : 's'}`, fig = v => num(v) ? gpSgnS(v, 2) : '–', last = n => String(n || '').split(' ').slice(1).join(' ') || String(n || '');
     const ga = pm('away') && isO(pm('away').goalie) ? pm('away').goalie : null, gh = pm('home') && isO(pm('home').goalie) ? pm('home').goalie : null, sa = pm('away') ? pm('away').strength : null, shh = pm('home') ? pm('home').strength : null, ra = prev(g.away), rh = prev(g.home);
     const rowsW = [].concat(ga || gh ? [['goal', 'In goal', fig(ga ? ga.gk : null), fig(gh ? gh.gk : null), ga ? ga.gk : null, gh ? gh.gk : null, `${ga ? last(ga.name) : '–'} · ${gh ? last(gh.name) : '–'}`]] : [],
-      num(sa) || num(shh) ? [['strength', 'Strength', fig(sa), fig(shh), sa, shh, 'goals a game']] : [], num(g.ra) && num(g.rh) ? [['elo', 'Team Elo', String(Math.round(g.ra)), String(Math.round(g.rh)), g.ra, g.rh, '']] : [], [['rest', 'Rest', restT(ra), restT(rh), ra, rh, '']]);
+      num(sa) || num(shh) ? [['strength', 'Strength', fig(sa), fig(shh), sa, shh, 'goals a game']] : [], num(g.ra) && num(g.rh) ? [['elo', 'Elo rating', String(Math.round(g.ra)), String(Math.round(g.rh)), g.ra, g.rh, '']] : [], [['rest', 'Rest', restT(ra), restT(rh), ra, rh, '']]);
     const rowsH = [...md.querySelectorAll('.ddrow[data-gs-row]')];
-    ck(eqA(rowsH.map(r => r.dataset.gsRow), rowsW.map(r => r[0])), `Matchup, the clubs: in goal, strength, the team Elo, rest (${rowsH.map(r => r.dataset.gsRow).join(', ')})`);
+    ck(eqA(rowsH.map(r => r.dataset.gsRow), rowsW.map(r => r[0])), `Matchup, the clubs: in goal, strength, the Elo rating, rest (${rowsH.map(r => r.dataset.gsRow).join(', ')})`);
     rowsW.forEach((rw, i) => { const r = rowsH[i]; if (!r || r.dataset.gsRow !== rw[0]) return; const el = [...r.querySelectorAll('.ddelo')], sn = [...r.querySelectorAll('.ddsn')].map(txt), both = num(rw[4]) && num(rw[5]);
       ck(txt(r.querySelector('.ddunit')) === rw[1] && eqA(sn, [A, H]) && eqA(el.map(txt), [rw[2], rw[3]]) && el[0].classList.contains('gs-better') === (both && rw[4] > rw[5]) && el[1].classList.contains('gs-better') === (both && rw[5] > rw[4]) && txt(r.querySelector('.ddend')) === rw[6], `Matchup, ${rw[1]}: ${A} ${rw[2]} · ${H} ${rw[3]} ${rw[6]}, the higher marked (${txt(r)})`); });
     /* the models: the Pick'em Record's reading of the same game (sPkPick, sPkModel), each model's side and its chance */
     const dkp = sPkLined(g.line) ? sImp(+g.line.homeML) / (sImp(+g.line.homeML) + sImp(+g.line.awayML)) : null, mk = id => { const x = sPkModel(g, id, S); return x && num(x.c.pHome) ? x.c.pHome : null; }, bt = id => { const x = sPkModel(g, id, S); return !!(x && x.bt); };
-    /* Alpha, the Joker and the ELO Model: the call frozen with the game's own, else, for a final from before they existed, its backtest, said on the row */
-    const MW = [['The call', g.pHome, 'call'], ['Team Elo', g.by === 'players' && isO(g.elo) && num(g.elo.pHome) ? g.elo.pHome : g.pHome, 'elo'], ['Alpha', mk('alpha'), 'alpha', bt('alpha')], ['The Joker', mk('joker'), 'joker', bt('joker')], ['ELO Model', mk('elom'), 'elom', bt('elom')], ['DraftKings', dkp, 'dk']].filter(r => num(r[1]));
+    /* Alpha, the Joker and the ELO Model: the call frozen with the game's own, else, for a final from before they existed, its backtest, said on the row.
+       No Team Elo (nhl v32, the owner's "should we just scrap Team Elo model"): the club ratings alone are no pick here, as on the Pick'em Record */
+    const MW = [['The call', g.pHome, 'call'], ['Alpha', mk('alpha'), 'alpha', bt('alpha')], ['The Joker', mk('joker'), 'joker', bt('joker')], ['ELO Model', mk('elom'), 'elom', bt('elom')], ['DraftKings', dkp, 'dk']].filter(r => num(r[1]));
     const MH = [...md.querySelectorAll('.ddrow[data-gs-model]')].map(r => [r.dataset.gsModel, txt(r.querySelector('.ttag')), txt(r.querySelector('.ddelo')), txt(r.querySelector('.ddend'))]);
     const CWm = slCallS(g);      /* the call's own row reads as the list and the page write it */
     ck(eqA(MH, MW.map(([n, p, id, b]) => id === 'call' && CWm ? [n, ab(CWm.pick), `${CWm.conf}%`, ''] : [n, ab(p >= 0.5 ? g.home : g.away), PBS.pctW(Math.max(p, 1 - p)), b ? 'backtest' : ''])), `Matchup, the models: each model's pick and its chance, the call first, DraftKings last where the game has both moneylines (${JSON.stringify(MH)})`);
     /* each row's side is the Pick'em tab's own pick of the model on this game (but a call whose stored pick parts from its chance, which the tab reads off `pick`) */
     for (const [n, p, id] of MW) { const pk = sPkPick(g, id), side = p >= 0.5 ? 'home' : 'away'; if (id !== 'call' && pk) ck(pk === side, `Matchup, ${n}: its side is the Pick'em Record's pick for the game (${side}, ${pk})`); }
+    /* the club ratings are a row of The clubs, "Elo rating", never a pick: nothing in the window calls anything "Team Elo" (nhl v32) */
+    ck(!/team elo/i.test(md.textContent) && !md.querySelector('[data-gs-model="Team Elo"]'), `Matchup: no "Team Elo" anywhere in it, the ratings' row "Elo rating" and no Team Elo pick among the models (${[...md.querySelectorAll('.ddunit')].map(txt).join(', ')})`);
     ck(!md.querySelector('p') || [...md.querySelectorAll('p')].every(p => txt(p).length <= 90), 'Matchup: no description');
     close();
   } else ck(false, 'the Matchup window did not open');
@@ -5391,9 +5394,11 @@ async function theLook() {
    from the state, pill by pill, title by title */
 /* ---------- THE PICK'EM RECORD (nhl v19; the NFL hub's anatomy with the Record tab folded in, nhl v30) ----------
    The Pick'em tab worked out here from the state by rules of its own: every final with a winner, straight up; each model's pick read
-   off the game's call as frozen at puck drop (the call its own side, `pick`; the Team Elo the club ratings' chance, the
-   Elo's view kept beside a player-model call, else the call's chance; DraftKings the moneyline favourite by the two prices, the home
-   side where they are level); the week Monday to Sunday by the game's Eastern date. The six tiles (DraftKings' record; the call
+   off the game's call as frozen at puck drop (the call its own side, `pick`; DraftKings the moneyline favourite by the two prices,
+   the home side where they are level; the NFL's three their frozen calls, else their backtest); the week Monday to Sunday by the
+   game's Eastern date. Five lines and no more: Alpha, the Joker, the ELO Model, the call and DraftKings (the Team Elo's went in nhl
+   v32, the owner's "should we just scrap Team Elo model, its severely underperforming": no "Team Elo" anywhere on the tab, no dash,
+   no "baseline", no --m-base). The six tiles (DraftKings' record; the call
    straight up in each of the Games tab's four confidence bands, cut on the chance rounded as a row writes it; how far DraftKings'
    total was from the goals scored), the legend, the chart's lines week by week with their end labels and a week's own numbers on a
    hover or a tap, the chart's geometry in its own coordinates (sPkGeom: the axis's figures and step, the units, every point and dot,
@@ -5404,7 +5409,7 @@ async function theLook() {
    tab). On the state, on a copy with no final, and on a copy of one month planting an unlined final, a game whose two ratings part, a
    level price, a model's own call over its backtest, a final with neither, a total and a puck line that push, a band with no game, a
    chance that rounds up into a band and an away pick at pHome 0.455 */
-const PK_S = [['alpha', 'Alpha'], ['joker', 'The Joker'], ['elom', 'ELO Model'], ['call', 'The call'], ['elo', 'Team Elo'], ['dk', 'DraftKings']];
+const PK_S = [['alpha', 'Alpha'], ['joker', 'The Joker'], ['elom', 'ELO Model'], ['call', 'The call'], ['dk', 'DraftKings']];
 const PK_MK = { alpha: 'alpha', joker: 'joker', elom: 'elo' };
 /* one of the NFL's three on a game: the call frozen with the game's own (`models`), else, with none, the state's backtest of it */
 function sPkModel(g, id, St) {
@@ -5421,7 +5426,6 @@ function sPkPick(g, id, St = S) {
   const num = v => typeof v === 'number' && isFinite(v), side = p => num(p) ? (p >= 0.5 ? 'home' : 'away') : null;
   if (PK_MK[id]) { const x = sPkModel(g, id, St); return x ? side(x.c.pHome) : null; }
   if (id === 'call') return g.pick === 'home' || g.pick === 'away' ? g.pick : side(g.pHome);
-  if (id === 'elo') return side(g.by === 'players' ? g.elo && g.elo.pHome : g.pHome);
   return sPkLined(g.line) ? (sImp(+g.line.homeML) >= sImp(+g.line.awayML) ? 'home' : 'away') : null;
 }
 const sPkWeek = d => { const t = Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)); return new Date(t - ((new Date(t).getUTCDay() + 6) % 7) * 864e5).toISOString().slice(0, 10); };
@@ -5552,16 +5556,15 @@ function sPkGeom(svg, D, wantW) {
   if (out.length) bad.push(`words past the drawing's edge (${W}x${H}): ${out.slice(0, 3).map(t => `"${txt(t)}" at ${t.getAttribute('x')},${t.getAttribute('y')}`).join(', ')}`);
   /* every mark of the drawing carries only what its kind draws with (the second review of nhl v30: Alpha's line with opacity="0", its dots
      drawn and its line not, passed): no opacity, visibility, transform, fill or stroke written on a mark, a line's colour its --c alone,
-     a dash on the baseline's alone, a band clear and nothing in the drawing but these */
-  const KIND = [['line.g', 'class x1 x2 y1 y2'], ['line.z', 'class x1 x2 y1 y2'], ['line.rv-cross', 'class x1 x2 y1 y2 style'], ['line.s', 'class style stroke-dasharray x1 x2 y1 y2'],
-    ['polyline', 'style stroke-dasharray data-model data-cum points'], ['circle', 'style cx cy r'], ['text', 'class x y text-anchor data-end'], ['tspan', ''], ['rect.rv-hit', 'class data-i x y width height fill']];
-  const marks = [], tok = /^--c:var\(--m-(alpha|joker|elom|call|base)\)$/;
+     no dash on any line (the Team Elo's dashed baseline went in nhl v32), a band clear and nothing in the drawing but these */
+  const KIND = [['line.g', 'class x1 x2 y1 y2'], ['line.z', 'class x1 x2 y1 y2'], ['line.rv-cross', 'class x1 x2 y1 y2 style'], ['line.s', 'class style x1 x2 y1 y2'],
+    ['polyline', 'style data-model data-cum points'], ['circle', 'style cx cy r'], ['text', 'class x y text-anchor data-end'], ['tspan', ''], ['rect.rv-hit', 'class data-i x y width height fill']];
+  const marks = [], tok = /^--c:var\(--m-(alpha|joker|elom|call)\)$/;
   for (const x of svg.querySelectorAll('*')) {
     const k = KIND.find(([sel]) => x.matches(sel)), names = [...x.attributes].map(a => a.name), cls = x.getAttribute('class');
     const why = !k ? 'not a mark the chart draws' : names.filter(a => !k[1].split(' ').includes(a)).map(a => `${a}="${x.getAttribute(a)}"`).join(' ')
       || (x.matches('line') && !['g', 'z', 'rv-cross', 's'].includes(cls) ? `class "${cls}"` : '') || (x.matches('text') && cls !== null && !['z', 'e'].includes(cls) ? `class "${cls}"` : '')
       || (x.matches('polyline, circle, line.s') && !tok.test(x.getAttribute('style') || '') ? `style "${x.getAttribute('style')}"` : '')
-      || (x.matches('polyline, line.s') && x.hasAttribute('stroke-dasharray') !== (x.getAttribute('style') === '--c:var(--m-base)') ? 'a dash off the baseline, or the baseline solid' : '')
       || (x.matches('line.rv-cross') && !/^(display: ?none;?)?$/.test(x.getAttribute('style') || '') ? `style "${x.getAttribute('style')}"` : '')
       || (x.matches('rect') && x.getAttribute('fill') !== 'transparent' ? `fill "${x.getAttribute('fill')}"` : '');
     if (why) marks.push(`<${x.tagName.toLowerCase()}${cls ? '.' + cls : ''}> ${why}`);
@@ -5593,8 +5596,14 @@ async function holdPickem(St, ms, tag, opts = {}) {
   ck([...sec.querySelectorAll('p')].every(p => p.id === 'pkBlind') && !sec.querySelector('img, canvas, iframe, a, details, .note, .intro') && tall(el('pkShow')) && tall(el('pkDay')) && eqA([...sec.querySelectorAll('button, select, input')].map(x => x.id), ['pkShow', 'pkDay']),
     'no description, link or image on the tab, and its two controls (Show every pick, the Day) 44px tall');
   /* every inline style on the tab is a token: a line's colour by its name, a cell's depth, the crosshair put away (a club's tag apart) */
-  const styled = [...sec.querySelectorAll('[style]')].filter(x => !x.classList.contains('ttag')).map(x => x.getAttribute('style')).filter(s => !/^(--c:var\(--m-(alpha|joker|elom|call|base)\)|--a:\d+\.\d%|display:none)$/.test(s));
+  const styled = [...sec.querySelectorAll('[style]')].filter(x => !x.classList.contains('ttag')).map(x => x.getAttribute('style')).filter(s => !/^(--c:var\(--m-(alpha|joker|elom|call)\)|--a:\d+\.\d%|display:none)$/.test(s));
   ck(!styled.length, `no colour written on the tab but by a token (${styled.slice(0, 3).join(' | ')})`);
+  /* no Team Elo (nhl v32, the owner's "should we just scrap Team Elo model, its severely underperforming"): not a word of it on the tab
+     (its title and screen-reader words among them), no row, column, line, end label or legend entry keyed elo, nothing dashed or called
+     the baseline, and no --m-base on it; the club ratings stay on Team Rankings and in the game's Matchup window */
+  { const words = [sec.textContent].concat([...sec.querySelectorAll('*')].flatMap(x => ['title', 'aria-label'].map(k => x.getAttribute(k) || ''))).join(' | ');
+    const keyed = [...sec.querySelectorAll('[data-pk="elo"], [data-model="elo"], [data-end="elo"], .lgd.dash, [stroke-dasharray]')], basey = /baseline/i.test(sec.textContent) || /m-base/.test(sec.innerHTML);   /* the words run together where spans meet: no word boundary */
+    ck(!/team elo/i.test(words) && !keyed.length && !basey, `no Team Elo anywhere on the tab: no word of it, no row, column, line, end label or legend entry, nothing dashed or called the baseline (${(/[^|]{0,40}team elo[^|]{0,40}/i.exec(words) || [''])[0]}${keyed.length ? ' ' + keyed.length + ' keyed' : ''}${basey ? ' baseline' : ''})`); }
   /* the six tiles */
   const tiles = [...d.querySelectorAll('#pkTiles .stat')], B = sPkBands(St), dk = D.rec.dk, dkN = dk.w + dk.l, pc0 = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
   const wantT = !any ? [] : [[dkN ? (100 * dk.w / dkN).toFixed(1) + '%' : '–', `DraftKings record, ${dk.w}/${dkN}`]].concat(PK_BANDS_S.map(([k, , lab]) => [pc0(B[k].w, B[k].w + B[k].l), `${lab}, ${B[k].w}/${B[k].w + B[k].l}`]), [[D.miss === null ? '–' : D.miss.toFixed(2), "total's avg miss, goals"]]);
@@ -5611,11 +5620,11 @@ async function holdPickem(St, ms, tag, opts = {}) {
     /* the legend: each model's season and its wins less DraftKings' on the games both picked; the swatch carries the colour, the words the ink */
     ck(eqA([...el('pkLegend').children].map(x => x.dataset.pk), PK_S.map(x => x[0])) && el('pkLegend').classList.contains('lgdrow'), `the legend's entries in order (${[...el('pkLegend').children].map(x => x.dataset.pk).join(' ')})`);
     for (const [id, name] of PK_S) {
-      const li = d.querySelector(`#pkLegend > span[data-pk="${id}"]`), r = D.rec[id], base = id === 'elo', sw = li && li.querySelector(':scope > i.lgd');
-      /* the Team Elo is the baseline (nhl v24): the legend calls it so and its swatch and line are dashed, every other model's solid */
-      const wantLi = id === 'dk' ? `DraftKings ${sPkRec(r)}` : `${name} ${sPkRec(r)} ${sPkSigned(last(id))} vs DraftKings${base ? ' · baseline' : ''}`;
+      const li = d.querySelector(`#pkLegend > span[data-pk="${id}"]`), r = D.rec[id], sw = li && li.querySelector(':scope > i.lgd');
+      /* every swatch and line solid (the Team Elo's dashed baseline went in nhl v32), DraftKings' the ink's */
+      const wantLi = id === 'dk' ? `DraftKings ${sPkRec(r)}` : `${name} ${sPkRec(r)} ${sPkSigned(last(id))} vs DraftKings`;
       ck(txt(li) === wantLi && !!li && txt(li.querySelector('b')) === sPkRec(r) && (li.getAttribute('title') || '').length >= 30, `the legend says ${wantLi}, the record in bold, what the model is on its title (${txt(li)})`);
-      ck(!!sw && sw.classList.contains('dash') === base && sw.classList.contains('ink') === (id === 'dk') && (id === 'dk' || sw.getAttribute('style') === `--c:var(--m-${id === 'elo' ? 'base' : id})`), `${name}'s legend swatch ${base ? 'dashed, the baseline' : id === 'dk' ? "the ink's, as its zero line" : 'solid, in its own colour'}`);
+      ck(!!sw && sw.className === (id === 'dk' ? 'lgd ink' : 'lgd') && (id === 'dk' ? !sw.hasAttribute('style') : sw.getAttribute('style') === `--c:var(--m-${id})`), `${name}'s legend swatch ${id === 'dk' ? "the ink's, as its zero line" : 'solid, in its own colour'} (${sw ? sw.className + ' ' + (sw.getAttribute('style') || '') : 'none'})`);
     }
     /* the chart: an image to a screen reader with its words; each line its weekly sums from zero; the end labels; a band a week */
     const svg = d.querySelector('#pkChart svg'), zero = svg && svg.querySelector('line.z'), zy = zero ? +zero.getAttribute('y1') : NaN;
@@ -5624,9 +5633,9 @@ async function holdPickem(St, ms, tag, opts = {}) {
       `the chart drawn inline, an image to a screen reader with its words, no image inside it (${svg && svg.getAttribute('aria-label')})`);
     if (svg) {
       for (const [id, name] of models) {
-        const pl = svg.querySelector(`polyline[data-model="${id}"]`), base = id === 'elo', pts = pl ? pl.getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number)) : [], end = svg.querySelector(`text[data-end="${id}"]`);
+        const pl = svg.querySelector(`polyline[data-model="${id}"]`), pts = pl ? pl.getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number)) : [], end = svg.querySelector(`text[data-end="${id}"]`);
         ck(!!pl && pl.getAttribute('data-cum') === D.cum[id].join(',') && pts.length === n + 1 && pts[0][1] === zy, `${name}'s line on the chart, its wins less DraftKings' added up week by week from 0 (${pl && pl.getAttribute('data-cum')}, want ${D.cum[id].join(',')})`);
-        ck(!!pl && (pl.getAttribute('stroke-dasharray') !== null) === base && pl.getAttribute('style') === `--c:var(--m-${base ? 'base' : id})`, `${name}'s line ${base ? 'dashed, the baseline' : 'solid'}, in its own colour (${pl && pl.getAttribute('stroke-dasharray')})`);
+        ck(!!pl && !pl.hasAttribute('stroke-dasharray') && pl.getAttribute('style') === `--c:var(--m-${id})`, `${name}'s line solid, in its own colour (${pl && pl.getAttribute('style')})`);
         /* a line's height is games: over the zero line with more wins than DraftKings, under it with fewer, each week */
         ck(pts.length === n + 1 && D.cum[id].every((v, i) => Math.sign(zy - pts[i + 1][1]) === Math.sign(v)), `${name}'s line is above DraftKings' zero line in the weeks it leads and below where it trails`);
         ck(txt(end) === `${sPkSigned(last(id))} ${name}` && !!end && txt(end.querySelector('tspan')) === sPkSigned(last(id)), `${name}'s line labelled at its end, "${sPkSigned(last(id))} ${name}" (${txt(end)})`);
@@ -5640,6 +5649,8 @@ async function holdPickem(St, ms, tag, opts = {}) {
         for (const x of svg.querySelectorAll('polyline, line.s')) { const s = cs(x); if (v(s, 'stroke') !== 'var(--c)' || !['none', 'rgba(0, 0, 0, 0)', 'transparent'].includes(v(s, 'fill')) || !shown(s)) wrongC.push(`${x.tagName.toLowerCase()}${x.dataset.model ? ' ' + x.dataset.model : ''}: stroke ${v(s, 'stroke')}, fill ${v(s, 'fill')}, opacity ${v(s, 'opacity')}, visibility ${v(s, 'visibility')}`); }
         for (const x of svg.querySelectorAll('circle')) { const s = cs(x); if (v(s, 'fill') !== 'var(--c)' || !shown(s)) wrongC.push(`a dot: fill ${v(s, 'fill')}, opacity ${v(s, 'opacity')}`); }
         ck(!wrongC.length && !!svg.querySelector('polyline') && !!svg.querySelector('circle'), `the page's CSS strokes every line and its end marker in the line's own --c and fills every dot with it, none of them hidden (${[...new Set(wrongC)].slice(0, 3).join(' | ')})`); }
+      ck(eqA([...svg.querySelectorAll('polyline')].map(x => x.dataset.model), models.map(m => m[0])) && eqA([...svg.querySelectorAll('text[data-end]')].map(x => x.dataset.end).sort(), PK_S.map(m => m[0]).sort()),
+        `the chart's lines are the four models' (${models.map(m => m[1]).join(', ')}) and its end labels theirs and DraftKings', no more (${[...svg.querySelectorAll('polyline')].map(x => x.dataset.model).join(' ')}; ${[...svg.querySelectorAll('text[data-end]')].map(x => x.dataset.end).join(' ')})`);
       const hits = [...svg.querySelectorAll('rect.rv-hit')], inked = [...svg.querySelectorAll('text, tspan')].every(t => !t.getAttribute('fill') && !t.getAttribute('style'));
       ck(txt(svg.querySelector('text[data-end="dk"]')) === '= DraftKings' && eqA(hits.map(h => h.dataset.i), D.weeks.map((x, i) => String(i))) && inked, `the zero line labelled "= DraftKings", a band to point at for each of the ${n} weeks, and every word in the page's ink, never a line's colour`);
       /* the drawing itself, by this section's own geometry (the review of nhl v30): jsdom lays nothing out, so the chart is drawn 900 wide */
@@ -5728,7 +5739,7 @@ async function holdPickem(St, ms, tag, opts = {}) {
     if (!eqA(rowsG.map(r => r.dataset.pk), PK_S.map(x => x[0]))) gridWrong.push(`rows ${rowsG.map(r => r.dataset.pk).join(' ')}`);
     for (const [id, name] of PK_S) {
       const tr = d.querySelector(`#pkWeeks tr[data-pk="${id}"]`), sw = tr && tr.cells[0].querySelector('i.lgd');
-      if (!tr || txt(tr.cells[0]) !== name || tr.cells[0].tagName !== 'TH' || !sw || sw.classList.contains('dash') !== (id === 'elo') || sw.classList.contains('ink') !== (id === 'dk')) { gridWrong.push(`${id}: no row, or not its name and swatch`); continue; }
+      if (!tr || txt(tr.cells[0]) !== name || tr.cells[0].tagName !== 'TH' || !sw || sw.className !== (id === 'dk' ? 'lgd ink' : 'lgd')) { gridWrong.push(`${id}: no row, or not its name and swatch`); continue; }
       D.weeks.concat(['season']).forEach((wk, i) => {
         const r = wk === 'season' ? D.rec[id] : D.rec[id][wk], c = tr.cells[i + 1], g = r.w + r.l, [cls, a] = sPkShade(r), pc = g ? Math.round(100 * r.w / g) : 0;
         const want = g ? `${sPkRec(r)} ${pc}%` : '–', got = c && c.querySelector('b') ? `${txt(c.querySelector('b'))} ${txt(c.querySelector('small'))}` : txt(c);
@@ -6931,15 +6942,17 @@ async function xParlaysChecks() {
 }
 async function pickemChecks() {
   console.log("THE PICK'EM RECORD");
-  /* the chart's five colours and the grid's two are tokens with a value in each look, and each line's is 3:1 or more on a card's two grounds */
+  /* the chart's four colours and the grid's two are tokens with a value in each look, and each line's is 3:1 or more on a card's two grounds;
+     the Team Elo's ice (--m-base) and its dashed swatch went with its line in nhl v32 */
   { const css = HTML.slice(HTML.indexOf('<style>'), HTML.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
     const blockOf = sel => { const i = css.indexOf(sel + '{'); return i < 0 ? '' : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
     const tok = (b, k) => (new RegExp(`${k}\\s*:\\s*(#[0-9A-Fa-f]{6})\\s*;`).exec(b) || [])[1] || null, low = [];
     for (const [look, b] of [['dark', blockOf(':root')], ['light', blockOf('html[data-theme="light"]')]]) {
-      for (const k of ['--m-alpha', '--m-joker', '--m-elom', '--m-call', '--m-base']) for (const g of ['--panel', '--panel-2']) { const c = tok(b, k), s = tok(b, g); if (!c || !s || !(crH(c, s) >= 3)) low.push(`${look} ${k} on ${g}: ${c && s ? crH(c, s).toFixed(2) : 'no token'}`); }
+      for (const k of ['--m-alpha', '--m-joker', '--m-elom', '--m-call']) for (const g of ['--panel', '--panel-2']) { const c = tok(b, k), s = tok(b, g); if (!c || !s || !(crH(c, s) >= 3)) low.push(`${look} ${k} on ${g}: ${c && s ? crH(c, s).toFixed(2) : 'no token'}`); }
       for (const k of ['--rv-up', '--rv-dn']) if (!tok(b, k)) low.push(`${look} ${k}: no token`);
     }
-    chk(!low.length, `the chart's five line colours and the grid's two shades are tokens in both looks, each line 3:1 or more on a card (${low.slice(0, 4).join('; ') || 'all'})`); }
+    chk(!low.length, `the chart's four line colours and the grid's two shades are tokens in both looks, each line 3:1 or more on a card (${low.slice(0, 4).join('; ') || 'all'})`);
+    chk(!/--m-base/.test(css) && !/\.lgd\.dash/.test(css) && !/Team Elo/.test(HTML.slice(HTML.indexOf('const PK_MODELS'), HTML.indexOf('const PK_KEY'))), "no Team Elo's colour, dashed swatch or entry left in the page's CSS or its Pick'em models"); }
   const D0 = sPkData(S), num = v => typeof v === 'number' && isFinite(v);
   console.log(`  the state: ${D0.fin.length} finals over ${D0.weeks.length} weeks; ${PK_S.map(([id, name]) => `${name} ${D0.rec[id].w}-${D0.rec[id].l}${id === 'dk' ? '' : ` (${sPkSigned(D0.cum[id].length ? D0.cum[id][D0.cum[id].length - 1] : 0)} vs DraftKings)`}`).join(', ')}; the total's average miss ${D0.miss === null ? 'none' : D0.miss.toFixed(2)} over ${D0.missN}`);
   await holdPickem(S, PUB, 'the state', { regrade: true });
@@ -6990,7 +7003,8 @@ async function pickemChecks() {
       for (const g of C.games) { const r = sPkGrade(g); if (r) g.result = r; else delete g.result; }
       C.record = sPkRecord(C);
       const D = sPkData(C), Bb = sPkBands(C);
-      chk(sPkPick(f[0], 'dk', C) === null && sPkPick(f[1], 'elo', C) !== sPkPick(f[1], 'call', C) && sPkPick(f[2], 'dk', C) === 'home' && ['alpha', 'joker', 'elom'].every((id, i) => sPkPick(f[3], id, C) !== was3[i] && !sPkModel(f[3], id, C).bt && !sPkPick(f[4], id, C) && sPkModel(f[8], id, C).bt)
+      const eloSide = g => g.elo && typeof g.elo.pHome === 'number' ? (g.elo.pHome >= 0.5 ? 'home' : 'away') : null;
+      chk(sPkPick(f[0], 'dk', C) === null && eloSide(f[1]) !== sPkPick(f[1], 'call', C) && sPkPick(f[2], 'dk', C) === 'home' && ['alpha', 'joker', 'elom'].every((id, i) => sPkPick(f[3], id, C) !== was3[i] && !sPkModel(f[3], id, C).bt && !sPkPick(f[4], id, C) && sPkModel(f[8], id, C).bt)
         && sPkPick(f[8], 'alpha', C) === 'home' && sPkPick(f[8], 'joker', C) === 'away'
         && C.record.ou.p >= 1 && C.record.pl.p >= 1 && Bb.high.w + Bb.high.l === 0 && Bb.low.w + Bb.low.l >= 2 && sPkConf(f[7]) === 55 && sPkConf(f[4]) === 55 && f[4].pick === 'away' && D.fin.length >= 9 && D.fin.every(g => moOf(g) === M) && Object.keys(C.record.byMonth).length === new Set(D.fin.map(g => g.type === 3 ? 'playoffs' : M)).size,
         `copy B plants one month of finals (${M}) with an unlined final, the two ratings parting, a level price, a model's own call over a backtest of the same game, a final with neither, one called by its backtest alone, two pushes, no HIGH pick, a 54.51% pick and an away pick at pHome 0.455, both LOW 55%`);

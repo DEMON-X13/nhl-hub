@@ -3968,7 +3968,7 @@ async function gamesListChecks() {
     /* Refresh odds is for a day from today on: a game still to come on a past date (made up) does not bring the bar back */
     { const GZ = come[come.length - 1], yday = slAdd(today, -1);
       if (GZ && GZ.date > today) { const was = GZ.date; both((St, a) => { St.games.find(x => x.id === a.id).date = a.d; }, { id: GZ.id, d: yday });
-        redraw(yday); if ($('daySel').value === yday) { const bZ = listWrongs(w, yday, AT, MAP), rZ = row(GZ); chk(!bZ.length && !!rZ && rZ.className === 'game' && $('slateOdds').hidden, `a game still to come on a past day does not bring Refresh odds back (${$('slateOdds').hidden ? 'hidden' : 'shown'}; ${bZ.slice(0, 2).join(' | ')})`); }
+        redraw(yday); if ($('daySel').value === yday) { const bZ = listWrongs(w, yday, AT, MAP), rZ = row(GZ); chk(!bZ.length && !!rZ && rZ.classList.contains('game') && !rZ.classList.contains('final') && $('slateOdds').hidden, `a game still to come on a past day does not bring Refresh odds back (${$('slateOdds').hidden ? 'hidden' : 'shown'}; ${bZ.slice(0, 2).join(' | ')})`); }
         both((St, a) => { St.games.find(x => x.id === a.id).date = a.d; }, { id: GZ.id, d: was }); redraw(today); } }
     /* a neutral game and a noted one */
     const GN = S.games.find(g => dayList(d).includes(g.date));

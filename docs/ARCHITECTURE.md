@@ -21,7 +21,8 @@ everything else changes only with a commit.
 ## The site: the NBA Hub's idea, on nfl-hub's shape
 
 X NHL Bets is the shape of nfl-hub's college site (one page, one job, one state file) with the
-NBA Hub's unit and look: the NHL has no weeks, so the page opens on a day strip, yesterday to
+NBA Hub's unit (and, until each tab is rebuilt, its components inside the tabs; the shell and the look are the NFL hub's since
+nhl v25): the NHL has no weeks, so the page opens on a day strip, yesterday to
 ten days out, one card per game. Moneylines, puck lines and totals; and a player props model, on trial
 (below), shown beside DraftKings' own player prices, whose chance ranks DraftKings' player lines in the Top 30 and the
 suggested parlays since the owner's call of 25 October 2026 (nhl v18). Everything is ESPN's public feeds,
@@ -175,15 +176,22 @@ sync), Standings, Power Ratings, Players (the player model's rankings and the so
 (`#pickem`), Record, and on the owner's devices X Parlays and the X Bet Log (a Playoff tab went in nhl v14: the Standings
 and Power ratings carry the playoff chances).
 
-THE LOOK (nhl v12, the card and the colours nhl v13, `index.html`; CLAUDE.md has the rules): the NBA Hub's components with ice for
-its orange, no image anywhere, each club a badge or a pill in its own colour from `TEAM_COLORS` (each club's primary colour, or its
-secondary where the primary is near-black, lifted in OKLCH, its hue kept, only to 3:1 for a badge and the win bar and 4.5:1 for a
-12px pill, then a few picked by hand: the navies a stronger blue, the Avalanche a crimson; the smoke holds the bars and keeps every two
-clubs outside one brand colour 5 apart in CIEDE2000); the game card the NBA's Tonight card since nhl v23 (badges, the call filled,
+THE LOOK (`index.html`; CLAUDE.md has the rules). Since nhl v25 (12 November 2026, the owner's "match what the NFL hub has") the shell
+is the NFL hub's, staged tab by tab: the stylesheet's first block is its tokens (both looks: `:root` and `html[data-theme="light"]`,
+ice where its accent is gold, `--on-fill` for the text on a fill), its header (`X NHL <em>Bets</em>`, the puck its `h1::after`, the
+stamp "Updated …" and the build tag, the Admin mark in `#hubAdmin`; no tagline, no record line), its tab bar (words alone, no counts;
+the owner's two tabs hidden by the stylesheet and taken out of a visitor's page), its card with the ice edge, its buttons (`.btn`
+primary, `.quiet`, `.go`, `.danger`), controls box, tables' base, `.pill`, `.finchip`, stat tiles and window; the head's theme
+script (`nhlhub_theme_v1`) and the header's light/dark switch are in, the switch hidden until every tab is rebuilt; a club is the NFL's
+filled tag (`tag()`, `.ttag`: `TEAM_COLORS` a palette a club, the text white or `#1E2230` whichever reads better, the border the fill
+at 72%; the smoke works each tag out again and keeps every two clubs outside one brand colour 5 apart in CIEDE2000); and the page
+carries no descriptions (the tagline, the keys, the "how" folds and the intro paragraphs cut; state lines, tooltips and money warnings
+kept). The tabs' insides are still the NBA Hub's components of nhl v12 to v23 on the new tokens until each is rebuilt, no image
+anywhere: the game card the NBA's Tonight card since nhl v23 (badges, the call filled,
 its chance with a confidence pill, High 65%+, Med 60-64, Low 55-59, 50/50, its season's record on its title, the win bar, the NBA's
 chips: Margin, Goals, Moneyline, a Puck line only on a call, Over/under, each call lit with its edge, or unlit and marked far off; tags; who is out cut to
 the goalies on one line and a row for each player worth `OUT_ROW`, 0.13 goals a game, about a point of his club's chance to win; the
-foot Lineups, Player props and Parlay Builder →; the confidence key over the day's cards; no bets board on the card); the game's bets
+foot Lineups, Player props and Parlay Builder →; no bets board on the card); the game's bets
 in its Player props window, Game bets over the player props (`#ppBets`: the NBA's Game lines rows with each button one line where it
 fits, side, price and the model's chance, a row's two buttons laid out alike, `syncBetRows` reading the browser's wrap, the call a tag
 on its edge with its edge, a side far off the market a "far off" tag and its two numbers under its line, every piece that cannot wrap
@@ -192,7 +200,8 @@ goalie's how and the injury report, never cut short; a redraw replaces only the 
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (the Standings' four
 sharing their column widths); the Player props window the NBA's sheet with a head that stays put; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
-builder first, then the Top 30 lines a line a row. The smoke's THE LOOK section holds it with its own code.
+builder first, then the Top 30 lines a line a row. The smoke's THE LOOK section holds it with its own code, and THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
+and the no-descriptions rule.
 
 REFRESH ODDS (nhl v9, `index.html`; CLAUDE.md has the rules): a button on the Games tab's odds bar and on the Parlay
 Builder tab's, over its panel, reads ESPN's scoreboard in the browser, on a press and never else, for the strip's days
@@ -328,7 +337,7 @@ Free sources only: no key, no credits.
 - DailyFaceoff answers GitHub's runners but not every sandbox; `starters.js` failing to read it
   locally is said in `data/starters.json`, not a fault in the code.
 - The page's origin, `demon-x13.github.io`, is shared with the owner's other Pages sites, so its
-  local storage key `nhl_v1` must stay its own.
+  local storage key `nhl_v1` must stay its own; the look's key, `nhlhub_theme_v1` (nhl v25), is this site's own too.
 - `data/props_model.json` looks generated but is **source** (`node tools/props.js fit`, finished seasons
   only). A refit changes its sha, and the props ledger then makes no new call until its bar is decided:
   the trial is of the constants it registered. `data/props_ledger.json` and `data/props_<season>.jsonl` are

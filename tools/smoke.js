@@ -702,30 +702,45 @@ function sPool(sl, kinds, off, reads) {
   out.sort(sOrder);
   return { kinds, tickable, ticked, legs: out, far, scan, m: new Set(out.map(L => L.game)).size };
 }
-/* every parlay of n legs, one a game, in leg order; per count of thin legs, the best return over the floor and the likeliest
-   (`must`: a leg id every parlay holds, as a level's lock does) */
-function sBrute(legs, n, floor, must) {
-  const games0 = []; for (const L of legs) { const last = games0[games0.length - 1]; if (last && last[0].game === L.game) last.push(L); else games0.push([L]); }
-  /* with a game's player lines (nhl v18) a game can hold scores of legs: a leg another leg of its game beats strictly on both the chance
-     and the return, at no more thin legs, is in no best parlay of either rule (the same parlay with the other in its place lands more
-     often, pays more and still makes the floor), so it is left out of the enumeration; a tie is never left out */
-  const rOf = L => L.p * L.dec;
-  const games = games0.map(gl => gl.filter(B => B.id === must || !gl.some(A => A !== B && (A.thin ? 1 : 0) <= (B.thin ? 1 : 0) && A.p > B.p && rOf(A) > rOf(B))));
-  const EPS = 1e-12, ret = [], lik = [];
-  const keep = (box, t, v, legs2, p, d) => { const b = box[t] || (box[t] = { v: -1, c: [] }); if (v < b.v - EPS) return; if (v > b.v) { b.v = v; b.c = b.c.filter(c => c.v >= v - EPS); } b.c.push({ v, legs: legs2.slice(), p, d, key: legs2.map(L => L.id).sort().join(',') }); };
-  const chosen = [];
-  const rec = (i, p, d, t) => {
-    if (chosen.length === n) { if (must && !chosen.some(L => L.id === must)) return; keep(lik, t, p, chosen, p, d); if (floor && p >= floor) keep(ret, t, p * d, chosen, p, d); return; }
-    for (let j = i; j <= games.length - (n - chosen.length); j++) for (const L of games[j]) { chosen.push(L); rec(j + 1, p * L.p, d * L.dec, t + (L.thin ? 1 : 0)); chosen.pop(); }
+/* a level by this smoke's own search (nhl v31): the likeliest parlay by the chance given (the site's model, S_CHANCE) of 2 to 12 legs,
+   one leg a game, whose legs' decimals multiplied reach minDec, paying where dec >= minDec * (1 - 1e-9). A depth-first search over
+   every parlay one leg a game, pruned only by the best found and the price still to reach (a leg another of its game beats strictly on
+   the chance at no lower price first left out: it is in no best parlay); none of the page's frontier. Ties: the chance within a relative
+   1e-9, fewer legs, the larger product of the other chance, the lower of the sorted leg ids joined by commas. Its chance, fair chance and
+   price worked in leg order, as the page and the record work them. Memoised on the pool (its legs' ids and numbers) and the price, since
+   holdSuggest runs at many clocks and after every read */
+const S_CAP = 12, S_TIE = 1e-9, S_PICK = 'likeliest-any', S_CHANCE = 'model';      // the owner's 11 November 2026 call: ranked by the model
+const S_LV_MEMO = new Map();
+function sLevel(legs, minDec, chance) {
+  chance = chance || S_CHANCE;
+  const memo = `${chance}|${minDec}|` + legs.map(L => `${L.id}:${L.p}:${L.fair}:${L.dec}`).join(';');
+  if (S_LV_MEMO.has(memo)) return S_LV_MEMO.get(memo);
+  const ch = chance === 'fair' ? (L => L.fair) : (L => L.p), oth = chance === 'fair' ? (L => L.p) : (L => L.fair), need = minDec * (1 - S_TIE);
+  const near = (a, b) => Math.abs(a - b) <= S_TIE * Math.max(a, b);
+  const better = (a, b) => !b || (!near(a.p, b.p) ? a.p > b.p : a.n !== b.n ? a.n < b.n : !near(a.o, b.o) ? a.o > b.o : a.key < b.key);
+  const by = new Map(); for (const L of legs) { if (!(ch(L) > 0)) continue; if (!by.has(L.game)) by.set(L.game, []); by.get(L.game).push(L); }
+  const games = [...by.values()].map(gl => gl.filter(B => !gl.some(A => A !== B && ch(A) > ch(B) * (1 + S_TIE) && A.dec >= B.dec)).sort((a, b) => ch(b) - ch(a)));
+  const m = games.length, top = games.map(gl => Math.max(...gl.map(L => L.dec)));
+  /* reach[i][r]: the most r more legs of games i on can add to the price */
+  const reach = []; reach[m] = [1].concat(new Array(S_CAP).fill(1));
+  for (let i = m - 1; i >= 0; i--) { reach[i] = [1]; for (let r = 1; r <= S_CAP; r++) reach[i][r] = Math.max(reach[i + 1][r], top[i] * reach[i + 1][r - 1]); }
+  let best = null; const chosen = [];
+  const go = (i, p, d, o) => {
+    if (chosen.length >= 2 && d >= need) { const q = { p, d, n: chosen.length, o, key: chosen.map(x => x.id).sort().join(','), legs: chosen.slice() }; if (better(q, best)) best = q; return; }
+    if (i >= m || chosen.length >= S_CAP || d * reach[i][S_CAP - chosen.length] < need) return;
+    for (const L of games[i]) { const np = p * ch(L); if (best && np < best.p * (1 - S_TIE)) continue; chosen.push(L); go(i + 1, np, d * L.dec, o * (oth(L) || 0)); chosen.pop(); }
+    go(i + 1, p, d, o);
   };
-  if (games.length >= n) rec(0, 1, 1, 0);
-  const pickBest = (box, k) => { let v = -1; for (let t = 0; t <= k; t++) if (box[t]) v = Math.max(v, box[t].v); if (v < 0) return null; const all = []; for (let t = 0; t <= k; t++) if (box[t]) all.push(...box[t].c.filter(c => c.v >= v - EPS)); return all.sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0)[0]; };
-  let k0 = -1; for (let t = 0; t <= n; t++) if (lik[t]) { k0 = t; break; }
-  if (k0 < 0) return null;
-  const fairOf = c => c.legs.reduce((f, L) => f === null || L.fair === null ? null : f * L.fair, 1);
-  if (!floor) { const c = pickBest(lik, k0); return Object.assign(c, { fair: fairOf(c) }); }
-  for (let k = k0; k <= n; k++) { const c = pickBest(ret, k); if (c) return Object.assign(c, { fair: fairOf(c) }); }
-  const c = pickBest(lik, k0); return Object.assign(c, { fair: fairOf(c), likeliest: true });
+  go(0, 1, 1, 1);
+  let res = null;
+  if (best) {
+    const out = best.legs.slice().sort(sOrder); let p = 1, d = 1, f = 1;
+    for (const L of out) { p *= L.p; d *= L.dec; f = f === null || L.fair === null ? null : f * L.fair; }
+    res = { legs: out, p, fair: f, d, n: out.length, key: best.key };
+  }
+  if (S_LV_MEMO.size > 400) S_LV_MEMO.clear();
+  S_LV_MEMO.set(memo, res);
+  return res;
 }
 /* the Top 30 lines by this smoke's own sums (nhl v17): the value picks (5 points or more above the price, the calls) then the other
    lines, each part by the expected return on $1 (the model's chance times the decimal, less the stake), ties to the lower leg id, 30 in all */
@@ -763,7 +778,9 @@ function sWide(sl, pool) {
   }
   return '';
 }
-const TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];        // Extreme went in nhl v14
+/* the levels (nhl v31): [id, label, the least legs, no floor, the least decimal]; the rule before, whose locked days keep their words */
+const TIERS = [['safe', 'Safe', 2, 0, 2.1], ['med', 'Medium', 2, 0, 4], ['aggr', 'Aggressive', 2, 0, 8]];        // Extreme went in nhl v14
+const TIERS_V30 = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
 const sClock = ms => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 const sDayClock = ms => new Date(ms).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 const sStakeOf = store => { const v = +store.stake; return isFinite(v) && v > 0 ? Math.round(Math.min(100000, Math.max(1, v)) * 100) / 100 : 20; };
@@ -839,15 +856,15 @@ const sSet = dd => S.suggest && S.suggest.sets && S.suggest.sets[dd] || null;
 const sLockAt = dd => { const e = sSet(dd); return Math.min(sDayLock(dd), e ? Date.parse(e.lock) : Infinity); };
 const sDayOpen = (dd, ms) => S.games.some(g => g.date === dd) && !S.games.some(g => g.date === dd && sStarted(g, ms)) && ms < sLockAt(dd);
 function sDayPool(dd, ms, reads) { const games = S.games.filter(g => g.date === dd && !sStarted(g, ms)); return sPool({ games }, S_KINDS, [], reads); }
-function sSpWhy(dd, pool) {
+function sSpWhy(dd, pool, minDec) {
   const m = pool.m, t = PBS.day(dd);
   if (m === 0) return `No leg on ${t} qualifies: the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market.`;
-  if (m === pool.tickable.length) return `Only ${m} game${m > 1 ? 's' : ''} on ${t} (one leg a game).`;
-  return `Only ${m} of the ${pool.tickable.length} games on ${t} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).`;
+  if (m < 2) return `Only ${m} of the ${pool.tickable.length} games on ${t} has a leg the model rates at or above DraftKings' price (one leg a game).`;
+  return `No parlay of ${t}'s legs pays ${PBS.toAm(minDec)} or more (one leg a game).`;
 }
 function sSpWide(dd, pool) {
-  const t = PBS.day(dd);
-  if (!pool.tickable.length) return S.games[0] && S.games[0].date === dd && S.games.every(g => g.date >= dd) ? `The season opens ${t}.` : `No DraftKings lines yet for ${t}.`;
+  const t = PBS.day(dd), n = S.games.filter(g => g.date === dd).length;
+  if (!pool.tickable.length) return S.games[0] && S.games[0].date === dd && S.games.every(g => g.date >= dd) ? `The season opens ${t}.` : `Next up: ${t}, ${n} game${n === 1 ? '' : 's'}. Its set goes up once DraftKings posts lines, about a day ahead.`;
   if (pool.tickable.length < 2) return `Only one game on ${t} has a DraftKings line, and a parlay needs two.`;
   return '';
 }
@@ -879,11 +896,83 @@ function sSpResult(t, legs) {
   const won = t.legs.filter((L, i) => legs[i] === 'win');
   return { result: 'won', payout: won.length === t.legs.length ? t.dec : won.reduce((a, L) => a * PBS.decOf(L.price), 1) };
 }
+/* a level's rule line and its title by the rule it carries (nhl v31), or the v30 rule's words for a level locked before it (no pick) */
+function sRuleWords(id, t) {
+  if (t.pick) return [`likeliest · ${PBS.toAm(t.minDec)}+`, `The likeliest parlay by ${t.chance === 'fair' ? "DraftKings' fair chance" : "the site's model (the props model, on trial, on player lines)"} paying at least ${PBS.toAm(t.minDec)}: $1 returns ${PBS.short(t.minDec)} or more`];
+  const [, , n, floor] = TIERS_V30.find(x => x[0] === id), pct = Math.round(floor * 100);
+  return !floor ? ['likeliest pair', 'The likeliest 2-leg parlay by the model'] : t.likeliest ? [`likeliest ${n} legs`, `No ${n}-leg parlay lands ${pct}% of the time by the model: the likeliest ${n} legs`]
+    : [`best return · model ${pct}%+`, `The ${n}-leg parlay with the best return (the model's chance times the payout) that lands at least ${pct}% of the time by the model`];
+}
+/* a level's head and its three numbers, as a card should draw them: its name and size (no size on an empty one), the rule line and its
+   title, the fair chance (", est." with a Yes price) and what $1 is expected to return at it ("expected −1%", rose below 0, titled with
+   the dollars), the model's chance it was ranked on under them ("model says 41%", "model 41%, props on trial"; none on a level ranked on
+   the fair chance), the price plain. A list of what is wrong */
+function sLevelWrongs(el, id, label, t, hasProp, est) {
+  const bad = [], [rule, title] = sRuleWords(id, t), r = el.querySelector('.pb-rule'), pill = el.querySelector('.pb-tc');
+  if (txt(el.querySelector('.pb-tn')) !== label) bad.push(`name "${txt(el.querySelector('.pb-tn'))}"`);
+  if (!pill || txt(pill) !== `${t.legs.length} legs`) bad.push(`size pill "${txt(pill)}" not "${t.legs.length} legs"`);
+  if (!r || txt(r) !== rule || r.getAttribute('title') !== title) bad.push(`rule "${txt(r)}" [${r && r.getAttribute('title')}] not "${rule}" [${title}]`);
+  const box = el.querySelector('.pb-n.pb-chance'), ev = box && box.querySelector('.pb-ev'), mline = box && [...box.querySelectorAll('.s')].filter(x => !x.classList.contains('pb-ev'));
+  if (t.fair === null) { if (!box || txt(box.querySelector('.v')) !== PBS.pctW(t.p) || txt(box.querySelector('.k')) !== "model's chance" || ev) bad.push(`chance box "${txt(box)}" with no fair chance`); }
+  else {
+    const e = t.fair * t.d - 1, rr = Math.round(e * 100), evW = `expected ${rr < 0 ? '−' : rr > 0 ? '+' : ''}${Math.abs(rr)}%`, evT = `At DraftKings' fair chance: $1 returns $${(1 + e).toFixed(2)} on average`;
+    const mW = t.chance === 'fair' ? null : hasProp ? `model ${PBS.pctW(t.p)}, props on trial` : `model says ${PBS.pctW(t.p)}`;
+    if (!box || txt(box.querySelector('.v')) !== PBS.pctW(t.fair) || txt(box.querySelector('.k')) !== `fair chance${est ? ', est.' : ''}`) bad.push(`chance "${txt(box)}" not ${PBS.pctW(t.fair)} fair chance${est ? ', est.' : ''}`);
+    if (!ev || txt(ev) !== evW || ev.getAttribute('title') !== evT || ev.classList.contains('neg') !== (rr < 0)) bad.push(`expected "${txt(ev)}" [${ev && ev.getAttribute('title')}${ev && ev.classList.contains('neg') ? ', rose' : ''}] not "${evW}" [${evT}${rr < 0 ? ', rose' : ''}]`);
+    if (!mline || mline.length !== (mW ? 1 : 0) || (mW && txt(mline[0]) !== mW)) bad.push(`model line "${mline ? mline.map(txt).join(' / ') : ''}" not "${mW || 'none'}"`);
+  }
+  const price = el.querySelectorAll('.pb-n')[1];
+  if (!price || txt(price.querySelector('.v')) !== PBS.toAm(t.d) || txt(price.querySelector('.k')) !== 'price' || /est/.test(txt(price))) bad.push(`price "${txt(price)}" not ${PBS.toAm(t.d)}, plain`);
+  if (el.querySelector('.pill.thin') || /thin edge/i.test(txt(el))) bad.push('a thin edge drawn');
+  return bad;
+}
+/* each level's eras (nhl v31) by this smoke's own sums over the ledger's graded days of the season: the rule a level was taken by (its
+   pick, least price and chance, or 'v30' with none), its first and last day, graded, won, lost, pushes, units on 1 a day, wins expected */
+function sEras(L, season) {
+  const SG = require('./suggest'), out = {}, r4 = x => Math.round(x * 1e4) / 1e4;
+  for (const [id] of TIERS) out[id] = {};
+  for (const dd of Object.keys(L.days).sort()) {
+    const e = L.days[dd]; if (SG.seasonOf(dd) !== season || !e.grade) continue;
+    for (const [id] of TIERS) {
+      const t = e.tiers[id], g = e.grade[id]; if (!t || !g) continue;
+      const k = t.pick ? `${t.pick} ${t.minDec} ${t.chance}` : 'v30', E = out[id][k] || (out[id][k] = { from: dd, to: dd, graded: 0, won: 0, lost: 0, push: 0, units: 0, exp_model: 0, exp_fair: 0 });
+      E.to = dd;
+      if (g.result === 'pending') continue;
+      if (g.result === 'push') { E.push++; continue; }
+      E.graded++; if (g.result === 'won') { E.won++; E.units += g.payout - 1; } else { E.lost++; E.units += -1; }
+      E.exp_model += t.p; if (t.fair !== null) E.exp_fair += t.fair;
+    }
+  }
+  for (const x of Object.values(out)) for (const E of Object.values(x)) { E.units = r4(E.units); E.exp_model = r4(E.exp_model); E.exp_fair = r4(E.exp_fair); }
+  return out;
+}
+/* a record pill's title by this smoke's own wording: the level's whole record, then each rule's own where it has had one before today's
+   ("of them 25 under the earlier rule (3 legs, best return at 25%+), to Nov 12: 4–21, −2.56 units; 2 since Nov 13 (likeliest paying
+   +300 or more): 1–1, +2.00 units") */
+function sRecTitle(id, label, minDec, t, since, eras) {
+  const un = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); }, f1 = v => (+v || 0).toFixed(1), pl = (n, x) => `${n} ${x}${n === 1 ? '' : x === 'push' ? 'es' : 's'}`;
+  const md = dd => new Date(dd + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  let title = `${label}: ${t.won} won of ${t.graded} graded${since ? ` since ${PBS.day(since)}` : ''}${t.graded ? `; wins expected ${f1(t.exp_fair)} by DraftKings' fair chance${t.fair_n < t.graded ? ` (on the ${t.fair_n} with one)` : ''}, ${f1(t.exp_model)} by the model` : ''}`
+    + (t.push ? `; ${pl(t.push, 'push')}, the stake back` : '') + (t.none ? `; ${pl(t.none, 'day')} with no ${label} parlay` : '') + (t.replay ? `; ${t.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
+  if (!eras) return title;
+  const cur = `${S_PICK} ${minDec} ${S_CHANCE}`, list = Object.entries(eras).filter(([, E]) => E.graded || E.push).sort((a, b) => a[1].from < b[1].from ? -1 : a[1].from > b[1].from ? 1 : a[0] < b[0] ? -1 : 1);
+  if (!list.some(([k]) => k !== cur)) return title;
+  return title + '; of them ' + list.map(([k, E]) => {
+    const rec = `${E.won}–${E.lost}${E.push ? `, ${pl(E.push, 'push')}` : ''}, ${un(E.units)} units`;
+    if (k === 'v30') { const V = TIERS_V30.find(x => x[0] === id); return `${E.graded} under the earlier rule (${!V[3] ? 'the likeliest pair' : `${V[2]} legs, best return at ${Math.round(V[3] * 100)}%+`}), to ${md(E.to)}: ${rec}`; }
+    const [, m, c] = k.split(' '), how = `likeliest${c === S_CHANCE ? '' : c === 'fair' ? " by DraftKings' fair chance" : ' by the model'} paying ${PBS.toAm(+m)} or more`;
+    return k === cur ? `${E.graded} since ${md(E.from)} (${how}): ${rec}` : `${E.graded} from ${md(E.from)} to ${md(E.to)} (${how}): ${rec}`;
+  }).join('; ');
+}
 function holdSuggest(w, ms, tag) {
   w.eval('renderSuggest()');
   const d = w.document, store = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), stake = sStakeOf(store), inB = sDrawn(w);
   const days = sSpDays(ms), secs = [...d.querySelectorAll('#spBody .sp-day')].map(x => x.dataset.spDay), out = {};
   chk(canon(secs) === canon(days), `${tag}: the Suggested Parlays tab shows ${days.join(' and ') || 'no day'} (${secs.join(', ') || 'none'})`);
+  /* the one dated line on the change of rule: for seven days from the publish that first carried it, by the publish's Eastern date */
+  { const c = S.suggest && S.suggest.change, el = d.getElementById('spChange');
+    const want = c && c.from && c.at && etDate(Date.parse(S.published)) < addD(etDate(Date.parse(c.at)), 7) ? `From ${new Date(c.from + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })} each level is the likeliest parlay paying +110, +300 or +700 or more; each pill's title keeps the earlier levels apart.` : '';
+    chk(!!el && (want ? !el.hidden && txt(el) === want : el.hidden), `${tag}: the change of rule ${want ? `says "${want}"` : 'says nothing'} (${el && !el.hidden ? txt(el) : 'hidden'})`); }
   if (!days.length) { chk(!!d.getElementById('spWide'), `${tag}: with no day to show the tab says why (${txt(d.getElementById('spWide'))})`); return out; }
   for (const dd of days) {
     const sec = d.querySelector(`#spBody .sp-day[data-sp-day="${dd}"]`); if (!sec) continue;
@@ -897,25 +986,30 @@ function holdSuggest(w, ms, tag) {
     }
     chk((sec.dataset.spState === 'open') === open, `${dt}: the set is ${open ? 'open' : 'locked'} (${sec.dataset.spState})`);
     if (open) {
-      chk(!!lockEl && txt(lockEl) === `Locks ${sClock(lockMs)}`, `${dt}: it says when it locks, the day's first puck drop (${txt(lockEl)})`);
+      chk(!!lockEl && txt(lockEl) === `Locks ${sDayClock(lockMs)}`, `${dt}: it says when it locks, the day's first puck drop with its weekday (${txt(lockEl)})`);
       const pool = sDayPool(dd, ms, sReads(w)), wide = sSpWide(dd, pool), cards = [...sec.querySelectorAll('.pb-tier')];
       if (wide) { chk(!cards.length && txt(sec.querySelector('.pb-wide')) === wide, `${dt}: no levels, and it says "${wide}" (${txt(sec.querySelector('.pb-wide'))})`); out[dd] = { open, pool, levels: null }; continue; }
       chk(cards.length === 3 && !sec.querySelector('.pb-tier[data-tier="xtrm"]'), `${dt}: three levels, Safe, Medium and Aggressive`);
-      const levels = {};
-      for (const [id, label, n, floor] of TIERS) {
+      /* what the page hands the record (pbDayLevels): each level with the rule that chose it, its numbers its legs' in leg order */
+      const given = JSON.parse(w.eval(`JSON.stringify(pbDayLevels(${JSON.stringify(dd)}))`)), levels = {};
+      for (const [id, label, , , minDec] of TIERS) {
         const el = sec.querySelector(`.pb-tier[data-tier="${id}"]`); if (!el) { chk(false, `${dt}: no ${label} card`); continue; }
-        const shown = [...el.querySelectorAll('.pb-tl')].map(x => x.dataset.id), b = sBrute(pool.legs, n, floor);
-        if (!b) { chk(el.classList.contains('none') && txt(el.querySelector('.pb-empty')) === sSpWhy(dd, pool), `${dt}: ${label} is empty: "${sSpWhy(dd, pool)}" (${txt(el.querySelector('.pb-empty')) || 'a parlay drawn'})`); levels[id] = null; continue; }
-        chk(JSON.stringify(shown) === JSON.stringify(b.legs.map(L => L.id)), `${dt}: ${label} is the brute force's ${b.likeliest ? 'likeliest' : floor ? 'best return' : 'likeliest pair'}: ${b.legs.map(L => L.id).join(', ')} (page: ${shown.join(', ')})`);
-        const rule = !floor ? 'likeliest pair' : b.likeliest ? `likeliest ${n} legs` : `best return · model ${Math.round(floor * 100)}%+`;
-        chk(txt(el.querySelector('.pb-rule')) === rule, `${dt}: ${label}'s rule line reads "${rule}" (${txt(el.querySelector('.pb-rule'))})`);
-        const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x));
-        const hasP = b.legs.some(L => L.prop);      // a level holding a player line: its chance partly the props model's, on trial, never "model says"
-        chk(b.fair === null ? v[0].startsWith(PBS.pctW(b.p)) : v[0].startsWith(PBS.pctW(b.fair)) && (hasP ? v[0].includes(`model ${PBS.pctW(b.p)}, props on trial`) && !/model says/.test(v[0]) : v[0].includes(`model says ${PBS.pctW(b.p)}`)), `${dt}: ${label} leads with the fair chance ${b.fair === null ? 'none' : PBS.pctW(b.fair)}, the model's ${PBS.pctW(b.p)} beside it${hasP ? ', marked props on trial' : ''}: ${v[0]}`);
-        chk(v[1].startsWith(PBS.toAm(b.d)), `${dt}: ${label}'s price is ${PBS.toAm(b.d)} (${v[1]})`);
+        const shown = [...el.querySelectorAll('.pb-tl')].map(x => x.dataset.id), b = sLevel(pool.legs, minDec), gv = given.levels[id];
+        if (!b) {
+          chk(el.classList.contains('none') && !el.querySelector('.pb-tc') && txt(el.querySelector('.pb-empty')) === sSpWhy(dd, pool, minDec) && gv === null, `${dt}: ${label} is empty, with no size pill: "${sSpWhy(dd, pool, minDec)}" (${txt(el.querySelector('.pb-empty')) || 'a parlay drawn'}${gv ? ', handed to the record' : ''})`);
+          levels[id] = null; continue;
+        }
+        chk(JSON.stringify(shown) === JSON.stringify(b.legs.map(L => L.id)), `${dt}: ${label} is this smoke's search's likeliest paying ${PBS.toAm(minDec)} or more: ${b.legs.map(L => L.id).join(', ')} (page: ${shown.join(', ')})`);
+        { const gl = gv ? gv.legs : [], gm = new Set(gl.map(L => L.game)), pr = gl.reduce((a, L) => a * L.p, 1), dc = gl.reduce((a, L) => a * PBS.decOf(L.price), 1), fr = gl.reduce((a, L) => a === null || L.fair === null ? null : a * L.fair, 1);
+          chk(!!gv && gv.pick === S_PICK && gv.minDec === minDec && gv.chance === S_CHANCE && !('likeliest' in gv) && JSON.stringify(gl.map(L => L.id)) === JSON.stringify(shown) && gl.length >= 2 && gl.length <= Math.min(S_CAP, pool.m) && gm.size === gl.length
+            && Math.abs(gv.p - pr) <= 1e-12 && Math.abs(gv.dec - dc) <= 1e-12 * dc && (fr === null ? gv.fair === null : Math.abs(gv.fair - fr) <= 1e-12) && gv.dec >= minDec * (1 - S_TIE) && Math.abs(gv.p - b.p) <= 1e-12 && Math.abs(gv.dec - b.d) <= 1e-12 * b.d,
+            `${dt}: ${label} as the page hands it to the record: pick ${gv && gv.pick}, ${gv && gv.minDec}, by ${gv && gv.chance}, ${gl.length} legs one a game, its chance, fair chance and price its legs' in leg order, paying ${gv && PBS.toAm(gv.dec)}`); }
+        const hasP = b.legs.some(L => L.prop), est = b.legs.some(L => L.fairEst);
+        const lw = sLevelWrongs(el, id, label, { legs: b.legs, p: b.p, fair: b.fair, d: b.d, pick: S_PICK, minDec, chance: S_CHANCE }, hasP, est);
+        chk(!lw.length, `${dt}: ${label}'s head and numbers: ${b.n} legs, "likeliest · ${PBS.toAm(minDec)}+", fair ${b.fair === null ? 'none' : PBS.pctW(b.fair)} and its expected return, the model's ${PBS.pctW(b.p)}${hasP ? ' (props on trial)' : ''}, ${PBS.toAm(b.d)} (${lw.join('; ')})`);
         const pay = el.querySelector('[data-pb-pay]');
         chk(pay && txt(pay.querySelector('.v')) === PBS.money(PBS.cents(stake * b.d)) && txt(pay.querySelector('.k')) === `${PBS.short(stake)} pays`, `${dt}: ${label} pays ${PBS.money(PBS.cents(stake * b.d))} on ${PBS.short(stake)} (${pay && txt(pay)})`);
-        /* every leg: the state's price, fair and model chance, thin where it is, its puck drop in the visitor's zone, its own Add */
+        /* every leg: the state's price, fair and model chance, its puck drop in the visitor's zone, its own Add */
         const lb = [];
         for (const L of b.legs) {
           const row = el.querySelector(`.pb-tl[data-id="${L.id}"]`), rt = txt(row), ab = row && row.querySelector('button.sp-add'), on = inB.has(L.id);
@@ -924,11 +1018,10 @@ function holdSuggest(w, ms, tag) {
           if (!(pr && txt(pr) === `${PBS.odds(L.price)}${ch}` && txt(em) === ch && ttl.includes(`fair ${PBS.pctW(L.fair)}`) && ttl.includes(mdl) && (!L.prop || /on trial/.test(ttl))
             && txt(row.querySelector('.nm .m')) === `${L.mu} · ${sClock(Date.parse(L.start))}` && txt(row.querySelector('.nm b')) === bold && txt(row.querySelector('.nm small')) === `${under}${L.mu} · ${sClock(Date.parse(L.start))}`
             && ab && ab.getAttribute('aria-label').includes(mdl) && !/ · /.test(ab.getAttribute('aria-label')))) lb.push(`${L.id}: ${rt} [${ttl}]`);
-          if (/thin edge/i.test(rt) !== (L.edge < S.edge)) lb.push(`${L.id}: thin edge ${/thin edge/i.test(rt)} at edge ${L.edge}`);
           if (!ab || ab.dataset.leg !== L.id || ab.getAttribute('aria-pressed') !== String(on) || txt(ab) !== (on ? 'Added' : 'Add') || !ab.getAttribute('aria-label').includes(`${S.teams[L.g.away].short} @ ${S.teams[L.g.home].short}`)) lb.push(`${L.id}: its Add (${ab ? txt(ab) + ' ' + ab.getAttribute('aria-pressed') : 'none'})`);
         }
         chk(!lb.length, `${dt}: ${label}'s every leg is the state's, in leg order, with its own Add naming its game (${lb.slice(0, 2).join(' | ')})`);
-        { const byId = new Map(pool.legs.map(L => [L.id, L])), ls = shown.map(id => byId.get(id)); chk(ls.every(Boolean) && JSON.stringify(ls.slice().sort(sOrder).map(L => L.id)) === JSON.stringify(shown), `${dt}: ${label}'s legs are in leg order`); }
+        { const byId = new Map(pool.legs.map(L => [L.id, L])), ls = shown.map(id2 => byId.get(id2)); chk(ls.every(Boolean) && JSON.stringify(ls.slice().sort(sOrder).map(L => L.id)) === JSON.stringify(shown), `${dt}: ${label}'s legs are in leg order`); }
         const all = sameIds(sDrawnList(w), shown), add = el.querySelector('[data-sp-add]'), fin = el.querySelector('[data-sp-finish]');
         chk(!!fin && fin.dataset.spFinish === `${dd}|${id}` && !!add && add.dataset.spAdd === `${dd}|${id}` && add.disabled === all && txt(add) === (all ? 'In the builder' : 'Add to builder'), `${dt}: ${label} ends with Finish and ${all ? 'In the builder, off' : 'Add to builder'} (${txt(add)})`);
         levels[id] = { legs: shown, b };
@@ -944,19 +1037,23 @@ function holdSuggest(w, ms, tag) {
       }
       const all = S.games.filter(g => g.date === dd), under = all.length && all.every(g => sStarted(g, ms));
       const res = {}; for (const [id] of TIERS) if (e.tiers[id]) res[id] = sSpResult(e.tiers[id], e.tiers[id].legs.map((L, i) => sSpGrade(L, i, e, id)));
-      const lv = TIERS.filter(([id]) => e.tiers[id]);
-      const words = `Locked since ${sClock(Date.parse(e.lock))}.` + (lv.length && lv.every(([id]) => res[id].result !== 'pending') ? ' Graded.' : under ? ' Under way.' : '');
+      const lv = TIERS.filter(([id]) => e.tiers[id]), newRule = Object.values(e.tiers).some(t => t && t.pick);
+      const words = `Locked since ${sDayClock(Date.parse(e.lock))}.` + (lv.length && lv.every(([id]) => res[id].result !== 'pending') ? ' Graded.' : under ? ' Under way.' : '');
       chk(txt(lockEl) === words, `${dt}: the locked set says "${words}" (${txt(lockEl)})`);
       const lb = [];
-      for (const [id, label] of TIERS) {
+      for (const [id, label, , , minDec] of TIERS) {
         const el = sec.querySelector(`.pb-tier[data-tier="${id}"]`), t = e.tiers[id]; if (!el) { lb.push(`no ${label}`); continue; }
-        if (!t) { if (!el.classList.contains('none')) lb.push(`${label} drawn though the record has none`); continue; }
+        if (!t) {
+          const none = `No ${label} parlay was in the set: ${newRule ? `no parlay of ${PBS.day(dd)}'s legs paid ${PBS.toAm(minDec)} or more` : `too few legs qualified on ${PBS.day(dd)}`}.`;
+          if (!el.classList.contains('none') || el.querySelector('.pb-tc') || txt(el.querySelector('.pb-empty')) !== none) lb.push(`${label} drawn "${txt(el)}" though the record has none ("${none}")`);
+          continue;
+        }
         const shown = [...el.querySelectorAll('.pb-tl')];
         if (canon(shown.map(x => x.dataset.id)) !== canon(t.legs.map(L => L.id))) lb.push(`${label}: legs ${shown.map(x => x.dataset.id).join(',')} not the record's`);
         t.legs.forEach((L, i) => { const gr = sSpGrade(L, i, e, id), r = shown[i]; if (r && r.dataset.grade !== (gr || 'pending')) lb.push(`${L.id}: graded ${r.dataset.grade}, not ${gr || 'pending'}`); });
         if (el.dataset.result !== res[id].result) lb.push(`${label}: ${el.dataset.result}, not ${res[id].result}`);
-        { const fl = TIERS.find(x => x[0] === id), want = !fl[3] ? 'likeliest pair' : t.likeliest ? `likeliest ${fl[2]} legs` : `best return · model ${Math.round(fl[3] * 100)}%+`;
-          if (txt(el.querySelector('.pb-rule')) !== want) lb.push(`${label}: rule "${txt(el.querySelector('.pb-rule'))}" not "${want}"`); }
+        /* the head and the numbers by the level's own rule: a v30 level's words (no pick), or the new rule's */
+        lb.push(...sLevelWrongs(el, id, label, Object.assign({}, t, { d: t.dec }), t.legs.some(L => L.kind === 'prop'), t.legs.some(L => L.kind === 'prop' && L.mk === 'yes')).map(x => `${label}: ${x}`));
         t.legs.forEach((L, i) => {
           const r = shown[i]; if (!r) return;
           const g = S.games.find(x => x.id === L.game), ab = String(L.mu || '').split(' @ '), club = x => Object.keys(S.teams || {}).find(k => S.teams[k].abbr === x) || null;
@@ -970,13 +1067,12 @@ function holdSuggest(w, ms, tag) {
             lb.push(`${L.id}: "${txt(r)}" not ${name} / ${what === null ? '(a player\'s bet)' : what} · ${L.mu} / ${PBS.odds(L.price)} ${fair} / ${st}`);
         });
         const v = [...el.querySelectorAll('.pb-n')].map(x => txt(x)), R = res[id];
-        if (!(v[1] || '').startsWith(PBS.toAm(t.dec)) || !(v[0] || '').startsWith(PBS.pctW(t.fair === null ? t.p : t.fair))) lb.push(`${label}: numbers ${v.join(' | ')}`);
         /* what the bet amount paid, was lost, came back or pays */
         const pay = R.result === 'won' ? `${PBS.money(PBS.cents(stake * R.payout))}${PBS.short(stake)} paid` : R.result === 'lost' ? `$0.00${PBS.short(stake)} lost` : R.result === 'push' ? `${PBS.money(PBS.cents(stake))}the stake back` : `${PBS.money(PBS.cents(stake * t.dec))}${PBS.short(stake)} pays`;
         if ((v[2] || '').replace(/\s+/g, '') !== pay.replace(/\s+/g, '')) lb.push(`${label}: pays "${v[2]}" not "${pay}"`);
       }
-      chk(!lb.length, `${dt}: the locked set is the record's, read only, each leg graded on the scores and each level's result (${lb.slice(0, 3).join(' | ')})`);
-      out[dd] = { open, entry: e };
+      chk(!lb.length, `${dt}: the locked set is the record's, read only, each level by its own rule's words, each leg graded on the scores and each level's result (${lb.slice(0, 3).join(' | ')})`);
+      out[dd] = { open, entry: e, newRule };
     }
   }
   return out;
@@ -1128,7 +1224,8 @@ async function parlayBuilder() {
     chk(w3.document.getElementById('pbStake').value === '20' && w3.document.getElementById('stake').value === '20', 'a stored amount that is not one boots as $20');
     /* Add to builder: asked before replacing other legs; then exactly the level's legs, priced as the level was, on the Parlay Builder */
     const dd = openDays.find(x => TIERS.some(t => S0[x].levels[t[0]] && S0[x].levels[t[0]].legs.length >= 2));
-    const lv = dd && TIERS.map(t => t[0]).find(id => S0[dd].levels[id] && S0[dd].levels[id].legs.length >= 2);
+    /* the level with the most legs (nhl v31: a level of any size), so its own size is in the words asked */
+    const lv = dd && TIERS.map(t => t[0]).filter(id => S0[dd].levels[id] && S0[dd].levels[id].legs.length >= 2).sort((a, b) => S0[dd].levels[b].legs.length - S0[dd].levels[a].legs.length)[0];
     if (lv) {
       spTab();
       const card = () => { w.eval('renderSuggest()'); return d.querySelector(`#spBody .sp-day[data-sp-day="${dd}"] .pb-tier[data-tier="${lv}"]`); };
@@ -1138,7 +1235,7 @@ async function parlayBuilder() {
       if (ob) ob.click(); else console.log(`  every suggested leg of ${dd} is on a game ${lv} uses: the ask before replacing other legs is not reached`);
       const before = JSON.stringify(store().legs), asked0 = w.__asked.length;
       w.__confirm = false; card().querySelector('[data-sp-add]').click();
-      chk(ob ? JSON.stringify(store().legs) === before && w.__asked.slice(asked0).some(q => /^Replace the \d+ legs? in the builder with the \w+ \d-leg parlay\?$/.test(q)) : w.__asked.length === asked0, `Add to builder asks before replacing other legs (and only then), and No changes nothing (${w.__asked.slice(asked0).join(' | ') || 'not asked'})`);
+      chk(ob ? JSON.stringify(store().legs) === before && w.__asked.slice(asked0).includes(`Replace the 1 leg in the builder with the ${TIERS.find(t => t[0] === lv)[1]} ${ids.length}-leg parlay?`) : w.__asked.length === asked0, `Add to builder asks before replacing other legs (and only then), and No changes nothing (${w.__asked.slice(asked0).join(' | ') || 'not asked'})`);
       w.__confirm = true; card().querySelector('[data-sp-add]').focus(); card().querySelector('[data-sp-add]').click();
       chk(JSON.stringify(store().legs.map(l => `${l.game}|${l.side}|${l.kind}`)) === JSON.stringify(ids), `Add to builder puts exactly the level's legs in, in order (${store().legs.length})`);
       chk(!$('tab-parlays').hidden && d.activeElement === $('bTitle'), `Add to builder opens the Parlay Builder and takes the keyboard's focus to the builder (${w.location.hash}; ${d.activeElement && (d.activeElement.id || d.activeElement.tagName)})`);
@@ -1802,7 +1899,7 @@ const propReqs = w => w.__requests.filter(r => PROPS_RX.test(r.url) || /propBets
 async function oddsDone(w) { for (let i = 0; i < 300 && w.eval('ODDS.busy'); i++) await wait(10); return !w.eval('ODDS.busy'); }
 /* the status line's words after a read, written here again from its counts */
 function sOddsText(r, at) {
-  const when = clockOf(at), n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+  const when = sDayClock(at), n = (k, one, many) => `${k} ${k === 1 ? one : many}`;      // with its weekday (nhl v31): "read Thu 9:12 PM EST"
   if (!r.answered) return `ESPN could not be read at ${when}: ${r.lined ? 'every line stands as shown' : 'nothing changed'}.`;
   let t = r.read ? `${r.allDK ? "DraftKings' lines" : 'Lines'} from ESPN, read ${when}: ${n(r.read, 'game', 'games')}${r.moved ? `, ${r.moved} moved since the last read` : ''}${r.first ? `, ${r.first} with a first line` : ''}.`
     : r.noLine || r.unread || r.started || r.postponed || r.cancelled || r.older ? `Lines from ESPN, read ${when}: none taken.` : `Lines from ESPN, read ${when}: no game on the days shown has a line yet.`;
@@ -3213,7 +3310,7 @@ async function hiddenLegs(M, G, AT, o) {
       dX.querySelector('#tabs button[data-tab="suggest"]').click();
       const addX = id && dX.querySelector(`#spBody button[data-sp-add="${G.date}|${id}"]`);
       if (!addX) { console.log(`  no suggested level of ${G.date} to plant the Over at ${T0 + 1} on: Add to builder beside a stored leg at a moved number not held`); break; }
-      const t = JSON.parse(wX.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(id)}))`)), what = `${t[1]} ${t[2]}-leg parlay`;
+      const what = `${TIERS.find(x => x[0] === id)[1]} ${addX.closest('.pb-tier').querySelectorAll('.pb-tl').length}-leg parlay`;      // the level's own size (nhl v31: any size)
       const s0 = wX.localStorage.getItem('nhl_v1'), a0 = wX.__asked.length; wX.__confirm = false;
       addX.click();
       const asked = wX.__asked.slice(a0).join(' | '); wX.__confirm = true;
@@ -3230,7 +3327,8 @@ async function hiddenLegs(M, G, AT, o) {
     chk(ofG(wA).length === 5 && ofG(wA, 'drawn').length === 0, `a press that finds no props posted takes the 5 out of the builder and keeps them stored (${ofG(wA).length} stored, ${ofG(wA, 'drawn').length} drawn)`);
     dA.querySelector('#tabs button[data-tab="suggest"]').click();
     const lvB = () => dA.querySelector('#spBody button[data-sp-add]:not([disabled])');
-    const lv = lvB(), t = lv && JSON.parse(wA.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(lv.dataset.spAdd.split('|')[1])}))`)), what = t && `${t[1]} ${t[2]}-leg parlay`;
+    const lvWhat = b => b && `${TIERS.find(x => x[0] === b.dataset.spAdd.split('|')[1])[1]} ${b.closest('.pb-tier').querySelectorAll('.pb-tl').length}-leg parlay`;      // the level's own size
+    const lv = lvB(), what = lvWhat(lv);
     if (!lv) console.log('  no suggested level to add: a level\'s Add to builder asking before the legs it leaves out go is not held on this state');
     else {
       const s0 = before(), a0 = wA.__asked.length; wA.__confirm = false; lv.click();
@@ -3240,7 +3338,7 @@ async function hiddenLegs(M, G, AT, o) {
       const s1 = before(), a1 = wA.__asked.length; dA.getElementById('clearParlay').click();
       chk(before() === s1 && wA.__asked.slice(a1).join(' | ') === 'Clear the 1 leg from the builder, and the 5 legs kept on this device that it leaves out of the parlay?', `Clear all with 1 drawn and 5 left out asks first, and No keeps all 6 (${wA.__asked.slice(a1).join(' | ') || 'not asked'})`);
       const lv2 = lvB(), a2 = wA.__asked.length; if (lv2) lv2.click();
-      chk(!!lv2 && before() === s1 && wA.__asked.slice(a2).join(' | ') === `Replace the 1 leg in the builder, and the 5 legs kept on this device that it leaves out of the parlay, with the ${JSON.parse(wA.eval(`JSON.stringify(PB_TIERS.find(x => x[0] === ${JSON.stringify(lv2 && lv2.dataset.spAdd.split('|')[1])}).slice(1, 3).join(' '))`))}-leg parlay?`, `Add to builder with 1 drawn and 5 left out asks about all 6, and No keeps them (${wA.__asked.slice(a2).join(' | ') || 'not asked'})`);
+      chk(!!lv2 && before() === s1 && wA.__asked.slice(a2).join(' | ') === `Replace the 1 leg in the builder, and the 5 legs kept on this device that it leaves out of the parlay, with the ${lvWhat(lv2)}?`, `Add to builder with 1 drawn and 5 left out asks about all 6, and No keeps them (${wA.__asked.slice(a2).join(' | ') || 'not asked'})`);
       wA.__confirm = true; const lv3 = lvB(), k3 = lv3 && lv3.dataset.spAdd.split('|');
       const ids3 = k3 ? JSON.parse(wA.eval(`JSON.stringify(spDay(${JSON.stringify(k3[0])}).levels[${JSON.stringify(k3[1])}].legs.map(L => L.id))`)) : [];
       if (lv3) lv3.click();
@@ -4082,7 +4180,7 @@ async function gamesListChecks() {
       else console.log('  no line among the games to come: another book in the idle odds line is not planted');
       const M2 = JSON.parse(STATE); for (const g of M2.games) if (!sStarted(g, AT)) { g.line = null; for (const k of ['mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick']) delete g[k]; }
       S = M2; const e8 = [], w8 = await boot(AT, e8, { state: JSON.stringify(M2) }), t8 = txt(w8.document.getElementById('oddsNote'));
-      chk(t8 === oddsIdleS(AT) && t8 === `No lines yet at the job's last run, ${clockOf(PUB)}.` && !/DraftKings/.test(t8) && !e8.length, `with no line among the games to come the idle odds line claims none (${t8})`); w8.close();
+      chk(t8 === oddsIdleS(AT) && t8 === `No lines yet at the job's last run, ${sDayClock(PUB)}.` && !/DraftKings/.test(t8) && !e8.length, `with no line among the games to come the idle odds line claims none (${t8})`); w8.close();
     } finally { S = real9; } }
   /* the one read wherever the Games tab is first drawn (the review's L3): a page opened on another tab at a puck drop asks ESPN for nothing,
      and reads the day shown once when Games is opened, no more when it is opened again */
@@ -4275,7 +4373,7 @@ function gpRoleS(x) {
 /* before a press: whose lines the page holds for the games still to come on the days listed and when the job read them. Each book is named,
    DraftKings first; a price of another book is never called DraftKings'; with no line there is no claim of one */
 function oddsIdleS(ms) {
-  const today = etDate(ms), days = slDaysS(ms).filter(dd => dd >= today), when = clockOf(PUB), nm = L => { const b = gpBookS(L); return b === 'the book' ? 'a book ESPN does not name' : b; };
+  const today = etDate(ms), days = slDaysS(ms).filter(dd => dd >= today), when = sDayClock(PUB), nm = L => { const b = gpBookS(L); return b === 'the book' ? 'a book ESPN does not name' : b; };
   const names = [...new Set(S.games.filter(g => days.includes(g.date) && !sStarted(g, ms) && g.line).map(g => nm(g.line)))].sort((a, b) => (b === 'DraftKings') - (a === 'DraftKings') || sStr(a, b));
   return names.length ? `${names.join(', ')} via ESPN, ${when}.` : `No lines yet at the job's last run, ${when}.`;
 }
@@ -6667,10 +6765,11 @@ async function lightDarkChecks() {
   const inDom = GONE.filter(c => dP.querySelector('.' + c));
   chk(!inCss.length && !inDom.length && !dP.querySelector('main details:not(.pb-games):not(.pb-pick)') && !dP.querySelector('#gameModal details, #gsModal details') && !dP.querySelector('#spRules, #pbRules, #ppHow, #fitNote, #pkNote, #bHint, #pcOwn, #pbStakeH'),
     `the classes and folds the cut descriptions wore are gone from the page and its stylesheet (in the CSS: ${inCss.join(', ') || 'none'}; in the page: ${inDom.join(', ') || 'none'})`);
-  /* kept: the source warnings, the builder's and the panel's money warnings and notices, another book's prices, an error line; and one
-     that is not a description: a level with no parlay says why (.pb-tier.none). A game's page and its windows are outside main: THE
+  /* kept: the source warnings, the builder's and the panel's money warnings and notices, another book's prices, an error line, the
+     change of the levels' rule for its seven days (a model change, the one thing worth a banner); and one that is not a description: a
+     level with no parlay says why (.pb-tier.none). A game's page and its windows are outside main: THE
      GAME'S PAGE holds them to the same rule, game by game */
-  const KEPT = ['#sourceNote', '#bNotes', '#pbNotes', '#pbRead', '#spRead', '#xpNote', '#xbNote', '#bMsg', '.pb-tier.none'];
+  const KEPT = ['#sourceNote', '#bNotes', '#pbNotes', '#pbRead', '#spRead', '#xpNote', '#xbNote', '#bMsg', '.pb-tier.none', '#spChange'];      // #spChange: the one dated line on a change of rule (nhl v31), seven days
   const showing = el => { for (let x = el; x && x !== dP.body; x = x.parentElement) if (x.hidden) return false; return true; };
   const long = [];
   const sweep = tag => { for (const el of dP.querySelectorAll('main p, main small, main .intro')) { if (!showing(el) || KEPT.some(k => el.closest(k))) continue; const t = txt(el); if (t.length > 90) long.push(`${tag}: ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : el.className ? '.' + String(el.className).split(' ')[0] : ''} "${t.slice(0, 70)}…" (${t.length})`); } };
@@ -6923,8 +7022,41 @@ async function pickemChecks() {
     } }
 }
 
+/* the level rule on planted pools (nhl v31): the page's pbLevel against this smoke's own search and against answers worked out by
+   hand, one pool a rule: a tie in the chance going to fewer legs, then to the larger product of the other chance, then to the lower
+   leg ids; the tie window relative (an absolute 1e-9 calls chances of 9e-4 that differ by a third of a millionth equal); the pays test
+   (1.5 x 1.4 is 2.0999999999999996, which pays +110, and a pair a cent under $2.10 does not); the cap of 12 legs (twelve legs of 1.2
+   pay +700 and eleven do not; fourteen of 1.17 pay and thirteen do not); one leg a game */
+async function sPlantedPools() {
+  const errs = [], w = await boot(PUB, errs, { hash: 'suggest' });
+  try {
+    let t0 = Date.parse('2026-11-13T00:00:00Z');
+    const amOf = dec => dec >= 2 ? Math.round((dec - 1) * 100) : -Math.round(100 / (dec - 1));
+    const L = (game, p, fair, dec, side) => ({ id: `${game}|${side || 'home'}|ml`, game, kind: 'ml', side: side || 'home', p, fair, dec, price: amOf(dec), start: new Date(t0 + 60000 * (parseInt(game.slice(1), 10) || 0)).toISOString(), mu: `${game} @ X` });
+    const G = n => `G${String(n).padStart(2, '0')}`;
+    const pools = [
+      ['a tie in the chance goes to fewer legs', 4, [L('G01', 0.6, 0.5, 2.0), L('G02', 0.5, 0.45, 2.4), L('G03', 0.8, 0.7, 1.25), L('G04', 0.75, 0.6, 1.4)], ['G01|home|ml', 'G02|home|ml']],
+      ['then to the larger product of the other chance', 4, [L('G01', 0.6, 0.5, 2.1), L('G02', 0.5, 0.45, 2.0), L('G03', 0.5, 0.48, 2.0)], ['G01|home|ml', 'G03|home|ml']],
+      ['then to the lower leg ids', 4, [L('G01', 0.6, 0.5, 2.1), L('G02', 0.5, 0.45, 2.0), L('G03', 0.5, 0.45, 2.0)], ['G01|home|ml', 'G02|home|ml']],
+      ['the tie window is relative', 2.1, [L('G01', 0.03, 0.6, 50), L('G02', 0.03, 0.5, 50), L('G03', 0.03000001, 0.4, 50)], ['G01|home|ml', 'G03|home|ml']],
+      ['1.5 x 1.4 pays +110', 2.1, [L('G01', 0.7, 0.6, 1.5), L('G02', 0.7, 0.62, 1.4), L('G03', 0.3, 0.25, 3)], ['G01|home|ml', 'G02|home|ml']],
+      ['a pair a cent under $2.10 does not pay +110', 2.1, [L('G01', 0.7, 0.6, 1.5), L('G02', 0.69, 0.62, 1 + 100 / 254), L('G03', 0.3, 0.25, 3)], ['G01|home|ml', 'G03|home|ml']],
+      ['twelve legs at the most: twelve of 1.2 pay +700', 8, Array.from({ length: 13 }, (_, i) => L(G(i + 1), 0.9, 0.8, 1.2)), Array.from({ length: 12 }, (_, i) => `${G(i + 1)}|home|ml`)],
+      ['twelve legs at the most: none of 1.17 pays +700', 8, Array.from({ length: 14 }, (_, i) => L(G(i + 1), 0.9, 0.8, 1.17)), null],
+      ['one leg a game', 2.1, [L('G01', 0.8, 0.7, 1.6), L('G01', 0.79, 0.7, 1.62, 'away'), L('G02', 0.3, 0.25, 3)], ['G01|home|ml', 'G02|home|ml']],
+    ];
+    for (const [what, minDec, legs, want] of pools) {
+      const got = JSON.parse(w.eval(`JSON.stringify(pbLevel(${JSON.stringify(legs)}, ${minDec}))`)), mine = sLevel(legs, minDec);
+      const ids = got ? got.legs.map(x => x.id) : null, mineIds = mine ? mine.legs.map(x => x.id) : null;
+      chk(JSON.stringify(ids) === JSON.stringify(want) && JSON.stringify(mineIds) === JSON.stringify(want) && (!got || (got.pick === S_PICK && got.minDec === minDec && got.chance === S_CHANCE && got.dec >= minDec * (1 - S_TIE))),
+        `the level rule on a planted pool: ${what} (page ${ids ? ids.join(', ') : 'none'}; this smoke's search ${mineIds ? mineIds.join(', ') : 'none'}; by hand ${want ? want.join(', ') : 'none'})`);
+    }
+    chk(!errs.length, `no runtime error on the planted pools: ${errs.join(' | ')}`);
+  } finally { w.close(); }
+}
 async function suggestRecord() {
   console.log("THE SUGGESTED PARLAYS' RECORD");
+  await sPlantedPools();
   const SG = require('./suggest'), file = process.env.NHL_SUGGEST || path.join(DATA, 'suggest_ledger.json');      // NHL_SUGGEST: simulate.js's own
   if (!fs.existsSync(file)) { chk(!S.suggest, `no ledger and no record in the state (${JSON.stringify(S.suggest)})`); console.log('  no ledger: its checks skipped'); return; }
   const L = SG.readLedger(file);
@@ -6939,7 +7071,13 @@ async function suggestRecord() {
     console.log('  the state predates the record (an older job published it): the record\'s state and page checks skipped'); return;
   }
   const sumOnly = Object.assign({}, S.suggest); delete sumOnly.sets;
-  chk(JSON.stringify(sumOnly) === JSON.stringify(SG.summarize(L, S.season)), `the state's record is the ledger's summary (${JSON.stringify(S.suggest && S.suggest.tiers && S.suggest.tiers.safe)})`);
+  /* the summary with each rule's days apart (nhl v31: each level's eras, and the change of rule): a state an older job published carries
+     neither, and is held to the summary without them; once one has, every state after it does */
+  const withEras = !!(S.suggest.tiers && Object.values(S.suggest.tiers).every(t => t && t.eras !== undefined)), wantSum = SG.summarize(L, S.season);
+  if (!withEras) { for (const t of Object.values(wantSum.tiers)) delete t.eras; delete wantSum.change;
+    chk(!(PREV && PREV.suggest && PREV.suggest.tiers && Object.values(PREV.suggest.tiers).some(t => t && t.eras !== undefined)), 'the record\'s eras are in every state after the first that carried them');
+    console.log('  the record\'s summary is an older job\'s (no eras): held without them'); }
+  chk(JSON.stringify(sumOnly) === JSON.stringify(wantSum), `the state's record is the ledger's summary (${JSON.stringify(S.suggest && S.suggest.tiers && S.suggest.tiers.safe).slice(0, 400)})`);
   /* the days the Suggested Parlays tab draws once they lock (nhl v17): the ledger's entries from the day before the publish's on, exactly;
      a state an older job published carries none, and once one has, every state after it does */
   if (S.suggest && S.suggest.sets !== undefined) chk(JSON.stringify(S.suggest.sets) === JSON.stringify(SG.current(L, PUB)), `the state's suggest.sets are the ledger's entries from the day before the publish on (${Object.keys(S.suggest.sets).join(', ')}; the ledger's ${Object.keys(SG.current(L, PUB)).join(', ')})`);
@@ -6949,18 +7087,23 @@ async function suggestRecord() {
   /* a day locked already is the last commit's ledger's to hold (SG.check), whatever its first puck drop reads now (a game postponed or moved) */
   const lined = [...new Set(S.games.filter(g => g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 60000) === pubMin).map(g => g.date))].filter(d => first[d] > PUB && !(L.days[d] && Date.parse(L.days[d].lock) <= PUB)).sort();
   const errs = [], w = await boot(PUB, errs, { hash: 'suggest', keepDk: true }), d = w.document;      // as the job's page boots: the state as published, its player lines read
+  /* a ledger whose header is still the v30 rule's was written by an older job, whose page took the open days by that rule: this page's
+     levels on them are held once the job runs it (and the record's check holds those days to their own rule meanwhile) */
+  const olderJob = JSON.stringify(L.tiers) === JSON.stringify(SG.TIERS_V30);
+  if (olderJob) console.log(`  the ledger is an older job's (its header the v30 rule's): ${lined.join(', ') || 'no day'} taken by that rule, held by the record's check alone`);
   for (const day of lined) {
     const want = SG.setOf(w, day), e = L.days[day];
     if (!want.games.length) { chk(!e, `${day}: no game to come with a fresh line in the page, no entry`); continue; }
+    if (olderJob) { chk(!!e && e.lock === new Date(first[day]).toISOString() && SG.ruleOfEntry(e) !== 'new', `${day}: taken by the older job, to lock at its first puck drop (${e ? e.lock : 'no entry'})`); continue; }
     chk(!!e && e.lock === new Date(first[day]).toISOString() && JSON.stringify([e.games, e.tiers]) === JSON.stringify([want.games, want.tiers]),
       `${day}: taken, to lock at its first puck drop ${new Date(first[day]).toISOString()}, the page's own levels at the publish (${e ? e.lock : 'no entry'})`);
-    /* the brute force's levels on the day's default pool, worked out here */
+    /* this smoke's own search on the day's default pool, worked out here: each level the likeliest paying its price, carrying its rule */
     const readsS = {}; for (const [gid, x] of Object.entries((S.props && S.props.games) || {})) { const r = dkSeed(x && x.dk); if (r) readsS[gid] = r; }      // what the job's page booted on
     const pool = sPool({ games: S.games.filter(g => g.date === day && !sStarted(g, PUB)) }, S_KINDS, [], readsS);
-    for (const [id, label, n, floor] of TIERS) {
-      const b = sBrute(pool.legs, n, floor), t = e && e.tiers[id];
-      chk(b ? !!t && JSON.stringify(t.legs.map(x => x.id)) === JSON.stringify(b.legs.map(x => x.id)) && Math.abs(t.p - b.p) < 1e-4 && Math.abs(t.dec - b.d) < 1e-3 : !t,
-        `${day} ${label}: the record's legs are the brute force's (${t ? t.legs.map(x => x.id).join(', ') : 'none'}; brute ${b ? b.legs.map(x => x.id).join(', ') : 'none'})`);
+    for (const [id, label, , , minDec] of TIERS) {
+      const b = sLevel(pool.legs, minDec), t = e && e.tiers[id];
+      chk(b ? !!t && JSON.stringify(t.legs.map(x => x.id)) === JSON.stringify(b.legs.map(x => x.id)) && Math.abs(t.p - b.p) < 1e-4 && Math.abs(t.dec - b.d) < 1e-3 && t.pick === S_PICK && t.minDec === minDec && t.chance === S_CHANCE && t.dec >= minDec * (1 - S_TIE) : !t,
+        `${day} ${label}: the record's level is this smoke's search's, the likeliest paying ${PBS.toAm(minDec)} or more, with its rule (${t ? `${t.legs.map(x => x.id).join(', ')} ${SG.ruleKey(t)}` : 'none'}; the search ${b ? b.legs.map(x => x.id).join(', ') : 'none'})`);
     }
   }
   /* an entry still to lock is a day with a line read at the publish (held above), or one with none read now whose set an earlier run took */
@@ -6974,15 +7117,19 @@ async function suggestRecord() {
     const any = TIERS.some(([id]) => R.tiers[id].graded || R.tiers[id].push);
     const want = ['Record'].concat(any ? TIERS.map(([id, label]) => { const t = R.tiers[id]; return `${label} ${t.won}–${t.lost}${t.graded || t.push ? ` ${un(t.units)} units` : ''}`; }) : ['None graded yet']).concat(R.pending ? [`Pending ${R.pending}`] : []);
     const got = [...rec.children].map(txt);
+    chk(rec.firstElementChild && rec.firstElementChild.tagName === 'H3', `the record's heading is an h3, as the days' (${rec.firstElementChild && rec.firstElementChild.tagName})`);
     /* the NFL hub's order (nhl v22): the heading, the odds bar, the record, the days' sets */
     const sibs = rec.parentElement ? [...rec.parentElement.children] : [], at = q => sibs.indexOf(d.querySelector(q));
     chk(!rec.hidden && rec.closest('#spPanel') && at('#spPanel .pb-hd') === 0 && at('#spPanel .pb-hd') < at('#spPanel .sp-odds') && at('#spPanel .sp-odds') < at('#pbRec') && at('#pbRec') < at('#spBody') && JSON.stringify(got) === JSON.stringify(want),
       `the Suggested Parlays tab's record row under its heading and odds bar, pill by pill: ${got.join(' | ')} (want ${want.join(' | ')})`);
-    if (any) for (const [id, label] of TIERS) {
+    /* each pill's title: its whole record, then (nhl v31) each rule's own where the level has had one before today's, worked out here
+       from the ledger's own days (a state an older job published carries no eras: none said) */
+    const eras = sEras(L, S.season);
+    if (any) for (const [id, label, , , minDec] of TIERS) {
       const t = R.tiers[id], el = rec.querySelector(`[data-pb-rec="${id}"]`);
-      const title = `${label}: ${t.won} won of ${t.graded} graded${R.since ? ` since ${PBS.day(R.since)}` : ''}${t.graded ? `; wins expected ${f1(t.exp_fair)} by DraftKings' fair chance${t.fair_n < t.graded ? ` (on the ${t.fair_n} with one)` : ''}, ${f1(t.exp_model)} by the model` : ''}`
-        + (t.push ? `; ${pl(t.push, 'push')}, the stake back` : '') + (t.none ? `; ${pl(t.none, 'day')} with no ${label} parlay` : '') + (t.replay ? `; ${t.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
+      const title = sRecTitle(id, label, minDec, t, R.since, withEras ? eras[id] : null);
       chk(!!el && el.getAttribute('title') === title, `${label}'s pill says its record in its title: ${el && el.getAttribute('title')}`);
+      if (withEras) chk(canon(t.eras) === canon(eras[id]), `${label}'s eras in the state are the ledger's days by this smoke's own sums (${JSON.stringify(t.eras).slice(0, 300)})`);
     }
     /* the figures by the ledger's own days, worked out here: won, lost and units on 1 a day */
     for (const [id, label] of TIERS) {
@@ -7000,6 +7147,27 @@ async function suggestRecord() {
     M.suggest.sets = SG.current(L, PUB);
     const real = S; S = M;
     try {
+      /* the pills' titles with two eras planted (the earlier rule's and today's), and the change of rule's line: said by the publish's date
+         for seven days from the publish that first carried it, gone on the seventh */
+      { const P = JSON.parse(JSON.stringify(M)), at0 = Date.parse(P.published);
+        for (const [id, , , , minDec] of TIERS) { const t = P.suggest.tiers[id];
+          /* the level's whole record the two eras', so its pill is drawn whatever the record held (an invented season's may hold none) */
+          Object.assign(t, { graded: 27, won: 5, lost: 22, push: 1, units: -0.5555, exp_model: 7.59, exp_fair: 4.2, fair_n: 27 });
+          t.eras = { v30: { from: '2026-10-13', to: '2026-11-12', graded: 25, won: 4, lost: 21, push: 1, units: -2.5555, exp_model: 6.79, exp_fair: 3.7 },
+            [`${S_PICK} ${minDec} ${S_CHANCE}`]: { from: '2026-11-13', to: '2026-11-14', graded: 2, won: 1, lost: 1, push: 0, units: 2, exp_model: 0.8, exp_fair: 0.5 } }; }
+        for (const [days, shown] of [[6, true], [7, false]]) {
+          P.suggest.change = { at: new Date(at0 - days * 86400000).toISOString(), from: '2026-11-13' }; S = P;
+          const e5 = [], w5 = await boot(PUB, e5, { state: JSON.stringify(P), hash: 'suggest' }), d5 = w5.document;
+          if (shown) holdSuggest(w5, PUB, `the change of rule said ${days} days on`);
+          const ch5 = d5.getElementById('spChange');
+          chk(ch5.hidden === !shown && (!shown || txt(ch5) === "From Nov 13 each level is the likeliest parlay paying +110, +300 or +700 or more; each pill's title keeps the earlier levels apart."), `the change of rule's line ${shown ? 'shows' : 'is gone'} ${days} days after the publish that first carried it (${ch5.hidden ? 'hidden' : txt(ch5)})`);
+          if (shown) for (const [id, label, , , minDec] of TIERS) {
+            const el = d5.querySelector(`#pbRec [data-pb-rec="${id}"]`), t = P.suggest.tiers[id], want = sRecTitle(id, label, minDec, t, P.suggest.since, t.eras);
+            chk(!!el && el.getAttribute('title') === want && /under the earlier rule/.test(want) && / since Nov 13 \(likeliest paying /.test(want), `${label}'s pill splits its eras in its title: ${el && el.getAttribute('title')}`);
+          }
+          chk(!e5.length, `no runtime error with the eras planted: ${e5.join(' | ')}`); w5.close();
+        }
+        S = M; }
       const today = etDate(PUB), sets = Object.keys(M.suggest.sets).sort(), clocks = [];
       const past = sets.filter(dd => dd < today && S.games.some(g => g.date === dd) && S.games.filter(g => g.date === dd).every(g => g.state === 'final')).pop();
       if (past) { const ms = Math.max(...S.games.filter(g => g.date === past).map(g => Date.parse(g.start))) + 60000; if (etDate(ms) === past) clocks.push([ms, `${past}, its games final`]); }

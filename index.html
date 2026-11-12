@@ -625,6 +625,7 @@ table.rv-grid .rv-season{border-left:2px solid var(--line-2)}
 .pb-n .v{font:700 17px/1.15 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
 .pb-n .k{font-size:10px;font-weight:700;letter-spacing:.05em;line-height:21px;text-transform:uppercase;color:var(--muted-ink)}
 .pb-n .s{margin-top:1px;font-size:11px;font-weight:600;line-height:1.4;color:var(--ink-2)}
+.pb-n .s.pb-ev.neg{color:var(--miss)}      /* a level's expected return at DraftKings' fair chance below 0 (nhl v31, the NFL's) */
 @media(max-width:1100px){.pb-nums{display:flex;flex-wrap:wrap}.pb-n{flex:1 1 0}.pb-n.pb-span{flex-basis:100%}}
 @media(max-width:380px){.pb-n.pb-chance{flex-basis:100%}.pb-tier{padding:12px 10px}}      /* the narrowest phones: the chance and its model line across the card, the price and pays under it */
 /* a leg a row: on its first line its club's pill (a total's two) and the club or player, a thin edge's tag; under it the bet, the game
@@ -655,7 +656,9 @@ table.rv-grid .rv-season{border-left:2px solid var(--line-2)}
 /* the Suggested Parlays tab: the odds bar, the record, then each day's set under its heading and its lock, a rule between them */
 .sp-odds{margin:10px 0 0}
 .sp .pb-rec{margin:14px 0 0;padding:14px 0 0;border-top:1px solid var(--line)}
-.sp .pb-rec .pb-reck{flex-basis:100%;margin:0;font:700 16px var(--body);letter-spacing:0;text-transform:none;color:var(--ink)}
+.sp .pb-rec .pb-reck{flex-basis:100%;margin:0;font:700 17px var(--display);letter-spacing:-.3px;text-transform:none;color:var(--ink)}      /* an h3, as the days' headings (nhl v31) */
+/* the one dated line on the change of rule (nhl v31), for seven days from the publish that first carried it */
+.sp-change{margin:10px 0 0;padding:6px 10px;border-left:3px solid var(--gold);border-radius:4px;background:var(--panel-3);font-size:12.5px;line-height:1.5;color:var(--ink)}
 .sp-day{margin:18px 0 0;padding:14px 0 0;border-top:1px solid var(--line)}
 .sp-dh{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px;margin:0 0 6px}
 .sp-dh h3{margin:0;font:700 17px var(--display);letter-spacing:-.3px;text-transform:none;color:var(--ink);min-width:0;overflow-wrap:anywhere}
@@ -1272,6 +1275,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
       <div class="espn-ctl sp-odds"><span class="pb-lbl sp-oddsk">Odds</span><button type="button" class="btn quiet espn-btn" id="spRefreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="espn-st" id="spOddsNote" role="status" aria-live="polite"></span></div>
       <p class="pb-read" id="spRead" hidden></p>
       <div class="pb-rec" id="pbRec" hidden></div>
+      <p class="sp-change" id="spChange" hidden></p>
       <div id="spBody"></div>
     </div>
   </section>
@@ -1378,7 +1382,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v30 · 2026-11-12';
+const APP_BUILD = 'nhl v31 · 2026-11-12';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -2163,8 +2167,16 @@ const FAR_OFF = 0.15;                   // 15 points or more above DraftKings' f
 const SITE = 'demon-x13.github.io/nhl-hub';
 const DK_SLIP = 'https://sportsbook.draftkings.com/?outcomes=', DK_EVENT = 'https://sportsbook.draftkings.com/event/', DK_NHL = 'https://sportsbook.draftkings.com/leagues/hockey/nhl';
 const ETZ = { timeZone: 'America/New_York' };
-/* the suggested levels: Safe, the likeliest pair; Medium and Aggressive, the best return of 3 and 4 legs that lands 25% and 12% */
-const PB_TIERS = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
+/* the suggested levels (nhl v31, the NFL hub's prices and its any-size rule): each the likeliest parlay of 2 to PB_LV_CAP legs, one
+   leg a game, whose legs' prices multiplied pay its own least price, Safe +110 or more ($1 returns $2.10), Medium +300 ($4), Aggressive
+   +700 ($8): [id, label, the least legs, no floor, the least decimal]. "Likeliest" is by PB_CHANCE, the site's model's chance (the
+   NFL ranks by DraftKings' fair chance, 'fair': on hockey's devig every player Under is worth exactly its price at the fair chance, so
+   that ranking only matches prices to the floor). Each level carries its rule ({ pick, minDec, chance }), so the record keeps every era
+   apart; PB_TIERS_V30 is the rule before (Safe the likeliest pair; Medium and Aggressive the best return of 3 and 4 legs landing 25%
+   and 12% by the model, else the likeliest of that size), kept for the words of the days it chose */
+const PB_TIERS = [['safe', 'Safe', 2, 0, 2.1], ['med', 'Medium', 2, 0, 4], ['aggr', 'Aggressive', 2, 0, 8]];
+const PB_TIERS_V30 = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
+const PB_LV_CAP = 12, PB_PICK = 'likeliest-any', PB_CHANCE = 'model';
 /* the Top 30's bet types: the three team markets and, since nhl v18, DraftKings' player lines, Overs (the anytime goal among them) and
    Unders; Build from's three mixes, the NFL hub's */
 const PB_KINDS = ['ml', 'pl', 'ou', 'po', 'pu'];
@@ -2691,11 +2703,10 @@ const legPills = L => L.kind === 'ou' ? tag(L.g.away, 'mini', true) + tag(L.g.ho
    by less. Each part is ranked by the expected return on $1 (the model's chance times the decimal price, less the stake), ties to the
    lower leg id, and the list stops at 30.
 
-   A day's levels: Safe, the likeliest pair; Medium and Aggressive, the 3- and 4-leg parlay with the best return (chance times payout)
-   that lands at least 25% and 12% of the time by the model's chance, or the likeliest of that size where none does. A call is
-   preferred; a thin leg is used only where the calls cannot make a level, the fewest first. The search is exact: branch and bound over
-   every parlay of the level's size, one leg a game, pruning only what cannot reach the floor or the best already found, and every
-   number is worked in leg order, the builder's, so Add to builder shows exactly what the level did */
+   A day's levels (nhl v31): each the likeliest parlay by PB_CHANCE of 2 to 12 legs, one leg a game, paying its own least price (pbLevel
+   below); no floor and no fallback, so a level no parlay pays is empty. Thin legs decide nothing there (the Top 30's Value part still
+   reads them). The search is exact, and every number of a level is worked in leg order, the builder's, so Add to builder shows exactly
+   what the level did */
 let PB_CUR = null;                          // the Top 30 as last drawn: { sl, ui, pool, top }
 /* the lines said when the clock changes the list under the visitor: the slate moved on (every game of the day shown has dropped the
    puck), or a game the list showed dropped the puck. Each holds while the panel is on the slate it was said on and its day is still
@@ -2736,61 +2747,53 @@ function pbPool(sl, ui) {
   ok.sort(legCmp);
   return { kinds, tickable, ticked, legs: ok, far, scan, games: new Set(ok.map(L => L.game)).size };
 }
-/* the best parlay of `need` more legs beside `locks`, one leg a game, at most `thinCap` thin legs among
-   the new ones; obj 'p' the likeliest, 'ret' the best chance times decimal with the chance at or over
-   `floor`. Ties within 1e-12 go to the lower of the sorted leg ids joined by commas */
-function pbBest(groups, need, thinCap, obj, floor, locks) {
-  const val = obj === 'p' ? (L => L.p) : (L => L.p * L.dec);
-  const max = (a, f) => a.reduce((m, L) => Math.max(m, f(L)), 0);
-  const gs = groups.map(gr => { const legs = gr.slice().sort((a, b) => val(b) - val(a)); const pref = legs.filter(L => !L.thin); return { legs, vA: max(legs, val), vP: max(pref, val), pA: max(legs, L => L.p), pP: max(pref, L => L.p) }; }).sort((a, b) => b.vA - a.vA);
-  const G = gs.length;
-  /* top[i][r]: the largest product of r of the per-game best values among games i on (all positive) */
-  const table = key => { const t = new Array(G + 1); t[G] = [1].concat(new Array(need).fill(0)); for (let i = G - 1; i >= 0; i--) { const row = [1]; for (let r = 1; r <= need; r++) row[r] = Math.max(t[i + 1][r], gs[i][key] * t[i + 1][r - 1]); t[i] = row; } return t; };
-  const TV = table('vA'), TVp = table('vP'), TP = table('pA'), TPp = table('pP');
-  let p0 = 1, v0 = 1; for (const L of locks) { p0 *= L.p; v0 *= val(L); }
-  const EPS = 1e-12, SLACK = 1 - 1e-9, chosen = [];
-  let bestV = -1, cands = [];
-  const leaf = () => {
-    const legs = locks.concat(chosen).sort(legCmp);
-    let p = 1, d = 1; for (const L of legs) { p *= L.p; d *= L.dec; }
-    if (floor && !(p >= floor)) return;
-    const v = obj === 'p' ? p : p * d;
-    if (v < bestV - EPS) return;
-    if (v > bestV) { bestV = v; cands = cands.filter(c => c.v >= v - EPS); }
-    cands.push({ v, legs, p, d, key: legs.map(L => L.id).sort().join(',') });
-  };
-  const dfs = (i, r, thinLeft, pp, vv) => {
-    if (r === 0) { if (floor && pp < floor * SLACK) return; if (bestV >= 0 && vv < bestV * SLACK) return; leaf(); return; }
-    if (G - i < r) return;
-    const tv = thinLeft > 0 ? TV : TVp, tp = thinLeft > 0 ? TP : TPp;
-    if (floor && pp * tp[i][r] < floor * SLACK) return;
-    if (bestV >= 0 && vv * tv[i][r] < bestV * SLACK) return;
-    for (const L of gs[i].legs) {
-      if (L.thin && thinLeft <= 0) continue;
-      chosen.push(L); dfs(i + 1, r - 1, thinLeft - (L.thin ? 1 : 0), pp * L.p, vv * val(L)); chosen.pop();
-    }
-    dfs(i + 1, r, thinLeft, pp, vv);
-  };
-  dfs(0, need, thinCap, p0, v0);
-  if (bestV < 0) return null;
-  const win = cands.filter(c => c.v >= bestV - EPS).sort((a, b) => strCmp(a.key, b.key))[0];
-  let fair = 1; for (const L of win.legs) fair = fair === null || L.fair === null ? null : fair * L.fair;
-  return { legs: win.legs, p: win.p, dec: win.d, fair };
-}
-/* a level: the first k (thin legs allowed, 0 up) with a parlay of its size, then the floor's rule, else the likeliest */
-function pbSearch(legs, n, floor, locks, exclude) {
-  const lockGames = new Set(locks.map(L => L.game));
+/* a level (nhl v31, the NFL hub's rule on hockey's pool): the likeliest parlay by PB_CHANCE of 2 to PB_LV_CAP legs, one leg a game,
+   whose legs' decimals multiplied pay minDec, or null where none does. It pays where dec >= minDec * (1 - 1e-9): the page, the record's
+   check (tools/suggest.js) and the smoke share the test, with the price worked in leg order as the record keeps it (2.1 can come out
+   2.0999999999999996 in another order). Ties: the ranking chance within a relative 1e-9, then fewer legs, then the larger product of
+   the other chance (DraftKings' fair chance when ranking by the model, and the reverse), then the lower of the sorted leg ids joined by
+   commas. The search is exact, a Pareto frontier across games: before it a leg is dropped where another of its game has a strictly
+   higher chance and at least its price; a partial parlay is dropped only where another has a chance above its own times (1 + 1e-9),
+   at least its price (capped at minDec) and no more legs, where it cannot beat the best complete one, or where it cannot reach the
+   price with the games left. Synchronous and a few milliseconds a level: tools/suggest.js boots this page in the job and calls it
+   through pbDayLevels. The smoke holds it to a search of its own over every parlay one leg a game */
+const PB_TIE = 1e-9;
+function pbLevel(legs, minDec) {
+  const ch = PB_CHANCE === 'fair' ? (L => L.fair) : (L => L.p), oth = PB_CHANCE === 'fair' ? (L => L.p) : (L => L.fair);
+  const cap = PB_LV_CAP, need = minDec * (1 - PB_TIE);
+  const tieEq = (a, b) => Math.abs(a - b) <= PB_TIE * Math.max(a, b);
+  const better = (a, b) => !b || (!tieEq(a.p, b.p) ? a.p > b.p : a.n !== b.n ? a.n < b.n : !tieEq(a.o, b.o) ? a.o > b.o : a.key < b.key);
   const by = new Map();
-  for (const L of legs) { if (lockGames.has(L.game) || exclude.has(L.id)) continue; if (!by.has(L.game)) by.set(L.game, []); by.get(L.game).push(L); }
-  const groups = [...by.values()], need = n - locks.length, lockThin = locks.filter(L => L.thin).length;
-  if (need < 0 || groups.length < need) return null;
-  const prefGames = groups.filter(gr => gr.some(L => !L.thin)).length;
-  let k0 = -1; for (let k = lockThin; k <= n; k++) if (prefGames >= need - (k - lockThin)) { k0 = k; break; }
-  if (k0 < 0) return null;
-  const run = (k, obj) => need === 0 ? pbBest([], 0, 0, obj, obj === 'p' ? 0 : floor, locks) : pbBest(groups, need, k - lockThin, obj, obj === 'p' ? 0 : floor, locks);
-  if (!floor) { const r = run(k0, 'p'); return r && Object.assign(r, { k: k0 }); }
-  for (let k = k0; k <= n; k++) { const r = run(k, 'ret'); if (r) return Object.assign(r, { k }); }
-  const r = run(k0, 'p'); return r && Object.assign(r, { k: k0, likeliest: true });
+  for (const L of legs) { if (!(ch(L) > 0)) continue; if (!by.has(L.game)) by.set(L.game, []); by.get(L.game).push(L); }
+  const games = [...by.values()].map(gl => gl.filter(B => !gl.some(A => A !== B && ch(A) > ch(B) * (1 + PB_TIE) && A.dec >= B.dec)));
+  const m = games.length, maxD = games.map(gl => Math.max(...gl.map(L => L.dec)));
+  /* reach[i][r]: the largest price r more legs of games i on can add (fewer allowed) */
+  const reach = []; reach[m] = [1].concat(new Array(cap).fill(1));
+  for (let i = m - 1; i >= 0; i--) { reach[i] = [1]; for (let r = 1; r <= cap; r++) reach[i][r] = Math.max(reach[i + 1][r], maxD[i] * reach[i + 1][r - 1]); }
+  let best = null, P = [{ p: 1, d: 1, n: 0, o: 1, legs: [] }];
+  for (let i = 0; i < m; i++) {
+    const nx = P.slice();
+    for (const s of P) for (const L of games[i]) {
+      const q = { p: s.p * ch(L), d: s.d * L.dec, n: s.n + 1, o: s.o * (oth(L) || 0), legs: s.legs.concat(L) };
+      if (best && q.p < best.p * (1 - PB_TIE)) continue;
+      if (q.n >= 2 && q.d >= need) { q.key = q.legs.map(x => x.id).sort().join(','); if (better(q, best)) best = q; continue; }
+      if (q.n < cap) nx.push(q);
+    }
+    /* what cannot beat the best or reach the price goes; then a partial another clearly likelier one matches on price and legs */
+    const keep = nx.filter(s => !(best && s.p < best.p * (1 - PB_TIE)) && s.d * reach[i + 1][cap - s.n] >= need).sort((a, b) => (b.p - a.p) || (a.n - b.n) || (b.d - a.d));
+    const top = new Array(cap + 1).fill(-1);
+    P = [];
+    for (let j = 0, f = 0; j < keep.length; j++) {
+      const s = keep[j], dc = Math.min(s.d, minDec);
+      for (; f < j && keep[f].p > s.p * (1 + PB_TIE); f++) { const x = keep[f], xc = Math.min(x.d, minDec); if (xc > top[x.n]) top[x.n] = xc; }
+      let dom = false; for (let n = 0; n <= s.n && !dom; n++) dom = top[n] >= dc;
+      if (!dom) P.push(s);
+    }
+  }
+  if (!best) return null;
+  const out = best.legs.slice().sort(legCmp);
+  let p = 1, d = 1, fair = 1; for (const L of out) { p *= L.p; d *= L.dec; fair = fair === null || L.fair === null ? null : fair * L.fair; }
+  return { legs: out, p, dec: d, fair, pick: PB_PICK, minDec, chance: PB_CHANCE };
 }
 
 /* ---------- the Top 30 lines ---------- */
@@ -2971,16 +2974,17 @@ const sameLegs = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]
 function spDay(date) {
   const games = S.games.filter(g => g.date === date && !hasStarted(g)).sort(gameCmp);
   const pool = pbPool({ games }, { k: Object.assign({}, PB_MIX.all), off: [] }), levels = {};
-  for (const t of PB_TIERS) levels[t[0]] = pbSearch(pool.legs, t[2], t[3], [], new Set());
+  for (const t of PB_TIERS) levels[t[0]] = pbLevel(pool.legs, t[4]);
   return { date, games, pool, levels };
 }
 /* the record's levels (tools/suggest.js boots this page on the state the job has just made and reads them here): one day's set as the
-   Suggested Parlays tab draws it, so the record is exactly what the tab showed on that day */
+   Suggested Parlays tab draws it, so the record is exactly what the tab showed on that day; each level with the rule that chose it
+   (pick, minDec, chance: nhl v31), which the record keeps on every level it takes from then on */
 function pbDayLevels(date) {
   const D = spDay(date), levels = {};
   const leg = L => Object.assign({ id: L.id, game: L.game, kind: L.kind, side: L.side, num: L.num, price: L.price, other: L.other, p: L.p, fair: L.fair, edge: L.edge, thin: !!L.thin, mu: L.mu, start: L.start },
     L.prop ? { pid: L.pid, name: L.name, team: L.team, grp: L.grp, stat: L.stat, mk: L.mk, k: L.k, at: L.at } : {});
-  for (const t of PB_TIERS) { const r = D.levels[t[0]]; levels[t[0]] = r ? { legs: r.legs.map(leg), p: r.p, fair: r.fair, dec: r.dec, likeliest: !!r.likeliest } : null; }
+  for (const t of PB_TIERS) { const r = D.levels[t[0]]; levels[t[0]] = r ? { legs: r.legs.map(leg), p: r.p, fair: r.fair, dec: r.dec, pick: r.pick, minDec: r.minDec, chance: r.chance } : null; }
   return { games: D.pool.tickable.map(g => g.id), levels };
 }
 /* a day's first puck drop: its earliest start, a game's being the earlier of its start and the puck drop its frozen call was made
@@ -3000,12 +3004,13 @@ function spDays() {
   return nx ? [nx] : [];
 }
 const spDayName = d => { const t = etToday(); return d === t ? 'Today' : d === addDays(t, 1) ? 'Tomorrow' : dayText(d); };
-/* why a level of an open day is empty, worked out from the day's lines */
-function spWhy(date, pool) {
+/* why a level of an open day is empty, worked out from the day's lines: no leg qualifies, one game alone has one, or (nhl v31) no
+   parlay of the day's legs, one a game, pays the level's least price */
+function spWhy(date, pool, minDec) {
   const m = pool.games, txt = dayText(date);
   if (m === 0) return `No leg on ${txt} qualifies: the model rates none at or above DraftKings' price, at 45% to 97% and not far off the market.`;
-  if (m === pool.tickable.length) return `Only ${m} game${m > 1 ? 's' : ''} on ${txt} (one leg a game).`;
-  return `Only ${m} of the ${pool.tickable.length} games on ${txt} ${m === 1 ? 'has' : 'have'} a leg the model rates at or above DraftKings' price (one leg a game).`;
+  if (m < 2) return `Only ${m} of the ${pool.tickable.length} games on ${txt} has a leg the model rates at or above DraftKings' price (one leg a game).`;
+  return `No parlay of ${txt}'s legs pays ${toAm(minDec)} or more (one leg a game).`;
 }
 /* the day-wide line in place of an open day's levels: no line yet, or one lined game */
 function spWide(D) {
@@ -3013,42 +3018,53 @@ function spWide(D) {
   if (!D.pool.tickable.length) {
     const opener = S.games[0] && S.games[0].date;
     if (opener === D.date && S.games.every(g => g.date >= D.date)) return `The season opens ${txt}.`;
-    return `No DraftKings lines yet for ${txt}.`;
+    return `Next up: ${txt}, ${D.games.length} game${D.games.length === 1 ? '' : 's'}. Its set goes up once DraftKings posts lines, about a day ahead.`;
   }
   if (D.pool.tickable.length < 2) return `Only one game on ${txt} has a DraftKings line, and a parlay needs two.`;
   return '';
 }
+/* a level's rule line and its title, by the rule that chose it (the level's own fields): from nhl v31 "likeliest · +300+", titled "The
+   likeliest parlay by the site's model (the props model, on trial, on player lines) paying at least +300: $1 returns $4 or more"; a
+   level the record locked before (no pick) keeps the words it was drawn with, by PB_TIERS_V30: "likeliest pair", "best return · model
+   25%+", "likeliest 3 legs" */
 const legRuleText = (t, res) => { const [, , n, floor] = t; return !floor ? 'likeliest pair' : res.likeliest ? `likeliest ${n} legs` : `best return · model ${Math.round(floor * 100)}%+`; };
 const legRuleTitle = (t, res) => { const [, , n, floor] = t; return !floor ? 'The likeliest 2-leg parlay by the model' : res.likeliest ? `No ${n}-leg parlay lands ${Math.round(floor * 100)}% of the time by the model: the likeliest ${n} legs` : `The ${n}-leg parlay with the best return (the model's chance times the payout) that lands at least ${Math.round(floor * 100)}% of the time by the model`; };
-const thinT = () => `thin edge: the model rates it at or above DraftKings' price, but not ${Math.round(S.edge * 100)} points above it`;
-/* the three numbers of a level: the fair chance (the model's beside it), the price, what the bet amount pays */
-/* a level holding a player line (nhl v18) says its chance is partly the props model's, on trial, never "model says" */
-const spNums = (p, fair, dec, pays, prop) => `<div class="pb-nums">
-      <div class="pb-n pb-chance"><div class="v">${fair === null ? whole(p) : whole(fair)}</div><div class="k">${fair === null ? "model's chance" : 'fair chance'}${fair !== null && prop ? ', est.' : ''}</div><div class="s">${fair === null ? 'no fair chance' : prop ? `model ${whole(p)}, <span class="nw">props on trial</span>` : `model says ${whole(p)}`}</div></div>
+const v30Tier = id => PB_TIERS_V30.find(x => x[0] === id);
+const lvRuleText = (id, res) => res.pick ? `likeliest · ${toAm(res.minDec)}+` : legRuleText(v30Tier(id), res);
+const lvRuleTitle = (id, res) => res.pick ? `The likeliest parlay by ${res.chance === 'fair' ? "DraftKings' fair chance" : "the site's model (the props model, on trial, on player lines)"} paying at least ${toAm(res.minDec)}: $1 returns ${stakeShort(res.minDec)} or more` : legRuleTitle(v30Tier(id), res);
+const lvRule = (id, res) => `<span class="pb-rule" title="${esc(lvRuleTitle(id, res))}">${esc(lvRuleText(id, res))}</span>`;
+/* the three numbers of a level (nhl v31, the NFL's): DraftKings' fair chance (", est." with a Yes price) and what $1 on it is expected
+   to return at that chance, fair x price - 1 in whole percent, rose below 0; under them the model's chance the level was ranked on
+   ("model says 41%", or "model 41%, props on trial" on a level holding a player line), gone on a level ranked on the fair chance; the
+   price, plain; what the bet amount pays */
+const spEv = (fair, dec) => { const ev = fair * dec - 1, r = Math.round(ev * 100); return `<div class="s pb-ev${r < 0 ? ' neg' : ''}" title="At DraftKings' fair chance: $1 returns $${(1 + ev).toFixed(2)} on average">expected ${r < 0 ? '−' : r > 0 ? '+' : ''}${Math.abs(r)}%</div>`; };
+const spNums = (res, pays, prop, est) => { const { p, fair, dec } = res; return `<div class="pb-nums">
+      <div class="pb-n pb-chance"><div class="v">${fair === null ? whole(p) : whole(fair)}</div><div class="k">${fair === null ? "model's chance" : 'fair chance'}${fair !== null && est ? ', est.' : ''}</div>${fair === null ? '<div class="s">no fair chance</div>' : spEv(fair, dec) + (res.chance === 'fair' ? '' : `<div class="s">${prop ? `model ${whole(p)}, <span class="nw">props on trial</span>` : `model says ${whole(p)}`}</div>`)}</div>
       <div class="pb-n"><div class="v">${toAm(dec)}</div><div class="k">price</div></div>
       ${pays}
-    </div>`;
-/* a level's head, the NFL's: its result (a locked level's) at the left, its name and its legs at the right, its rule under them */
-const spHead = (id, label, n, tag, rule) => `<div class="pb-th">${tag || ''}<span class="pb-tn">${label}</span><span class="pb-tc">${n} legs</span>${rule || ''}</div>`;
+    </div>`; };
+/* a level's head, the NFL's: its result (a locked level's) at the left, its name and its size at the right (none on an empty level),
+   its rule under them */
+const spHead = (id, label, n, tag, rule) => `<div class="pb-th">${tag || ''}<span class="pb-tn">${label}</span>${n ? `<span class="pb-tc">${n} legs</span>` : ''}${rule || ''}</div>`;
 /* a leg's two lines: the club or player on the first (a total's two clubs and its bet), the bet, the game and its puck drop under it */
-const spWho = (pills, who, thin) => `<span class="pb-who">${pills}<b>${esc(who)}</b>${thin || ''}</span>`;
+const spWho = (pills, who) => `<span class="pb-who">${pills}<b>${esc(who)}</b></span>`;
 const spFairEm = (fair, est) => fair === null || fair === undefined ? '—' : `${whole(fair)}${est ? ' est.' : ''}`;
 const spUnder = (bet, mu, when) => `<small>${bet ? `${esc(bet)} · ` : ''}<span class="m"><span class="nw">${esc(mu)}</span>${when ? ` · <span class="nw">${esc(when)}</span>` : ''}</span></small>`;
 /* an open level's card: each leg a row with its own Add, then Finish and Add to builder */
 function spCard(t, res, D, inB, drawnIds) {
-  const [id, label, n] = t, key = `${D.date}|${id}`;
-  if (!res) return `<div class="pb-tier none" data-tier="${id}">${spHead(id, label, n)}<p class="pb-empty">${esc(spWhy(D.date, D.pool))}</p></div>`;
+  const [id, label] = t, key = `${D.date}|${id}`;
+  if (!res) return `<div class="pb-tier none" data-tier="${id}">${spHead(id, label, 0)}<p class="pb-empty">${esc(spWhy(D.date, D.pool, t[4]))}</p></div>`;
   const stake = pbStake(), all = sameLegs(drawnIds, res.legs.map(L => L.id));
   /* DraftKings' fair chance under the price, the NFL's (est. on a Yes price): the legs' figures multiply to the card's fair chance; both
      chances, named, on the row's title and in the Add's name */
   const rows = res.legs.map(L => { const on = inB.has(L.id), ch = legChances(L, true) + (L.prop ? ' (on trial)' : ''), tot = L.kind === 'ou' && !L.prop;
     return `<li class="pb-tl" data-id="${esc(L.id)}" title="${esc(ch)}">
-      <span class="nm">${spWho(legWho(L), tot ? L.bet : L.who, L.thin ? `<span class="pill warn thin" title="${esc(thinT())}">thin edge</span>` : '')}${spUnder(tot ? '' : L.bet, L.mu, timeOf(L.g))}</span>
+      <span class="nm">${spWho(legWho(L), tot ? L.bet : L.who)}${spUnder(tot ? '' : L.bet, L.mu, timeOf(L.g))}</span>
       <span class="pr">${fmtOdds(L.price)}<em>${spFairEm(L.fair, L.fairEst)}</em></span>
       <button type="button" class="sp-add" data-leg="${esc(L.id)}" aria-pressed="${on}" aria-label="${esc(`${on ? 'In your parlay: take out' : 'Add'} ${legName(L)}, ${fmtOdds(L.price)}, ${ch.replace(/ · /g, ', ')}`)}" title="${on ? 'In your parlay: tap to take it out' : 'Add this leg to your parlay'}">${on ? 'Added' : 'Add'}</button></li>`; }).join('');
   return `<div class="pb-tier" data-tier="${id}">
-    ${spHead(id, label, n, '', `<span class="pb-rule" title="${esc(legRuleTitle(t, res))}">${esc(legRuleText(t, res))}</span>`)}
-    ${spNums(res.p, res.fair, res.dec, `<div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`, res.legs.some(L => L.prop))}
+    ${spHead(id, label, res.legs.length, '', lvRule(id, res))}
+    ${spNums(res, `<div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`, res.legs.some(L => L.prop), res.legs.some(L => L.fairEst))}
     <ul class="pb-tlegs">${rows}</ul>
     <div class="pb-acts"><button type="button" class="btn quiet" data-sp-add="${key}"${all ? ' disabled' : ''}>${all ? 'In the builder' : 'Add to builder'}</button><button type="button" class="btn go" data-sp-finish="${key}">Finish</button></div>
   </div>`;
@@ -3089,9 +3105,11 @@ function spResult(t, legs) {
   const won = t.legs.filter((L, i) => legs[i] === 'win');
   return { result: 'won', payout: won.length === t.legs.length ? t.dec : won.reduce((a, L) => a * dec(L.price), 1) };
 }
+/* a set taken under the rule of nhl v31 on (its levels carry their pick): an empty level there is one no parlay paid */
+const spSetPick = e => Object.values(e.tiers || {}).some(x => isObj(x) && !!x.pick);
 function spLockedCard(t, e) {
-  const [id, label, n] = t, tt = e.tiers && e.tiers[id];
-  if (!tt) return `<div class="pb-tier none" data-tier="${id}">${spHead(id, label, n)}<p class="pb-empty">No ${label} parlay was in the set: too few legs qualified on ${esc(dayText(e.date))}.</p></div>`;
+  const [id, label] = t, tt = e.tiers && e.tiers[id];
+  if (!tt) return `<div class="pb-tier none" data-tier="${id}">${spHead(id, label, 0)}<p class="pb-empty">No ${label} parlay was in the set: ${spSetPick(e) ? `no parlay of ${esc(dayText(e.date))}'s legs paid ${toAm(t[4])} or more` : `too few legs qualified on ${esc(dayText(e.date))}`}.</p></div>`;
   const grades = tt.legs.map((L, i) => spLegNow(L, i, e, id)), R = spResult(tt, grades), stake = pbStake(), gb = gameById();
   const rows = tt.legs.map((L, i) => {
     const g = gb[L.game], gr = grades[i], mu = L.mu || '', bet = L.kind === 'prop' ? `${L.name || `ESPN athlete ${L.pid}`} ${propBet(L.stat, L.mk, L.side, +L.line, L.k)}` : L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? fmtLine(L.line) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.line}`;
@@ -3115,8 +3133,8 @@ function spLockedCard(t, e) {
     : R.result === 'push' ? `<div class="pb-n pay"><div class="v">${money(cents(stake))}</div><div class="k">the stake back</div></div>`
     : `<div class="pb-n pay" data-pb-pay="${tt.dec}"><div class="v">${money(cents(stake * tt.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`;
   return `<div class="pb-tier locked" data-tier="${id}" data-result="${R.result}">
-    ${spHead(id, label, n, res, `<span class="pb-rule" title="${esc(legRuleTitle(t, tt))}">${esc(legRuleText(t, tt))}</span>`)}
-    ${spNums(tt.p, tt.fair, tt.dec, pay, tt.legs.some(L => L.kind === 'prop'))}
+    ${spHead(id, label, tt.legs.length, res, lvRule(id, tt))}
+    ${spNums(tt, pay, tt.legs.some(L => L.kind === 'prop'), tt.legs.some(L => L.kind === 'prop' && L.mk === 'yes'))}
     <ul class="pb-tlegs">${rows}</ul>
   </div>`;
 }
@@ -3128,7 +3146,7 @@ function spSetHtml(date, inB, drawnIds) {
   if (spOpen(date)) {
     const D = spDay(date), w = spWide(D);
     SP_CUR[date] = D.levels;
-    const lk = isFinite(lock) ? `<p class="sp-lock" title="The set locks at the day's first puck drop: the record grades the set the job took at its last run before then">Locks ${esc(hhmm(new Date(lock).toISOString()))}</p>` : '';
+    const lk = isFinite(lock) ? `<p class="sp-lock" title="The set locks at the day's first puck drop: the record grades the set the job took at its last run before then">Locks ${esc(dayClock(new Date(lock).toISOString()))}</p>` : '';
     return `<section class="sp-day" data-sp-day="${date}" data-sp-state="open">${head}${lk}`
       + (w ? `<div class="empty pb-wide">${esc(w)}</div>` : `<div class="pb-tiers">${PB_TIERS.map(t => spCard(t, D.levels[t[0]], D, inB, drawnIds)).join('')}</div>`) + '</section>';
   }
@@ -3139,7 +3157,7 @@ function spSetHtml(date, inB, drawnIds) {
   if (e) {
     const lv = PB_TIERS.filter(t => e.tiers[t[0]]);
     const settled = lv.length && lv.every(t => spResult(e.tiers[t[0]], e.tiers[t[0]].legs.map((L, i) => spLegNow(L, i, e, t[0]))).result !== 'pending');
-    words = ` since ${hhmm(e.lock)}.`;
+    words = ` since ${dayClock(e.lock)}.`;
     if (settled) { words += ' Graded.'; state = 'graded'; } else if (under) { words += ' Under way.'; state = 'under'; }
   }
   /* a publish from before the record's sets were carried (nhl v16 and older) says only that the day locked, never that no set was taken */
@@ -3155,6 +3173,7 @@ function spNone() {
 function renderSuggest() {
   if (!S) return;
   const rh = pbRecHtml(); $('pbRec').innerHTML = rh; $('pbRec').hidden = !rh;
+  const ch = spChangeText(); $('spChange').textContent = ch; $('spChange').hidden = !ch;
   const days = spDays(), drawn = builderLegs(false), inB = new Set(drawn.map(L => L.id)), ids = drawn.map(L => L.id);
   SP_CUR = {};
   const open = days.filter(spOpen), lined = S.games.filter(g => open.includes(g.date) && !hasStarted(g) && freshLine(g));
@@ -3166,22 +3185,46 @@ function renderSuggest() {
   for (const d of days) for (const g of S.games) if (g.date === d && !hasStarted(g)) SHOWN.add(g.id);
 }
 /* the record's row under the tab's heading (S.suggest, tools/suggest.js's summary of the season's days): the NFL hub's, a pill a
-   level, won-lost and the units on 1 a day, pending apart, "None graded yet" before any; each pill's title the graded count, the wins
-   expected by DraftKings' fair chance and by the model, pushes, days with no parlay of that level and the days replayed */
+   level, won-lost and the units on 1 a day over every rule the level has had, pending apart, "None graded yet" before any; each pill's
+   title the graded count, the wins expected by DraftKings' fair chance and by the model, pushes, days with no parlay of that level and
+   the days replayed, then (nhl v31) each rule's own record where the level has had a rule before today's (the summary's eras): "of them
+   25 under the earlier rule (3 legs, best return at 25%+), to Nov 12: 4–21, −2.56 units; 2 since Nov 13 (likeliest paying +300 or
+   more): 1–1, +2.00 units" */
+const recUnits = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); };
+function spEraWords(t, s) {
+  if (!isObj(s.eras)) return '';
+  const cur = [PB_PICK, t[4], PB_CHANCE].join(' '), v = v30Tier(t[0]);
+  const eras = Object.entries(s.eras).filter(([, e]) => isObj(e) && (e.graded || e.push)).sort((a, b) => strCmp(a[1].from, b[1].from) || strCmp(a[0], b[0]));
+  if (eras.every(([k]) => k === cur)) return '';
+  return '; of them ' + eras.map(([k, e]) => {
+    const rec = `${e.won}–${e.lost}${e.push ? `, ${e.push} push${e.push === 1 ? '' : 'es'}` : ''}, ${recUnits(e.units)} units`;
+    if (k === 'v30') return `${e.graded} under the earlier rule (${!v[3] ? 'the likeliest pair' : `${v[2]} legs, best return at ${Math.round(v[3] * 100)}%+`}), to ${monthDay(e.to)}: ${rec}`;
+    const [, minDec, chance] = k.split(' '), how = `likeliest${chance === PB_CHANCE ? '' : chance === 'fair' ? " by DraftKings' fair chance" : ' by the model'} paying ${toAm(+minDec)} or more`;
+    return k === cur ? `${e.graded} since ${monthDay(e.from)} (${how}): ${rec}` : `${e.graded} from ${monthDay(e.from)} to ${monthDay(e.to)} (${how}): ${rec}`;
+  }).join('; ');
+}
+/* the one dated line on the change of rule (nhl v31): for seven days from the publish that first carried it (the record's change.at,
+   by the publish's Eastern date), never stored. CLAUDE.md: only a model change earns a banner */
+function spChangeText() {
+  const c = S.suggest && isObj(S.suggest.change) ? S.suggest.change : null;
+  if (!c || !c.from || !c.at || !(etDate(S.published) < addDays(etDate(c.at), 7))) return '';
+  const am = PB_TIERS.map(t => toAm(t[4]));
+  return `From ${monthDay(c.from)} each level is the likeliest parlay paying ${am.slice(0, -1).join(', ')} or ${am[am.length - 1]} or more; each pill's title keeps the earlier levels apart.`;
+}
 function pbRecHtml() {
   const R = S.suggest; if (!isObj(R) || !isObj(R.tiers)) return '';
-  const un = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); }, f1 = v => (+v || 0).toFixed(1), pl = (n, w) => `${n} ${w}${n === 1 ? '' : w.endsWith('sh') ? 'es' : 's'}`;
+  const un = recUnits, f1 = v => (+v || 0).toFixed(1), pl = (n, w) => `${n} ${w}${n === 1 ? '' : w.endsWith('sh') ? 'es' : 's'}`;
   const since = R.since ? ` since ${dayText(R.since)}` : '';
   const shown = PB_TIERS.filter(t => isObj(R.tiers[t[0]]));
   const any = shown.some(t => R.tiers[t[0]].graded || R.tiers[t[0]].push);
-  const pills = shown.map(([id, label]) => {
-    const s = R.tiers[id];
+  const pills = shown.map(t => {
+    const [id, label] = t, s = R.tiers[id];
     const title = `${label}: ${s.won} won of ${s.graded} graded${since}${s.graded ? `; wins expected ${f1(s.exp_fair)} by DraftKings' fair chance${s.fair_n < s.graded ? ` (on the ${s.fair_n} with one)` : ''}, ${f1(s.exp_model)} by the model` : ''}`
       + (s.push ? `; ${pl(s.push, 'push')}, the stake back` : '') + (s.none ? `; ${pl(s.none, 'day')} with no ${label} parlay` : '')
-      + (s.replay ? `; ${s.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
+      + (s.replay ? `; ${s.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '') + spEraWords(t, s);
     return `<span class="rec" data-pb-rec="${id}" title="${esc(title)}">${esc(label)} <b>${s.won}–${s.lost}</b>${s.graded || s.push ? ` ${un(s.units)} units` : ''}</span>`;
   }).join('');
-  return `<span class="pb-reck">Record</span>${any ? pills : '<span class="rec" data-pb-rec="none">None graded yet</span>'}${R.pending ? `<span class="rec" data-pb-rec="pending">Pending <b>${R.pending}</b></span>` : ''}`;
+  return `<h3 class="pb-reck">Record</h3>${any ? pills : '<span class="rec" data-pb-rec="none">None graded yet</span>'}${R.pending ? `<span class="rec" data-pb-rec="pending">Pending <b>${R.pending}</b></span>` : ''}`;
 }
 /* every level's pays line, redrawn in place as the amount is typed */
 function pbPays() {
@@ -3208,7 +3251,7 @@ $('spBody').addEventListener('click', e => {
      their lines, or keeps their game to one leg), which a reload could bring back. A leg left out is kept only where the level holds
      that very bet at its number: the same side at a number a read has moved it to is another bet, and the stored one goes (sameBet) */
   const drawn = builderLegs(false), have = drawn.length, held = heldOut(drawn), lv = res.legs.map(storeLeg);
-  const lose = held.filter(l => !lv.some(nl => sameBet(l, nl))).length, what = `${t[1]} ${t[2]}-leg parlay`;
+  const lose = held.filter(l => !lv.some(nl => sameBet(l, nl))).length, what = `${t[1]} ${res.legs.length}-leg parlay`;
   const ask = !lose ? `Replace the ${legsN(have)} in the builder with the ${what}?` : !have ? `Replace the ${legsN(lose)} kept on this device that the builder leaves out of the parlay with the ${what}?`
     : `Replace the ${legsN(have)} in the builder, and the ${legsN(lose)} kept on this device that it leaves out of the parlay, with the ${what}?`;
   if (((have && !sameLegs(drawn.map(L => L.id), res.legs.map(L => L.id))) || lose) && !confirm(ask)) return;
@@ -4172,14 +4215,14 @@ function oddsSay(text) { ODDS.said = text; for (const id of ['oddsNote', 'pbOdds
 /* before a press: whose lines the page holds for the games still to come on the days listed, and when the job read them. Another book's
    price is never called DraftKings': each book is named, and with no line there is no claim of one */
 function oddsIdleText() {
-  const today = etToday(), days = new Set(listDays().filter(d => d >= today)), when = hhmm(S.published);
+  const today = etToday(), days = new Set(listDays().filter(d => d >= today)), when = dayClock(S.published);
   const names = [...new Set(S.games.filter(g => days.has(g.date) && !hasStarted(g) && g.line).map(g => { const b = bookName(g.line); return b === 'the book' ? 'a book ESPN does not name' : b; }))].sort((a, b) => (b === 'DraftKings') - (a === 'DraftKings') || strCmp(a, b));
   return names.length ? `${names.join(', ')} via ESPN, ${when}.` : `No lines yet at the job's last run, ${when}.`;
 }
 function oddsIdle() { if (!ODDS.said && S) oddsSay(oddsIdleText()); }      // the job's own read, until a press
 function oddsBusy(on) { ODDS.busy = on; for (const b of document.querySelectorAll('[data-odds]')) { if (on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); b.setAttribute('aria-busy', String(on)); } if (on && $('ppOddsNote')) $('ppOddsNote').textContent = 'reading…'; }
 function oddsText(r) {
-  const when = hhmm(r.at);
+  const when = dayClock(r.at);
   if (!r.answered) return `ESPN could not be read at ${when}: ${r.lined ? 'every line stands as shown' : 'nothing changed'}.`;
   const src = r.books.size && [...r.books].every(b => bookKey(b) === 'draftkings') ? "DraftKings' lines" : 'Lines';
   let t = r.read ? `${src} from ESPN, read ${when}: ${plural(r.read, 'game', 'games')}${r.moved ? `, ${r.moved} moved since the last read` : ''}${r.first ? `, ${r.first} with a first line` : ''}.`

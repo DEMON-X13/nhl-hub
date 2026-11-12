@@ -3221,7 +3221,7 @@ function pbRecHtml() {
     const [id, label] = t, s = R.tiers[id];
     const title = `${label}: ${s.won} won of ${s.graded} graded${since}${s.graded ? `; wins expected ${f1(s.exp_fair)} by DraftKings' fair chance${s.fair_n < s.graded ? ` (on the ${s.fair_n} with one)` : ''}, ${f1(s.exp_model)} by the model` : ''}`
       + (s.push ? `; ${pl(s.push, 'push')}, the stake back` : '') + (s.none ? `; ${pl(s.none, 'day')} with no ${label} parlay` : '')
-      + (s.replay ? `; ${s.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '') + spEraWords(t, s);
+      + (s.replay ? `; ${s.replay} of them rebuilt afterwards, by the earlier rule, from the state the site published before that day's first puck drop` : '') + spEraWords(t, s);
     return `<span class="rec" data-pb-rec="${id}" title="${esc(title)}">${esc(label)} <b>${s.won}–${s.lost}</b>${s.graded || s.push ? ` ${un(s.units)} units` : ''}</span>`;
   }).join('');
   return `<h3 class="pb-reck">Record</h3>${any ? pills : '<span class="rec" data-pb-rec="none">None graded yet</span>'}${R.pending ? `<span class="rec" data-pb-rec="pending">Pending <b>${R.pending}</b></span>` : ''}`;

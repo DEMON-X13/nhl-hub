@@ -1362,7 +1362,9 @@ nhl v15 on the NFL hub's (`props/build/suggest_ledger.js`), with hockey's unit, 
   write over the record). That first run's `step()` rewrites the header itself and no day: `tiers` the new table, `tiersBefore` the
   v30 one, `how` naming both, `changed` its publish. Every day locked before stands as taken, words and all (only open days are
   rewritten, and a day taken by v30 that no later run reaches with a fresh line locks by v30). `setOf` copies the rule's fields onto
-  a level the page gives them for, and only there. On 12 November (15:58Z, 11 games) the v30 levels were −105 (2 legs: model 63.0%,
+  a level the page gives them for, and only there. **Reverting v31 is not one step**: once a v31 run has migrated the header, v30's
+  `check()` refuses it ("its levels are not Safe, Medium, Aggressive") and every run would fail before its commit, so a revert keeps
+  v31's `tools/suggest.js`, or puts the header back to v30's (`tiers` from `tiersBefore`, no `changed`) in the same commit. On 12 November (15:58Z, 11 games) the v30 levels were −105 (2 legs: model 63.0%,
   fair 49.2%), +590 (3: 29.2%, 14.5%) and +1217 (4: 18.6%, 7.6%); the new rule's on the same pool +111 (Rinzel Under 0.5 assists,
   But Under 0.5 points: 62.5%, 47.5%), +302 (3: 41.0%, 24.8%) and +700 (Leafs +1.5 and three Unders: 27.0%, 12.0%).
 

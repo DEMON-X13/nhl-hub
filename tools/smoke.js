@@ -953,7 +953,7 @@ function sRecTitle(id, label, minDec, t, since, eras) {
   const un = v => { const r = Math.round(v * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); }, f1 = v => (+v || 0).toFixed(1), pl = (n, x) => `${n} ${x}${n === 1 ? '' : x === 'push' ? 'es' : 's'}`;
   const md = dd => new Date(dd + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   let title = `${label}: ${t.won} won of ${t.graded} graded${since ? ` since ${PBS.day(since)}` : ''}${t.graded ? `; wins expected ${f1(t.exp_fair)} by DraftKings' fair chance${t.fair_n < t.graded ? ` (on the ${t.fair_n} with one)` : ''}, ${f1(t.exp_model)} by the model` : ''}`
-    + (t.push ? `; ${pl(t.push, 'push')}, the stake back` : '') + (t.none ? `; ${pl(t.none, 'day')} with no ${label} parlay` : '') + (t.replay ? `; ${t.replay} of them rebuilt by today's rules from the state the site published before that day's first puck drop` : '');
+    + (t.push ? `; ${pl(t.push, 'push')}, the stake back` : '') + (t.none ? `; ${pl(t.none, 'day')} with no ${label} parlay` : '') + (t.replay ? `; ${t.replay} of them rebuilt afterwards, by the earlier rule, from the state the site published before that day's first puck drop` : '');
   if (!eras) return title;
   const cur = `${S_PICK} ${minDec} ${S_CHANCE}`, list = Object.entries(eras).filter(([, E]) => E.graded || E.push).sort((a, b) => a[1].from < b[1].from ? -1 : a[1].from > b[1].from ? 1 : a[0] < b[0] ? -1 : 1);
   if (!list.some(([k]) => k !== cur)) return title;
@@ -1429,13 +1429,13 @@ async function cardChecks(w, legs, origin) {
     /* one game's ids gone, one key gone, a number moved */
     if (legs.length >= 3) {
       plant(legs[2].game, null); reopen();
-      chk(new RegExp(`opens 2 of the ${legs.length} legs`).test(note()) && /no DraftKings ids were read for its game/.test(note()) && $('pcDk').href.split('+').length === legs.length - 1, `a game with no ids: named, ${legs.length - 1} of ${legs.length} opened (${note().slice(0, 160)})`);
+      chk(new RegExp(`opens ${legs.length - 1} of the ${legs.length} legs`).test(note()) && /no DraftKings ids were read for its game/.test(note()) && $('pcDk').href.split('+').length === legs.length - 1, `a game with no ids: named, ${legs.length - 1} of ${legs.length} opened (${note().slice(0, 160)})`);
       noteOk('a game with no ids');
       Object.defineProperty(w.navigator, 'share', { value: async data => { shared.push(data); }, configurable: true });
       Object.defineProperty(w.navigator, 'canShare', { value: () => true, configurable: true });
       $('pcLink').click(); await wait(20);
       const t2 = shared[shared.length - 1].text || '';
-      chk(t2.includes(`DraftKings betslip (opens 2 of the ${legs.length} legs as DraftKings had them; add leg 3 by hand):`) && t2.includes('Add by hand at DraftKings:\n3. ' + legs[2].who + ' ' + legs[2].bet + ' (no DraftKings id was read for its game)'), `the Share text names the leg to add by hand: ${JSON.stringify(t2).slice(0, 300)}`);
+      chk(t2.includes(`DraftKings betslip (opens ${legs.length - 1} of the ${legs.length} legs as DraftKings had them; add leg 3 by hand):`) && t2.includes('Add by hand at DraftKings:\n3. ' + legs[2].who + ' ' + legs[2].bet + ' (no DraftKings id was read for its game)'), `the Share text names the leg to add by hand: ${JSON.stringify(t2).slice(0, 300)}`);
       plant(legs[2].game, Object.assign({}, ids[2]));
       const k1 = Object.assign({}, ids[1]); delete k1[key(legs[1])]; plant(legs[1].game, k1); reopen();
       chk(/not among the DraftKings ids read for its game/.test(note()), 'a key gone: "not among the DraftKings ids read for its game"');
@@ -1809,7 +1809,7 @@ async function parlayEdges() {
   { const M = copy(); for (const g of M.games) if (g.state === 'pre' && g.line) { g.line = null; delete g.mlPick; delete g.plPick; delete g.ouPick; } await madeUp('no line', M, PUB + 60000); }
   if (fresh.length >= 3) {
     /* every game of the slate alike: the home side to win at 60% on -110 (a call), the away puck line at 62% on -150 and the under at 50% on
-       +100 (thin): no 3-leg parlay reaches 25%, so Medium is the likeliest 3; every level is a tie broken by the leg ids */
+       +100 (thin): every level is the likeliest of any size at its price, and each a tie broken by the leg ids */
     const M = copy(), day = fresh[0].date;
     for (const g of M.games) if (g.date === day && g.state === 'pre' && Date.parse(g.start) > PUB && g.line && Math.floor(Date.parse(g.line.at) / 60000) === Math.floor(PUB / 60000)) {
       Object.assign(g.line, { homeML: -110, awayML: 100, homeLine: 1.5, homeSpreadOdds: 125, awaySpreadOdds: -150, total: 5.5, overOdds: -120, underOdds: 100 }); delete g.line.dk;
@@ -7035,15 +7035,20 @@ async function sPlantedPools() {
     const L = (game, p, fair, dec, side) => ({ id: `${game}|${side || 'home'}|ml`, game, kind: 'ml', side: side || 'home', p, fair, dec, price: amOf(dec), start: new Date(t0 + 60000 * (parseInt(game.slice(1), 10) || 0)).toISOString(), mu: `${game} @ X` });
     const G = n => `G${String(n).padStart(2, '0')}`;
     const pools = [
-      ['a tie in the chance goes to fewer legs', 4, [L('G01', 0.6, 0.5, 2.0), L('G02', 0.5, 0.45, 2.4), L('G03', 0.8, 0.7, 1.25), L('G04', 0.75, 0.6, 1.4)], ['G01|home|ml', 'G02|home|ml']],
+      /* the 3 legs G02, G03, G04 tie the pair on the chance (0.3) and have the larger fair product, so only the rule of fewer legs picks the pair */
+      ['a tie in the chance goes to fewer legs', 4, [L('G01', 0.6, 0.4, 2.0), L('G02', 0.5, 0.4, 2.4), L('G03', 0.8, 0.79, 1.25), L('G04', 0.75, 0.74, 1.4)], ['G01|home|ml', 'G02|home|ml']],
       ['then to the larger product of the other chance', 4, [L('G01', 0.6, 0.5, 2.1), L('G02', 0.5, 0.45, 2.0), L('G03', 0.5, 0.48, 2.0)], ['G01|home|ml', 'G03|home|ml']],
       ['then to the lower leg ids', 4, [L('G01', 0.6, 0.5, 2.1), L('G02', 0.5, 0.45, 2.0), L('G03', 0.5, 0.45, 2.0)], ['G01|home|ml', 'G02|home|ml']],
       ['the tie window is relative', 2.1, [L('G01', 0.03, 0.6, 50), L('G02', 0.03, 0.5, 50), L('G03', 0.03000001, 0.4, 50)], ['G01|home|ml', 'G03|home|ml']],
       ['1.5 x 1.4 pays +110', 2.1, [L('G01', 0.7, 0.6, 1.5), L('G02', 0.7, 0.62, 1.4), L('G03', 0.3, 0.25, 3)], ['G01|home|ml', 'G02|home|ml']],
       ['a pair a cent under $2.10 does not pay +110', 2.1, [L('G01', 0.7, 0.6, 1.5), L('G02', 0.69, 0.62, 1 + 100 / 254), L('G03', 0.3, 0.25, 3)], ['G01|home|ml', 'G03|home|ml']],
       ['twelve legs at the most: twelve of 1.2 pay +700', 8, Array.from({ length: 13 }, (_, i) => L(G(i + 1), 0.9, 0.8, 1.2)), Array.from({ length: 12 }, (_, i) => `${G(i + 1)}|home|ml`)],
-      ['twelve legs at the most: none of 1.17 pays +700', 8, Array.from({ length: 14 }, (_, i) => L(G(i + 1), 0.9, 0.8, 1.17)), null],
+      /* 1.18 to the 12th is 7.29, under 8; to the 13th 8.60: a cap of 13 would take 13 legs here */
+      ['twelve legs at the most: none of 1.18 pays +700', 8, Array.from({ length: 14 }, (_, i) => L(G(i + 1), 0.9, 0.8, 1.18)), null],
       ['one leg a game', 2.1, [L('G01', 0.8, 0.7, 1.6), L('G01', 0.79, 0.7, 1.62, 'away'), L('G02', 0.3, 0.25, 3)], ['G01|home|ml', 'G02|home|ml']],
+      /* a team leg and a player's line of one game: the two of them would be the likeliest (0.48 at 2.2), but one leg a game takes
+         G01's moneyline with G02's (0.36 at 3.68) */
+      ['one leg a game, a team leg and a player line alike', 2.1, [L('G01', 0.8, 0.7, 1.6), Object.assign(L('G01', 0.6, 0.55, 1.375), { id: 'G01|prop|900001|pts|under|0.5', kind: 'prop', prop: { pid: '900001', stat: 'pts', side: 'under', line: 0.5 } }), L('G02', 0.45, 0.4, 2.3)], ['G01|home|ml', 'G02|home|ml']],
     ];
     for (const [what, minDec, legs, want] of pools) {
       const got = JSON.parse(w.eval(`JSON.stringify(pbLevel(${JSON.stringify(legs)}, ${minDec}))`)), mine = sLevel(legs, minDec);

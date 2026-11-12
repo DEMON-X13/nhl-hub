@@ -222,12 +222,12 @@ steps stand on:
   folds of unpriced players; every tab's intro paragraph; the builder's lesson and its "Add one more leg" line; the Top 30's lead
   and its "as read" sentence (the Refresh odds line says it); the card's "Yours alone"; the Record's fit paragraph. **Kept**:
   headings, labels, numbers, buttons, `title=` tooltips (where each cut fact worth keeping went), state lines ("DraftKings via ESPN, 2:40 PM UTC · no player lines yet.", "Out: Brayden Point (C, injured reserve).", "No DraftKings lines yet for Thu, Nov 12.", "61 calls
-  predate the injury report.", "Injury report Nov 11, 2:40 PM UTC · goalies Nov 11, 2:40 PM UTC") and money warnings in a few words
+  predate the injury report.", "Injury report of Nov 11, 10:11 PM EST", "No forward matches “zz”.") and money warnings in a few words
   (a source warning's bold words, "2 lines far off the market left out.", "Price est.: DraftKings prices same-game parlays its
   own way.", another book's prices, a leg to add by hand, a level with no parlay saying why). A new paragraph of explanation fails
   the smoke.
-- **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("Team Elo", "1161 skaters",
-  "3-leg parlay"): Team rankings and its absences, Player rankings, Club strength tonight, the Pick'em's chart and its week grid, the
+- **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("Team Elo", "2026-27 through Nov 11",
+  "3-leg parlay"): Team rankings and its absences, ELO Ratings' Rankings, the Pick'em's chart and its week grid, the
   Record's two tables, the parlay tabs' panels, X Parlays. A stat strip stands bare over its cards, as the NFL's. The Games tab's
   card grid is not wrapped (its rows come with the next step).
 
@@ -244,19 +244,18 @@ inside one), tags, the panel and the sheet (the suggested-parlay cards the NFL h
 across a panel's text; on a phone a text box or a select is 16px, so iOS never zooms the page in on it.
 
 - **Every column at every width.** Unlike the NBA's (which hides a table's lesser columns on a tablet and a phone), no
-  table here gives up a column: one wider than the screen scrolls sideways inside its own `.wrap` (or `.scroll`, the
-  players' 400 rows under a sticky head), its club or player column (`.sk`) held at the left as the figures pass under
-  it. On a phone a club in a table is its pill alone (its name kept for a screen reader, absolute inside the club's own
-  box, `.tbl .tw`, positioned: in the players' Club column, which is not the held one, 400 names once set against `main`
-  ran the tab on some 14,000px of empty page past its last table), and a few headings and the Record's months are written
-  short (`.t-wide` over `.t-narrow`: words only, never a column). Team Rankings' table (nhl v26, below) is laid out fixed on a
+  table here gives up a column: one wider than the screen scrolls sideways inside its own `.wrap` (or `.scroll`, ELO
+  Ratings' hundreds of players under a sticky head), its club or player column (`.sk`) held at the left as the figures pass under
+  it. Where a club in a table is its tag alone (Team Rankings on a phone, ELO Ratings at every width) its name is kept for a
+  screen reader, absolute inside the club's own box (`.tw`, positioned: in the Players tab's Club column, which was not the held
+  one, 400 names once set against `main` ran the tab on some 14,000px of empty page past its last table), and a few headings and
+  the Record's months are written short (`.t-wide` over `.t-narrow`: words only, never a column). Team Rankings' table (nhl v26, below) is laid out fixed on a
   width for each of its eleven columns, never squeezed under what they add up to (it scrolls instead), and by its own words on a
-  phone, its club's tag held; its absences table holds the player. A column of figures keeps one format: the team Elo a whole
-  number (the number its shield is taken on); in the Players tab a rating or a strength, the column a
-  table is in order of, unsigned, offence, defence and attack signed and coloured by their sign (+29.9 lime, -8.3 rose),
-  as the NBA's. The smoke reads every rule
+  phone, its club's tag held; its absences table holds the player. A column of figures keeps one format: an Elo a whole
+  number (the number its shield is taken on); in ELO Ratings a figure in goals a game to the hundredth, signed with a true
+  minus (+0.49, −0.08, 0.00), a player's coloured by its sign, a club's plain beside its place. The smoke reads every rule
   in the page's CSS that hides anything and holds every table, row and cell clear of all of them, and every table's
-  columns to the list it had before the restyle (a skater's position now beside his name).
+  columns to its list, heading by heading.
 - **No images.** The page loads no team logo or any other image: on the table tabs ESPN's 32 logos were some 2.2 MB
   of 2.75 MB. Until nhl v25 (since it a club is the NFL's filled tag, above) a club was a badge on a game card and an outlined pill everywhere else (`pill()`, `muPills()`, `teamCell()`: the
   short name stays as text beside it), in its own colour from `TEAM_COLORS` in the page (keyed by the state's club
@@ -280,7 +279,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   asked for), the Ducks' orange and Edmonton's and Philadelphia's (7.1 to 6.9 and 7.3 to 7.1, as the oranges went
   to their own brand colours) and pairs already one colour (under 1). The smoke holds every bar, the families' distance, and every club but the Kings
   in a hue (CIELAB chroma 15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
-  icons left are the drawn ones (the puck, the folds' chevrons, the players' sparklines, and since nhl v19 the Pick'em chart); a leg's Add (a suggested level's, a
+  icons left are the drawn ones (the puck, the folds' chevrons, the tier shields, ELO Ratings' trend lines and histogram, and since nhl v19 the Pick'em chart); a leg's Add (a suggested level's, a
   Top 30 line's) is a word, Add or Added.
 - **The Games list** (`renderGames`, `gameRow`; nhl v28, 12 November 2026: the Games tab as the NFL hub's game list, the rest of
   the second step of the owner's ask above; the NBA's Tonight cards and the day strip are gone). **The bar** over it: **Day** (`#daySel`, a
@@ -586,6 +585,107 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     the table laid out by its own words, a club its tag alone (the name kept for a screen reader) with its rank chip, held at the
     left as the figures pass under; the absences table holds the player.
   - `#standings`, `#playoff` and a tab stored under either name open it.
+- **The ELO Ratings tab** (`#players`, the Players tab's own name, kept so an old link and a stored tab still open it, and `#elo`,
+  the NFL site's; nhl v29, 12 November 2026, the same ask: "match what the NFL hub has, the look, the layout"): the NFL hub's ELO
+  Ratings in hockey's terms, where the Players tab's two cards (Player rankings; Club strength tonight) were. The stamp over one
+  card ("rated Wed, Nov 11, 10:11 PM EST": the player model's `generated`, the visitor's clock), and in the card, the NFL's: the
+  heading "Rankings" with its pill ("2026-27 through Nov 11": the season and `S.players.asOf`) and one search box; the position
+  pills, **Forwards, Defencemen, Goalies** (the three groups the models rate apart: C, LW and RW are forwards); under the label
+  CLUBS the unit pills, **Overall, Attack, Defence, Goaltending**; the tier histogram; the table. No intro, note or key: what a
+  number means is on its heading's `title`. All of it is read from the state as published (`renderPlayers()`, `peWho()`,
+  `peRows()`, `peClubs()`, `peCurve()`): nothing fetched, and the one thing stored is the pill chosen (`nhl_v1` `ui.plKind`, the
+  Players tab's own key: its `skaters` and `goalies` open Forwards and Goalies, anything else Forwards). The job gained one note
+  for it: `tools/players.js` writes each rated player's `last`, the day of his last game on the ice, beside his rating (no
+  rating, lineup or call reads it; no number of the model moved).
+  - **The Elo scale.** The player model rates in goals a game (`S.players.players[id]`: a skater's `v` his offence plus his
+    defence, a goalie's his save rating). The NFL's tiers and histogram stand on an Elo, so each figure is set on its scale:
+    **Elo = round(1500 + 100 × (v − mean) / sd)**, the mean and the sd (the population's) those of `v` over the ranked players of
+    his group (`peScale`), so 1500 is the average ranked forward and a tier (50) half a standard deviation, as the NFL's; where a
+    group is one player or all level, every Elo is 1500. The ladder is the NFL's as it is (`eloTier`, `tierBadge`: Wood under 1350,
+    then 50-point steps, Gold from 1500, HOF from 1750). The Elo's heading says all of that on its title, and the figure itself
+    stays beside it in a column of its own (Goals/G, to the hundredth, half away from zero, signed, lime over zero and rose under;
+    a skater's Offence and Defence after it) and, to the thousandth, on the Elo's title: nothing is hidden behind the scale. On 12
+    November 2026's ratings, by the rule below: 470 forwards (mean −0.051, sd 0.176: Elo 1245 to 1808), 247 defencemen (−0.101,
+    0.206), 74 goalies (0.012, 0.162).
+  - **Who is ranked** (`peWho()`, `peRows()`). The state rates everyone in the box files since 2021-22 (1,675 players, the retired
+    among them: Zdeno Chara is one); `seasons` holds a season-end value for everyone rated, played or not, and `gp` is the games
+    behind the rating since 2021-22 (a goalie's those of 20 minutes or more), so the small line says "482 games rated", never
+    "this season". The Players tab listed whoever had 20 games (10 for a goalie), 400 at the most. **Ranked: that floor
+    (`PE_FLOOR`) and a game this season**, his `last` (the day of his last game on the ice, which `tools/players.js` writes) being
+    of this season (a season starts in August: the job's `seasonOf`); **before this season has a final, last season counts**. **Or,
+    with the floor, on a club's injury report** (out or day to day, by the row's ESPN id): he stays ranked and is marked, as the
+    NFL marks its questionable, IR, OUT or SUSP in rose from the report's own words, DTD in gold, the words on the mark's title
+    (the first club's out row that names him; an out before a day to day), and he is **shown at the club whose report has him**,
+    in the small line and the tag (Frederik Andersen "G · EDM" on Edmonton's injured reserve, his last game Carolina's; Elvis
+    Merzlikins and Miles Wood on Toronto's, Nick Bjugstad on Winnipeg's). The rule in force is on the Player heading's title.
+    - Why `last`: the tab first shipped (to review, never to the site) ranking whoever was "with a club now as the state tells":
+      in a club's last lineup, its goalie in net, on its report, or in a box score the state carries (14 days). Review, 12 November
+      2026: that population changed daily. A lineup leaves out anyone on the report, so a player injured more than two weeks was
+      ranked through the report alone and dropped the day he came off it until he dressed (Rasmus Ristolainen that day; Owen
+      Tippett, the ninth forward, and Travis Konecny on 1 November; Linus Ullmark on 8 and 9 November: 35 players left and came
+      back over 21 daily states, each moving the mean, the sd and every rank below); 96 of the 758 stood on a box score alone
+      (Vasilevskiy, Saros: not "in net next") and would leave as it aged; and with no box score carried, a summer's or an opening
+      night's goalies were 31, not 72. The state could not say when a player last played, so the job now does. On 12 November's
+      ratings the rule on `last` ranks everyone the first rule did and 33 more (19 forwards, 12 defencemen, James Reimer and
+      Spencer Martin), none fewer.
+    - **A state from before `last`** (none of its players has one: the published state until the job's first run with this
+      `players.js`) is read by that first rule, so the page never ranks nobody; the smoke holds both.
+    - One limit, known: the day after a season's first finals only those who have played (and the reported) are ranked, some 200,
+      and the rest come in as their clubs play their first games, three or four days. Before that first final last season counts,
+      so a summer and an opening night are whole.
+  - **The order and the rank.** The order is `v`, best first; level, the name, then the id. The rank is one more than the players
+    whose Elo as shown is greater, so **players level on it share a rank** (24, 24, 26: Team Rankings' rule; review found 131 of
+    451 forwards on the figure and Elo of the row above with a rank of their own, Anders Lee 24th and Travis Konecny 25th on
+    +0.261 and 1674), and a search keeps it (`peRanks`). A club's place in a unit the same (Edmonton and Ottawa, both −0.473 in
+    attack, are 28th and 28th, Seattle 30th), so its place in a column is its rank with that column's pill pressed.
+  - **The columns** are the NFL's (#, Player over its small line "C · CAR · 482 games rated", Team as its tag, Elo, Tier as
+    shield and name, Career, Trend, Peak) with the goals-a-game figures after Tier, and **no Move column**: the state carries no
+    rating of a week ago for a player, and none is invented. Career, Trend and Peak are worked from `seasons` (his figure at the
+    end of each season on file, 2021-22 on), each set on today's mean and sd so they compare with the Elo beside them (`peHist`).
+    **Career** is their average: the NFL's is the rating with every season behind it, which hockey's rating already is, so the
+    closest honest thing a season-end file gives is his level across them ("–" with none on file). **Peak** is the best of them
+    and of now, with its season ("1777 · 2025-26"; the first to reach it). **Trend** is the NFL's line (84 by 22, lime where it
+    ends at or over where it began, rose under) through them to now, its numbers on the cell's title. Ice time, the Players tab's
+    TOI, is in each game's Lineups.
+  - **The clubs' pills** (the NFL's unit pills and its `teamsCard()`): the clubs ranked by `S.players.teams[club]`'s `strength`
+    (Overall: its lineup's attack and defence, weighted by ice time, and the goalie in net for its next game), `offence`,
+    `defence` or `goalie.gk`, each set on the Elo scale among the clubs that have the figure. Columns #, Team (the tag over "18
+    games"), Record, Rating, Tier, then every club's four figures in every view (Overall, Attack, Defence, Goalie, each signed to
+    the hundredth with its place among the clubs, the NFL's ordinals: the top eight lime, the bottom eight rose) and In goal (the
+    goalie's name, how he was chosen on its title). The pill chooses which figure the table is ranked and tiered on; no heading
+    sorts or is lit. A club with no goalie in net stands last in Goaltending, unranked and outside that scale. The Players tab's
+    Out column and its sources line went: who is out is Team Rankings' Impact absences and each game's Lineups, and which injury
+    report the calls stand on is said there and in the Games tab's warnings.
+  - **The histogram** (`peCurve`, the NFL's `curveChart()`; an inline SVG, no image): the ranked in twelve 50-point bins from 1200
+    to 1800 (the ends clamped in), a bar a bin in its tier's colour (the NFL's; HOF the gem's gradient) with its count over it,
+    the ten tiers and where each starts under the axis, the dashed bell curve a normal curve of as many would draw on the same
+    scale, and the legend ("470 ranked forwards", "bell curve"). A bin's tier, range, count and share show over it under the
+    pointer (`.pe-cv-tip`: "Wood · under 1250", "1 forward (0%)", one of them never "1 forwards"), held half its own width inside
+    each edge of what shows of the chart (unheld, the first bin's tip lost 31px at the card's left and the last's gave the chart a
+    sideways scroll of its own), and a screen reader gets the counts on the chart's label. Hockey's differences: it is drawn at its
+    box's own width, 520 to 680px, so its 9.5px words stay 9.5px (the NFL scales a 640-wide drawing, 7.7px on a phone), a narrower
+    box scrolling it sideways inside the card, and again on a resize (`peFit`); and each bar is edged in half `--ink`, 3.1:1 or
+    more on the card in both looks whatever its tier's colour (bare, the NFL's Elite and Iron bars are 1.7 and 1.8:1 on its dark
+    card, its Gold 2.2:1 on its light one). None is drawn under five ranked, the NFL's rule.
+  - **The search.** The NFL's tab has none (it lists ten players, or 25); hockey ranks hundreds, so one box in the card's head and
+    no club select: a name or a piece of one, whatever its case or accents, among the group's ranked, and **a club's abbreviation
+    typed whole** ("car", "UTA") lists that club's ranked players of the group, with whoever's name holds those letters. It draws
+    once the typing pauses (200ms), keeps each player's rank, leaves the histogram the group's, is never stored, and is hidden
+    over the clubs' 32 rows. **A name with no row in the pressed group says where its player is** (`peWhere`), one short line in
+    the table's place, never a paragraph: a ranked player of another group first ("Cale Makar · defenceman · press Defencemen"),
+    then one rated and not ranked, the latest on the ice first ("Sebastian Cossa · 7 games rated: under the floor of 10", "Zdeno
+    Chara · not ranked: no game this season"), "· and 2 more" where the letters fit others; with nobody, "No forward matches
+    “…”." (the Players tab lifted its floor once a name was typed; here a defenceman's name typed on Forwards said only that no
+    forward matched). The first 60 rows are drawn at once and the rest eighty at a time between frames (`PE_FIRST`, `PE_STEP`),
+    so a press or a keystroke is answered before the long tail is laid out; a draw that is not the latest stops, so two pills
+    pressed one after the other leave the second's table alone.
+  - **Widths.** The players' table is in a `.scroll` box (72vh, its head held at the top, as the Players' was), the clubs' in a
+    `.wrap`; the player or the club is the held column. No column is hidden at any width (the NFL hides Team, Trend and Peak on a
+    phone). A club is its tag alone at every width, as the NFL's, its name kept for a screen reader inside the club's own
+    positioned box (`table.pe-t .tw`). On a phone the held player is no wider than 140px (118px from 380px down), a longer name
+    going onto a second line between its words, "rated" dropped from the small line and the tag a size down, so the Elo is whole
+    before any swipe at 360px. A pill is 44px tall (the NFL's 30), the chosen one said by `aria-pressed`. Every colour is a token
+    but the tiers' own, so the tab needs no rule for the light look.
 - **The Pick'em Record tab** (`#pickem`, before the Record tab; nhl v19, the owner's ask of 25 October 2026, "i want a tab for
   pickem record and show all the models we have and their records", the NFL hub's Pick'em Record in hockey's terms; the Record
   tab stays beside it, the owner's "Keep both tabs"): every final with a winner, straight up, each model's pick read off the game's
@@ -611,9 +711,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
 - **The Record tab**: the stat strip's five figures step down together from 30px until each fits its tile on one line
   (`fitRecord`, 16px the least, again on a resize), so a three-figure record never breaks at its hyphen ("179-" over
   "145" on a 390 phone).
-- **The Players tab**: the search draws once the typing pauses (200ms); the first 60 rows at once and the rest, to 400,
-  eighty at a time between frames, so a keystroke or a press is answered at once.
-- **Headings** carry a small `.pill` for the two or three words that help ("Team Elo", "1161 skaters", kept whole); the sentences
+- **Headings** carry a small `.pill` for the two or three words that help ("Team Elo", "2026-27 through Nov 11", kept whole); the sentences
   beside a heading went in nhl v25.
 
 Since nhl v23 a card is the NBA's height: on 8 November 2026's published state at 390px, the day's cards to come 349 to
@@ -623,7 +721,8 @@ the logos every tab is 5 requests and about 520 KB where a table tab was 37 and 
 throttled phone where it took about 14.2s (a local replay of HEAD's page and this one on the same state, Lighthouse's phone
 profile, three cold loads a tab, ESPN's API and image host aborted; the Games tab adds the one live-score read of ESPN's
 API when its day has a game under way); the Players tab's long tasks went from 2.9s in all to 1.5s, the longest from
-569ms to 267ms (a phone now lays out every column), and a keystroke in its search is answered in about 15ms at 4x CPU. The smoke's THE LOOK holds all of it (below).
+569ms to 267ms (a phone now lays out every column), and a keystroke in its search is answered in about 15ms at 4x CPU (ELO
+Ratings, its place since nhl v29, draws its rows by the same rule and was not timed again). The smoke's THE LOOK holds all of it (below).
 
 ### The job
 
@@ -848,12 +947,13 @@ puck-line side far off the market that is no call and says nothing, "Out:" with 
 to day in the projected lineup wearing the DTD chip and nobody else, a first NHL start on the goalie's row and in Lineups, seven
 out in the Lineups window with a dash for the one the model does not rate; then the same game at its puck drop, no Value, no box
 and a grade to come in each box's place), the tab bar words alone on every tab and after a puck drop on the watch (the counts went
-in nhl v25), every tag (`.ttag`) its club's abbreviation filled in its club's colour by the smoke's own sums (its text and its edge with it), its club's name beside it, and no club in a `.pill`, each table's marked columns (`#` and its order), every table keeping every column at every width (no
+in nhl v25), every tag (`.ttag`) its club's abbreviation filled in its club's colour by the smoke's own sums (its text and its edge with it), its club's name beside it, and no club in a `.pill`, every table keeping every column at every width (no
 rule in the page's CSS, in any media query, hides a table, row or cell; each scrolls sideways in its wrapper with its club or player
-column the one held; each has the columns it had before the restyle; every name a table hides for a screen reader held by a
-positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), each player's name in bold
-and his club in the Club column, the Players' figures (ratings and strengths unsigned, offence, defence and attack signed and
-coloured by the sign shown), Team Rankings' table laid out fixed on its eleven columns' widths, never squeezed under them and no cell
+column the one held; each has its columns, heading by heading; every name a table hides for a screen reader held by a
+positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), ELO Ratings' three tables
+(the players', the goalies', the clubs') among them with their held columns (Player, Player, Team), no lit heading on that tab and
+nothing left of the Players tab's tables, switch, club select and sources line, its seven pills and its search 44px, its trend
+lines and histogram the only drawings beside the shields, the Pick'em chart and the switch's two glyphs, Team Rankings' table laid out fixed on its eleven columns' widths, never squeezed under them and no cell
 broken, and by its own words on a phone, its two tables' columns and held columns (Team; the absences' Player), no lit heading on it, no
 Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
 side far off the market said on its own button with both numbers exactly and every other part of the button (in Pick your own
@@ -886,7 +986,42 @@ stamp, hidden with none; another tab and back asking the network for nothing and
 copies: no final at all and no player model (no chip anywhere, a dash in both rate cells, the card hidden; opened by the old `#standings`); a
 rating each side of every tier's line (1649.6 shows 1650 and wears HOF), three clubs level, a club 40 Elo higher a week ago, one idle all week,
 one with no final beside clubs that have one, one with no playoff odds, outs each side of the bar and level in size (opened by the old
-`#playoff`); and a player model with no out worth a row, opened by an older page's stored Standings tab. Its section THE PROPS MODEL (in the state's
+`#playoff`); and a player model with no out worth a row, opened by an older page's stored Standings tab. Its section ELO RATINGS (nhl v29) works the ELO Ratings tab out from the state by rules of its own, each an invariant of any state the job can
+publish: the tab its stamp and one card (the heading and its pill, one search box, the seven pills, the histogram, one table; no description,
+select or link), after Team Rankings and before the Pick'em Record; who is ranked, by whichever rule the state calls for (with `last` in it:
+the floor of games and a game this season, or last season before the first final, or a report's row; with no `last`: the floor and a report's
+row, a lineup, the goalie in net or a box score the state carries), each mark with its words and the club that has him; where the state has
+`last`, each player's against this season's box file (the day of his last line on the ice, through the ratings' `asOf`); the order, and the
+rank shared on a level Elo; the scale (each group's mean and population spread, summed in the ranked order so the last bit is the page's) and
+every Elo on it, 1500 throughout where the spread is nothing; every row word for word (the name, the mark, the small line and the tag at the
+club that has him, the Elo with the figure to the thousandth on its title, the shield the tier of that Elo by the smoke's own nine numbers,
+the figures to the hundredth in their sign's colour, Career, the Trend line's points, colour and title, Peak and its season); every heading's
+title, the Player's the rule in force; the histogram (twelve bins by its own counts, each bar in its tier's colour and no shorter than a
+smaller one's, the axis, the bell as tall as a normal curve of as many on the bars' own scale, the legend, the label, a bin's words under the
+pointer, "1 forward" for one, none under five; 520 to 680px wide on a made-up box, again on a resize; its tip, on a made-up layout, over its
+bar and half its width inside each edge of what shows, scrolled or not); the clubs' four tables (each unit's order among the clubs that have
+the figure, its scale and tiers, the four figures with their places, shared on a level Elo, and colours, the goalie in net and how he was
+chosen, a club with no goalie last and unranked); the pills (one pressed, the choice in `ui.plKind`, the search hidden over the clubs; two
+pressed with no pause between them leaving the second's table alone, never the first's tail under it); the search (drawn a fifth of a second
+after the typing stops and not before, whatever the case or accents, each rank kept, the histogram the group's still; a club's abbreviation
+typed whole listing that club's players; a name with no row said where its player is, by the smoke's own order, a ranked player of another
+group, one under the floor, one with no game this season, in a line of 90 characters at the most; nothing stored or fetched); the first sixty
+rows at once and the rest after; another tab and back the same table; nothing stored but the pill and the tab's name, nothing fetched; and,
+from the stylesheet's text, the tab's rules writing no colour but the tiers' on the legend's swatch, each text colour a text token (never a
+line's or a ground's; `--on-fill` on an `--ink` fill alone), a bar's edge 3:1 on the card's two grounds in both looks, no rule hiding a part
+of its table. THE LOOK holds, for every table of the page, that no rule under any media query lets go of a held column (a `position` other
+than sticky, a `left` other than 0). On the state (opened by `#players` with a clubs' pill kept) and on made-up copies: no player model (the
+heading and "No player model yet.", opened by the NFL site's `#elo`); on the first rule (`last` taken off every player), 58 made-up
+defencemen on a mean of nothing and a spread of a tenth of a goal, so a figure in thousandths is its Elo's distance from 1500: one on each
+tier's line and one a point under it, forty in two level groups sharing a rank each (two of them one name), one name accented, each kind of
+mark and of history, and three who are not ranked (a game under the floor, no club, no figure), beside three goalies ranked by the box score
+alone (in net, in relief, of a side whose starter the box cannot tell) and one a game short, a club with no goalie in net and two level in
+attack, opened by an older page's stored Goalies; on `last` (planted on every player), a forward off the report and out of every lineup who
+stays, one dressed and dated last season who goes, one dated three seasons back on another club's injured reserve who stays and is shown
+there, one dated two seasons back who goes, the goalies all level on one rank, a handful of forwards (a histogram) and one defenceman (1500,
+none), opened by a stored Skaters; the same with no game final yet, where the one dated last season stays; and a junk pill kept. Its checks
+were proved on 143 faults, each planted alone and each caught: 140 in a copy of the page (`NHL_HTML`), 22 of them for the review of 12
+November 2026, at least one for each of its fixes, and 3 in the `last` of a copy of the state. Its section THE PROPS MODEL (in the state's
 reality) holds the box files' shots (no old-shape line, no `sog`, the skater shots against the goalies' at the
 column level) and starting goalies (at most one mark a side, on a goalie of that side who played, and the sides that
 used two goalies marked), the record of closing props in its shape, one line a final, the ledger by `props_check.js` against
@@ -1343,8 +1478,11 @@ score), or is expected to (the same choice, while it is to come, under way or no
 Elo's gap it blends is its own replay of every final, this run's. The card says which goalie (how he was chosen
 on his row's title on the game's page and in its Lineups window, whose foot names the injury report the lineup was built on), and says when a club's last box score is not
 read yet; the page says when the injury
-report or DailyFaceoff could not be read. The Players tab shows the rankings with a five-season line
-each, and which report and goalies the clubs stand on.
+report or DailyFaceoff could not be read. ELO Ratings (under The look; the Players tab until nhl v29) shows the rankings on the
+NFL's Elo scale, each player's seasons on file beside them, and the clubs by unit. For it `players.json` carries, beside each
+player's rating, `last`: the day (the box score's own, Eastern) of the last game he was on the ice in, noted as the replay walks the
+boxes (nhl v29). It is a note for the page, which ranks who has played this season on it: no rating, lineup, goalie or call reads
+it, and a scratch run before and after it wrote the same file but for it.
 
 ### The props model (on trial)
 
@@ -1636,7 +1774,7 @@ outrank what the job published:
 
 - **Published data wins over anything a browser kept.** Local storage holds only what the visitor
   made (and, read and never written, the NFL hub's sign-in record that marks the owner's devices: under X Parlays): the parlay builder's legs (a player leg with DraftKings' price and the time it was read), the parlays they saved, their stake, their picks on the Parlay
-  Builder, the tab they were on and the X Parlays they cleared on this device (the owner's), under one key, `nhl_v1`; and, under a key of its own, `nhlhub_theme_v1`, the light or dark look (nhl v25: written only by a press of the header's switch, which is hidden for now, so no visitor's browser holds it yet; never in `nhl_v1`, never sent). Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
+  Builder, the tab they were on, the pill they chose on ELO Ratings and the X Parlays they cleared on this device (the owner's), under one key, `nhl_v1`; and, under a key of its own, `nhlhub_theme_v1`, the light or dark look (nhl v25: written only by a press of the header's switch, which is hidden for now, so no visitor's browser holds it yet; never in `nhl_v1`, never sent). Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
   the props model's projections and its ledger's numbers, DraftKings' player lines as the job read them, and the record are read
   from `state.json` on every load. A leg whose game has started leaves the
   builder: its price is gone. The lines and player props Refresh odds reads from ESPN live in the page's memory alone,

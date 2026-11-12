@@ -173,8 +173,10 @@ class Model {
         x.gk -= P.Kg * surprise;
       }
     }
-    for (const s of box.skaters) { const x = this.player(s.id, s.name, s.pos, s.team); x.gp++; x.toi.push(s.toi); if (x.toi.length > P.recent) x.toi.shift(); }
-    for (const gl of box.goalies) { const x = this.player(gl.id, gl.name, 'G', gl.team); if (gl.toi > 1200) x.gp++; }
+    /* `last`: the date of the last box score a player was on the ice in, which the page's ELO Ratings reads to tell who has played
+       this season (nhl v29). A note beside the rating: no rating, lineup or call reads it */
+    for (const s of box.skaters) { const x = this.player(s.id, s.name, s.pos, s.team); x.gp++; x.toi.push(s.toi); if (x.toi.length > P.recent) x.toi.shift(); if (s.toi > 0 && box.date) x.last = box.date; }
+    for (const gl of box.goalies) { const x = this.player(gl.id, gl.name, 'G', gl.team); if (gl.toi > 1200) x.gp++; if (gl.toi > 0 && box.date) x.last = box.date; }
     for (const side of ['home', 'away']) this.last[box[side]] = box;
   }
 }
@@ -419,6 +421,7 @@ function main() {
   for (const [id, x] of Object.entries(m.r)) {
     if (x.debut || (x.gp < 5 && Object.keys(x.seasons).length === 0)) continue;
     players[id] = { name: x.name, pos: x.pos, team: x.team, o: +(x.o * LEAGUE.conv).toFixed(3), d: +(x.d * LEAGUE.conv).toFixed(3), gk: +x.gk.toFixed(3), v: +(x.pos === 'G' ? x.gk : (x.o + x.d) * LEAGUE.conv).toFixed(3), gp: x.gp, toi: x.toi.length ? Math.round(x.toi.reduce((a, b) => a + b, 0) / x.toi.length) : 0, seasons: x.seasons };
+    if (x.last) players[id].last = x.last;      // the day of his last game on the ice (Eastern, the box score's own date)
   }
   const out = { params: P, league: { shots: +LEAGUE.shots.toFixed(2), conv: +LEAGUE.conv.toFixed(4) }, report, asOf: games[games.length - 1].date, season: last, games: games.length, players, teams, upcoming,
     injuries: injMeta, starters: stMeta, generated: prev ? prev.generated : null };

@@ -163,7 +163,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ice)}
 ::placeholder{color:var(--ink-2);opacity:1}
 @media(max-width:640px){select,input[type=text],input[type=search]{font-size:16px}}            /* iOS zooms in on a box under 16px, and stays zoomed */
 @media(max-width:760px){ .bar{gap:8px} .bar label{font-size:13px} }
-/* the segmented control, a pill (the Players' Skaters/Goalies): the chosen one filled --ink */
+/* the segmented control, a pill: the chosen one filled --ink */
 .seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-2);border-radius:999px;background:var(--panel);max-width:100%}
 .seg button{border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;min-height:44px}
 .seg button:not(.on):hover{color:var(--ink);background:var(--panel-2)}
@@ -330,13 +330,8 @@ html[data-theme="light"] tbody tr:hover td.sk{background:color-mix(in srgb,var(-
 .tbl th.on{color:var(--ice-2)}         /* the column the table is in order of, lit (the NHL's headers do not sort, so no pointer) */
 .tbl td.n,.tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:900px){ table{font-size:13px} th,td{padding:7px 6px} }
-.tbl .rk{color:var(--muted-ink);width:30px}
 .tbl .big{font-family:var(--display);font-weight:700}
-.tbl .pos{color:var(--lime)} .tbl .neg{color:var(--rose-ink)}
-.tbl .outs{color:var(--rose-ink);white-space:normal;min-width:180px}
-.tbl .pn b{font-weight:700}
-#plSearch{flex:1 1 160px;min-width:0}
-.pl-src{margin:0 0 12px;font-size:12.5px;color:var(--ink-2)}      /* a state line: which injury report and goalies, how many calls predate the report */
+.pl-src{margin:0 0 12px;font-size:12.5px;color:var(--ink-2)}      /* a state line: how many calls predate the injury report */
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media(max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
 /* ---------- Team Rankings (nhl v26, the NFL hub's tab of that name; it took the Standings' and Power Ratings' place) ----------
@@ -386,9 +381,64 @@ table.rt-v .tn{color:var(--ink-2);margin-left:4px}
 @media(max-width:720px){ #injCard th.num{white-space:normal;min-width:96px} }      /* the long heading on three lines, so the figure stays whole beside the held player: on a phone, and on the first widths past one (at 641px the one-line heading put the figure half out of its box) */
 @media(max-width:640px){ #injCard th,#injCard td{padding:7px 9px} #injCard .sk{box-shadow:inset -1px 0 0 var(--line)} }
 @media(max-width:380px){ #injCard th,#injCard td{padding-left:6px;padding-right:6px} }
-.spark{display:inline-block;vertical-align:middle;height:22px;width:90px}
-.spark polyline{fill:none;stroke:var(--ice);stroke-width:1.5}
-.spark circle{fill:var(--lime)}
+/* ---------- ELO Ratings (nhl v29, the NFL hub's tab of that name, where the Players tab was; every class pe-, the NFL's own) ----------
+   One card: the heading with its pill and the one search box, the position pills, the clubs' pills under their label, the tier
+   histogram, the table. The values are the NFL page's (its tab_elo.html and its hub look), with hockey's differences, each on purpose:
+   a pill 44px tall (the NFL's is 30); the chosen pill said by aria-pressed; --on-fill on it and on the histogram's tip (the NFL writes
+   the two colours out); no column hidden on a phone (the NFL hides Team, Trend and Peak): the table scrolls in its wrapper, the player
+   or the club held (.sk); a club its tag alone at every width, as the NFL's, its name kept for a screen reader inside the club's own
+   positioned box; a bar of the histogram edged in half --ink, so each reads 3:1 on the card in both looks whatever its tier's colour
+   (bare, the NFL's Elite and Iron are 1.7 and 1.8:1 on its dark card, its Gold 2.2:1 on its light one). No colour is written here but the tiers' own, on the legend's
+   swatch: every other is a token, so the light look needs no rule of its own */
+.pe-hd{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;margin:0 0 10px}
+.pe-hd h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0}
+.pe-hd h2 .pill{margin-left:0}
+#peSearch{margin-left:auto;flex:0 1 220px;width:220px}
+.pe-pos{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.pe-pos button{font:600 12px/1 var(--body);padding:8px 14px;min-height:44px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.pe-pos button:hover{color:var(--ink);border-color:var(--ink-2)}
+.pe-pos button[aria-pressed="true"]{background:var(--ink);color:var(--on-fill);border-color:var(--ink)}
+.pe-pos .pe-unitpill{border-color:var(--ink-2);color:var(--ink);font-weight:700}
+.pe-pos .pe-units{flex:1 1 100%;display:grid;grid-template-columns:max-content repeat(4,max-content);gap:6px;align-items:center;justify-content:start;margin-top:4px}
+.pe-pos .pe-ulab{grid-column:1;font:700 11px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-right:6px}
+@media(max-width:720px){ .pe-pos .pe-units{grid-template-columns:repeat(2,minmax(0,1fr))} .pe-pos .pe-ulab{grid-column:1/-1;padding:6px 0 0} }
+/* the ladder as a bell curve: drawn at its box's width, 520px the least, so a phone scrolls it sideways inside the card */
+.pe-curve{margin:0 0 16px;max-width:680px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pe-cv-in{position:relative;min-width:520px;padding-top:34px}
+.pe-curve svg{display:block;width:100%;height:auto;overflow:visible}
+.pe-cv-bar{stroke:color-mix(in srgb,var(--ink) 50%,transparent);stroke-width:1}
+.pe-cv-key{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin:6px 0 0}
+.pe-cv-key i{display:inline-block;width:14px;height:0;border-top:2px dashed var(--ink-2);vertical-align:middle;margin-right:6px}
+.pe-cv-key b{display:inline-block;width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#A05A2C,#D4A017,#3B82F6,#7C3AED);vertical-align:middle;margin-right:6px}
+.pe-cv-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--on-fill);font-size:12px;line-height:1.45;padding:7px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%);opacity:0;transition:opacity .1s}
+.pe-cv-tip.on{opacity:1}
+/* the table: the NFL's rows (a name over its small line, 56px), every column kept */
+table.pe-t{font-size:13px}
+table.pe-t th{letter-spacing:.08em;padding:0 10px 8px;white-space:nowrap}
+table.pe-t td{padding:9px 10px;white-space:nowrap}
+table.pe-t td.pe-n,table.pe-t th.pe-n{text-align:right;font-variant-numeric:tabular-nums}
+table.pe-t .pe-rank{color:var(--muted);font-weight:600;width:28px}
+table.pe-t .pe-name{color:var(--ink)}
+table.pe-t .pe-name b{font-weight:600}
+table.pe-t .pe-name small{display:block;font-weight:500;color:var(--muted);font-size:11px;margin-top:2px}
+table.pe-t td.pe-n>small{font-size:11px;color:var(--ink-2)}
+.pe-elo{font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink)}
+.pe-up{color:var(--pick);font-weight:600} .pe-down{color:var(--miss);font-weight:600} .pe-flat{color:var(--muted)}
+.pe-spark{display:inline-block;vertical-align:middle}
+.pe-ord{display:inline-block;margin-left:5px;font-size:10.5px;font-weight:600;color:var(--muted);min-width:30px;text-align:left}
+.pe-ord.top{color:var(--pick)} .pe-ord.bot{color:var(--miss)}
+.pe-q{font-size:10px;font-weight:700;padding:1px 6px;margin-left:6px;vertical-align:1px}      /* on a report: still ranked, and marked (the NFL's Q) */
+table.pe-t .tw{position:relative}
+table.pe-t .tw .tn{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+#peNone{margin:0}
+@media(max-width:1100px){ table.pe-t .sk{box-shadow:inset -1px 0 0 var(--line)} }      /* the held column's edge, where the table can be wider than its box */
+@media(max-width:900px){ table.pe-t th,table.pe-t td{padding-left:6px;padding-right:6px} }
+/* a phone: the held player no wider than 140px (118px on the narrowest), a longer name going onto a second line between its words, and
+   the club's tag a size down, so the Elo, the column the table is in order of, is whole before any swipe at 360px */
+@media(max-width:640px){ #peSearch{flex:1 1 100%;width:auto;margin-left:0}
+  table.pe-t .pe-who{width:max-content;max-width:140px;white-space:normal}
+  table.pe-t .ttag.mini{font-size:10px;min-width:34px;padding:4px} }
+@media(max-width:380px){ table.pe-t .pe-who{max-width:118px} }
 /* ---------- the record's tiles ---------- */
 /* the figures step down together to fit their tiles on one line (fitRecord, 16px the least), so "784-646" never breaks at its hyphen */
 #recordTotals .stat>b{font-family:var(--display);font-size:30px;font-weight:700;display:block;line-height:1;letter-spacing:-.02em;position:relative}
@@ -1072,16 +1122,10 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 }
 /* ---------- the tables at narrower widths ----------
    No column ever gives way: a table wider than the screen scrolls sideways inside its own wrapper (.wrap, .scroll), its club or player
-   column (.sk) held at the left as the figures pass under it, so every number on a desktop is a swipe away on a phone. On a phone a
-   club in a table is its pill alone (its name kept for a screen reader), and a heading or a month may be written short (.t-wide over
-   .t-narrow, the words only, never a column) */
+   column (.sk) held at the left as the figures pass under it, so every number on a desktop is a swipe away on a phone. A heading or a
+   month may be written short on a phone (.t-wide over .t-narrow, the words only, never a column) */
 @media(min-width:641px){.t-narrow{display:none}}
-@media(max-width:640px){.t-wide{display:none} .tbl th,.tbl td{padding:9px 8px} .tbl th{letter-spacing:.03em}
-  .tbl td.wrap-any{overflow-wrap:anywhere;white-space:normal}
-  .tbl .tw .tn{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-  /* the club's own box holds its hidden name: without it a club cell that is not the held (sticky) column, the players' Club, set each
-     name against main, outside the table's scrolling box, and the 400 of them ran the page on some 14,000px past the last table */
-  .tbl .tw{position:relative}}
+@media(max-width:640px){.t-wide{display:none} .tbl th,.tbl td{padding:9px 8px} .tbl th{letter-spacing:.03em}}
 </style>
 <script>
 /* The visitor's light or dark look. Dark is the look and every visitor's default, whatever the system's preference says. The switch at the
@@ -1134,7 +1178,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
     <button data-tab="parlays">Parlay Builder</button>
     <button data-tab="xparlays" data-admin-only>X Parlays</button>
     <button data-tab="ratings">Team Rankings</button>
-    <button data-tab="players">Players</button>
+    <button data-tab="players">ELO Ratings</button>
     <button data-tab="pickem">Pick'em Record</button>
     <button data-tab="xbets" data-admin-only>X Bet Log</button>
     <button data-tab="record">Record</button>
@@ -1165,20 +1209,16 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
   </section>
 
   <section id="tab-players" hidden>
-    <div class="card">
-      <h2>Player rankings <span class="pill" id="plNoteP" hidden></span></h2>
-      <div class="bar">
-        <div class="seg" id="plKind" role="group" aria-label="Skaters or goalies"><button type="button" data-kind="skaters" class="on" aria-pressed="true">Skaters</button><button type="button" data-kind="goalies" aria-pressed="false">Goalies</button></div>
-        <select id="plTeam" aria-label="Club"><option value="">Every club</option></select>
-        <input type="text" id="plSearch" placeholder="Search a name" aria-label="Search a name">
+    <div class="bar"><span class="grow"></span><span class="livestamp" id="peStamp"></span></div>
+    <div class="card pe-wrap" id="peCard">
+      <div class="pe-hd"><h2 id="peH">Rankings <span class="pill" id="pePill" hidden></span></h2><input type="search" id="peSearch" placeholder="Search a name" aria-label="Search a name" autocomplete="off" spellcheck="false"></div>
+      <div class="pe-pos" id="pePos" role="group" aria-label="Players by position, or the clubs by unit">
+        <button type="button" data-view="F" aria-pressed="true">Forwards</button><button type="button" data-view="D" aria-pressed="false">Defencemen</button><button type="button" data-view="G" aria-pressed="false">Goalies</button>
+        <div class="pe-units" role="presentation"><span class="pe-ulab" aria-hidden="true">Clubs</span><button type="button" class="pe-unitpill" data-view="str" aria-pressed="false">Overall</button><button type="button" class="pe-unitpill" data-view="off" aria-pressed="false">Attack</button><button type="button" class="pe-unitpill" data-view="def" aria-pressed="false">Defence</button><button type="button" class="pe-unitpill" data-view="gk" aria-pressed="false">Goaltending</button></div>
       </div>
-      <p class="muted" id="plModelNote" hidden></p>
-      <div class="scroll"><table class="tbl" id="plTable"></table></div>
-    </div>
-    <div class="card">
-      <h2>Club strength tonight</h2>
-      <p class="pl-src" id="plSources" hidden></p>
-      <div class="wrap"><table class="tbl" id="plTeams"></table></div>
+      <div id="peCurve"></div>
+      <div class="scroll" id="peBox"><table class="pe-t" id="peTable"></table></div>
+      <p class="pb-none" id="peNone" role="status" hidden></p>
     </div>
   </section>
 
@@ -1296,7 +1336,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v28 · 2026-11-12';
+const APP_BUILD = 'nhl v29 · 2026-11-12';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1309,7 +1349,6 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const pct = p => (p * 100).toFixed(0) + '%';
 const pct1 = p => (p * 100).toFixed(1) + '%';
 const signed = n => n > 0 ? '+' + n : String(n);
-const sgn = n => n > 0 ? ' pos' : n < 0 ? ' neg' : '';                     /* a table's signed figure: lime above zero, --rose-ink below */
 const fmtLine = n => n === 0 ? 'PK' : (n > 0 ? '+' + n : String(n));
 const fmtOdds = n => n === null || n === undefined ? '—' : (n > 0 ? '+' + n : String(n));
 const dec = am => am > 0 ? 1 + am / 100 : 1 + 100 / -am;
@@ -1478,8 +1517,9 @@ function tierDefs(){ if(document.getElementById('peDefs')) return; const box=doc
 /* a tab by name; #parlay, the NFL site's name for the builder, opens it too. On a phone the bar scrolls
    sideways, and the chosen tab's button is brought into it by scrolling the bar, never the page */
 /* '#parlay', the NFL site's name, opens the Parlay Builder; '#standings' and '#playoff', the tabs nhl v26 and nhl v14 took off, open
-   Team Rankings, where the record, the points and the playoff chances are (a tab stored under either name too) */
-const tabName = n => n === 'parlay' ? 'parlays' : n === 'playoff' || n === 'standings' ? 'ratings' : n;
+   Team Rankings, where the record, the points and the playoff chances are (a tab stored under either name too); '#elo', the NFL site's
+   name, opens ELO Ratings, whose own name is still the Players tab's (#players: an old link and a stored tab open it) */
+const tabName = n => n === 'parlay' ? 'parlays' : n === 'playoff' || n === 'standings' ? 'ratings' : n === 'elo' ? 'players' : n;
 function navTo(b) {
   const nav = $('tabs'); if (!b || !nav) return;
   const left = Math.max(0, b.offsetLeft - (nav.clientWidth - b.offsetWidth) / 2);
@@ -1827,62 +1867,240 @@ function renderAbsences() {
     + '</tbody></table></div>' + (I && I.pulled ? `<p class="muted inj-asof">Injury report of ${esc(dateClock(I.pulled))}</p>` : '');
 }
 
-/* ---------- Players ---------- */
-$('plKind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; P.ui.plKind = b.dataset.kind; save(); renderPlayers(); });
-/* the search draws once the typing pauses (a fifth of a second): up to 400 rows a draw */
-let PL_T = null;
-$('plTeam').addEventListener('change', renderPlayers); $('plSearch').addEventListener('input', () => { clearTimeout(PL_T); PL_T = setTimeout(renderPlayers, 200); });
-function spark(seasons, now) {
-  const ks = Object.keys(seasons).sort(); const vs = ks.map(k => seasons[k]).concat([now]);
-  if (vs.length < 2) return '';
-  const lo = Math.min(...vs), hi = Math.max(...vs), span = hi - lo || 1;
-  const pts = vs.map((v, i) => `${(i / (vs.length - 1) * 86 + 2).toFixed(1)},${(20 - (v - lo) / span * 18).toFixed(1)}`);
-  const [lx, ly] = pts[pts.length - 1].split(',');
-  return `<svg class="spark" viewBox="0 0 90 22" title="${ks.map((k, i) => `${k - 1}-${String(k).slice(2)}: ${vs[i]}`).join(', ')}, now ${now}"><polyline points="${pts.join(' ')}"></polyline><circle cx="${lx}" cy="${ly}" r="2"></circle></svg>`;
+/* ---------- ELO Ratings (nhl v29: the NFL hub's tab of that name, its rankings() and teamsCard(), in hockey's terms) ----------
+   The owner's ask of 11 November 2026: "match what the NFL hub has, the look, the layout". One card where the Players tab had two: the
+   heading and its pill, the position pills (Forwards, Defencemen, Goalies: the three groups the models rate apart), the clubs' pills
+   (Overall, Attack, Defence, Goaltending), the tier histogram with its bell curve, the table. Everything is read from the state as
+   published (S.players, S.teams, S.box): nothing is fetched, and the one thing stored is the pill chosen (nhl_v1 ui.plKind, the Players
+   tab's own key: its 'skaters' opens Forwards, its 'goalies' Goalies).
+   THE SCALE. The player model rates in goals a game (a skater's v his offence plus his defence, a goalie's his save rating). The NFL's
+   tiers and histogram stand on an Elo, so each figure is set on the NFL's scale: Elo = round(1500 + 100 x (v - mean) / sd), the mean
+   and the sd (the population's) those of v over the RANKED players of his group, so 1500 is the average ranked forward and a tier (50)
+   half a standard deviation, as the NFL's. Where a group has one player or all are level (sd 0) every Elo is 1500. The goals-a-game
+   figure stays in its own column beside it, and to the thousandth on the Elo's title. A past season's value is set on the same mean
+   and sd (Career, Trend, Peak), so the columns compare. A club's unit the same way among the clubs that have it.
+   WHO IS RANKED (peWho). The state rates everyone in the box files since 2021-22, the retired among them. Ranked: the Players tab's
+   own floor (20 games behind his rating, 10 of 20 minutes or more for a goalie) AND a game this season: his `last`, the day of his
+   last game on the ice, which tools/players.js writes beside his rating, is of this season (a season starts in August, the job's
+   seasonOf); before this season has a final, last season counts. OR, with the floor, on a club's injury report (out or day to day, by
+   the row's ESPN id): he is ranked and marked (the NFL's Q), IR, OUT or SUSP in rose, DTD in gold, the report's own words on the
+   mark's title, and shown at the club whose report has him (Frederik Andersen on Edmonton's, his last game Carolina's). So the
+   ranked do not change with who dressed last night: a player off the report and not yet back on the ice stays. A state from before
+   `last` (none of its players has one) is read by the rule this tab shipped with: with a club now as far as that state tells, in a
+   club's last lineup, its goalie in net, on its report, or on the ice in a final whose box score the state carries.
+   THE ORDER is v, best first; level, the name, then the id. THE RANK is one more than the players whose Elo as shown is greater:
+   players level on it share a rank (24, 24, 26: Team Rankings' rule), and a search keeps it. A club's place in a unit the same. */
+const PE_GROUPS = [['F', 'Forwards', 'forwards', 'forward'], ['D', 'Defencemen', 'defencemen', 'defenceman'], ['G', 'Goalies', 'goalies', 'goalie']];
+const PE_UNITS = [['str', 'Overall'], ['off', 'Attack'], ['def', 'Defence'], ['gk', 'Goaltending']];
+const PE_FLOOR = { F: 20, D: 20, G: 10 };              // games behind a rating before it is ranked (tools/players.js lists its best on the same floor)
+const PE_FIRST = 60, PE_STEP = 80;                     // rows drawn at once, then a frame's worth at a time
+const peGroupOf = pos => pos === 'G' ? 'G' : pos === 'D' ? 'D' : 'F';
+const peView = () => { const k = P.ui.plKind === 'goalies' ? 'G' : P.ui.plKind; return PE_GROUPS.some(g => g[0] === k) || PE_UNITS.some(u => u[0] === k) ? k : 'F'; };
+const peNum = x => typeof x === 'number' && isFinite(x);
+const peIsDay = x => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x);
+const peSeasonOf = d => +d.slice(0, 4) + (+d.slice(5, 7) >= 8 ? 1 : 0);      // the season of an Eastern day: August on is the next one's (tools/espn.js's seasonOf)
+const seasonWords = y => `${y - 1}-${String(y).slice(2)}`;
+const peOrd = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] || 'th');
+const peFold = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+/* a figure in goals a game: to the hundredth, half away from zero, signed (never -0.00); the state writes thousandths, so the sums are whole numbers */
+const peHun = x => { const h = Math.round(Math.round(Math.abs(x) * 1000) / 10); return x < 0 ? -h : h; };
+const peGoals = x => { const h = peHun(x); return (h > 0 ? '+' : h < 0 ? '−' : '') + (Math.abs(h) / 100).toFixed(2); };
+const peExact = x => `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(3)} goals a game`;
+const peSigned = x => { const h = peHun(x); return `<span class="${h > 0 ? 'pe-up' : h < 0 ? 'pe-down' : 'pe-flat'}">${peGoals(x)}</span>`; };
+/* the scale of a set of figures: v -> Elo */
+function peScale(vals) {
+  const n = vals.length; let m = 0, q = 0;
+  for (const v of vals) m += v; m = n ? m / n : 0;
+  for (const v of vals) q += (v - m) * (v - m);
+  const sd = n ? Math.sqrt(q / n) : 0;
+  return v => sd > 1e-9 ? Math.round(1500 + 100 * (v - m) / sd) : 1500;
+}
+/* who is ranked, but for the floor: `rep` the players a report names, each with his mark and the club whose report it is (the first
+   club's out row, an out before a day to day); `on(id, p)` whether he counts. With `last` in the state: on a report, or a game this
+   season (or last, before this season has a final). Without it (a state from before nhl v29's job): on a report, or with a club now as
+   that state tells: a club's last lineup, its goalie in net, a final whose box score the state carries */
+function peWho() {
+  const PL = S.players || {}, teams = Object.entries(PL.teams || {}).filter(([, t]) => isObj(t)), rep = new Map();
+  const put = (id, mark) => { if (id === null || id === undefined) return; const k = String(id); if (!rep.has(k)) rep.set(k, mark); };
+  for (const [club, t] of teams) for (const o of t.out || []) if (isObj(o)) put(o.id, { k: 'out', w: String(o.status || 'Out'), club });
+  for (const [club, t] of teams) for (const o of t.dtd || []) if (isObj(o)) put(o.id, { k: 'dtd', w: 'Day to day', club });
+  const dated = Object.values(PL.players || {}).some(p => isObj(p) && peIsDay(p.last));
+  if (dated) { const early = !(S.games || []).some(g => g.state === 'final');
+    return { rep, dated, early, on: (id, p) => rep.has(id) || (peIsDay(p.last) && (peSeasonOf(p.last) === S.season || (early && peSeasonOf(p.last) === S.season - 1))) }; }
+  const now = new Set(), add = id => { if (id !== null && id !== undefined) now.add(String(id)); };
+  for (const [, t] of teams) { for (const l of t.lineup || []) if (isObj(l)) add(l.id); if (isObj(t.goalie)) add(t.goalie.id); }
+  for (const b of Object.values((S.box && S.box.games) || {})) { if (!isObj(b)) continue;
+    for (const k of ['s', 'g']) if (isObj(b[k])) for (const id of Object.keys(b[k])) add(id);
+    for (const k of ['r', 'u']) if (Array.isArray(b[k])) for (const id of b[k]) add(id); }
+  return { rep, dated, early: false, on: id => rep.has(id) || now.has(id) };
+}
+/* a list in order of its Elos, best first: each one's rank, one more than those whose Elo as shown is greater */
+const peRanks = elos => { const r = []; elos.forEach((e, i) => { r.push(i && elos[i - 1] === e ? r[i - 1] : i + 1); }); return r; };
+/* a group's ranked players in order, each with his rank, his Elo, his mark and the club that has him; and the scale they stand on */
+function peRows(grp, who) {
+  const W = who || peWho(), rows = [];
+  for (const [id, p] of Object.entries((S.players && S.players.players) || {})) if (isObj(p) && peNum(p.v) && peGroupOf(p.pos) === grp && p.gp >= PE_FLOOR[grp] && W.on(id, p)) { const mark = W.rep.get(id) || null; rows.push({ id, p, mark, club: mark ? mark.club : p.team }); }
+  rows.sort((a, b) => b.p.v - a.p.v || az(String(a.p.name), String(b.p.name)) || az(a.id, b.id));
+  const sc = peScale(rows.map(x => x.p.v));
+  for (const x of rows) x.elo = sc(x.p.v);
+  const rk = peRanks(rows.map(x => x.elo)); rows.forEach((x, i) => { x.rank = rk[i]; });
+  return { rows, sc, who: W };
+}
+/* his seasons on file, oldest first, each set on today's scale: Career their average (the NFL's is the rating with every season behind
+   it, which this rating already is: the closest thing a season-end file gives is his level across them), Peak the best of them and of
+   now with its season (the first to reach it), Trend the line through them to now */
+function peHist(p, sc) {
+  const ks = Object.keys(isObj(p.seasons) ? p.seasons : {}).filter(k => /^\d{4}$/.test(k) && peNum(p.seasons[k])).sort(), vs = ks.map(k => p.seasons[k]);
+  const pts = ks.map((k, i) => [seasonWords(+k), vs[i]]).concat([[seasonWords(S.season), p.v]]);
+  let pk = pts[0]; for (const x of pts) if (x[1] > pk[1]) pk = x;
+  return { career: vs.length ? sc(vs.reduce((a, b) => a + b, 0) / vs.length) : null, peak: [sc(pk[1]), pk[0]], line: ks.map((k, i) => [seasonWords(+k), sc(vs[i])]) };
+}
+/* the NFL's spark(): a line across an 84 by 22 box, lime where it ends at or above where it began, rose under */
+function peSpark(v) {
+  if (v.length < 2) return '';
+  const lo = Math.min(...v), hi = Math.max(...v), W = 84, H = 22;
+  const x = i => (i / (v.length - 1)) * (W - 2) + 1, y = e => hi === lo ? H / 2 : H - 1 - ((e - lo) / (hi - lo)) * (H - 2);
+  const d = v.map((e, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(e).toFixed(1)).join(' ');
+  return `<svg class="pe-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false"><path d="${d}" fill="none" stroke="${v[v.length - 1] >= v[0] ? 'var(--pick)' : 'var(--miss)'}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+/* the ladder as a bell curve (the NFL's curveChart): how many of the ranked wear each tier, in 50-point bins from 1200 to 1800 (six
+   standard deviations, the ends clamped in), each bar in its tier's colour with its count over it, the tiers and where each starts
+   under the axis, and the dashed line what a normal curve on the same scale expects of as many. An inline SVG, no image, drawn at its
+   box's own width (520 to 680px) so its words keep their size: a narrower box scrolls it sideways, inside the card. Under five ranked
+   it is not drawn (the NFL's rule) */
+let PE_CW = 0, PE_CURVE = null;
+function peCurve(vals, label, one) {
+  if (!vals || vals.length < 5) return '';
+  const box = $('peCurve'), cw = box ? Math.round(box.clientWidth || 0) : 0, W = cw ? Math.max(520, Math.min(680, cw)) : 640; PE_CW = cw;
+  const n = vals.length, LO = 1200, HI = 1800, BW = 50, H = 200, padB = 46, padT = 22, nb = (HI - LO) / BW, bw = W / nb, gap = 2, f = x => +x.toFixed(1);
+  const at = v => Math.min(HI - 1, Math.max(LO, v));
+  const bins = Array.from({ length: nb }, (_, i) => { const lo = LO + i * BW, t = eloTier(lo + 1); return { lo, name: t[0], fill: t[0] === 'HOF' ? 'url(#tg-hof-gem)' : t[2], cnt: vals.filter(v => at(v) >= lo && at(v) < lo + BW).length }; });
+  const dens = e => n * BW * Math.exp(-(((e - 1500) / 100) ** 2) / 2) / (100 * Math.sqrt(2 * Math.PI));
+  const top = Math.max(...bins.map(b => b.cnt), dens(1500), 1), base = H - padB, y = v => padT + (H - padT - padB) * (1 - v / top), X = e => (e - LO) / (HI - LO) * W;
+  const bars = bins.map((b, i) => { const x = f(i * bw + gap / 2), w = f(bw - gap), yy = f(y(b.cnt)), h = base - yy, r = Math.min(4, h / 2);
+    const range = i === 0 ? `under ${b.lo + BW}` : i === nb - 1 ? `${b.lo} and up` : `${b.lo}–${b.lo + BW - 1}`;
+    const tip = `<b>${b.name}</b> · ${range}<br>${b.cnt} ${esc(b.cnt === 1 ? one || label : label)} (${Math.round(b.cnt / n * 100)}%)`;
+    return `<g class="pe-cv-bin" data-lo="${b.lo}" data-n="${b.cnt}" data-tip="${esc(tip)}" data-x="${(x + w / 2) / W}" data-y="${yy / H}"><rect x="${f(i * bw)}" y="0" width="${f(bw)}" height="${base}" fill="transparent"/>`
+      + (h > 0 ? `<path class="pe-cv-bar" d="M${x} ${base}V${f(yy + r)}Q${x} ${yy} ${f(x + r)} ${yy}H${f(x + w - r)}Q${f(x + w)} ${yy} ${f(x + w)} ${f(yy + r)}V${base}Z" fill="${b.fill}"/>` : '')
+      + (b.cnt ? `<text x="${f(x + w / 2)}" y="${f(yy - 5)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${b.cnt}</text>` : '') + '</g>'; }).join('');
+  const bands = [[LO, 1350], [1350, 1400], [1400, 1450], [1450, 1500], [1500, 1550], [1550, 1600], [1600, 1650], [1650, 1700], [1700, 1750], [1750, HI]].map(([lo, hi]) => {
+    const t = eloTier(lo + 1), cx = f((X(lo) + X(hi)) / 2);
+    return `<line x1="${f(X(lo))}" x2="${f(X(lo))}" y1="${base}" y2="${base + 5}" stroke="var(--line-2)"/><text class="pe-cv-tn" x="${cx}" y="${base + 18}" text-anchor="middle" font-size="9.5" font-weight="600" fill="var(--ink-2)">${t[0]}</text><text class="pe-cv-tm" x="${cx}" y="${base + 31}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${lo === LO ? '&lt;1350' : hi === HI ? '1750+' : lo}</text>`; }).join('');
+  const pts = []; for (let k = 0; k <= 96; k++) { const e = LO + k * (HI - LO) / 96; pts.push(`${k ? 'L' : 'M'}${X(e).toFixed(1)} ${y(dens(e)).toFixed(1)}`); }
+  return `<div class="pe-curve" role="img" aria-label="${esc(label)} by rating: ${bins.filter(b => b.cnt).map(b => b.lo + ' ' + b.cnt).join(', ')}"><div class="pe-cv-in"><svg class="pe-cv" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false">${bars}<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--line-2)"/>${bands}<path class="pe-cv-bell" d="${pts.join(' ')}" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-dasharray="5 4" pointer-events="none"/></svg><div class="pe-cv-tip" aria-hidden="true"></div></div>`
+    + `<div class="pe-cv-key"><span><b></b>${n} ranked ${esc(label)}</span><span><i></i>bell curve</span></div></div>`;
+}
+/* the curve in its box, and a bar's count and share over it while the pointer is on its bin (the NFL's curveHover) */
+function peDrawCurve() {
+  const root = $('peCurve'); if (!root) return;
+  root.innerHTML = PE_CURVE ? peCurve(PE_CURVE[0], PE_CURVE[1], PE_CURVE[2]) : '';
+  const box = root.querySelector('.pe-cv-in'), tip = box && box.querySelector('.pe-cv-tip'); if (!tip) return;
+  for (const g of box.querySelectorAll('.pe-cv-bin')) {
+    /* over its bar, and never past either edge of what shows of the chart (its box scrolls sideways on a phone): the tip is centred on
+       its left, so that is held half the tip's width inside each edge. Unheld, the first bin's lost 31px at the card's left and the
+       last's ran 29px past the right, which left the chart with a sideways scroll of its own */
+    g.addEventListener('mouseenter', () => { const r = box.querySelector('svg').getBoundingClientRect(), bt = box.getBoundingClientRect(), view = box.parentElement;
+      tip.innerHTML = g.dataset.tip; const half = tip.offsetWidth / 2, lo = view.scrollLeft + half, hi = view.scrollLeft + view.clientWidth - half, x = r.left - bt.left + (+g.dataset.x) * r.width;
+      tip.style.left = (hi > lo ? Math.min(hi, Math.max(lo, x)) : x) + 'px'; tip.style.top = (r.top - bt.top + (+g.dataset.y) * r.height - 6) + 'px'; tip.classList.add('on'); });
+    g.addEventListener('mouseleave', () => tip.classList.remove('on'));
+  }
+}
+function peFit() { const box = $('peCurve'); if (!S || !box || $('tab-players').hidden || !PE_CURVE) return; const cw = Math.round(box.clientWidth || 0); if (cw && cw !== PE_CW) peDrawCurve(); }
+/* what a number means is on its heading's title, never in a sentence on the page */
+const PE_TIER_T = 'Wood under 1350, then a tier every 50 Elo: Iron, Bronze, Silver, Gold from 1500, Platinum, Diamond, Master, Elite, and HOF from 1750';
+const peRankedT = who => `Ranked: ${PE_FLOOR.F} games or more behind his rating (a goalie ${PE_FLOOR.G}, of 20 minutes or more) and ` + (!who.dated ? `with a club now: in its last lineup or in net, on its injury report, or on the ice in the last ${(S.box && S.box.days) || 14} days`
+  : `a game ${who.early ? 'last season or this' : 'this season'}, or on a club's injury report`);
+const peEloT = what => `Goals a game by the player model, set on the Elo scale: 1500 the average ${what}, 100 a standard deviation`;
+const peHead = cols => '<thead><tr>' + cols.map(([h, cls, t]) => `<th${cls ? ` class="${cls}"` : ''}${t ? ` title="${esc(t)}"` : ''}>${h}</th>`).join('') + '</tr></thead>';
+const peShield = elo => `<span class="pe-shield">${tierBadge(elo)}${eloTier(elo)[0]}</span>`;
+const peMark = m => !m ? '' : m.k === 'dtd' ? '<span class="pill warn pe-q" title="Day to day">DTD</span>' : `<span class="pill bad pe-q" title="${esc(m.w)}">${/injured reserve/i.test(m.w) ? 'IR' : /suspen/i.test(m.w) ? 'SUSP' : 'OUT'}</span>`;
+let PE_RUN = 0, PE_T = null;
+/* the one line the card says in place of its table: no player model, nobody ranked, no name that matches */
+function peSay(words) { $('peNone').textContent = words; $('peNone').hidden = !words; $('peBox').hidden = !!words; if (words) $('peTable').innerHTML = ''; }
+$('pePos').addEventListener('click', e => { const b = e.target.closest('button[data-view]'); if (!b) return; P.ui.plKind = b.dataset.view; save(); renderPlayers(); });
+/* the search draws once the typing pauses (a fifth of a second) */
+$('peSearch').addEventListener('input', () => { clearTimeout(PE_T); PE_T = setTimeout(renderPlayers, 200); });
+/* a name typed that no row of the pressed group holds: where its player is, in a few words (never a paragraph), or nothing. First a
+   ranked player of another group ("Cale Makar · defenceman · press Defencemen"), then one rated and not ranked, the latest on the ice
+   first ("Sebastian Cossa · 7 games rated: under the floor of 10", "Zdeno Chara · not ranked: no game this season"); "and 2 more"
+   where the letters fit others too */
+function peWhere(q, view, who) {
+  if (!q) return '';
+  const hits = [], ranked = new Set(), games = n => `${n} game${n === 1 ? '' : 's'}`;
+  for (const g of PE_GROUPS) for (const x of peRows(g[0], who).rows) { ranked.add(x.id); if (g[0] !== view && peFold(x.p.name).includes(q)) hits.push(`${x.p.name} · ${g[3]} · press ${g[1]}`); }
+  const rest = Object.entries(S.players.players || {}).filter(([id, p]) => isObj(p) && !ranked.has(id) && peFold(p.name).includes(q))
+    .sort((a, b) => az(String(b[1].last || ''), String(a[1].last || '')) || (b[1].gp || 0) - (a[1].gp || 0) || az(String(a[1].name), String(b[1].name)) || az(a[0], b[0]));
+  for (const [, p] of rest) { const fl = PE_FLOOR[peGroupOf(p.pos)];
+    hits.push(`${p.name} · ` + (!(p.gp >= fl) ? `${games(p.gp || 0)} rated: under the floor of ${fl}` : !who.dated ? 'not ranked: with no club now' : `not ranked: no game ${who.early ? 'last season or this' : 'this season'}`)); }
+  return hits.length ? hits[0] + (hits.length > 1 ? ` · and ${hits.length - 1} more` : '') : '';
 }
 function renderPlayers() {
-  const PL = S.players;
-  $('plModelNote').hidden = !!PL;
-  if (!PL) { $('plModelNote').textContent = 'No player model yet.'; $('plTable').innerHTML = ''; $('plTeams').innerHTML = ''; $('plNoteP').hidden = true; $('plSources').hidden = true; return; }
-  const kind = P.ui.plKind || 'skaters';
-  for (const b of $('plKind').querySelectorAll('button')) { b.classList.toggle('on', b.dataset.kind === kind); b.setAttribute('aria-pressed', String(b.dataset.kind === kind)); }
-  if ($('plTeam').options.length === 1) $('plTeam').innerHTML += Object.keys(S.teams).sort().map(c => `<option value="${c}">${esc(T(c).short)}</option>`).join('');
-  /* which report and goalies the clubs stand on, as a state line: "Injury report Nov 11, 2:40 PM UTC · goalies Nov 11, 2:40 PM UTC" */
-  const I = PL.injuries, ST = PL.starters, when2 = iso => iso ? dateClock(iso) : '—';
-  const src = [I === undefined ? '' : I ? `Injury report ${when2(I.pulled)}` : 'No injury report', ST ? (ST.ok === false ? 'goalies not read' : `goalies ${when2(ST.pulled)}`) : ''].filter(Boolean).join(' · ');
-  $('plSources').textContent = src; $('plSources').hidden = !src;
-  const team = $('plTeam').value, q = $('plSearch').value.trim().toLowerCase();
-  let rows = Object.entries(PL.players).map(([id, p]) => Object.assign({ id }, p)).filter(p => kind === 'goalies' ? p.pos === 'G' : p.pos !== 'G');
-  if (team) rows = rows.filter(p => p.team === team); if (q) rows = rows.filter(p => p.name.toLowerCase().includes(q));
-  rows = rows.filter(p => team || q || p.gp >= (kind === 'goalies' ? 10 : 20)).sort((a, b) => b.v - a.v);
-  $('plNoteP').textContent = `${rows.length} ${kind}`; $('plNoteP').hidden = false;
-  const x100 = v => (v * 100).toFixed(1);
-  /* the NBA's player rows: the name in bold, the position beside it; the name held at the left as the table scrolls sideways, the
-     rating (the table's order) right beside it so a phone shows it without a swipe */
-  const head = kind === 'goalies' ? '<thead><tr><th class="n on">#</th><th class="sk">Goalie</th><th class="n on">Rating</th><th>Club</th><th class="n">Starts</th><th>Five seasons</th></tr></thead>' : '<thead><tr><th class="n on">#</th><th class="sk">Player</th><th class="n on">Rating</th><th>Club</th><th class="n">Offence</th><th class="n">Defence</th><th class="n">Games</th><th class="n">TOI</th><th>Five seasons</th></tr></thead>';
-  const sx = v => sgn(+x100(v));          /* coloured by the sign shown */
-  /* a signed figure printed signed, as the NBA's: +29.5 lime, -8.3 rose, 0.0 plain (never -0.0); a rating
-     or a strength, a column a table is in order of, stays unsigned */
-  const s100 = v => { const t = x100(v), n = +t; return n > 0 ? '+' + t : n < 0 ? t : (0).toFixed(1); };
-  const who = p => `<td class="pn sk"><b>${esc(p.name)}</b>${kind === 'goalies' ? '' : ` <span class="muted">${esc(p.pos)}</span>`}</td>`;
-  const tr = (p, i) => kind === 'goalies'
-    ? `<tr><td class="n rk">${i + 1}</td>${who(p)}<td class="n big">${x100(p.v)}</td><td>${teamCell(p.team)}</td><td class="n">${p.gp}</td><td>${spark(p.seasons, p.v)}</td></tr>`
-    : `<tr><td class="n rk">${i + 1}</td>${who(p)}<td class="n big">${x100(p.v)}</td><td>${teamCell(p.team)}</td><td class="n${sx(p.o)}">${s100(p.o)}</td><td class="n${sx(p.d)}">${s100(p.d)}</td><td class="n">${p.gp}</td><td class="n">${Math.floor(p.toi / 60)}:${String(p.toi % 60).padStart(2, '0')}</td><td>${spark(p.seasons, p.v)}</td></tr>`;
-  /* the first rows at once, the rest (to 400) eighty at a time between frames, so a press or a keystroke is answered and painted before
+  const PL = S.players, view = peView(), unit = PE_UNITS.find(u => u[0] === view), run = ++PE_RUN;
+  $('pePos').hidden = !PL; $('peSearch').hidden = !PL || !!unit;
+  if (!PL) { $('peStamp').textContent = ''; $('pePill').hidden = true; PE_CURVE = null; peDrawCurve(); peSay('No player model yet.'); return; }
+  for (const b of $('pePos').querySelectorAll('button[data-view]')) b.setAttribute('aria-pressed', String(b.dataset.view === view));
+  /* the stamp, the NFL's: when the ratings were made, in the visitor's own clock; the pill: the season and the last day rated */
+  const made = Date.parse(PL.generated);
+  $('peStamp').textContent = isFinite(made) ? 'rated ' + new Date(made).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }) : '';
+  $('pePill').textContent = seasonWords(S.season) + (/^\d{4}-\d{2}-\d{2}$/.test(String(PL.asOf)) ? ' through ' + dayWords(PL.asOf) : ''); $('pePill').hidden = false;
+  tierDefs();
+  $('peBox').className = unit ? 'wrap' : 'scroll'; $('peBox').scrollTop = 0;
+  if (unit) return peClubs(view);
+  const G = PE_GROUPS.find(g => g[0] === view), { rows, sc, who } = peRows(view), typed = $('peSearch').value.trim(), q = peFold(typed);
+  /* the search: a name or a piece of one, whatever its case or accents, and a club's abbreviation typed whole (CAR), which lists the
+     club's ranked players of the group with whoever's name holds those letters */
+  const clubQ = q ? Object.keys(S.teams).find(id => peFold(T(id).abbr) === q) : null;
+  const shown = q ? rows.filter(x => peFold(x.p.name).includes(q) || (clubQ && x.club === clubQ)) : rows, goalie = view === 'G';
+  PE_CURVE = [rows.map(x => x.elo), G[2], G[3]]; peDrawCurve();
+  if (!shown.length) { peSay(rows.length ? peWhere(q, view, who) || `No ${G[3]} matches “${typed}”.` : `No ${G[2]} ranked yet.`); return; }
+  peSay('');
+  const head = peHead([['#', 'pe-rank', ''], ['Player', 'sk', peRankedT(who)], ['Team', '', ''], ['Elo', 'pe-n', peEloT(`ranked ${G[3]}`)], ['Tier', '', PE_TIER_T]].concat(
+    goalie ? [['Goals/G', 'pe-n', 'His save rating by the player model, in goals a game: the figure his Elo is set from']]
+      : [['Goals/G', 'pe-n', 'What he adds to his club by the player model, in goals a game on the ice all game: his offence and his defence, the figure his Elo is set from'], ['Offence', 'pe-n', 'His offence rating, in goals a game'], ['Defence', 'pe-n', 'His defence rating, in goals a game']],
+    [['Career', 'pe-n', "His rating at the end of each season on file, averaged, on today's scale"], ['Trend', '', 'His rating at the end of each season on file, then now'], ['Peak', 'pe-n', "His best rating at a season's end or now, on today's scale, and the season"]]));
+  const tr = x => { const p = x.p, h = peHist(p, sc), line = h.line.concat([['now', x.elo]]);
+    return `<tr><td class="pe-rank">${x.rank}</td><td class="pe-name sk"><div class="pe-who"><b>${esc(p.name)}</b>${peMark(x.mark)}<small>${esc(p.pos)} · ${esc(T(x.club).abbr)} · ${p.gp} game${p.gp === 1 ? '' : 's'}<span class="t-wide"> rated</span></small></div></td><td>${teamCell(x.club)}</td>`
+      + `<td class="pe-n"><span class="pe-elo" title="${peExact(p.v)}">${x.elo}</span></td><td>${peShield(x.elo)}</td><td class="pe-n">${peSigned(p.v)}</td>${goalie ? '' : `<td class="pe-n">${peSigned(p.o)}</td><td class="pe-n">${peSigned(p.d)}</td>`}`
+      + `<td class="pe-n">${h.career === null ? '–' : h.career}</td><td title="${esc(line.map(l => l[0] + ' ' + l[1]).join(', '))}">${peSpark(line.map(l => l[1])) || '–'}</td><td class="pe-n">${h.peak[0]}<small> · ${h.peak[1]}</small></td></tr>`; };
+  /* the first rows at once, the rest a frame's worth at a time between frames, so a press or a keystroke is answered and painted before
      the long tail is laid out; a newer draw stops an older one's tail */
-  const all = rows.slice(0, 400), first = 60, run = ++PL_RUN, raf = window.requestAnimationFrame ? f => window.requestAnimationFrame(f) : f => setTimeout(f, 16);
-  $('plTable').innerHTML = head + '<tbody>' + all.slice(0, first).map(tr).join('') + '</tbody>';
+  const raf = window.requestAnimationFrame ? fn => window.requestAnimationFrame(fn) : fn => setTimeout(fn, 16);
+  $('peTable').innerHTML = head + '<tbody>' + shown.slice(0, PE_FIRST).map(tr).join('') + '</tbody>';
   const more = i => raf(() => setTimeout(() => {
-    if (run !== PL_RUN || i >= all.length) return;
-    const tb = $('plTable').tBodies[0]; if (!tb) return;
-    tb.insertAdjacentHTML('beforeend', all.slice(i, i + 80).map((p, j) => tr(p, i + j)).join(''));
-    more(i + 80);
+    if (run !== PE_RUN || i >= shown.length) return;
+    const tb = $('peTable').tBodies[0]; if (!tb) return;
+    tb.insertAdjacentHTML('beforeend', shown.slice(i, i + PE_STEP).map(tr).join(''));
+    more(i + PE_STEP);
   }, 0));
-  if (all.length > first) more(first);
-  const ts = Object.entries(PL.teams).sort((a, b) => b[1].strength - a[1].strength);
-  $('plTeams').innerHTML = '<thead><tr><th class="n on">#</th><th class="sk">Club</th><th class="n on">Strength</th><th class="n">Attack</th><th class="n">Defence</th><th>Goalie</th><th>Out</th></tr></thead><tbody>' + ts.map(([c, t], i) => `<tr><td class="n rk">${i + 1}</td><td class="sk">${teamCell(c)}</td><td class="n big">${x100(t.strength)}</td><td class="n${sx(t.offence)}">${s100(t.offence)}</td><td class="n${sx(t.defence)}">${s100(t.defence)}</td><td>${t.goalie ? `${esc(t.goalie.name)} <span class="muted small">${x100(t.goalie.gk)} · ${esc(t.goalie.how)}</span>` : '—'}</td><td class="small outs wrap-any">${(t.out || []).map(o => esc(o.name)).join(', ') || '<span class="muted">nobody</span>'}</td></tr>`).join('') + '</tbody>';
+  if (shown.length > PE_FIRST) more(PE_FIRST);
 }
-let PL_RUN = 0;
+/* the clubs by a unit (the NFL's teamsCard): Overall the club's strength for its next game (its lineup's attack and defence, weighted by
+   ice time, and the goalie in net), Attack, Defence, Goaltending, each S.players.teams[club]'s own figure set on the Elo scale among
+   the clubs that have it. Every club's four figures are in every view, each with its place among the clubs (the NFL's ordinals: the top
+   eight lime, the bottom eight rose); the pill chooses which the table is ranked and tiered on. A club's place in a unit is one more
+   than the clubs whose Elo in it is greater, so clubs level on it share a place, and its place in a column is its rank with that
+   column's pill pressed. A club with no goalie in net has no Goaltending figure: it stands last there, unranked, outside that scale */
+function peClubs(view) {
+  const teams = S.players.teams || {}, val = { str: t => t.strength, off: t => t.offence, def: t => t.defence, gk: t => isObj(t.goalie) ? t.goalie.gk : null };
+  const U = {};
+  for (const [k] of PE_UNITS) { const have = Object.keys(teams).filter(id => isObj(teams[id]) && peNum(val[k](teams[id]))).sort((a, b) => val[k](teams[b]) - val[k](teams[a]) || az(a, b));
+    const sc = peScale(have.map(id => val[k](teams[id]))), rk = peRanks(have.map(id => sc(val[k](teams[id]))));
+    U[k] = { have, sc, place: Object.fromEntries(have.map((id, i) => [id, rk[i]])) }; }
+  const order = U[view].have.concat(Object.keys(teams).filter(id => !U[view].place[id]).sort(az));
+  PE_CURVE = [U[view].have.map(id => U[view].sc(val[view](teams[id]))), 'clubs', 'club']; peDrawCurve();
+  if (!order.length) { peSay('No club rated yet.'); return; }
+  peSay('');
+  const name = PE_UNITS.find(u => u[0] === view)[1];
+  const what = { str: "the club's strength for its next game: its lineup's attack and defence and the goalie in net", off: "its lineup's offence, weighted by ice time", def: "its lineup's defence, weighted by ice time", gk: 'the save rating of the goalie in net for its next game' };
+  const fig = (id, k) => { const t = teams[id], v = isObj(t) ? val[k](t) : null, pl = U[k].place[id], m = U[k].have.length; if (!peNum(v)) return '<td class="pe-n pe-st">–</td>';
+    return `<td class="pe-n pe-st" title="${peExact(v)}"><span class="pe-sv">${peGoals(v)}</span><small class="pe-ord${pl <= 8 ? ' top' : pl > m - 8 ? ' bot' : ''}">${peOrd(pl)}</small></td>`; };
+  const head = peHead([['#', 'pe-rank', ''], ['Team', 'sk', ''], ['Record', 'pe-n', 'Wins, losses, losses past regulation'], ['Rating', 'pe-n', `${name}: ${what[view]}, in goals a game by the player model, set on the Elo scale: 1500 the average club, 100 a standard deviation`], ['Tier', '', PE_TIER_T],
+    ['Overall', 'pe-n', `Attack, defence and the goalie in net, in goals a game, and its place among the clubs`], ['Attack', 'pe-n', `Its lineup's offence, weighted by ice time, in goals a game, and its place among the clubs`], ['Defence', 'pe-n', `Its lineup's defence, weighted by ice time, in goals a game, and its place among the clubs`], ['Goalie', 'pe-n', 'The save rating of the goalie in net for its next game, in goals a game, and its place among the clubs'], ['In goal', '', 'The goalie the model has in net for its next game']]);
+  $('peTable').innerHTML = head + '<tbody>' + order.map(id => { const t = isObj(teams[id]) ? teams[id] : {}, c = S.teams[id], v = val[view](t), ok = peNum(v), elo = ok ? U[view].sc(v) : null, g = isObj(t.goalie) ? t.goalie : null;
+    return `<tr><td class="pe-rank">${ok ? U[view].place[id] : '–'}</td><td class="pe-name sk">${teamCell(id)}${c && peNum(c.gp) ? `<small>${c.gp} game${c.gp === 1 ? '' : 's'}</small>` : ''}</td><td class="pe-n">${c && peNum(c.w) ? `${c.w}-${c.l}-${c.otl}` : '–'}</td>`
+      + (ok ? `<td class="pe-n"><span class="pe-elo" title="${peExact(v)}">${elo}</span></td><td>${peShield(elo)}</td>` : '<td class="pe-n">–</td><td>–</td>')
+      + PE_UNITS.map(u => fig(id, u[0])).join('') + `<td class="pe-in"${g && g.how ? ` title="${esc(g.how)}"` : ''}>${g ? esc(g.name) : '–'}</td></tr>`; }).join('') + '</tbody>';
+}
 
 /* ---------- a bet, as the page names it: the state's own numbers, nothing recomputed ----------
    A leg is one side of one market on one game: the moneyline (home or away), the puck line (home or
@@ -3166,7 +3384,7 @@ function fitNums() {
   }
 }
 let FIT_T = null;
-window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(() => { fitTiles(); if (typeof pkFit === 'function') pkFit(); if (ADMIN && S && !$('tab-xbets').hidden) renderXBets(); }, 120); });
+window.addEventListener('resize', () => { clearTimeout(FIT_T); FIT_T = setTimeout(() => { fitTiles(); if (typeof pkFit === 'function') pkFit(); peFit(); if (ADMIN && S && !$('tab-xbets').hidden) renderXBets(); }, 120); });
 if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(() => { fitTiles(); syncBetRows(); }, () => {});
 if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => { fitTiles(); syncBetRows(); });
 if (BET_RO) BET_RO.observe($('plLines'));

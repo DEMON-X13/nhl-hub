@@ -70,6 +70,26 @@
    NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page; NHL_SMOKE_ALL=1 lists every
    failure; NHL_SMOKE_ONLY=list,page,look,... runs the named sections alone, a development aid that always ends as a failure. */
 'use strict';
+/* The heap. Every section boots the page in jsdom several times. On 12 November 2026 a review measured the whole run at 2,009 MB of the
+   2,096 MB Node 22 allows by default, and a page three small edits bigger died there ("Reached heap limit", exit 134); with THE GAMES LIST
+   and THE GAME'S PAGE added it reached 2,637 MB where it was given room. A gate that dies takes every publish with it. The cause was
+   windows left open: a window booted and closed is given back whole (eight of them hold 62 MB, measured), but one left open keeps its
+   page's timers and its whole realm, and the sections written before the heap mattered left theirs open. So:
+   - main() closes every window a section opened once the section is over (OPEN, closeSince) and collects; what a section leaves held
+     is then 170 to 380 MB, and the run's peak 1,141 MB, inside the heaviest section;
+   - the smoke runs itself again with room (a 6 GB ceiling, not a reservation; GitHub's runner has 16) and --expose-gc, whoever starts
+     it: the job, simulate.js, a hand. A caller that sets --max-old-space-size itself is left alone;
+   - the line before the count says the peak and what is still held at the end, so a run that creeps is seen in the job's log long
+     before it reaches the ceiling. NHL_SMOKE_HEAP=1 says both after each section. */
+if (!process.execArgv.some(a => /^--max[-_]old[-_]space[-_]size/.test(a)) && !process.env.NHL_SMOKE_CHILD) {
+  const r = require('child_process').spawnSync(process.execPath, ['--max-old-space-size=6144', '--expose-gc', ...process.execArgv, ...process.argv.slice(1)],
+    { stdio: 'inherit', env: Object.assign({}, process.env, { NHL_SMOKE_CHILD: '1' }) });
+  if (r.error) { console.error(`smoke: could not start itself with a larger heap: ${r.error.message}`); process.exit(1); }
+  process.exit(r.status === null ? 1 : r.status);
+}
+let HEAP_PEAK = 0;
+const heapNow = () => { const h = process.memoryUsage().heapUsed; if (h > HEAP_PEAK) HEAP_PEAK = h; return h; };
+setInterval(heapNow, 500).unref();
 const fs = require('fs'), path = require('path');
 const { execFileSync } = require('child_process');
 const { JSDOM } = require('jsdom');
@@ -181,6 +201,10 @@ function noDk(body) {
   NODK_C.set(body, out);
   return out;
 }
+/* every window boot() makes, until it is closed (the heap, at the top of this file): main() closes whatever a section opened once the
+   section is over, and everything at the end */
+const OPEN = new Set();
+function closeSince(had) { for (const x of [...OPEN]) if (!had || !had.has(x)) { try { x.close(); } catch (e) { /* closed already */ } OPEN.delete(x); } }
 async function boot(clockMs, errors, opts = {}) {
   /* opts.bodyProbe, for THE LOOK: LIGHT AND DARK: a script first in the body noting html[data-theme] as the body starts to be parsed (__atBody) */
   const html0 = opts.bodyProbe ? HTML.replace('<body>', '<body><script>window.__atBody = document.documentElement.getAttribute("data-theme") || "";</' + 'script>') : HTML;
@@ -220,6 +244,7 @@ async function boot(clockMs, errors, opts = {}) {
       w.addEventListener('error', e => errors.push(e.message));
     },
   });
+  OPEN.add(dom.window);
   await wait(300);
   return dom.window;
 }
@@ -6269,12 +6294,15 @@ async function main() {
     ['x', 'X PARLAYS AND THE X BET LOG', xParlaysChecks], ['models', "THE PICK'EM MODELS", async () => modelsChecks()], ['theme', 'THE LOOK: LIGHT AND DARK', lightDarkChecks], ['teams', 'TEAM RANKINGS', teamRankingsChecks], ['pickem', "THE PICK'EM RECORD", pickemChecks], ['odds', 'REFRESH ODDS', refreshOddsChecks],
     ['props', 'PLAYER PROPS', playerPropsChecks], ['job', "THE JOB'S PLAYER LINES", jobLinesChecks], ['sgp', 'SAME-GAME PARLAYS AND PLAYER LEGS', sameGameChecks]];
   /* a page that breaks a section's steps (a button missing, a leg not where it should be) fails it, never ends the smoke unheard */
-  for (const [key, name, fn] of SECTIONS) { if (ONLY && !ONLY.includes(key)) continue; try { await fn(); } catch (e) { chk(false, `${name} stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 3).join(' ')}`); } }
+  for (const [key, name, fn] of SECTIONS) { if (ONLY && !ONLY.includes(key)) continue; const had = new Set(OPEN); try { await fn(); } catch (e) { chk(false, `${name} stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 3).join(' ')}`); } closeSince(had); heapNow();
+    if (global.gc) { global.gc(); global.gc(); }
+    if (process.env.NHL_SMOKE_HEAP) console.log(`  heap after ${name}: ${Math.round(process.memoryUsage().heapUsed / 1048576)} MB held, peak so far ${Math.round(HEAP_PEAK / 1048576)} MB`); }
   if (ONLY) { checks++; fails.push(`a partial run (NHL_SMOKE_ONLY=${ONLY.join(',')}): the gate is the whole run`); }
 
   /* written synchronously: process.exit (the page's timers would keep Node up) must not cut a piped log short */
   const shown = process.env.NHL_SMOKE_ALL ? fails : fails.slice(0, 60);
-  fs.writeSync(1, [`${checks} checks, ${fails.length} failures`].concat(shown.map(f => '  FAIL ' + f), fails.length > shown.length ? [`  ... and ${fails.length - shown.length} more (NHL_SMOKE_ALL=1 lists them all)`] : []).join('\n') + '\n');
+  heapNow(); closeSince(null); if (global.gc) { global.gc(); global.gc(); }
+  fs.writeSync(1, [`  heap: peak ${Math.round(HEAP_PEAK / 1048576)} MB, ${Math.round(process.memoryUsage().heapUsed / 1048576)} MB held at the end, of ${Math.round(require('v8').getHeapStatistics().heap_size_limit / 1048576)} MB`, `${checks} checks, ${fails.length} failures`].concat(shown.map(f => '  FAIL ' + f), fails.length > shown.length ? [`  ... and ${fails.length - shown.length} more (NHL_SMOKE_ALL=1 lists them all)`] : []).join('\n') + '\n');
   process.exit(fails.length ? 1 : 0);
 }
 main().catch(e => { console.error(e); process.exit(1); });

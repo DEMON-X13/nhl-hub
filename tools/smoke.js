@@ -5468,8 +5468,12 @@ async function holdPickem(St, ms, tag, opts = {}) {
         const g = St.games.find(x => x.id === tr.dataset.id); if (!g) continue;
         const fin = g.state === 'final' && sPkWin(g), t0 = new Date(g.start), c0 = tr.cells[0], sm = c0.querySelector('small'), mu = c0.cloneNode(true); for (const x of mu.querySelectorAll('small')) x.remove();
         const when = `${t0.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} ${t0.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}`;
-        /* a game is under way from its puck drop by the page's clock, which runs on: one within a few seconds of it may read either way */
-        const near = g.state === 'pre' && Math.abs(Date.parse(g.start) - now) < 5000, hows = fin ? [` · ${abbr(g[fin])} won ${g.as}–${g.hs}`] : near ? ['', ' · under way'] : [g.state !== 'pre' || Date.parse(g.start) <= now ? ' · under way' : ''];
+        /* a game is under way from its puck drop by the page's clock, which runs on: one within a few seconds of it may read either way.
+           A start the feed moved after the puck drop its frozen call was made before (the job's delay rule) reads "start moved" until the
+           new puck drop; one still to come with no such call, nothing */
+        const moved = ms => g.state === 'pre' && Date.parse(g.start) > ms && delayedAt(g, g.start, ms), stand = ms => moved(ms) ? ' · start moved' : sStarted(g, ms) ? ' · under way' : '';
+        const near = g.state === 'pre' && (Math.abs(Date.parse(g.start) - now) < 5000 || (g.before && Math.abs(Date.parse(g.before) - now) < 5000));
+        const hows = fin ? [` · ${abbr(g[fin])} won ${g.as}–${g.hs}`] : near ? [...new Set([stand(now - 5000), stand(now + 5000)])] : [stand(now)];
         if (txt(mu) !== `${abbr(g.away)} at ${abbr(g.home)}` || !eqA([...c0.querySelectorAll('b')].map(txt), [abbr(g.away), abbr(g.home)]) || !hows.some(h => txt(sm) === (when + h).trim())) bad.push(`${g.id}: "${txt(mu)}" "${txt(sm)}", want "${abbr(g.away)} at ${abbr(g.home)}" "${when + hows[0]}"`);
         PK_S.forEach(([id], j) => {
           const c = tr.cells[1 + j], p = sPkPick(g, id, St), mark = !fin || !p ? '' : p === fin ? '✓' : '✗', x = PK_MK[id] ? sPkModel(g, id, St) : null, bt = !!(x && x.bt);
@@ -6624,7 +6628,15 @@ async function pickemChecks() {
     for (const g of A.games) if (g.state !== 'pre') { g.state = 'pre'; g.hs = null; g.as = null; delete g.result; }
     A.record = sPkRecord(A);
     chk(!sPkData(A).fin.length && A.record.su.w + A.record.su.l === 0 && !Object.keys(A.record.byMonth).length, 'copy A plants a season with no final yet');
-    await holdPickem(A, PUB, 'copy A (no final yet)', { hash: 'record', how: 'the old #record address' }); }
+    /* and on the state's own day, where it has two games: one whose start the feed moved three hours after the puck drop its frozen call
+       was made before, an hour ago (the job's delay rule: its call is kept, "start moved" until the new puck drop), and one whose puck
+       drop passed half an hour ago with the feed still saying scheduled ("under way") */
+    const isoA = ms => new Date(ms).toISOString().slice(0, 16) + 'Z', onT = A.games.filter(g => g.date === A.today).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+    let plantA = null;
+    if (onT.length >= 2) { const [gm, gu] = onT; gm.before = isoA(PUB - 3600000); gm.frozen = isoA(PUB - 7200000); gm.start = isoA(PUB + 2 * 3600000); gu.start = isoA(PUB - 1800000); delete gu.before; plantA = A.today;
+      chk(delayedAt(gm, gm.start, PUB) && !startedAt(gm, PUB) && startedAt(gu, PUB) && !delayedAt(gu, gu.start, PUB), `copy A plants on ${A.today} a start moved after its puck drop (${gm.id}) and a puck drop passed with the feed saying scheduled (${gu.id})`); }
+    else console.log(`  copy A: ${A.today} has ${onT.length} games, so no moved start or passed puck drop is planted`);
+    await holdPickem(A, PUB, 'copy A (no final yet)', { hash: 'record', how: 'the old #record address', days: plantA ? [plantA] : [] }); }
   /* copy B: a season of one month (the latest with a final, else the schedule's first; finals made up where it has under nine), opened by a
      stored Record tab, planting: a final with no line (DraftKings picks nothing, so it counts in neither DraftKings' season nor against it,
      nor in the total's miss), one whose club ratings part from the call, one priced level (DraftKings picks the home side), a model's own

@@ -300,6 +300,10 @@ function partC() {
   /* the verdict on made-up ledgers of 12,000 lines */
   const fake = (pmOf, priceOf) => {
     const L = JSON.parse(J(L3)); L.calls = {}; L.decision = null;
+    /* the made-up calls below are dated from 31 October 2026 on, so their bar is registered before them (the real one's time), not at
+       this run's clock as the scratch ledger's was: registered at the run's clock, every one of them was "called before the bar" on any
+       state published after 31 October, and this test failed from 1 November on with nothing wrong */
+    L.bar_registered = '2026-10-15T11:46Z';
     let k = 0; const R = mul(7);
     for (let gi = 0; gi < 175; gi++) {
       const lines = [];

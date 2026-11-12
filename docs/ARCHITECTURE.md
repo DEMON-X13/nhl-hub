@@ -174,7 +174,7 @@ bet and says it is under way, a live score the job published says when it was re
 reads ESPN itself once on opening for a game under way), and a leg whose game has started leaves the
 builder. Tabs: Games, Suggested Parlays (`#suggest`), Parlay Builder (`#parlays`, `#parlay` too; browser only, no
 sync), Team Rankings (`#ratings`; `#standings` and `#playoff` open it too), ELO Ratings (`#players`, the Players tab's name kept,
-and `#elo`), Pick'em Record (`#pickem`), Record, and on the owner's devices X Parlays and the X Bet Log. Team Rankings (nhl v26)
+and `#elo`), Pick'em Record (`#pickem`; `#record`, the tab nhl v30 folded into it, opens it too), and on the owner's devices X Parlays and the X Bet Log: the NFL hub's tab bar. Team Rankings (nhl v26)
 is the NFL hub's tab of that name where the Standings and Power Ratings were (a Playoff tab went in nhl v14): one table of the 32
 clubs in order of the team Elo (`rankRows()`, `renderRankings()`: the rank shared by clubs level on the Elo shown, the record, the
 points, the Elo with its tier's shield on hockey's 30-point ladder (`TEAM_TIERS`, `teamShield()`, the NFL's `tierBadge()`), the Elo
@@ -237,7 +237,7 @@ Lineups (the drawer's lists) and Team Stats (the NFL's bars on what the state ca
 is Pick your own legs' alone; every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (Team Rankings'
 table fixed on a width a column, laid out by its own words on a phone; ELO Ratings' players in a box that scrolls both ways under a
-held head); the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
+held head); the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
 builder first, then the Top 30 lines a line a row. The smoke's THE GAME'S PAGE section holds the page and its windows by a model of its own, THE LOOK the rest with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
 and the no-descriptions rule, and TEAM RANKINGS and ELO RATINGS those two tabs, each worked out from the state by rules of its own
@@ -256,13 +256,17 @@ lines while its stored legs stay as they were, an open card follows. In memory o
 reload is the published state. The same press reads DraftKings' player props for the games today and tomorrow
 (THE PROPS VIEW, below).
 
-THE PICK'EM RECORD (nhl v19, `index.html`, every class `pk-`; CLAUDE.md has the rules): the tab before the Record, every
-final straight up by each model's frozen pick (the call's `pick`, the Team Elo's `elo.pHome` or `pHome`, DraftKings'
-favourite on the frozen line), Monday-to-Sunday weeks (Eastern), DraftKings' season and favourite bands in the strip, the
-chart of each model's wins against DraftKings (`pkChart`, inline SVG), the week grid (`#pkWeeks`) and every pick of a day
-(`#pkPicks`, behind Show every pick). Nothing is stored and nothing is fetched: it reads the state alone. Since nhl v20 the
-NFL hub's three are on it too (Alpha, the Joker, the ELO Model: each game's `models`, frozen with the call; the finals before
-they existed from `models.backtest`, marked bt).
+THE PICK'EM RECORD (nhl v19; the NFL hub's Record tab since nhl v30, `index.html`, its classes the NFL's `rv-`, `lgd`, `pickgrid` and
+this page's `pk-`; CLAUDE.md has the rules): the last of a visitor's tabs, every final straight up by each model's frozen pick
+(the call's `pick`, the Team Elo's `elo.pHome` or `pHome`, DraftKings' favourite on the frozen line; the NFL hub's three, each
+game's `models`, the finals before they existed from `models.backtest`, marked bt), Monday-to-Sunday weeks (Eastern). `pkData()`
+makes the sums and `renderPickem()` draws: six tiles (`#pkTiles`: DraftKings' record, the call in each of the Games tab's four
+confidence bands by `bandRecs()`, the total's average miss in goals); the card Wins against DraftKings (`#pkLegend`, the chart
+`pkChart()`, an inline SVG at its box's width with a week's numbers on a hover, `pkTip()`; Show every pick, `#pkShow`, `#pkDay`,
+`#pkPicks`); the card Week by week (`#pkWeeks`, `pkCell()`); and the card Bets record (`#pkBets`, `pkBets()`: the state's
+`record`, the season and each month, what the Record tab showed until nhl v30) with the line on calls made before the injury
+report (`#pkBlind`). Nothing is stored and nothing is fetched: it reads the state alone. The chart's five lines and the grid's two
+shades are tokens (`--m-*`, `--rv-up`, `--rv-dn`) with a value in each look.
 
 THE PARLAY BUILDER (nhl v7, laid out as the NFL hub's in nhl v17, `index.html`, every class `pb-` for the panel, `t30-` for
 the Top 30, `sp-` for the Suggested Parlays tab and `pc-` for the card; CLAUDE.md has the rules): on the Parlay Builder tab

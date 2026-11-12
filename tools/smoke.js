@@ -3840,7 +3840,7 @@ async function gamesListChecks() {
     const okRead = r => r.cache === 'no-store' && r.method === 'GET', badU = dU.filter(dd => readsOf(dd).length !== 1 || !okRead(readsOf(dd)[0])), badN = dN.filter(dd => readsOf(dd).length), badM = dM.filter(dd => readsOf(dd).length > 1 || !readsOf(dd).every(okRead));
     const nM = dM.reduce((n, dd) => n + readsOf(dd).length, 0);
     chk(!badU.length && !badN.length && !badM.length && sbReqs().length === dU.length + nM, `a day shown is read once where it has a game under way that the state has no final for, and never where it has none (${dU.length} days read of ${dayList(d).length}${dM.length ? `, ${dM.length} whose first puck dropped during the walk` : ''}; read wrongly: ${badU.concat(badM).join(', ') || 'none'}; read for nothing: ${badN.join(', ') || 'none'}; ${sbReqs().length} requests)`);
-    if (dU.length) { const other = dayList(d).find(dd => dd !== dU[0] && !dM.includes(dd)); if (other) openDay(d, other); openDay(d, dU[0]); d.querySelector('#tabs button[data-tab="record"]').click(); d.querySelector('#tabs button[data-tab="games"]').click();
+    if (dU.length) { const other = dayList(d).find(dd => dd !== dU[0] && !dM.includes(dd)); if (other) openDay(d, other); openDay(d, dU[0]); d.querySelector('#tabs button[data-tab="pickem"]').click(); d.querySelector('#tabs button[data-tab="games"]').click();
       chk(readsOf(dU[0]).length === 1 && sbReqs().length - dM.reduce((n, dd) => n + readsOf(dd).length, 0) === dU.length, `and not again when the day is chosen or the tab opened a second time (${readsOf(dU[0]).length})`); }
     else console.log('  no day of the select has a game under way at the publish: the one read is held on the page opened at a puck drop below');
     await wait(20);
@@ -3868,7 +3868,7 @@ async function gamesListChecks() {
   S = JSON.parse(JSON.stringify(real));
   try {
     const both = (fn, arg) => { fn(S, arg); w.eval(`(${fn.toString()})(S, ${JSON.stringify(arg === undefined ? null : arg)})`); };
-    const redraw = day => { d.querySelector('#tabs button[data-tab="record"]').click(); d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, day); };
+    const redraw = day => { d.querySelector('#tabs button[data-tab="pickem"]').click(); d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, day); };
     const row = g => cardOf(d, g.id), gBy = id => S.games.find(x => x.id === id);
     const hold = (g, at, lv, tag) => { redraw(g.date); const c = row(g), b = c ? rowWrongs(w, c, gBy(g.id), at, MAP, lv) : ['no row']; chk(!b.length, `${tag} (${b.slice(0, 3).join(' | ')}${c ? `: ${txt(c.querySelector('.sl-result'))}` : ''})`); return c; };
     const come = S.games.filter(g => dayList(d).includes(g.date) && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start)), G = come[0];
@@ -4022,7 +4022,7 @@ async function gamesListChecks() {
       both((St, dd) => { St.games = St.games.filter(g => g.date !== dd); }, today);
       if (later) { redraw(today); const bE = listWrongs(w, today, AT, MAP); chk(!bE.length && $('gamesList').children.length === 1 && txt($('gamesList')) === slEmptyS(today, AT) && $('slateOdds').hidden && /0–0$/.test(txt($('dayRec'))), `today with no game is still in the select and says so, its record 0–0 and no odds bar (${txt($('gamesList'))}; ${bE.slice(0, 2).join(' | ')})`); }
       /* on the schedule's last game day there is no later day: with today's games gone the season is over, so the select is every game day, the last one shown, today not among them */
-      else { d.querySelector('#tabs button[data-tab="record"]').click(); d.querySelector('#tabs button[data-tab="games"]').click(); const shown = $('daySel').value, bE = listWrongs(w, shown, AT, MAP);
+      else { d.querySelector('#tabs button[data-tab="pickem"]').click(); d.querySelector('#tabs button[data-tab="games"]').click(); const shown = $('daySel').value, bE = listWrongs(w, shown, AT, MAP);
         chk(eqA(dayList(d), slDaysS(AT)) && !dayList(d).includes(today) && shown === slOpenS(AT) && !bE.length, `on the schedule's last game day, with today's games gone the select is every game day and shows the last, today not listed (${dayList(d).length} days, ${shown}; ${bE.slice(0, 2).join(' | ')})`); } }
     both(St => { St.games = []; }); w.__setClock(AT + 86400000 * 400); d.dispatchEvent(new w.Event('visibilitychange')); w.__setClock(AT); d.dispatchEvent(new w.Event('visibilitychange'));
     chk(eqA(dayList(d), [today]) && txt($('gamesList')) === `The ${S.season - 1}-${String(S.season).slice(2)} schedule is not out yet` && $('dayPrev').disabled && $('dayNext').disabled, `with no schedule the select is today alone and the list says the schedule is not out (${txt($('gamesList'))})`);
@@ -4048,10 +4048,10 @@ async function gamesListChecks() {
   /* the one read wherever the Games tab is first drawn (the review's L3): a page opened on another tab at a puck drop asks ESPN for nothing,
      and reads the day shown once when Games is opened, no more when it is opened again */
   { const nextG = S.games.filter(g => g.state === 'pre' && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0], tU = nextG ? Date.parse(nextG.start) + 60000 : AT;
-    const e5 = [], w5 = await boot(tU, e5, { hash: 'record' }), d5 = w5.document, sb5 = () => w5.__requests.filter(r => r.url.startsWith(SB_URL)), n0 = sb5().length;
+    const e5 = [], w5 = await boot(tU, e5, { hash: 'pickem' }), d5 = w5.document, sb5 = () => w5.__requests.filter(r => r.url.startsWith(SB_URL)), n0 = sb5().length;
     d5.querySelector('#tabs button[data-tab="games"]').click(); await wait(20);
     const day5 = d5.getElementById('daySel').value, want5 = S.games.some(g => g.date === day5 && g.state !== 'final' && sStarted(g, tU)) ? 1 : 0, n1 = sb5().length;
-    d5.querySelector('#tabs button[data-tab="record"]').click(); d5.querySelector('#tabs button[data-tab="games"]').click(); d5.dispatchEvent(new w5.Event('visibilitychange')); await wait(20);
+    d5.querySelector('#tabs button[data-tab="pickem"]').click(); d5.querySelector('#tabs button[data-tab="games"]').click(); d5.dispatchEvent(new w5.Event('visibilitychange')); await wait(20);
     chk(n0 === 0 && n1 === want5 && sb5().length === want5 && (!want5 || (sb5()[0].url === `${SB_URL}?dates=${day5.replace(/-/g, '')}&limit=100` && sb5()[0].cache === 'no-store')) && (!nextG || want5 === 1), `a page opened on another tab asks ESPN for nothing, reads the day shown once when Games is first opened${nextG ? ' (a game under way: one read)' : ''}, and nothing more after (${n0}, ${n1}, ${sb5().length} requests; day ${day5})`);
     chk(!e5.length, 'no runtime error on a page opened on another tab: ' + e5.join(' | ')); w5.close(); }
   /* before the season opens (the page opened five days before the first game): today and the first week's game days, today the countdown.
@@ -4639,7 +4639,7 @@ async function gamePageChecks() {
     chk(modal.hidden && d.activeElement === card(), 'a click on the backdrop closes it');
     card().click(); view.querySelector('.ghead').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
     chk(!modal.hidden, 'a click inside the page does not');
-    d.querySelector('#tabs button[data-tab="record"]').click();
+    d.querySelector('#tabs button[data-tab="pickem"]').click();
     chk(modal.hidden && !d.body.classList.contains('modal-open'), 'a change of tab closes it');
     d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, G0.date);
     /* a window: Close holds the focus, Tab stays inside, Escape closes it alone and gives the focus back to its button; the next Escape closes the page */
@@ -5067,7 +5067,7 @@ async function theLook() {
   }
   /* nhl v25: the tab bar is words alone, the NFL hub's: no count on a tab (Games and Parlay Builder carried one), on any tab, with a
      leg in the builder or without */
-  const tabWords = { games: 'Games', suggest: 'Suggested Parlays', parlays: 'Parlay Builder', xparlays: 'X Parlays', ratings: 'Team Rankings', players: 'ELO Ratings', pickem: "Pick'em Record", xbets: 'X Bet Log', record: 'Record' };
+  const tabWords = { games: 'Games', suggest: 'Suggested Parlays', parlays: 'Parlay Builder', xparlays: 'X Parlays', ratings: 'Team Rankings', players: 'ELO Ratings', pickem: "Pick'em Record", xbets: 'X Bet Log' };
   const bareTabs = dd => [...dd.querySelectorAll('#tabs button')].every(b => !b.children.length && txt(b) === tabWords[b.dataset.tab]) && !dd.getElementById('gameCount') && !dd.getElementById('legCount');
   chk(bareTabs(d), `every tab is its words alone, no count on any (${[...d.querySelectorAll('#tabs button')].map(txt).join(' | ')})`);
   /* 44px: the toolbar, the tabs, ELO Ratings' seven pills and its search */
@@ -5128,17 +5128,20 @@ async function theLook() {
   chk(hiders.length > 0 && scrollers.length > 0, `the page's CSS read: ${hiders.length} rules that hide, ${scrollers.length} that scroll`);
   /* nhl v26: Team Rankings' one table (the NFL's eight columns with goals a game for its EPA pair, and PTS, Playoff and Cup: what the
      Standings' fourteen and Power Ratings' ten gave, less the columns the record and the two rates carry) and its absences table */
+  const PKD = sPkData(S);
   const COLS = { ratings: TR_HEAD, absences: TR_ABS,
-    pePlayers: PE_HEAD.F, peGoalies: PE_HEAD.G, peClubs: PE_HEAD.U, recMonth: ['When', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'], recBand: ['Model chance', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'],
-    /* nhl v19's Pick'em: a column a week played (Monday's date) and the season; every pick of a day, a column a model */
-    pkWeeks: ['Model'].concat(sPkData(S).weeks.map(sPkShort), ['Season']), pkPicks: ['Game', 'Result'].concat(PK_S.map(m => m[1])) };
-  const STICK = { ratings: 'Team', absences: 'Player', pePlayers: 'Player', peGoalies: 'Player', peClubs: 'Team', recMonth: 'When', recBand: 'Model chance', pkWeeks: 'Model', pkPicks: 'Game' };
+    pePlayers: PE_HEAD.F, peGoalies: PE_HEAD.G, peClubs: PE_HEAD.U,
+    /* the Pick'em Record's three (nhl v30, the NFL's): the week grid, a column a week played (its Monday over its games) and the season, its
+       models' column headed by no word; every pick of a day, the game and a column a model; the bets record, what the Record tab's two tables held */
+    pkWeeks: [''].concat(PKD.weeks.map(x => `${sPkShort(x)}${PKD.games[x]} game${PKD.games[x] === 1 ? '' : 's'}`), ['Season']), pkPicks: ['Game'].concat(PK_S.map(m => m[1])), pkBets: ['When', 'Straight up', 'Moneyline', 'Puck line', 'Totals'] };
+  const STICK = { ratings: 'Team', absences: 'Player', pePlayers: 'Player', peGoalies: 'Player', peClubs: 'Team', pkWeeks: '', pkPicks: 'Game', pkBets: 'When' };
   /* a heading as a desktop shows it: its words without the short form a phone shows instead (.t-narrow) */
   const wideTxt = th => { const c = th.cloneNode(true); for (const x of c.querySelectorAll('.t-narrow')) x.remove(); return txt(c); };
   const lost = [], seen = [];
   const unheld = cssWith(w, 'position', /^(?!sticky$).+/).concat(cssWith(w, 'left', /^(?!0(px)?$).+/));      // every rule, under any media, that sets a position other than sticky, or a left other than 0
   const tablesHeld = (tab, keyOf) => {
-    for (const tb of d.querySelectorAll(tab === 'ratings' || tab === 'players' ? `#tab-${tab} table` : `#tab-${tab} table.tbl`)) {      // Team Rankings' two and ELO Ratings' one are the NFL's plain tables (table.rt-v, the absences', table.pe-t): every table of the tab
+    for (const tb of d.querySelectorAll(`#tab-${tab} table`)) {      // every table of the tab (Team Rankings' two, ELO Ratings' one and the Pick'em Record's grids are the NFL's plain tables, not table.tbl)
+      if (!tb.rows.length) continue;                         // a table the tab has put away, nothing drawn in it (the Pick'em Record's before any final, its picks until asked)
       const key = keyOf(tb), ths = [...tb.querySelectorAll('thead th')], heads = ths.map(wideTxt), want = COLS[key]; seen.push(key);
       if (!want || !eqA(heads, want)) lost.push(`${key}: columns ${JSON.stringify(heads)}, want ${JSON.stringify(want)}`);
       const wr = tb.parentElement;
@@ -5156,13 +5159,13 @@ async function theLook() {
       if (rows.some(r => r.cells.length !== ths.length)) lost.push(`${key}: a row with a cell missing`);
     }
   };
-  for (const t of ['ratings', 'players', 'pickem', 'record']) {
+  for (const t of ['ratings', 'players', 'pickem']) {
     d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     if (t === 'pickem' && d.querySelector('#pkPicksW').hidden) d.querySelector('#pkShow').click();
     if (t === 'players') { if (S.players) for (const [v, key] of [['F', 'pePlayers'], ['G', 'peGoalies'], ['str', 'peClubs'], ['F', null]]) { d.querySelector(`#pePos button[data-view="${v}"]`).click(); if (key && d.querySelector('#peTable tbody tr')) tablesHeld(t, () => key); } }
     else tablesHeld(t, tb => tb.id || (tb.classList.contains('rt-v') ? 'ratings' : tb.closest('#injCard') ? 'absences' : 'a table with no name'));
   }
-  chk(!lost.length && ['ratings', 'recMonth', 'recBand', 'pkWeeks', 'pkPicks'].every(k => seen.includes(k)) && seen.includes('absences') === sTrOuts(S).length > 0 && (!S.players || [['pePlayers', sPeRows(S, 'F').rows.length], ['peGoalies', sPeRows(S, 'G').rows.length], ['peClubs', Object.keys(S.players.teams || {}).length]].every(([k, n]) => !n || seen.includes(k))), `every table keeps every column at every width, scrolling sideways in its wrapper with its club or player held (${seen.length} tables; ${lost.slice(0, 4).join(' | ')})`);
+  chk(!lost.length && seen.includes('ratings') && seen.includes('pkWeeks') === PKD.fin.length > 0 && seen.includes('pkPicks') === S.games.length > 0 && seen.includes('pkBets') === (!!S.record && S.record.su.w + S.record.su.l > 0) && seen.includes('absences') === sTrOuts(S).length > 0 && (!S.players || [['pePlayers', sPeRows(S, 'F').rows.length], ['peGoalies', sPeRows(S, 'G').rows.length], ['peClubs', Object.keys(S.players.teams || {}).length]].every(([k, n]) => !n || seen.includes(k))), `every table keeps every column at every width, scrolling sideways in its wrapper with its club or player held (${seen.length} tables; ${lost.slice(0, 4).join(' | ')})`);
   /* Team Rankings' table (nhl v26) is laid out fixed on a width for each of its eleven columns, never squeezed under what they add up to
      (it scrolls in its wrapper instead), so every heading stays on one line (the NFL shares what is left among its figure columns, and
      its headings break in two on a tablet); on a phone it is laid out by its own words, every cell's width let go. jsdom lays nothing
@@ -5183,11 +5186,11 @@ async function theLook() {
   const absR = cssWith(w, 'position', /^absolute$/), posR = cssWith(w, 'position', /^(relative|sticky|absolute|fixed)$/), loose = [];
   let absN = 0;
   let absRt = 0, absPe = 0;
-  for (const t of ['ratings', 'players', 'pickem', 'record']) {
+  for (const t of ['ratings', 'players', 'pickem']) {
     d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     for (const kind of t === 'players' && S.players ? ['F', 'G', 'str'] : [null]) {
       if (kind) d.querySelector(`#pePos button[data-view="${kind}"]`).click();
-      for (const tb of d.querySelectorAll(t === 'ratings' || t === 'players' ? `#tab-${t} table` : `#tab-${t} table.tbl`)) for (const el of tb.querySelectorAll('span, div, b, i, small, em')) {
+      for (const tb of d.querySelectorAll(`#tab-${t} table`)) for (const el of tb.querySelectorAll('span, div, b, i, small, em')) {
         const a = absR.find(([sel]) => hitsSel(el, sel)); if (!a) continue;
         absN++; if (t === 'ratings') absRt++; if (kind === 'str') absPe++;
         let held = false; for (let q = el.parentElement; q && q !== tb.parentElement; q = q.parentElement) if (posR.some(([sel, md]) => (md === '' || md === a[1]) && hitsSel(q, sel))) { held = true; break; }
@@ -5197,32 +5200,6 @@ async function theLook() {
     if (t === 'players' && S.players) d.querySelector('#pePos button[data-view="F"]').click();
   }
   chk(absN > 0 && absRt === Object.keys(S.teams).length && (!S.players || absPe === Object.keys(S.players.teams || {}).length) && !loose.length, `every name a table hides for a screen reader is held by a positioned box inside its table, Team Rankings' ${Object.keys(S.teams).length} and ELO Ratings' clubs among them (${absN} held, ${absRt} in Team Rankings, ${absPe} in the clubs' table; ${loose.slice(0, 3).join(' | ')})`);
-  /* the Record's tiles: a figure and its label, lime where the side picks won more than they lost, rose where fewer, none on the straight-up two */
-  d.querySelector('#tabs button[data-tab="record"]').click();
-  const R = S.record, rate = r => r.w + r.l ? (r.w / (r.w + r.l) * 100).toFixed(1) + '%' : '—', wl = r => `${r.w}-${r.l}${r.p ? '-' + r.p : ''}`, cl = r => r.w > r.l ? 'good' : r.w < r.l ? 'bad' : '';
-  const wantT = [[`${R.su.w}-${R.su.l}`, 'Straight up', ''], [rate(R.su), 'SU rate', ''], [wl(R.ml), 'Moneyline picks', cl(R.ml)], [wl(R.pl), 'Puck line picks', cl(R.pl)], [wl(R.ou), 'Totals picks', cl(R.ou)]];
-  const haveT = [...d.querySelectorAll('#recordTotals .stat')].map(s => [txt(s.querySelector(':scope > b')), txt(s.querySelector(':scope > span')), (s.querySelector(':scope > b') || { className: '' }).className]);
-  chk(eqA(haveT, wantT), `the Record's five tiles ${JSON.stringify(wantT)} (${JSON.stringify(haveT)})`);
-  /* the Record's figures fit their tiles on one line, all five at one size: at 30px a three-figure record ("179-145") broke at its hyphen
-     on a phone. jsdom lays nothing out, so here a tile is 120px wide and a figure 0.7 of its font size a character, and the page is held to
-     stepping its figures down until each fits (fitRecord), on drawing the tab and again on a resize, on a record of 784-646 */
-  {
-    const big = Object.assign({}, S, { record: Object.assign({}, S.record, { su: { w: 784, l: 646 }, ml: { w: 157, l: 129, p: 3 }, pl: { w: 314, l: 226 }, ou: { w: 353, l: 355, p: 12 } }) });
-    const errsR = [], wR = await boot(AT, errsR, { state: JSON.stringify(big) }), dR = wR.document, TILE = 120;
-    const fig = el => !!(el && el.matches && el.matches('#recordTotals .stat>b')), fpx = el => parseFloat(wR.getComputedStyle(el).fontSize) || 30;
-    const natural = el => txt(el).length * fpx(el) * 0.7;
-    Object.defineProperty(wR.HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return fig(this) ? TILE : 0; } });
-    Object.defineProperty(wR.HTMLElement.prototype, 'scrollWidth', { configurable: true, get() { return fig(this) ? Math.ceil(Math.max(TILE, natural(this))) : 0; } });
-    const fits = () => { const bs = [...dR.querySelectorAll('#recordTotals .stat>b')], sz = bs.map(fpx); return bs.length === 5 && bs.every(b => natural(b) <= TILE) && sz.every(x => x === sz[0]) && sz[0] >= 16 ? null : bs.map(b => `${txt(b)} ${fpx(b)}px`).join(', '); };
-    dR.querySelector('#tabs button[data-tab="record"]').click();
-    const f1 = fits();
-    chk(txt(dR.querySelector('#recordTotals .stat>b')) === '784-646' && 7 * 30 * 0.7 > TILE && !f1, `the Record's figures step down together until each fits its tile on one line (${f1 || 'all fit'})`);
-    for (const b of dR.querySelectorAll('#recordTotals .stat>b')) b.style.fontSize = '';
-    wR.dispatchEvent(new wR.Event('resize')); await wait(250);
-    const f2 = fits();
-    chk(!f2, `and again on a resize (${f2 || 'all fit'})`);
-    chk(!errsR.length, 'no runtime error fitting the Record: ' + errsR.join(' | '));
-  }
   /* Pick your own legs (no chips there): a side far off the market says so on its own button, both numbers in view; on Both days where
      offered, so tomorrow's games are held too */
   d.querySelector('#tabs button[data-tab="parlays"]').click();
@@ -5238,7 +5215,7 @@ async function theLook() {
   if (bothB && day0) { const b0 = d.querySelector(`#pbDay button[data-day="${day0}"]`); if (b0) b0.click(); }
   /* no image after every tab, every day, a game's page, its windows and the card window */
   d.querySelector('#tabs button[data-tab="pickem"]').click();
-  chk(!d.querySelectorAll('#tab-pickem img').length && (sPkData(S).weeks.length ? !!d.querySelector('#pkChart svg.pk-chart') : /No game graded yet/.test(txt(d.querySelector('#pkChart')))), "the Pick'em tab: its chart drawn inline (or, before any final, said not to be), no image");
+  chk(!d.querySelectorAll('#tab-pickem img').length && (sPkData(S).weeks.length ? !!d.querySelector('#pkChart svg.pk-chart') && d.querySelector('#pkNone').hidden : !d.querySelector('#pkNone').hidden && /No game graded yet/.test(txt(d.querySelector('#pkNone')))), "the Pick'em tab: its chart drawn inline (or, before any final, said not to be), no image");
   d.querySelector('#tabs button[data-tab="games"]').click();
   for (const dd of dayList(d)) openDay(d, dd);
   const gI = S.games.filter(g => dayList(d).includes(g.date)).find(g => S.props && S.props.games && S.props.games[g.id]) || S.games.find(g => dayList(d).includes(g.date));
@@ -5275,14 +5252,18 @@ async function theLook() {
    HEAD:data/suggest_ledger.json); the state's record its summary; every day still to lock with a line read at the publish taken,
    the page's own levels on it at the publish and this smoke's brute force's on its own pool; and the panel's record row worked out
    from the state, pill by pill, title by title */
-/* ---------- THE PICK'EM RECORD (nhl v19) ----------
+/* ---------- THE PICK'EM RECORD (nhl v19; the NFL hub's anatomy with the Record tab folded in, nhl v30) ----------
    The Pick'em tab worked out here from the state by rules of its own: every final with a winner, straight up; each model's pick read
    off the game's call as frozen at puck drop (the call its own side, `pick`; the Team Elo the club ratings' chance, the
    Elo's view kept beside a player-model call, else the call's chance; DraftKings the moneyline favourite by the two prices, the home
-   side where they are level); the week Monday to Sunday by the game's Eastern date. The tiles and DraftKings' favourite bands, the
-   legend, the chart's lines week by week, the week grid with its shading, and every pick of a day (the day it opens on, a past day),
-   on the state and on a copy with a final unlined, one whose two ratings part and one priced level. The call's season is the
-   state's own SU record, worked out by the job */
+   side where they are level); the week Monday to Sunday by the game's Eastern date. The six tiles (DraftKings' record; the call
+   straight up in each of the Games tab's four confidence bands, cut on the chance rounded as a row writes it; how far DraftKings'
+   total was from the goals scored), the legend, the chart's lines week by week with their end labels and a week's own numbers on a
+   hover, the week grid with its shading, the bets record (the state's `record`, and on the state as given the record worked out
+   again from its finals and calls), the line on calls made before the injury report, and every pick of a day (the day it opens
+   on, a past day); the old addresses (#record, a stored `record` tab). On the state, on a copy with no final, and on a copy of one
+   month planting an unlined final, a game whose two ratings part, a level price, a model's own call over its backtest, a final with
+   neither, a total and a puck line that push, a band with no game and a chance that rounds up into a band */
 const PK_S = [['alpha', 'Alpha'], ['joker', 'The Joker'], ['elom', 'ELO Model'], ['call', 'The call'], ['elo', 'Team Elo'], ['dk', 'DraftKings']];
 const PK_MK = { alpha: 'alpha', joker: 'joker', elom: 'elo' };
 /* one of the NFL's three on a game: the call frozen with the game's own (`models`), else, with none, the state's backtest of it */
@@ -5293,6 +5274,7 @@ function sPkModel(g, id, St) {
   return isO(b) && isO(b[k]) ? { c: b[k], bt: true } : null;
 }
 const MON_S = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MON_L = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const sImp = o => o < 0 ? -o / (100 - o) : 100 / (100 + o);
 const sPkLined = L => !!L && [L.homeML, L.awayML].every(v => v !== null && v !== undefined && v !== '' && isFinite(v) && +v !== 0);
 function sPkPick(g, id, St = S) {
@@ -5302,98 +5284,219 @@ function sPkPick(g, id, St = S) {
   if (id === 'elo') return side(g.by === 'players' ? g.elo && g.elo.pHome : g.pHome);
   return sPkLined(g.line) ? (sImp(+g.line.homeML) >= sImp(+g.line.awayML) ? 'home' : 'away') : null;
 }
-const sPkFav = g => { if (!sPkLined(g.line)) return null; const h = sImp(+g.line.homeML), a = sImp(+g.line.awayML); return Math.max(h, a) / (h + a); };
 const sPkWeek = d => { const t = Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)); return new Date(t - ((new Date(t).getUTCDay() + 6) % 7) * 864e5).toISOString().slice(0, 10); };
 const sPkShort = d => `${MON_S[+d.slice(5, 7) - 1]} ${+d.slice(8, 10)}`;
-const sPkPct = r => r.w + r.l ? (100 * r.w / (r.w + r.l)).toFixed(1) + '%' : '—';
-const sPkSigned = n => n > 0 ? '+' + n : n < 0 ? '−' + -n : '±0';
+const sPkRec = r => `${r.w}–${r.l}`;
+const sPkSigned = n => n > 0 ? '+' + n : n < 0 ? '−' + -n : '0';
 const sPkWin = g => g.hs > g.as ? 'home' : g.as > g.hs ? 'away' : null;
 function sPkData(St) {
   const fin = St.games.filter(g => g.state === 'final' && typeof g.hs === 'number' && typeof g.as === 'number' && g.hs !== g.as);
   const weeks = [...new Set(fin.map(g => sPkWeek(g.date)))].sort();
-  const rec = {}, vs = {}, bands = { '65+': [0.65, 2], '60-65': [0.60, 0.65], '55-60': [0.55, 0.60], '50-55': [0.5, 0.55] }, band = {};
+  const rec = {}, vs = {}, games = {}, miss = [];
   for (const [id] of PK_S) { rec[id] = { w: 0, l: 0 }; for (const wk of weeks) rec[id][wk] = { w: 0, l: 0 }; if (id !== 'dk') vs[id] = {}; }
-  for (const k in bands) band[k] = { w: 0, l: 0 };
   for (const g of fin) {
     const win = sPkWin(g), wk = sPkWeek(g.date), right = {};
+    games[wk] = (games[wk] || 0) + 1;
     for (const [id] of PK_S) { const p = sPkPick(g, id, St); if (!p) continue; right[id] = p === win; const k = right[id] ? 'w' : 'l'; rec[id][k]++; rec[id][wk][k]++; }
     for (const id of Object.keys(vs)) if (id in right && 'dk' in right) vs[id][wk] = (vs[id][wk] || 0) + right[id] - right.dk;
-    const f = sPkFav(g); if (f !== null && 'dk' in right) for (const [k, [lo, hi]] of Object.entries(bands)) if (f >= lo && f < hi) band[k][right.dk ? 'w' : 'l']++;
+    if (g.line && typeof g.line.total === 'number' && isFinite(g.line.total)) miss.push(Math.abs(g.hs + g.as - g.line.total));
   }
   const cum = {}; for (const id of Object.keys(vs)) { let c = 0; cum[id] = weeks.map(w => (c += vs[id][w] || 0)); }
-  return { fin, weeks, rec, cum, band };
+  return { fin, weeks, rec, cum, games, missN: miss.length, miss: miss.length ? miss.reduce((a, x) => a + x, 0) / miss.length : null };
 }
-const sPkClass = r => { if (!(r.w + r.l)) return ''; const q = r.w / (r.w + r.l); return q >= 0.65 ? 'g3' : q >= 0.58 ? 'g2' : q > 0.5 ? 'g1' : q <= 0.35 ? 'r3' : q <= 0.42 ? 'r2' : q < 0.5 ? 'r1' : ''; };
-async function holdPickem(St, ms, tag) {
-  const errs = [], w = await boot(ms, errs, { state: JSON.stringify(St), hash: 'pickem' }), d = w.document, D = sPkData(St), abbr = id => St.teams[id].abbr;
-  const sec = d.querySelector('#tab-pickem');
-  chk(!!sec && !sec.hidden && d.querySelector('#tabs button[data-tab="pickem"]').getAttribute('aria-current') === 'page', `${tag}: #pickem opens the Pick'em tab`);
-  /* the tiles: DraftKings' season, then its favourite by how strong it was */
-  const tiles = [...d.querySelectorAll('#pkTiles .stat')].map(t => [txt(t.querySelector('.v')), txt(t.querySelector('.k')), txt(t.querySelector('.s'))]);
-  const want = [[`${D.rec.dk.w}-${D.rec.dk.l}`, 'DraftKings', sPkPct(D.rec.dk)]].concat([['65+', '65%+'], ['60-65', '60–65%'], ['55-60', '55–60%'], ['50-55', '50–55%']].map(([k, t]) => [`${D.band[k].w}-${D.band[k].l}`, `Favourite ${t}`, sPkPct(D.band[k])]));
-  chk(eqA(tiles, want), `${tag}: the tiles, DraftKings' season and its favourite by strength (${JSON.stringify(tiles.slice(0, 2))}, want ${JSON.stringify(want.slice(0, 2))})`);
-  chk(D.band['65+'].w + D.band['65+'].l + D.band['60-65'].w + D.band['60-65'].l + D.band['55-60'].w + D.band['55-60'].l + D.band['50-55'].w + D.band['50-55'].l === D.rec.dk.w + D.rec.dk.l, `${tag}: every game DraftKings picked is in one band`);
-  /* the legend and the chart: each model's season and its wins less DraftKings' on the games both picked, week by week */
-  for (const [id, name] of PK_S) {
-    const li = d.querySelector(`#pkLegend .pk-li[data-pk="${id}"]`), r = D.rec[id];
-    /* the Team Elo is the baseline (nhl v24): the legend calls it so and its swatch and line are dashed, every other model's solid */
-    const base = id === 'elo';
-    const wantLi = id === 'dk' ? `DraftKings ${r.w}-${r.l}` : `${name} ${r.w}-${r.l} · ${sPkSigned(D.cum[id].length ? D.cum[id][D.cum[id].length - 1] : 0)} vs DraftKings${base ? ' · baseline' : ''}`;
-    chk(txt(li) === wantLi, `${tag}: the legend says ${wantLi} (${txt(li)})`);
-    if (id === 'dk') continue;
-    const pl = d.querySelector(`#pkChart svg.pk-chart polyline[data-model="${id}"]`);
-    chk(!li || li.classList.contains('base') === base, `${tag}: ${name}'s legend swatch ${base ? 'dashed, the baseline' : 'solid'}`);
-    chk(!pl || (pl.getAttribute('stroke-dasharray') !== null) === base, `${tag}: ${name}'s line on the chart ${base ? 'dashed, the baseline' : 'solid'} (${pl && pl.getAttribute('stroke-dasharray')})`);
-    chk(D.weeks.length ? !!pl && pl.getAttribute('data-cum') === D.cum[id].join(',') && pl.getAttribute('points').trim().split(/\s+/).length === D.weeks.length + 1 : !pl,
-      `${tag}: ${name}'s line on the chart, its wins less DraftKings' added up week by week from 0 (${pl && pl.getAttribute('data-cum')}, want ${D.cum[id].join(',')})`);
-  }
-  const svg = d.querySelector('#pkChart svg');
-  chk(D.weeks.length ? !!svg && svg.classList.contains('pk-chart') && svg.getAttribute('role') === 'img' && /against DraftKings/.test(svg.getAttribute('aria-label') || '') && !svg.querySelector('image, use, foreignObject') : /No game graded yet/.test(txt(d.querySelector('#pkChart'))),
-    `${tag}: the chart drawn, an image to a screen reader with its words, no image inside it`);
-  if (St === S) chk(D.rec.call.w === St.record.su.w && D.rec.call.l === St.record.su.l, `the call's season is the state's own SU record (${D.rec.call.w}-${D.rec.call.l}, the job's ${St.record.su.w}-${St.record.su.l})`);
-  /* the week grid: a column a week and the season, a row a model, each cell its record and rate, shaded by the rate */
-  const th = [...d.querySelectorAll('#pkWeeks thead th')].map(txt), wantTh = ['Model'].concat(D.weeks.map(sPkShort), ['Season']);
-  chk(eqA(th, wantTh), `${tag}: the week grid's columns (${th.join(' ')}, want ${wantTh.join(' ')})`);
-  const gridWrong = [];
-  for (const [id, name] of PK_S) {
-    const tr = d.querySelector(`#pkWeeks tr[data-pk="${id}"]`);
-    if (!tr || txt(tr.cells[0]) !== name) { gridWrong.push(`${id}: no row`); continue; }
-    D.weeks.concat(['season']).forEach((wk, i) => {
-      const r = wk === 'season' ? D.rec[id] : D.rec[id][wk], c = tr.cells[i + 1], cls = sPkClass(r), shown = c ? [...c.classList].filter(x => /^[gr][123]$/.test(x)).join(' ') : '?';
-      const want = r.w + r.l ? `${r.w}-${r.l} ${sPkPct(r)}` : '—', got = c && c.querySelector('b') ? `${txt(c.querySelector('b'))} ${txt(c.querySelector('small'))}` : txt(c);
-      if (!c || got !== want || shown !== cls) gridWrong.push(`${name} ${wk}: "${got}" ${shown}, want "${want}" ${cls}`);
-    });
-  }
-  chk(!gridWrong.length, `${tag}: every cell of the week grid by its own sums and shading (${gridWrong.slice(0, 3).join(' | ')})`);
-  /* every pick of a day: shut until asked; then the day it opens on (today with games, else the latest played) and a day before it */
-  chk(d.querySelector('#pkPicksW').hidden && d.querySelector('#pkShow').getAttribute('aria-expanded') === 'false', `${tag}: every pick shut until asked`);
-  d.querySelector('#pkShow').click();
-  const today = etDate(ms), days = [...new Set(St.games.map(g => g.date))].sort(), open = days.includes(today) ? today : [...days].reverse().find(x => x <= today) || days[0] || '';
-  chk(!d.querySelector('#pkPicksW').hidden && d.querySelector('#pkShow').getAttribute('aria-expanded') === 'true' && d.querySelector('#pkDay').value === open, `${tag}: shown, it opens on ${open || 'no day (no game on the schedule)'} (${d.querySelector('#pkDay').value})`);
-  const holdDay = day => {
-    const gs = St.games.filter(g => g.date === day).sort((a, b) => Date.parse(a.start) - Date.parse(b.start)), rows = [...d.querySelectorAll('#pkPicks tbody tr[data-id]')], bad = [];
-    if (rows.map(r => r.dataset.id).sort().join() !== gs.map(g => g.id).sort().join()) bad.push(`games ${rows.map(r => r.dataset.id).join(',')}`);
-    for (let i = 1; i < rows.length; i++) { const a = St.games.find(g => g.id === rows[i - 1].dataset.id), b = St.games.find(g => g.id === rows[i].dataset.id); if (a && b && Date.parse(a.start) > Date.parse(b.start)) bad.push('not in puck-drop order'); }
-    for (const tr of rows) {
-      const g = St.games.find(x => x.id === tr.dataset.id); if (!g) continue;
-      const fin = g.state === 'final' && sPkWin(g), res = fin ? `${abbr(g.away)} ${g.as} – ${abbr(g.home)} ${g.hs}` : null;
-      if (txt(tr.cells[0]) !== `${abbr(g.away)} @ ${abbr(g.home)}` || (res && txt(tr.cells[1]) !== res)) bad.push(`${g.id}: "${txt(tr.cells[0])}" "${txt(tr.cells[1])}"`);
-      PK_S.forEach(([id], j) => {
-        const c = tr.cells[2 + j], p = sPkPick(g, id, St), mark = !fin || !p ? '' : p === sPkWin(g) ? '✓' : '✗', x = PK_MK[id] ? sPkModel(g, id, St) : null, bt = !!(x && x.bt);
-        const want = p ? abbr(g[p]) + mark + (bt ? 'bt' : '') : '—';
-        if (!c || txt(c) !== want || (p && c.dataset.pick !== p) || (!!c.dataset.bt) !== bt) bad.push(`${g.id} ${id}: "${txt(c)}"${c && c.dataset.bt ? ' (bt)' : ''}, want "${want}"`);
+/* the call straight up in the Games tab's four confidence bands: every game the job graded, by its pick's chance rounded to a whole
+   percentage as a row writes it (so 54.51% is 55%, a LOW pick) */
+const PK_BANDS_S = [['high', 65, 'high confidence'], ['med', 60, 'medium'], ['low', 55, 'low'], ['coin', 0, '50/50']];
+const sPkConf = g => { if (typeof g.pHome !== 'number' || !isFinite(g.pHome)) return null; const side = g.pick === 'home' || g.pick === 'away' ? g.pick : g.pHome >= 0.5 ? 'home' : 'away'; return Math.round((side === 'home' ? g.pHome : 1 - g.pHome) * 100); };
+function sPkBands(St) {
+  const B = {}; for (const [k] of PK_BANDS_S) B[k] = { w: 0, l: 0 };
+  for (const g of St.games) { const c = g.result && typeof g.result.su === 'boolean' ? sPkConf(g) : null; if (c !== null) B[PK_BANDS_S.find(x => c >= x[1])[0]][g.result.su ? 'w' : 'l']++; }
+  return B;
+}
+/* a final graded again from its score and its call, the job's rule: straight up on the pick; the moneyline side taken; the puck line
+   and the total on the line's own number where a side was taken, a push where the number lands on it */
+function sPkGrade(g) {
+  const has = v => v !== null && v !== undefined;
+  if (g.state !== 'final' || !has(g.hs)) return null;                // the job grades a final with a score
+  const margin = g.hs - g.as, total = g.hs + g.as, L = g.line, r = { su: (margin > 0) === (g.pick === 'home') };
+  if (g.mlPick) r.ml = (margin > 0) === (g.mlPick === 'home') ? 'win' : 'loss';
+  if (L && has(L.homeLine) && g.plPick) { const c = margin + L.homeLine, home = c > 0 ? 'win' : c < 0 ? 'loss' : 'push'; r.pl = home === 'push' ? 'push' : (home === 'win') === (g.plPick === 'home') ? 'win' : 'loss'; }
+  if (L && has(L.total) && g.ouPick) { const over = total > L.total ? 'win' : total < L.total ? 'loss' : 'push'; r.ou = over === 'push' ? 'push' : (over === 'win') === (g.ouPick === 'over') ? 'win' : 'loss'; }
+  return r;
+}
+function sPkRecord(St) {
+  const fresh = () => ({ su: { w: 0, l: 0 }, ml: { w: 0, l: 0 }, pl: { w: 0, l: 0, p: 0 }, ou: { w: 0, l: 0, p: 0 } }), R = Object.assign(fresh(), { byMonth: {} });
+  for (const g of St.games) { const r = sPkGrade(g); if (!r) continue; const mo = g.type === 3 ? 'playoffs' : g.date.slice(0, 7), M = R.byMonth[mo] = R.byMonth[mo] || fresh();
+    for (const t of [R, M]) { t.su[r.su ? 'w' : 'l']++; for (const k of ['ml', 'pl', 'ou']) if (r[k]) t[k][r[k] === 'win' ? 'w' : r[k] === 'loss' ? 'l' : 'p']++; } }
+  return R;
+}
+const sPkRecStr = R => { const one = r => r && r.su && r.ml && r.pl && r.ou ? `${r.su.w}-${r.su.l} ml ${r.ml.w}-${r.ml.l} pl ${r.pl.w}-${r.pl.l}-${r.pl.p || 0} ou ${r.ou.w}-${r.ou.l}-${r.ou.p || 0}` : 'none'; return R ? [one(R)].concat(Object.keys(R.byMonth || {}).sort().map(m => `${m} ${one(R.byMonth[m])}`)).join('; ') : 'none'; };
+/* a grid cell's shade, the NFL's: clear at .500, green over and red under, deepest (42%) from 30 points off */
+const sPkShade = r => { const g = r.w + r.l, p = g ? r.w / g : 0.5; return !g || p === 0.5 ? ['', null] : [p > 0.5 ? 'up' : 'dn', `--a:${(Math.min(0.42, Math.abs(p - 0.5) / 0.3 * 0.42) * 100).toFixed(1)}%`]; };
+async function holdPickem(St, ms, tag, opts = {}) {
+  const errs = [], w = await boot(ms, errs, Object.assign({ state: JSON.stringify(St) }, opts.store ? { store: opts.store } : { hash: opts.hash || 'pickem' })), d = w.document;
+  const ck = (ok, msg) => chk(ok, `${tag}: ${msg}`), el = id => d.getElementById(id), D = sPkData(St), abbr = id => St.teams[id].abbr, any = D.fin.length > 0, n = D.weeks.length;
+  const sec = el('tab-pickem'), onB = d.querySelector('#tabs button.on'), tabs = [...d.querySelectorAll('#tabs button')].map(b => b.dataset.tab);
+  ck(!!sec && !sec.hidden && w.location.hash === '#pickem' && !!onB && onB.dataset.tab === 'pickem' && txt(onB) === "Pick'em Record" && onB.getAttribute('aria-current') === 'page', `${opts.how || '#pickem'} opens the Pick'em Record, its address #pickem (${w.location.hash}; ${txt(onB)})`);
+  if (!sec) { w.close(); return; }
+  const writes0 = w.__writes.slice();
+  /* the NFL's tab bar, and no Record tab: its button, its section and what it drew are gone */
+  ck(eqA(tabs, ['games', 'suggest', 'parlays', 'ratings', 'players', 'pickem']) && !el('tab-record') && !d.querySelector('#recordTotals, #recMonth, #recBand, #recordNote, .two') && !/fitRecord|renderRecord/.test(HTML),
+    `a visitor's tabs are the NFL's six, the Pick'em Record last, and the Record tab is gone with its tiles, its two tables and its fit (${tabs.join(' ')})`);
+  /* the anatomy, the NFL's: the tiles, then three cards by their headings, the state line last; in the first card the legend, the chart, the button and the picks */
+  const cardIds = ['pkChartC', 'pkWeeksC', 'pkBetsC'], heads = cardIds.map(id => el(id) ? txt(el(id).querySelector(':scope > h2')) : '');
+  ck(eqA([...sec.children].map(x => x.id), ['pkTiles'].concat(cardIds, ['pkBlind'])) && cardIds.every(id => el(id).classList.contains('card')) && eqA(heads, ['Wins against DraftKings', 'Week by week', 'Bets record'])
+    && eqA([...el('pkChartC').children].map(x => x.id || x.tagName), ['H2', 'pkNone', 'pkLegend', 'pkChart', 'pkBar', 'pkPicksW']) && el('pkTiles').classList.contains('stat-strip'),
+    `the tab is the tiles, then the cards Wins against DraftKings (the legend, the chart, Show every pick, the picks), Week by week and Bets record (${[...sec.children].map(x => x.id).join(' ')}; ${heads.join(' | ')})`);
+  /* nothing but numbers and names: no paragraph but the one state line, no link, image or frame, every control 44px */
+  const tall = x => !!x && w.getComputedStyle(x).minHeight === '44px';
+  ck([...sec.querySelectorAll('p')].every(p => p.id === 'pkBlind') && !sec.querySelector('img, canvas, iframe, a, details, .note, .intro') && tall(el('pkShow')) && tall(el('pkDay')) && eqA([...sec.querySelectorAll('button, select, input')].map(x => x.id), ['pkShow', 'pkDay']),
+    'no description, link or image on the tab, and its two controls (Show every pick, the Day) 44px tall');
+  /* every inline style on the tab is a token: a line's colour by its name, a cell's depth, the crosshair put away (a club's tag apart) */
+  const styled = [...sec.querySelectorAll('[style]')].filter(x => !x.classList.contains('ttag')).map(x => x.getAttribute('style')).filter(s => !/^(--c:var\(--m-(alpha|joker|elom|call|base)\)|--a:\d+\.\d%|display:none)$/.test(s));
+  ck(!styled.length, `no colour written on the tab but by a token (${styled.slice(0, 3).join(' | ')})`);
+  /* the six tiles */
+  const tiles = [...d.querySelectorAll('#pkTiles .stat')], B = sPkBands(St), dk = D.rec.dk, dkN = dk.w + dk.l, pc0 = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+  const wantT = !any ? [] : [[dkN ? (100 * dk.w / dkN).toFixed(1) + '%' : '–', `DraftKings record, ${dk.w}/${dkN}`]].concat(PK_BANDS_S.map(([k, , lab]) => [pc0(B[k].w, B[k].w + B[k].l), `${lab}, ${B[k].w}/${B[k].w + B[k].l}`]), [[D.miss === null ? '–' : D.miss.toFixed(2), "total's avg miss, goals"]]);
+  const haveT = tiles.map(t => [txt(t.querySelector(':scope > b')), txt(t.querySelector(':scope > span'))]);
+  ck(eqA(haveT, wantT) && el('pkTiles').hidden === !any, `the six tiles: DraftKings' record, the call in each confidence band on its rounded chance, the total's average miss in goals (${JSON.stringify(haveT)}, want ${JSON.stringify(wantT)})`);
+  ck(tiles.every(t => t.children.length === 2 && (t.getAttribute('title') || '').length >= 30), 'a tile is its figure and its label, what the number means on its title');
+  if (any) { const t6 = tiles[5] ? tiles[5].getAttribute('title') || '' : '', t1 = tiles[0] ? tiles[0].getAttribute('title') || '' : '';
+    ck(t6.includes(`the ${D.missN} final${D.missN === 1 ? '' : 's'} with a total`) && t1.includes(`${dk.w} of ${dkN}`) && PK_BANDS_S.every(([k], i) => (tiles[1 + i].getAttribute('title') || '').includes(`${B[k].w} of ${B[k].w + B[k].l}`)), `each tile's title counts what it stands on (${t1} | ${t6})`); }
+  /* before any final: the tiles, the legend, the chart, the grid put away, and the card says so */
+  ck(el('pkNone').hidden === any && txt(el('pkNone')) === 'No game graded yet.' && el('pkLegend').hidden === !any && el('pkChart').hidden === !any && el('pkWeeksC').hidden === !any
+    && (any || (!tiles.length && !el('pkLegend').children.length && !el('pkChart').children.length && !el('pkWeeks').rows.length)), `${any ? 'with a final graded the card draws its legend and chart' : 'before any final the card says "No game graded yet." and draws no tile, legend, chart or grid'} (${D.fin.length} finals)`);
+  const last = id => D.cum[id].length ? D.cum[id][n - 1] : 0, models = PK_S.filter(([id]) => id !== 'dk');
+  if (any) {
+    /* the legend: each model's season and its wins less DraftKings' on the games both picked; the swatch carries the colour, the words the ink */
+    ck(eqA([...el('pkLegend').children].map(x => x.dataset.pk), PK_S.map(x => x[0])) && el('pkLegend').classList.contains('lgdrow'), `the legend's entries in order (${[...el('pkLegend').children].map(x => x.dataset.pk).join(' ')})`);
+    for (const [id, name] of PK_S) {
+      const li = d.querySelector(`#pkLegend > span[data-pk="${id}"]`), r = D.rec[id], base = id === 'elo', sw = li && li.querySelector(':scope > i.lgd');
+      /* the Team Elo is the baseline (nhl v24): the legend calls it so and its swatch and line are dashed, every other model's solid */
+      const wantLi = id === 'dk' ? `DraftKings ${sPkRec(r)}` : `${name} ${sPkRec(r)} ${sPkSigned(last(id))} vs DraftKings${base ? ' · baseline' : ''}`;
+      ck(txt(li) === wantLi && !!li && txt(li.querySelector('b')) === sPkRec(r) && (li.getAttribute('title') || '').length >= 30, `the legend says ${wantLi}, the record in bold, what the model is on its title (${txt(li)})`);
+      ck(!!sw && sw.classList.contains('dash') === base && sw.classList.contains('ink') === (id === 'dk') && (id === 'dk' || sw.getAttribute('style') === `--c:var(--m-${id === 'elo' ? 'base' : id})`), `${name}'s legend swatch ${base ? 'dashed, the baseline' : id === 'dk' ? "the ink's, as its zero line" : 'solid, in its own colour'}`);
+    }
+    /* the chart: an image to a screen reader with its words; each line its weekly sums from zero; the end labels; a band a week */
+    const svg = d.querySelector('#pkChart svg'), zero = svg && svg.querySelector('line.z'), zy = zero ? +zero.getAttribute('y1') : NaN;
+    const aria = 'Wins against DraftKings by week: ' + models.map(([id, name]) => `${name} ${sPkSigned(last(id))}`).join(', ');
+    ck(!!svg && svg.classList.contains('pk-chart') && svg.classList.contains('rv-chart') && svg.getAttribute('role') === 'img' && svg.getAttribute('aria-label') === aria && !svg.querySelector('image, use, foreignObject') && !!zero && d.querySelectorAll('#pkChart svg').length === 1,
+      `the chart drawn inline, an image to a screen reader with its words, no image inside it (${svg && svg.getAttribute('aria-label')})`);
+    if (svg) {
+      for (const [id, name] of models) {
+        const pl = svg.querySelector(`polyline[data-model="${id}"]`), base = id === 'elo', pts = pl ? pl.getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number)) : [], end = svg.querySelector(`text[data-end="${id}"]`);
+        ck(!!pl && pl.getAttribute('data-cum') === D.cum[id].join(',') && pts.length === n + 1 && pts[0][1] === zy, `${name}'s line on the chart, its wins less DraftKings' added up week by week from 0 (${pl && pl.getAttribute('data-cum')}, want ${D.cum[id].join(',')})`);
+        ck(!!pl && (pl.getAttribute('stroke-dasharray') !== null) === base && pl.getAttribute('style') === `--c:var(--m-${base ? 'base' : id})`, `${name}'s line ${base ? 'dashed, the baseline' : 'solid'}, in its own colour (${pl && pl.getAttribute('stroke-dasharray')})`);
+        /* a line's height is games: over the zero line with more wins than DraftKings, under it with fewer, each week */
+        ck(pts.length === n + 1 && D.cum[id].every((v, i) => Math.sign(zy - pts[i + 1][1]) === Math.sign(v)), `${name}'s line is above DraftKings' zero line in the weeks it leads and below where it trails`);
+        ck(txt(end) === `${sPkSigned(last(id))} ${name}` && !!end && txt(end.querySelector('tspan')) === sPkSigned(last(id)), `${name}'s line labelled at its end, "${sPkSigned(last(id))} ${name}" (${txt(end)})`);
+        const dots = [...svg.querySelectorAll('circle')].filter(c => c.getAttribute('style') === pl.getAttribute('style')).length;
+        ck(dots === n + 1 || dots === 1, `${name}'s line has a dot a week from the start, or its last alone where the weeks are too close (${dots} for ${n} weeks)`);
+      }
+      const hits = [...svg.querySelectorAll('rect.rv-hit')], inked = [...svg.querySelectorAll('text, tspan')].every(t => !t.getAttribute('fill') && !t.getAttribute('style'));
+      ck(txt(svg.querySelector('text[data-end="dk"]')) === '= DraftKings' && eqA(hits.map(h => h.dataset.i), D.weeks.map((x, i) => String(i))) && inked, `the zero line labelled "= DraftKings", a band to point at for each of the ${n} weeks, and every word in the page's ink, never a line's colour`);
+      /* a week pointed at: its own numbers beside a crosshair; pointed away from, both gone */
+      const tip = el('pkTip'), cross = svg.querySelector('line.rv-cross');
+      for (const k of [...new Set([0, n - 1])]) {      // the first week, where a season's sum so far is that week's own, and the last, where it is the legend's
+        const wk = D.weeks[k], tip0 = !!tip && tip.hidden && !!cross && cross.style.display === 'none';
+        if (hits[k]) hits[k].dispatchEvent(new w.MouseEvent('mouseover', { bubbles: true }));
+        const wantTip = [`Week of ${sPkShort(wk)}`].concat(models.map(([id, name]) => `${name} ${sPkRec(D.rec[id][wk])} · season ${sPkSigned(D.cum[id][k])} vs DraftKings`), [`DraftKings ${sPkRec(D.rec.dk[wk])}`]);
+        const px = svg.querySelector('polyline') ? svg.querySelector('polyline').getAttribute('points').trim().split(/\s+/)[k + 1].split(',')[0] : '';
+        ck(tip0 && !tip.hidden && eqA([...tip.children].map(txt), wantTip) && cross.style.display !== 'none' && cross.getAttribute('x1') === px, `the week of ${sPkShort(wk)} pointed at shows its own numbers, and the season's sums after it, beside a crosshair on that week (${tip ? [...tip.children].map(txt).join(' | ') : 'no tip'}; want ${wantTip.join(' | ')})`);
+        if (hits[k]) hits[k].dispatchEvent(new w.MouseEvent('mouseout', { bubbles: true }));
+        ck(!!tip && tip.hidden && cross.style.display === 'none', 'pointed away from, the numbers and the crosshair go');
+      }
+    }
+    /* the week grid: a column a week (its Monday, its games) and the season, a row a model, each cell its record and rate, shaded by the rate */
+    const ths = [...d.querySelectorAll('#pkWeeks thead th')], own = th => { const c = th.cloneNode(true); for (const x of c.querySelectorAll('small')) x.remove(); return txt(c); };
+    const haveH = ths.map(th => [own(th), txt(th.querySelector('small'))]), wantH = [['', '']].concat(D.weeks.map(x => [sPkShort(x), `${D.games[x]} game${D.games[x] === 1 ? '' : 's'}`]), [['Season', '']]);
+    ck(eqA(haveH, wantH) && !!ths[n + 1] && ths[0].getAttribute('aria-label') === 'Model' && ths[n + 1].classList.contains('rv-season') && el('pkWeeks').classList.contains('rv-grid'), `the week grid's columns, each week by its Monday with its games, the season last (${haveH.map(x => x.join(' ')).join(' | ')})`);
+    const gridWrong = [], rowsG = [...d.querySelectorAll('#pkWeeks tbody tr')];
+    if (!eqA(rowsG.map(r => r.dataset.pk), PK_S.map(x => x[0]))) gridWrong.push(`rows ${rowsG.map(r => r.dataset.pk).join(' ')}`);
+    for (const [id, name] of PK_S) {
+      const tr = d.querySelector(`#pkWeeks tr[data-pk="${id}"]`), sw = tr && tr.cells[0].querySelector('i.lgd');
+      if (!tr || txt(tr.cells[0]) !== name || tr.cells[0].tagName !== 'TH' || !sw || sw.classList.contains('dash') !== (id === 'elo') || sw.classList.contains('ink') !== (id === 'dk')) { gridWrong.push(`${id}: no row, or not its name and swatch`); continue; }
+      D.weeks.concat(['season']).forEach((wk, i) => {
+        const r = wk === 'season' ? D.rec[id] : D.rec[id][wk], c = tr.cells[i + 1], g = r.w + r.l, [cls, a] = sPkShade(r), pc = g ? Math.round(100 * r.w / g) : 0;
+        const want = g ? `${sPkRec(r)} ${pc}%` : '–', got = c && c.querySelector('b') ? `${txt(c.querySelector('b'))} ${txt(c.querySelector('small'))}` : txt(c);
+        const shown = c ? ['up', 'dn'].filter(x => c.classList.contains(x)).join(' ') : '?', title = g ? `${name}, ${wk === 'season' ? 'season' : 'week of ' + sPkShort(wk)}: ${r.w} of ${g} (${pc}%)` : null;
+        if (!c || got !== want || shown !== cls || c.getAttribute('style') !== a || c.getAttribute('title') !== title || c.classList.contains('rv-none') !== !g || c.classList.contains('rv-season') !== (wk === 'season')) gridWrong.push(`${name} ${wk}: "${got}" ${shown} ${c && c.getAttribute('style')}, want "${want}" ${cls} ${a}`);
       });
     }
-    chk(gs.length > 0 && !bad.length, `${tag}: every pick of ${day}, the game, the score, each model's side and whether it was right (${gs.length} games; ${bad.slice(0, 3).join(' | ')})`);
-  };
-  if (open) holdDay(open);
-  else chk(!d.querySelectorAll('#pkDay option').length && /No games/.test(txt(d.querySelector('#pkPicks tbody'))), `${tag}: with no game on the schedule, no day to choose and the grid says so`);
-  const past = [...days].reverse().find(x => x < open && St.games.some(g => g.date === x && g.state === 'final'));
-  if (past) { const sel = d.querySelector('#pkDay'); sel.value = past; sel.dispatchEvent(new w.Event('change', { bubbles: true })); chk(d.activeElement === d.querySelector('#pkDay'), `${tag}: the day chosen, the keyboard stays on it`); holdDay(past); }
-  d.querySelector('#pkShow').click();
-  chk(d.querySelector('#pkPicksW').hidden, `${tag}: Hide the picks shuts them`);
-  chk(!errs.length, `${tag}: no runtime error on the Pick'em tab: ${errs.join(' | ')}`);
+    ck(!gridWrong.length, `every cell of the week grid by its own sums: its record, its rate, its shade and what it counts on its title (${gridWrong.slice(0, 3).join(' | ')})`);
+  }
+  /* the bets record: the state's `record`, the season and each month: the call straight up with its rate, and the sides it took */
+  const R = St.record, okR = r => !!r && ['su', 'ml', 'pl', 'ou'].every(k => r[k] && typeof r[k] === 'object'), has = okR(R) && R.su.w + R.su.l > 0;
+  ck(el('pkBetsC').hidden === !has && (has || !el('pkBets').rows.length), `the Bets record ${has ? 'shows' : 'is put away with no game graded'}`);
+  if (has) {
+    const months = Object.keys(R.byMonth || {}).filter(m => okR(R.byMonth[m])).sort((a, b) => (a === 'playoffs') - (b === 'playoffs') || (a < b ? -1 : a > b ? 1 : 0));
+    const wl = r => `${r.w}–${r.l}${r.p ? '–' + r.p : ''}`, rate = r => r.su.w + r.su.l ? (100 * r.su.w / (r.su.w + r.su.l)).toFixed(1) + '%' : '–';
+    const wantB = [['season', 'Season', '', R]].concat(months.map(m => [m, m === 'playoffs' ? 'Playoffs' : `${MON_L[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}`, m === 'playoffs' ? '' : `${MON_S[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}`, R.byMonth[m]]));
+    const wide = x => { const c = x.cloneNode(true); for (const y of c.querySelectorAll('.t-narrow')) y.remove(); return txt(c); };
+    const rowsB = [...d.querySelectorAll('#pkBets tbody tr')], badB = [];
+    if (rowsB.length !== wantB.length) badB.push(`${rowsB.length} rows for the season and ${months.length} month(s)`);
+    wantB.forEach(([key, lab, short, r], i) => { const tr = rowsB[i]; if (!tr) return;
+      const got = [tr.dataset.k, wide(tr.cells[0]), txt(tr.cells[0].querySelector('.t-narrow')), txt(tr.cells[1].querySelector('b')), txt(tr.cells[1].querySelector('small')), txt(tr.cells[2]), txt(tr.cells[3]), txt(tr.cells[4])];
+      const want = [key, lab, short, `${r.su.w}–${r.su.l}`, rate(r), wl(r.ml), wl(r.pl), wl(r.ou)];
+      if (!eqA(got, want)) badB.push(`${key}: ${got.join(' | ')}, want ${want.join(' | ')}`); });
+    const thB = [...d.querySelectorAll('#pkBets thead th')], bar = Math.round((St.edge || 0.05) * 100);
+    ck(!badB.length && eqA(thB.map(txt), ['When', 'Straight up', 'Moneyline', 'Puck line', 'Totals']) && thB.slice(1).every(th => (th.getAttribute('title') || '').length >= 30) && thB.slice(2).every(th => th.getAttribute('title').includes(`${bar} points or more`)),
+      `the Bets record, a row for the season and one a month: the call straight up with its rate, and its moneyline, puck line and totals sides, a push counted where there is one (${rowsB.length} rows; ${badB.slice(0, 3).join(' || ')})`);
+  }
+  /* on a state the job made: its record is its finals and calls worked out again, the call's season on the chart is it, and the four bands hold it */
+  if (opts.regrade) {
+    const mine = sPkRecord(St), Bs = PK_BANDS_S.reduce((a, [k]) => [a[0] + B[k].w, a[1] + B[k].l], [0, 0]);
+    ck(okR(R) && sPkRecStr(mine) === sPkRecStr(R), `the state's record is its finals and calls graded again, the season and month by month (${sPkRecStr(R).slice(0, 160)}; graded again ${sPkRecStr(mine).slice(0, 160)})`);
+    ck(okR(R) && D.rec.call.w === R.su.w && D.rec.call.l === R.su.l && Bs[0] === R.su.w && Bs[1] === R.su.l, `the call's season on the tab is the state's own straight-up record, and the four bands add up to it (${D.rec.call.w}-${D.rec.call.l}; bands ${Bs.join('-')}; the job's ${R && R.su ? R.su.w + '-' + R.su.l : 'none'})`);
+  }
+  /* calls made before the injury report was read: one short line under the bets record, only where there are any */
+  const blind = St.games.filter(g => g.result && g.frozen && g.pm && !g.pm.inj).length;
+  ck(blind && has ? !el('pkBlind').hidden && txt(el('pkBlind')) === `${blind} call${blind === 1 ? '' : 's'} predate${blind === 1 ? 's' : ''} the injury report.` : el('pkBlind').hidden, `the tab says how many calls were made without the injury report, in one short line (${blind}: ${el('pkBlind').hidden ? 'hidden' : txt(el('pkBlind'))})`);
+  /* every pick of a day: shut until asked; then the day it opens on (today with games, else the latest played) and a day before it */
+  const days = [...new Set(St.games.map(g => g.date))].sort();
+  ck(el('pkPicksW').hidden && el('pkShow').getAttribute('aria-expanded') === 'false' && txt(el('pkShow')) === 'Show every pick' && el('pkDayL').hidden && !el('pkPicks').rows.length && el('pkBar').hidden === !days.length, `every pick shut until asked${days.length ? '' : ', and with no game on the schedule nothing to ask for'}`);
+  if (days.length) {
+    el('pkShow').click();
+    const today = etDate(w.Date.now()), open = days.includes(today) ? today : [...days].reverse().find(x => x <= today) || days[0];
+    ck(!el('pkPicksW').hidden && el('pkShow').getAttribute('aria-expanded') === 'true' && txt(el('pkShow')) === 'Hide every pick' && !el('pkDayL').hidden && el('pkDay').value === open && eqA([...el('pkDay').options].map(o => o.value), [...days].reverse()), `shown, it opens on ${open}, the days with games to choose from, the latest first (${el('pkDay').value})`);
+    ck(eqA([...d.querySelectorAll('#pkPicks thead th')].map(txt), ['Game'].concat(PK_S.map(x => x[1]))) && el('pkPicksW').classList.contains('pickgrid'), `the picks' columns: the game, then a column a model (${[...d.querySelectorAll('#pkPicks thead th')].map(txt).join(' ')})`);
+    const holdDay = day => {
+      const now = w.Date.now(), gs = St.games.filter(g => g.date === day).sort((a, b) => Date.parse(a.start) - Date.parse(b.start)), rows = [...d.querySelectorAll('#pkPicks tbody tr[data-id]')], bad = [];
+      if (rows.map(r => r.dataset.id).sort().join() !== gs.map(g => g.id).sort().join()) bad.push(`games ${rows.map(r => r.dataset.id).join(',')}`);
+      for (let i = 1; i < rows.length; i++) { const a = St.games.find(g => g.id === rows[i - 1].dataset.id), b = St.games.find(g => g.id === rows[i].dataset.id); if (a && b && Date.parse(a.start) > Date.parse(b.start)) bad.push('not in puck-drop order'); }
+      for (const tr of rows) {
+        const g = St.games.find(x => x.id === tr.dataset.id); if (!g) continue;
+        const fin = g.state === 'final' && sPkWin(g), t0 = new Date(g.start), c0 = tr.cells[0], sm = c0.querySelector('small'), mu = c0.cloneNode(true); for (const x of mu.querySelectorAll('small')) x.remove();
+        const when = `${t0.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} ${t0.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}`;
+        /* a game is under way from its puck drop by the page's clock, which runs on: one within a few seconds of it may read either way */
+        const near = g.state === 'pre' && Math.abs(Date.parse(g.start) - now) < 5000, hows = fin ? [` · ${abbr(g[fin])} won ${g.as}–${g.hs}`] : near ? ['', ' · under way'] : [g.state !== 'pre' || Date.parse(g.start) <= now ? ' · under way' : ''];
+        if (txt(mu) !== `${abbr(g.away)} at ${abbr(g.home)}` || !eqA([...c0.querySelectorAll('b')].map(txt), [abbr(g.away), abbr(g.home)]) || !hows.some(h => txt(sm) === (when + h).trim())) bad.push(`${g.id}: "${txt(mu)}" "${txt(sm)}", want "${abbr(g.away)} at ${abbr(g.home)}" "${when + hows[0]}"`);
+        PK_S.forEach(([id], j) => {
+          const c = tr.cells[1 + j], p = sPkPick(g, id, St), mark = !fin || !p ? '' : p === fin ? '✓' : '✗', x = PK_MK[id] ? sPkModel(g, id, St) : null, bt = !!(x && x.bt);
+          const want = p ? abbr(g[p]) + mark + (bt ? 'bt' : '') : '–', res = c && c.querySelector('.res');
+          if (!c || txt(c) !== want || (c.dataset.pick || null) !== p || (!!c.dataset.bt) !== bt || !!res !== !!mark || (res && res.classList.contains('ok') !== (mark === '✓')) || (p && txt(c.querySelector('.ttag')) !== abbr(g[p]))) bad.push(`${g.id} ${id}: "${txt(c)}"${c && c.dataset.bt ? ' (bt)' : ''}, want "${want}"`);
+        });
+      }
+      ck(gs.length > 0 && !bad.length, `every pick of ${day}: the game, its day and puck drop, how it ended, each model's side and whether it was right (${gs.length} games; ${bad.slice(0, 3).join(' | ')})`);
+    };
+    holdDay(open);
+    const past = [...days].reverse().find(x => x < open && St.games.some(g => g.date === x && g.state === 'final'));
+    const choose = day => { const sel = el('pkDay'); sel.value = day; sel.dispatchEvent(new w.Event('change', { bubbles: true })); ck(d.activeElement === el('pkDay') && el('pkDay').value === day, 'the day chosen, the keyboard stays on it'); holdDay(day); };
+    if (past) choose(past);
+    /* and the latest day with a pick that is a backtest's (a final from before the models existed: its pick marked bt), and any day the copy plants on */
+    const isBt = g => g.state === 'final' && Object.keys(PK_MK).some(id => { const x = sPkModel(g, id, St); return !!x && x.bt; });
+    const btDay = [...days].reverse().find(x => x !== open && x !== past && St.games.some(g => g.date === x && isBt(g)));
+    for (const day of [...new Set([btDay].concat(opts.days || []))].filter(x => x && days.includes(x) && x !== past && x !== open)) choose(day);
+    el('pkShow').click();
+    ck(el('pkPicksW').hidden && !el('pkPicks').rows.length && txt(el('pkShow')) === 'Show every pick' && el('pkShow').getAttribute('aria-expanded') === 'false', 'Hide every pick shuts them');
+  }
+  /* nothing stored but the tab the visitor is on, as before; nothing asked for */
+  let stored = null; try { stored = JSON.parse(w.localStorage.getItem('nhl_v1')); } catch (e) { stored = null; }
+  ck(eqA(w.__writes, writes0) && writes0.every(k => k === 'nhl_v1') && !!stored && !!stored.ui && stored.ui.tab === 'pickem', `the tab stores nothing of its own: the picks shown, the day and the week pointed at are in the page's memory (${w.__writes.length - writes0.length} writes after it opened; the tab kept: ${stored && stored.ui && stored.ui.tab})`);
+  ck(w.__requests.every(r => r.url.startsWith('state.json?t=')), `the tab asks for nothing: the page read state.json and no more (${w.__requests.map(r => r.url.slice(0, 40)).join(', ')})`);
+  ck(!errs.length, `no runtime error on the Pick'em tab: ${errs.join(' | ')}`);
   holdRequests(w, `THE PICK'EM RECORD (${tag})`);
+  w.close();
 }
 /* ---------- THE PICK'EM MODELS (nhl v20, tools/models.js) ----------
    The NFL hub's three on the state: its `models` the constants' sha, fit and walk-forward table of data/models.json; its backtest the
@@ -5589,7 +5692,7 @@ async function holdRankings(St, ms, tag, opts = {}) {
     ck(pulled ? stamp.length === 1 && stamp[0].classList.contains('inj-asof') && txt(stamp[0]) === `Injury report of ${new Date(pulled).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}` : !stamp.length, `the card's one line is the injury report's own time, in the visitor's clock (${stamp.map(txt).join(' | ') || 'none'})`);
   }
   /* nothing stored but the tab's name, nothing fetched: another tab and back */
-  { const other = d.querySelector('#tabs button[data-tab="record"]'); other.click();
+  { const other = d.querySelector('#tabs button[data-tab="pickem"]'); other.click();
     const st0 = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), r0 = w.__requests.length, w0 = w.__writes.length, html0 = tb.outerHTML;
     d.querySelector('#tabs button[data-tab="ratings"]').click();
     const st1 = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), wr = w.__writes.slice(w0), tab1 = st1.ui && st1.ui.tab;
@@ -6075,7 +6178,7 @@ async function holdElo(St, ms, tag, opts = {}) {
     } }
   /* ---- nothing stored but the pill and the tab's name, nothing fetched; another tab and back draws the same table ---- */
   { btns[0].click(); await settle(out.groups.F ? out.groups.F.rows.length : 0);
-    const html0 = tb.outerHTML; d.querySelector('#tabs button[data-tab="record"]').click(); d.querySelector('#tabs button[data-tab="players"]').click(); await settle(out.groups.F ? out.groups.F.rows.length : 0);
+    const html0 = tb.outerHTML; d.querySelector('#tabs button[data-tab="pickem"]').click(); d.querySelector('#tabs button[data-tab="players"]').click(); await settle(out.groups.F ? out.groups.F.rows.length : 0);
     const st1 = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), wr = w.__writes.slice(w0), kind = st1.ui && st1.ui.plKind, tab1 = st1.ui && st1.ui.tab, strip = s => { const o = JSON.parse(JSON.stringify(s)); if (o.ui) { delete o.ui.plKind; delete o.ui.tab; } return o; };
     ck(w.__requests.length === r0 && wr.every(k => k === 'nhl_v1') && kind === 'F' && tab1 === 'players' && eqA(strip(st0), strip(st1)) && w.location.hash === '#players', `the tab asks the network for nothing and stores nothing but the pill chosen and the tab's name (${w.__requests.length - r0} requests; wrote ${[...new Set(wr)].join(', ') || 'nothing'}; plKind ${kind}, tab ${tab1})`);
     ck(tb.outerHTML === html0 && d.querySelectorAll('#peDefs').length === 1 && d.querySelectorAll('[id="tg-gold"]').length === 1 && d.getElementById('peDefs').parentElement === d.body, 'another tab and back: the same table, the gradients still in the page once, outside the tab'); }
@@ -6411,7 +6514,7 @@ async function xParlaysChecks() {
   {
     const errs = [], w = await boot(PUB, errs, { hash: 'xparlays', admin: REC, files: { 'data/xparlays.json': XP, 'data/xbets.json': XB } }), d = w.document;
     const tabs = tabsOf(d);
-    chk(d.documentElement.getAttribute('data-admin') === 'on' && tabs.indexOf('xparlays') === tabs.indexOf('parlays') + 1 && tabs.indexOf('xbets') === tabs.indexOf('pickem') + 1 && !d.querySelector('#hubAdmin').hidden && !d.querySelector('#adminMark').hidden && txt(d.querySelector('#hubAdmin')) === 'Admin' && d.querySelector('#hubAdmin').contains(d.querySelector('#adminMark')), `the admin's page: X Parlays after the Parlay Builder, the X Bet Log after the Pick'em Record, Admin in the header (${tabs.join(',')})`);
+    chk(d.documentElement.getAttribute('data-admin') === 'on' && tabs.indexOf('xparlays') === tabs.indexOf('parlays') + 1 && tabs.indexOf('xbets') === tabs.indexOf('pickem') + 1 && eqA(tabs, ['games', 'suggest', 'parlays', 'xparlays', 'ratings', 'players', 'pickem', 'xbets']) && !d.querySelector('#hubAdmin').hidden && !d.querySelector('#adminMark').hidden && txt(d.querySelector('#hubAdmin')) === 'Admin' && d.querySelector('#hubAdmin').contains(d.querySelector('#adminMark')), `the admin's page: X Parlays after the Parlay Builder, the X Bet Log after the Pick'em Record and last (the NFL's bar, the owner's two in it), Admin in the header (${tabs.join(',')})`);
     const rq = xReq(w);
     chk(rq.length === 2 && rq.every(r => r.cache === 'no-store' && /\?t=\d+/.test(r.url) && r.method === 'GET'), `both files read once, no-store, a cache-buster each (${rq.map(r => r.url).join(', ')})`);
     chk(!d.querySelector('#tab-xparlays').hidden && d.querySelector('#tab-games').hidden, 'the X Parlays tab opens on the admin\'s page');
@@ -6504,29 +6607,62 @@ async function xParlaysChecks() {
 }
 async function pickemChecks() {
   console.log("THE PICK'EM RECORD");
-  const D0 = sPkData(S);
-  console.log(`  the state: ${D0.fin.length} finals over ${D0.weeks.length} weeks; ${PK_S.map(([id, name]) => `${name} ${D0.rec[id].w}-${D0.rec[id].l}${id === 'dk' ? '' : ` (${sPkSigned(D0.cum[id].length ? D0.cum[id][D0.cum[id].length - 1] : 0)} vs DraftKings)`}`).join(', ')}`);
-  await holdPickem(S, PUB, 'the state');
-  /* a copy: a final with no line (DraftKings picks nothing, so it counts in neither DraftKings' season nor against it), one whose club
-     ratings part from the player model's call, one priced level (DraftKings picks the home side) */
-  const C = JSON.parse(STATE), fins = C.games.filter(g => g.state === 'final' && g.hs !== g.as);
-  if (fins.length >= 3) {
-    const lined = fins.filter(g => sPkPick(g, 'dk')).length, was0 = !!sPkPick(fins[0], 'dk');
-    fins[0].line = null;
-    const b = fins[1]; b.by = 'players'; b.elo = Object.assign({}, b.elo || {}, { pHome: sPkPick(b, 'call') === 'home' ? 0.41 : 0.59 });
-    const was2 = !!sPkPick(fins[2], 'dk'); fins[2].line = Object.assign({}, fins[2].line, { homeML: -110, awayML: -110 });
-    /* the NFL's three: a final whose own frozen call parts from its backtest (the call is the one counted), and one with neither */
-    let three = true;
-    if (fins.length >= 5) {
-      const g3 = fins[3], was = PK_S.filter(([id]) => PK_MK[id]).map(([id]) => sPkPick(g3, id, C));
-      g3.models = { v: 'planted', alpha: { pHome: was[0] === 'home' ? 0.3 : 0.7, mu: 0 }, joker: { pHome: was[1] === 'home' ? 0.3 : 0.7 }, elo: { pHome: was[2] === 'home' ? 0.3 : 0.7, m: 0 } };
-      delete fins[4].models; if (C.models && C.models.backtest && C.models.backtest.games) delete C.models.backtest.games[fins[4].id];
-      three = ['alpha', 'joker', 'elom'].every((id, i) => sPkPick(g3, id, C) !== was[i] && !sPkPick(fins[4], id, C));
+  /* the chart's five colours and the grid's two are tokens with a value in each look, and each line's is 3:1 or more on a card's two grounds */
+  { const css = HTML.slice(HTML.indexOf('<style>'), HTML.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
+    const blockOf = sel => { const i = css.indexOf(sel + '{'); return i < 0 ? '' : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
+    const tok = (b, k) => (new RegExp(`${k}\\s*:\\s*(#[0-9A-Fa-f]{6})\\s*;`).exec(b) || [])[1] || null, low = [];
+    for (const [look, b] of [['dark', blockOf(':root')], ['light', blockOf('html[data-theme="light"]')]]) {
+      for (const k of ['--m-alpha', '--m-joker', '--m-elom', '--m-call', '--m-base']) for (const g of ['--panel', '--panel-2']) { const c = tok(b, k), s = tok(b, g); if (!c || !s || !(crH(c, s) >= 3)) low.push(`${look} ${k} on ${g}: ${c && s ? crH(c, s).toFixed(2) : 'no token'}`); }
+      for (const k of ['--rv-up', '--rv-dn']) if (!tok(b, k)) low.push(`${look} ${k}: no token`);
     }
-    const D = sPkData(C);
-    chk(sPkPick(fins[0], 'dk') === null && sPkPick(fins[1], 'elo') !== sPkPick(fins[1], 'call') && sPkPick(fins[2], 'dk') === 'home' && D.rec.dk.w + D.rec.dk.l === lined - (was0 ? 1 : 0) + (was2 ? 0 : 1) && three, 'the copy plants an unlined final, the two ratings parting, a level price, a model\'s own call over its backtest and a final with neither');
-    await holdPickem(C, PUB, 'a made-up copy');
-  }
+    chk(!low.length, `the chart's five line colours and the grid's two shades are tokens in both looks, each line 3:1 or more on a card (${low.slice(0, 4).join('; ') || 'all'})`); }
+  const D0 = sPkData(S), num = v => typeof v === 'number' && isFinite(v);
+  console.log(`  the state: ${D0.fin.length} finals over ${D0.weeks.length} weeks; ${PK_S.map(([id, name]) => `${name} ${D0.rec[id].w}-${D0.rec[id].l}${id === 'dk' ? '' : ` (${sPkSigned(D0.cum[id].length ? D0.cum[id][D0.cum[id].length - 1] : 0)} vs DraftKings)`}`).join(', ')}; the total's average miss ${D0.miss === null ? 'none' : D0.miss.toFixed(2)} over ${D0.missN}`);
+  await holdPickem(S, PUB, 'the state', { regrade: true });
+  /* copy A: no final yet (every game put back to come), opened by the old #record address */
+  { const A = JSON.parse(STATE);
+    for (const g of A.games) if (g.state !== 'pre') { g.state = 'pre'; g.hs = null; g.as = null; delete g.result; }
+    A.record = sPkRecord(A);
+    chk(!sPkData(A).fin.length && A.record.su.w + A.record.su.l === 0 && !Object.keys(A.record.byMonth).length, 'copy A plants a season with no final yet');
+    await holdPickem(A, PUB, 'copy A (no final yet)', { hash: 'record', how: 'the old #record address' }); }
+  /* copy B: a season of one month (the latest with a final, else the schedule's first; finals made up where it has under nine), opened by a
+     stored Record tab, planting: a final with no line (DraftKings picks nothing, so it counts in neither DraftKings' season nor against it,
+     nor in the total's miss), one whose club ratings part from the call, one priced level (DraftKings picks the home side), a model's own
+     frozen call beside a backtest of the same game (the call is the one counted), a final with neither, one called by its backtest alone
+     (marked bt), a total and a puck line landing on their numbers (two pushes), no HIGH pick at all, and a pick at 54.51%, which a row
+     writes as 55%: a LOW pick. Every final graded again, and the record made from the grades */
+  { const C = JSON.parse(STATE), moOf = g => g.date.slice(0, 7), callable = g => num(g.pHome) && (g.pick === 'home' || g.pick === 'away'), over = g => g.state === 'final' && num(g.hs) && num(g.as) && g.hs !== g.as;
+    const had = C.games.filter(over), M = had.length ? had.map(moOf).sort().pop() : (C.games.map(moOf).sort()[0] || null);
+    const inM = M ? C.games.filter(g => moOf(g) === M && callable(g)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start)) : [];
+    if (inM.length < 9) console.log(`  copy B skipped: ${M ? `${M} has ${inM.length} games with a call` : 'no game on the schedule'}, and it plants on nine finals`);
+    else {
+      for (const g of C.games) if (moOf(g) !== M && g.state !== 'pre') { g.state = 'pre'; g.hs = null; g.as = null; delete g.result; }
+      const f = inM.filter(over);
+      for (let i = 0; f.length < 9 && i < inM.length; i++) { const g = inM[i]; if (f.includes(g)) continue; const a0 = 1 + ((i + 1) % 4); g.state = 'final'; g.hs = 2 + (i % 3); g.as = a0 === g.hs ? a0 + 1 : a0; f.push(g); }
+      f.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+      f[0].line = null; for (const k of ['mlPick', 'plPick', 'ouPick']) delete f[0][k];
+      f[1].by = 'players'; f[1].elo = Object.assign({}, f[1].elo || {}, { pHome: f[1].pick === 'home' ? 0.41 : 0.59 });
+      f[2].line = Object.assign({ total: null, homeLine: null }, f[2].line || {}, { homeML: -110, awayML: -110 });
+      const was3 = ['alpha', 'joker', 'elom'].map(id => sPkPick(f[3], id, C));
+      f[3].models = { v: 'planted', alpha: { pHome: was3[0] === 'home' ? 0.3 : 0.7, mu: 0 }, joker: { pHome: was3[1] === 'home' ? 0.3 : 0.7 }, elo: { pHome: was3[2] === 'home' ? 0.3 : 0.7, m: 0 } };
+      C.models = C.models || {}; C.models.backtest = C.models.backtest || {}; C.models.backtest.games = C.models.backtest.games || {};
+      C.models.backtest.games[f[3].id] = { alpha: { pHome: was3[0] === 'home' ? 0.7 : 0.3, mu: 0 }, joker: { pHome: was3[1] === 'home' ? 0.7 : 0.3 }, elo: { pHome: was3[2] === 'home' ? 0.7 : 0.3, m: 0 } };
+      delete f[4].models; delete C.models.backtest.games[f[4].id];
+      delete f[8].models; C.models.backtest.games[f[8].id] = { alpha: { pHome: 0.7, mu: 0.3 }, joker: { pHome: 0.3 }, elo: { pHome: 0.7, m: 0.2 } };
+      f[5].line = Object.assign({ homeML: -120, awayML: 100, homeLine: null }, f[5].line || {}, { total: f[5].hs + f[5].as }); f[5].ouPick = 'over';
+      f[6].line = Object.assign({ homeML: -120, awayML: 100, total: null }, f[6].line || {}, { homeLine: f[6].as - f[6].hs }); f[6].plPick = 'home';
+      for (const g of C.games) if (g.state === 'final' && sPkConf(g) >= 65) g.pHome = g.pick === 'home' || (g.pick !== 'away' && g.pHome >= 0.5) ? 0.62 : 0.38;
+      f[7].pHome = f[7].pick === 'home' ? 0.5451 : 0.4549;
+      for (const g of C.games) { const r = sPkGrade(g); if (r) g.result = r; else delete g.result; }
+      C.record = sPkRecord(C);
+      const D = sPkData(C), Bb = sPkBands(C);
+      chk(sPkPick(f[0], 'dk', C) === null && sPkPick(f[1], 'elo', C) !== sPkPick(f[1], 'call', C) && sPkPick(f[2], 'dk', C) === 'home' && ['alpha', 'joker', 'elom'].every((id, i) => sPkPick(f[3], id, C) !== was3[i] && !sPkModel(f[3], id, C).bt && !sPkPick(f[4], id, C) && sPkModel(f[8], id, C).bt)
+        && sPkPick(f[8], 'alpha', C) === 'home' && sPkPick(f[8], 'joker', C) === 'away'
+        && C.record.ou.p >= 1 && C.record.pl.p >= 1 && Bb.high.w + Bb.high.l === 0 && Bb.low.w + Bb.low.l >= 1 && sPkConf(f[7]) === 55 && D.fin.length >= 9 && D.fin.every(g => moOf(g) === M) && Object.keys(C.record.byMonth).length === new Set(D.fin.map(g => g.type === 3 ? 'playoffs' : M)).size,
+        `copy B plants one month of finals (${M}) with an unlined final, the two ratings parting, a level price, a model's own call over a backtest of the same game, a final with neither, one called by its backtest alone, two pushes, no HIGH pick and a 54.51% pick`);
+      console.log(`  copy B: ${D.fin.length} finals in ${M}; the record ${sPkRecStr(C.record).slice(0, 110)}`);
+      await holdPickem(C, PUB, 'copy B (one month, the planted finals)', { store: JSON.stringify({ ui: { tab: 'record' } }), how: 'a stored Record tab', days: [f[3].date, f[8].date] });
+    } }
 }
 
 async function suggestRecord() {
@@ -6799,13 +6935,13 @@ async function main() {
   chk(grade('over', 'ou', 5.5) === 'win' && grade('under', 'ou', 5.5) === 'loss' && grade('over', 'ou', 6) === 'push', 'a total leg grades over, under and push');
   S.games.pop();
 
-  /* Record */
-  d.querySelector('#tabs button[data-tab="record"]').click();
-  chk(new RegExp(`${S.record.su.w}-${S.record.su.l}`).test(txt($('recordTotals'))), 'record tab shows the straight-up record');
-  chk(d.querySelectorAll('#recMonth tbody tr').length === Object.keys(S.record.byMonth).length, 'a row per graded month');
-  chk(!$('fitNote') && !/How it was fitted|Held out/.test(txt($('tab-record'))), 'the Record carries no paragraph on the fit (nhl v25: it is in CLAUDE.md and data/model.json)');
-  const blind = S.games.filter(g => g.result && g.frozen && g.pm && !g.pm.inj).length;
-  chk(blind ? !$('recordNote').hidden && txt($('recordNote')) === `${blind} call${blind === 1 ? '' : 's'} predate${blind === 1 ? 's' : ''} the injury report.` : $('recordNote').hidden, `the record says how many calls were made without the injury report, in one short line (${blind}: ${$('recordNote').hidden ? 'hidden' : txt($('recordNote'))})`);
+  /* the record (nhl v30: the Record tab is folded into the Pick'em Record, whose section holds it number for number): no Record tab, the
+     straight-up record and a row a graded month in its Bets record, no paragraph on the fit */
+  d.querySelector('#tabs button[data-tab="pickem"]').click();
+  chk(!$('tab-record') && !d.querySelector('#tabs button[data-tab="record"]'), 'no Record tab: its button and its section are gone');
+  { const graded = S.record.su.w + S.record.su.l > 0, rowsR = [...d.querySelectorAll('#pkBets tbody tr')];
+    chk(graded ? txt(rowsR[0] && rowsR[0].cells[1].querySelector('b')) === `${S.record.su.w}–${S.record.su.l}` && rowsR.length === 1 + Object.keys(S.record.byMonth).length : $('pkBetsC').hidden, `the Pick'em Record's Bets record shows the straight-up record, and a row per graded month under the season's (${rowsR.length} rows)`); }
+  chk(!$('fitNote') && !/How it was fitted|Held out/.test(txt($('tab-pickem'))), 'the tab carries no paragraph on the fit (nhl v25: it is in CLAUDE.md and data/model.json)');
 
   /* state invariants the page relies on */
   for (const g of S.games) {

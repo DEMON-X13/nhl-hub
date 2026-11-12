@@ -185,11 +185,12 @@ steps stand on:
   from 620px down): the Admin mark first on the owner's devices (`#hubAdmin` holding `#adminMark`; no Sign out, the sign-in is the
   NFL hub's), then `#stamp`, "Updated Wed, Nov 11, 10:11 PM UTC" (when the job published, the visitor's clock, its zone named as
   every time on the page is), then `#buildTag`. **No tagline, no season or record line, no description in the head** (the record
-  is the Record's; the champion, once the season has one, is a pill on Team Rankings' heading, `#ratChamp`). A load that fails
+  is the Pick'em Record's; the champion, once the season has one, is a pill on Team Rankings' heading, `#ratChamp`). A load that fails
   says so in the stamp (`.bad`) and in an `.empty` first in `main`.
 - **The tab bar** is words alone: **no count on a tab** (Games and the Parlay Builder carried one until v25; the slip bar still
-  shows the builder off its tab). The ten tabs and their ids are as they were (the merge to the NFL's eight comes with the Team
-  Rankings, ELO Ratings and Pick'em steps). The owner's two tabs are the NFL's way: no `hidden` attribute, hidden from a visitor's
+  shows the builder off its tab). Since nhl v30 the bar is the NFL's: Games, Suggested Parlays, Parlay Builder, [X Parlays], Team
+  Rankings, ELO Ratings, Pick'em Record, [X Bet Log] (the Standings went in v26, the Record tab in v30; their old addresses open the
+  tabs that took them in). The owner's two tabs are the NFL's way: no `hidden` attribute, hidden from a visitor's
   first paint by the stylesheet (`html:not([data-admin="on"]) #tabs [data-admin-only]`), and taken out of a visitor's page by
   `boot()`. The chosen tab is brought into the bar again once the page and the web fonts are in (they widen the pills).
 - **The light look is built and hidden.** Both palettes are in the stylesheet (`:root` and `html[data-theme="light"]`, the NFL's
@@ -200,7 +201,7 @@ steps stand on:
   attribute**: visitors get the dark look until every tab is rebuilt on the tokens and a real-browser sweep of every text's
   contrast in the light look is clean. Turning it on is taking that attribute off. The shell, the cards, the buttons, the tables'
   base and the club tags are right in both looks today; the tabs' insides are only as far as the aliases take them (the Pick'em
-  and X Bet Log charts' line colours are still written for a dark card). The parlay card keeps the dark palette in both looks, as
+  chart's five lines have been tokens with a value in each look since nhl v30). The parlay card keeps the dark palette in both looks, as
   its image does.
 - **A club is a filled tag** (`tag(id, cls, hide)`, `.ttag`; `muPills()`, `teamCell()`), the NFL's: its abbreviation in Unbounded
   on its own colour, the same in both looks, its three colours inline. `TEAM_COLORS` is a palette a club, the tag's fill first (the
@@ -215,7 +216,7 @@ steps stand on:
   outlined colours of nhl v13 below are gone, and since nhl v28 the card's badge with them.
 - **No descriptions** (the owner's rule on the NFL page, 22 October 2026: "i dont want any descriptions anywhere. i want the site
   to speak for itself"). Cut in v25: the tagline; the confidence key over the cards (each band's record stays on its pill's
-  title; the Record tab's By confidence is other bands, 70+, 60-70 and 50-60); Lineups' key but its state line (`.lu-src`, the Lineups window's foot since nhl v27); the opening countdown's small print; the
+  title, and since nhl v30 is a tile on the Pick'em Record; the Record tab's By confidence, other bands, went with the tab); Lineups' key but its state line (`.lu-src`, the Lineups window's foot since nhl v27); the opening countdown's small print; the
   folds "How the levels are chosen", "How the list is chosen", "How these numbers are worked out" and "The props model is on
   trial" (the trial stays as one pill in the bar of a game's page, the ledger's running numbers on its title: a model on trial
   against the book is a money warning); in nhl v27, with the Player props window, its read sentence, its stat tabs' key and its
@@ -227,8 +228,8 @@ steps stand on:
   own way.", another book's prices, a leg to add by hand, a level with no parlay saying why). A new paragraph of explanation fails
   the smoke.
 - **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("Team Elo", "2026-27 through Nov 11",
-  "3-leg parlay"): Team rankings and its absences, ELO Ratings' Rankings, the Pick'em's chart and its week grid, the
-  Record's two tables, the parlay tabs' panels, X Parlays. A stat strip stands bare over its cards, as the NFL's. The Games tab's
+  "3-leg parlay"): Team rankings and its absences, ELO Ratings' Rankings, the Pick'em's chart, its week grid and its bets
+  record, the parlay tabs' panels, X Parlays. A stat strip stands bare over its cards, as the NFL's. The Games tab's
   card grid is not wrapped (its rows come with the next step).
 
 Before nhl v25, and still true of the tabs' insides: since nhl v12 (16 October 2026, the owner's "make the NHL games look like the NBA version ... the same style as the
@@ -249,7 +250,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   it. Where a club in a table is its tag alone (Team Rankings on a phone, ELO Ratings at every width) its name is kept for a
   screen reader, absolute inside the club's own box (`.tw`, positioned: in the Players tab's Club column, which was not the held
   one, 400 names once set against `main` ran the tab on some 14,000px of empty page past its last table), and a few headings and
-  the Record's months are written short (`.t-wide` over `.t-narrow`: words only, never a column). Team Rankings' table (nhl v26, below) is laid out fixed on a
+  the Bets record's months are written short (`.t-wide` over `.t-narrow`: words only, never a column). Team Rankings' table (nhl v26, below) is laid out fixed on a
   width for each of its eleven columns, never squeezed under what they add up to (it scrolls instead), and by its own words on a
   phone, its club's tag held; its absences table holds the player. A column of figures keeps one format: an Elo a whole
   number (the number its shield is taken on); in ELO Ratings a figure in goals a game to the hundredth, signed with a true
@@ -318,7 +319,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   bar shows it, on the Pick'em's cut-offs in the NFL's words and colours (HIGH 65%+ lime, MED 60-64% gold, LOW 55-59% grey,
   50/50 rose) with that percentage, so a pill and the bar never disagree, and on its title what the band is and its record
   this season, the call straight up ("HIGH: the model gives its pick 65% or more. Its HIGH picks this season: 41–5.",
-  `bandRecs`: the record nhl v23's card had on its pill; the Record tab's By confidence is other bands); the **score prediction**, the goals layer's two rates
+  `bandRecs`: the record nhl v23's card had on its pill; since nhl v30 the Pick'em Record's four band tiles are the same records); the **score prediction**, the goals layer's two rates
   to a tenth, away first (`xgOf`, the game page's expected score), its leader's tag and "by" the difference of the two numbers
   shown ("even" where level); and **where the game stands** (`slateOutcome`, `slateResult`): "0 : 0" to come; "LIVE" once the
   puck has dropped with no score read; "TB leading 2–0" or "Tied 1–1" with the clock under it (a score the job read says "as
@@ -686,31 +687,63 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     going onto a second line between its words, "rated" dropped from the small line and the tag a size down, so the Elo is whole
     before any swipe at 360px. A pill is 44px tall (the NFL's 30), the chosen one said by `aria-pressed`. Every colour is a token
     but the tiers' own, so the tab needs no rule for the light look.
-- **The Pick'em Record tab** (`#pickem`, before the Record tab; nhl v19, the owner's ask of 25 October 2026, "i want a tab for
-  pickem record and show all the models we have and their records", the NFL hub's Pick'em Record in hockey's terms; the Record
-  tab stays beside it, the owner's "Keep both tabs"): every final with a winner, straight up, each model's pick read off the game's
-  call as frozen at puck drop, nothing worked out after a game: the call (the site's own pick, the player ratings blended with
-  the club Elo, `pick`; named for what it is, since the NFL's "ELO Model" is a model of its own, on the Joker), the Team Elo (the club ratings alone: `elo.pHome` beside a player-model call, else the call's `pHome`) and DraftKings, the baseline
-  as the NFL's Vegas (the moneyline favourite with its margin out, on the line frozen with the call, the home side where the two
-  prices are level; not a closing line). The week runs Monday to Sunday by the game's Eastern date. DraftKings' season and its
-  favourite by strength (65%+, 60-65, 55-60, 50-55) in the stat strip; the chart (`pkChart`, an inline SVG, no image, drawn at
-  its box's own width so its 11px words stay 11px on a phone, the end labels giving way to the legend under 480px) each model's
-  wins less DraftKings' on the games both picked, added up week by week; the legend; the week grid (a column a week and the
-  season, each cell its record and rate, shaded green over .500 and rose under, deeper the further off); Show every pick, a day's
-  picks with the score and a tick or a cross (the day it opens on today where today has games, else the latest played). The call's season is the state's own SU record (the Record tab's). Since nhl v20 the NFL's three
-  are on it too, first (Alpha green, the Joker rose, the ELO Model orange, as the NFL's; the call white, the Team Elo ice): each
-  game's `models`, frozen with its call, and for the finals before they existed their backtest (`models.backtest`), counted as the
-  NFL hub counts its own and marked bt in the picks (under The pick'em models). Since nhl v24 (11 November 2026, the owner asking whether
-  the "ELO model" at -7 should be improved or scrapped: it was the Team Elo line, the ELO Model being at -2 with the season's best log
-  loss) the Team Elo is drawn as the baseline, its line and its legend swatch dashed and "· baseline" after its legend entry, the note
-  saying it is the club ratings the call, Alpha and the playoff odds are built on, not a pick of its own. A review that day found it
-  replayed exactly (277 of 277 finals), its -7 noise (19-26 where it parted from DraftKings, p 0.37) on a known weakness (behind the
-  close by +0.0048, +0.0073 and +0.0090 log loss walk-forward, about 4 games in 277), 29 goals-only refits of it within ±0.0002, and a
-  club shot rating added to it +0.0053 better on its own line but only +0.0008 on the call (Alpha already carries the shots), so it
-  is kept as it is.
-- **The Record tab**: the stat strip's five figures step down together from 30px until each fits its tile on one line
-  (`fitRecord`, 16px the least, again on a resize), so a three-figure record never breaks at its hyphen ("179-" over
-  "145" on a 390 phone).
+- **The Pick'em Record tab** (`#pickem`, the last of a visitor's tabs; nhl v19, the owner's ask of 25 October 2026, "i want a tab for
+  pickem record and show all the models we have and their records"; **since nhl v30, 12 November 2026, the NFL hub's Record tab in
+  hockey's terms with this page's Record tab folded into it**, the fifth step of the owner's "match what the NFL hub has": its
+  anatomy and its computed values, ice where it has gold). Every final with a winner, straight up, each model's pick read off the
+  game's call as frozen at puck drop, nothing worked out after a game: the call (the site's own pick, the player ratings blended with
+  the club Elo, `pick`; named for what it is, since the NFL's "ELO Model" is a model of its own, on the Joker), the Team Elo (the
+  club ratings alone: `elo.pHome` beside a player-model call, else the call's `pHome`) and DraftKings, the baseline as the NFL's
+  Vegas (the moneyline favourite with its margin out, on the line frozen with the call, the home side where the two prices are
+  level; not a closing line); since nhl v20 the NFL's three too, first: each game's `models`, frozen with its call, and for the
+  finals before they existed their backtest (`models.backtest`), counted as the NFL hub counts its own and marked bt in the picks
+  (under The pick'em models). The week runs Monday to Sunday by the game's Eastern date and is named by its Monday. The tab, top to
+  bottom (`renderPickem`, `pkData`):
+  - **Six tiles** (`#pkTiles`, the NFL's: a figure over its label, what the number means on the tile's title): "DraftKings
+    record, 179/286" (its favourite's season, to a tenth of a percent); the call straight up in each of the Games tab's four
+    confidence bands, "high confidence, 41/46", "medium", "low", "50/50" (`bandRecs`, the pills' own records: every game the job
+    graded, cut at 65, 60 and 55 on the pick's chance rounded as a row writes it, so 54.51% is a LOW pick; one set of bands on the
+    site); and "total's avg miss, goals", how far DraftKings' total was from the goals scored on average over the finals with a
+    total (the NFL's "spread's avg miss, pts"; two decimals, hockey's totals being a tenth of football's). A band with no game
+    reads "–" and "0/0".
+  - **The card "Wins against DraftKings"**: the legend line (`#pkLegend`, `.lgdrow`: a swatch, the model, its record in bold,
+    "+1 vs DraftKings"; DraftKings last with the ink's swatch; an entry never broken, its "vs DraftKings" half going under its
+    record on the narrowest phones); the chart (`pkChart`, an inline SVG, no image, drawn at its box's own width, 900 at the most,
+    so its 11px words stay 11px on a phone): each model's wins less DraftKings' on the games both picked, added up week by week from
+    zero, DraftKings the zero line in ink, a grid line a step, a dot a week (the season's last alone once the weeks are under 8px
+    apart), every line labelled at its end ("+1 The call", nudged apart, "= DraftKings" on the zero line), the weeks named under
+    the axis as often as there is room; a week pointed at or tapped shows its own numbers beside a crosshair (`pkTip`: each
+    model's record that week and where its season stood against DraftKings after it), as the NFL's and as a line chart should. Then
+    **Show every pick** (`#pkShow`, "Hide every pick" once open) and a Day select: that day's games in puck-drop order (the NFL's pick
+    grid, `.pickgrid`, laid out fixed: the game, "NYR at CGY" over its day and puck drop on the visitor's clock and how it ended,
+    "· NYR won 3–1" or "· under way"; then a column a model, its side's tag with a tick or a cross once final, bt on a backtest's).
+    It opens on today where today has games, else the latest played; shut and the day chosen are in this page's memory alone.
+  - **The card "Week by week"** (`#pkWeeks`, the NFL's `table.rv-grid`): the models down the side (held), a column a week (its
+    Monday over its games) and the season, each cell its record over its rate to a whole percent, shaded as the NFL's: clear at
+    .500, green over and red under, deepest (42%) from 30 points off (`--rv-up`, `--rv-dn`), what it counts on its title.
+  - **The card "Bets record"** (`#pkBets`; what the Record tab showed, from the state's `record`): a row for the season and one a
+    month (the playoffs last; a month written short on a phone, `.t-wide` over `.t-narrow`), the call straight up with its rate
+    to a tenth, and the moneyline, puck line and totals sides the call took at the site's bar over DraftKings' implied chance,
+    won–lost and –pushed where there is a push; each heading's meaning on its title. Under it the one state line, "61 calls
+    predate the injury report." (`#pkBlind`, only where there are any).
+  - **Before any final** the tiles, the legend, the chart, the grid and the bets record are put away and the card says "No game
+    graded yet." over Show every pick (the picks of the games to come); with no game on the schedule the button goes too.
+  - **Colour.** The five lines are tokens with a value in each look (`--m-alpha` green, `--m-joker` rose, `--m-elom` orange, as
+    the NFL's three; `--m-call` violet, the call's, which was white until the zero line took the ink; `--m-base` ice, the Team
+    Elo's), each 3:1 or more on a card and, worked out with a colour-vision simulation rather than judged by eye, any two apart for
+    red-green colour-blind eyes (the NFL's own red and orange are not); the words are in the page's ink, never a line's colour.
+    Since nhl v24 (11 November 2026, the owner asking whether the "ELO model" at -7 should be improved or scrapped: it was the Team
+    Elo line, the ELO Model being at -2 with the season's best log loss) the Team Elo is drawn as the baseline, its line and its
+    swatch dashed and "· baseline" after its legend entry, its title saying it is the club ratings the call, Alpha and the playoff
+    odds are built on, not a pick of its own. A review that day found it replayed exactly (277 of 277 finals), its -7 noise (19-26
+    where it parted from DraftKings, p 0.37) on a known weakness (behind the close by +0.0048, +0.0073 and +0.0090 log loss
+    walk-forward, about 4 games in 277), 29 goals-only refits of it within ±0.0002, and a club shot rating added to it +0.0053
+    better on its own line but only +0.0008 on the call (Alpha already carries the shots), so it is kept as it is.
+  - Nothing is fetched and nothing stored but the tab the visitor is on.
+- **No Record tab** (nhl v30, the same step: the tab bar is the NFL's): its five tiles and By month are the Pick'em Record's Bets
+  record, its By confidence (other bands: 70+, 60-70, 50-60) gave way to the four band tiles, its line on the injury report is
+  under the Bets record, and the Games tab's Season pill carries the straight-up record. `#record` and a stored `record` tab open
+  the Pick'em Record. `fitRecord` and the two-column `.two` went with it.
 - **Headings** carry a small `.pill` for the two or three words that help ("Team Elo", "2026-27 through Nov 11", kept whole); the sentences
   beside a heading went in nhl v25.
 
@@ -838,7 +871,7 @@ games it plants on or clicks are taken from the day the panel shows (the Day con
 day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the game's page on them (under The props model) on answers it makes from the state's own
-projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19) works the Pick'em tab out from the state by rules of its own (the picks, the weeks, the tiles and bands, the legend, the chart's weekly sums, every cell of the week grid and its shading, every pick of the day it opens on and of a past day), on the state and on a copy planting an unlined final, a game whose two ratings part and a level price, and holds the call's season to the state's SU record. Its section THE GAME'S PAGE (nhl v27) holds the page a game opens and its three windows by a model of its own, on any
+projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19, rewritten for nhl v30) works the Pick'em tab out from the state by rules of its own: the address (and the old ones, `#record` and a stored `record` tab), a visitor's six tabs with no Record tab, the anatomy (the tiles, the three cards by their headings, the one state line), the six tiles (DraftKings' record, the call in each confidence band on its rounded chance, the total's average miss) with their titles, the legend word for word with its swatches, the chart (its label for a screen reader, each line's weekly sums from zero and its side of the zero line, the baseline dashed, the end labels, every word in the page's ink, a week pointed at and pointed away from), every cell of the week grid (its record, rate, shade and title), the bets record row for row from the state's `record`, the injury-report line, every pick of the day it opens on, of a past day and of the latest day with a backtest's pick, nothing stored or fetched, no inline colour but by a token, and the five line colours 3:1 on a card in both looks; on the state as given it also grades every final again from its score and its call and holds the state's `record` to that, the season and month by month, and the call's season and the four bands to its straight-up record. It runs on the state, on a copy with no final yet, and on a copy of one month (finals made up where the month has under nine) planting an unlined final, a game whose two ratings part, a level price, a model's own call beside a backtest of the same game, a final with neither, one called by its backtest alone, a total and a puck line that push, no HIGH pick at all and a 54.51% pick; every rule is an invariant of the state it is given (tried on a state with no final, with one, with every game final, with one month, with no line, with no model and with no schedule). Its section THE GAME'S PAGE (nhl v27) holds the page a game opens and its three windows by a model of its own, on any
 state the job can publish (what a rule needs and the state lacks is said and skipped): for every game of the days it holds (yesterday to ten days
 out, the season's first day and a past day mid-way), opened from its row, the bar (Close, the trial's pill by the ledger's decision, All skaters, no Book's cut), the search, Refresh
 odds and this game's own status line or, once the puck has dropped, the strip; the head's six cells (the day and time or where the
@@ -955,9 +988,9 @@ positioned box inside its table, read from the rules in each media query since j
 nothing left of the Players tab's tables, switch, club select and sources line, its seven pills and its search 44px, its trend
 lines and histogram the only drawings beside the shields, the Pick'em chart and the switch's two glyphs, Team Rankings' table laid out fixed on its eleven columns' widths, never squeezed under them and no cell
 broken, and by its own words on a phone, its two tables' columns and held columns (Team; the absences' Player), no lit heading on it, no
-Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
+Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), a
 side far off the market said on its own button with both numbers exactly and every other part of the button (in Pick your own
-legs, Both days included), the Record's tiles, the lock's words, the card's
+legs, Both days included), the lock's words, the card's
 leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE LOOK: LIGHT AND DARK (nhl v25) holds the two looks and the owner's no-descriptions rule, all of it in jsdom by
 rules of its own: the theme script first in the head, after the stylesheet and before the body, `nhlhub_theme_v1` named in it alone;
 both palettes read from the stylesheet's text, every colour token of `:root` with a light value; each text token 4.5:1 on each ground

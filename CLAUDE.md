@@ -109,7 +109,11 @@ opened when the section ends, runs itself again with a 6 GB heap ceiling and `--
 a hand), and says its peak and what it still holds on the line before the count ("heap: peak 1141 MB, 341 MB held at the end"): on
 12 November 2026 the run was within 4% of Node's default 2 GB and growing with each new section, because older sections left their
 jsdom windows open (a window closed is given back whole; one left open keeps its page's timers and its realm). A gate that dies of
-memory takes every publish with it, so a new section closes its own windows too, and a peak that creeps is a fault to fix. DailyFaceoff answers
+memory takes every publish with it, so a new section closes its own windows too, and a peak that creeps is a fault to fix. Time
+is the other budget: the job's simulation runs the smoke 14 times, three at a time, so a section that adds a minute adds about five
+to every publish. On 12 November 2026 the job had grown from 17 minutes to 46, and two thirds of ELO RATINGS' 103 seconds were a
+document-wide search for each shield's gradient made once a row (now once a table pass); measure a new section with
+`NHL_SMOKE_HEAP=1` (each section's line) or `node --cpu-prof`, and keep what is checked once a page out of loops over rows. DailyFaceoff answers
 GitHub's runners but not every sandbox: `starters.js` failing to read it there, for that alone, is not
 a fault (it says so in `data/starters.json`, and the model chooses the goalies).
 
@@ -776,7 +780,8 @@ lateness; before 10pm; the night's finals), and once on a push to `tools/` (`too
 `tools/package*.json`), the page, `data/corr.json` (a table measured again goes into the state at once) or
 the workflow, so a change is proved on the real feeds and the state is the new job's at once. (The lateness was measured over 15 runs in October 2026, before the move;
 this repo's own is not measured yet.) The simulation first: `tools/simulate.js` plays the whole job
-offline on fixtures in the feeds' own shapes. Today's real state, box scores and injury report go through the job in its order (the steps read from
+offline on fixtures in the feeds' own shapes (its 14 smoke runs in the background, three at a time, each on a snapshot of the
+scratch files it is pointed at, judged when done: about 11 minutes, where one after another took about 40). Today's real state, box scores and injury report go through the job in its order (the steps read from
 `update.yml`, so a step moved there is a step moved in the simulation) with planted cases (an injured
 top goalie, a skater out by name only, a goalie on another club's report, DailyFaceoff confirming a
 backup with its date written as midnight GMT, naming a debut, and an unconfirmed goalie on the day's last game (the

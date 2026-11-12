@@ -70,7 +70,7 @@
       new season's ratings are that season's carried, and a season missing everywhere is refused. */
 'use strict';
 const fs = require('fs'), path = require('path'), os = require('os');
-const { spawnSync } = require('child_process');
+const { spawnSync, spawn } = require('child_process');
 const E = require('./espn');
 const Hist = require('./hist');
 const { goals, spreadOf, coverProbs, totalProbs } = require('./elo');
@@ -107,6 +107,37 @@ function run(script, args, env, label) {
   const out = (r.stdout || '') + (r.stderr || '');
   process.stdout.write(`  [${label || script}${args && args.length ? ' ' + args.join(' ') : ''}] exit ${r.status}\n` + out.split('\n').filter(Boolean).slice(-6).map(l => '      ' + l.slice(0, 220)).join('\n') + '\n');
   return { status: r.status, out };
+}
+/* the smoke in the background (it was 14 runs one after another, two thirds of the simulation's time). Each run is started on a
+   snapshot of the files it is pointed at that live in this simulation's scratch folder (a later step may rewrite them), as its own
+   process writing its log and its exit code to files, at most SMOKE_MAX at once; its judge (the chk on its result that used to follow
+   it) is applied when it is done, and smokesDone() waits for them all before the counts are written. The simulation runs
+   synchronously, so nothing here needs the event loop: a full slot is waited for by polling the exit files */
+const SMOKE_MAX = Math.max(1, Math.min(3, os.cpus().length - 1)), SMOKES = [];
+const sleepSync = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const smokeExit = s => { if (s.status !== null) return s.status; const t = fs.existsSync(s.exitFile) ? fs.readFileSync(s.exitFile, 'utf8').trim() : ''; if (t === '') return null; s.status = +t; return s.status; };
+function smokeLater(env, label, judge) {
+  while (SMOKES.filter(s => smokeExit(s) === null).length >= SMOKE_MAX) sleepSync(250);
+  const dir = mkdir(`smoke-${SMOKES.length}`), env2 = {};
+  for (const [k, v] of Object.entries(env)) {
+    if (typeof v === 'string' && path.isAbsolute(v) && v.startsWith(SCRATCH + path.sep) && fs.existsSync(v)) {
+      const to = path.join(dir, k); fs.cpSync(v, to, { recursive: true, verbatimSymlinks: true }); env2[k] = to;
+    } else env2[k] = v;
+  }
+  const outFile = path.join(dir, 'out.txt'), exitFile = path.join(dir, 'exit.txt');
+  spawn('sh', ['-c', 'node "$0" > "$1" 2>&1; echo $? > "$2.tmp" && mv "$2.tmp" "$2"', path.join(__dirname, 'smoke.js'), outFile, exitFile],
+    { env: Object.assign({}, process.env, { GITHUB_ACTIONS: '' }, env2), stdio: 'ignore' });
+  SMOKES.push({ label, judge, outFile, exitFile, status: null, judged: false });
+  process.stdout.write(`  [${label}] started in the background (${SMOKES.filter(s => smokeExit(s) === null).length} running)\n`);
+}
+function smokesDone() {
+  for (const s of SMOKES) {
+    while (smokeExit(s) === null) sleepSync(250);
+    if (s.judged) continue; s.judged = true;
+    const out = fs.existsSync(s.outFile) ? fs.readFileSync(s.outFile, 'utf8') : '';
+    process.stdout.write(`  [${s.label}] exit ${s.status}\n` + out.split('\n').filter(Boolean).slice(-6).map(l => '      ' + l.slice(0, 220)).join('\n') + '\n');
+    s.judge({ status: s.status, out });
+  }
 }
 /* a data folder: the fixed files copied, the box scores linked (the current season's copied, since fetch_box.js appends to it) */
 function dataDir(name, from = REAL_DATA) {
@@ -520,8 +551,7 @@ function partB() {
     const sgs = (SB.props && SB.props.games) || {}, notCopied = Object.keys(sgs).filter(id => JSON.stringify(sgs[id].dk) !== JSON.stringify(gs[id] && gs[id].dk));
     chk(!notCopied.length && JSON.stringify(SB.props && SB.props.dk) === JSON.stringify(PJB.dk), `the state carries each game's read as props.js wrote it (${Object.keys(sgs).length} games, ${notCopied.length} not)`);
   }
-  const sm = run('smoke.js', [], { NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB, NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json'), NHL_PREV_SUGGEST: fs.existsSync(path.join(REAL_DATA, 'suggest_ledger.json')) ? path.join(REAL_DATA, 'suggest_ledger.json') : 'none' }, 'smoke.js over B');
-  chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the real data through the new job: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB, NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json'), NHL_PREV_SUGGEST: fs.existsSync(path.join(REAL_DATA, 'suggest_ledger.json')) ? path.join(REAL_DATA, 'suggest_ledger.json') : 'none' }, 'smoke.js over B', sm => chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the real data through the new job: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B }).status === 0, 'sources.js: every source read');
   /* the props model's record: every final asked for its closing props failing is a broken source; one failing among others a note */
   {
@@ -565,8 +595,7 @@ function partB() {
   /* the page over a state whose injury report is a day old */
   const old = readJSON(STB); if (old.players && old.players.injuries) old.players.injuries.pulled = minute(Date.parse(old.published) - 20 * 3600000);
   const STALE = path.join(SCRATCH, 'B-stale.json'); fs.writeFileSync(STALE, JSON.stringify(old));
-  const sm2 = run('smoke.js', [], { NHL_STATE: STALE, NHL_DATA: B, NHL_PREV_STATE: 'none' }, 'smoke.js, stale injury report');
-  chk(sm2.status === 0, 'the page says the injury report is stale: ' + sm2.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 4).join(' | '));
+  smokeLater({ NHL_STATE: STALE, NHL_DATA: B, NHL_PREV_STATE: 'none' }, 'smoke.js, stale injury report', sm2 => chk(sm2.status === 0, 'the page says the injury report is stale: ' + sm2.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 4).join(' | ')));
   /* DailyFaceoff: silent, then a shape it cannot read, then dates or names it misreads, on a day with games */
   if (D) {
     const B2 = mkdir('B-dfo'); for (const f of ['starters.json']) fs.copyFileSync(path.join(B, f), path.join(B2, f));
@@ -617,8 +646,7 @@ function partB() {
       const rm = run('update.js', ['--offline'], Object.assign({}, env, { NHL_DATA: BM, NHL_TEAMS: path.join(BM, 'teams.json'), NHL_OUT: OUTM, NHL_STATE: STM }), 'update.js, a start moved between the passes');
       const SM = rm.status === 0 ? readJSON(STM) : null, gm = SM && SM.games.find(g => g.id === mv.id), left = SM && SM.props ? Object.keys(SM.props.games) : [];
       chk(!!gm && gm.start === ns && !left.includes(mv.id) && left.length === pj.size - 1, `a game whose start ESPN moved between the passes is published on its new start with no projection made on its old one, the rest kept (exit ${rm.status}; ${gm && gm.start}; ${left.length} of ${pj.size} projected)`);
-      const smM = run('smoke.js', [], { NHL_STATE: STM, NHL_DATA: BM, NHL_PREV_STATE: STB, NHL_OUT: OUTM, NHL_PREV_LEDGER: path.join(B, 'props_ledger.json'), NHL_PREV_SUGGEST: fs.existsSync(path.join(B, 'suggest_ledger.json')) ? path.join(B, 'suggest_ledger.json') : 'none' }, 'smoke.js over a start moved between the passes');
-      chk(smM.status === 0 && / 0 failures/.test(smM.out), 'smoke over a start moved between the passes: ' + smM.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+      smokeLater({ NHL_STATE: STM, NHL_DATA: BM, NHL_PREV_STATE: STB, NHL_OUT: OUTM, NHL_PREV_LEDGER: path.join(B, 'props_ledger.json'), NHL_PREV_SUGGEST: fs.existsSync(path.join(B, 'suggest_ledger.json')) ? path.join(B, 'suggest_ledger.json') : 'none' }, 'smoke.js over a start moved between the passes', smM => chk(smM.status === 0 && / 0 failures/.test(smM.out), 'smoke over a start moved between the passes: ' + smM.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
     }
   }
   return { B, NOW, D, FX, OUTB, dfo, starts, lastOf, feedPlain, avail: freeOf(feedPlain), planted: [X, Y, Z].filter(Boolean) };
@@ -672,8 +700,7 @@ function partB2(b) {
     const t = S2.games.find(g => g.id === conf.tonight.id), gl = t && t.pm && t.pm[t.home === conf.c ? 'home' : 'away'].goalie;
     chk(gl && gl.id !== conf.second.id, `${conf.c} tonight: not ${conf.second.name} again, whom DailyFaceoff confirmed for last night's game not yet boxed (${gl && gl.name}, ${gl && gl.how})`);
   }
-  const sm = run('smoke.js', [], { NHL_STATE: STE, NHL_DATA: DB, NHL_PREV_STATE: path.join(ROOT, 'state.json'), NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json') }, 'smoke.js over the evening, against the published state');
-  chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the first evening after a change: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: STE, NHL_DATA: DB, NHL_PREV_STATE: path.join(ROOT, 'state.json'), NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json') }, 'smoke.js over the evening, against the published state', sm => chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the first evening after a change: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
 
   /* B3. rows an older job rewrote after puck drop (the margin and the puck-line, total and overtime chances
      recomputed on the team Elo's margin, whose call it was and the team Elo's view dropped) are put back to the
@@ -762,8 +789,7 @@ function partB4(b) {
   const CALL = ['pHome', 'rh', 'ra', 'diff', 'mu', 'xt', 'tie', 'frozen', 'before', 'pm', 'elo', 'by', 'line', 'pick', 'mlEdge', 'mlPick', 'cover', 'plEdge', 'plPick', 'ou', 'ouEdge', 'ouPick'];
   const moved = g2 ? CALL.filter(k => JSON.stringify(g2[k] ?? null) !== JSON.stringify(g1[k] ?? null)) : ['missing'];
   chk(g2 && g2.state === 'pre' && g2.start === MOVED && !moved.length, `a game whose start the feed moved later after its puck drop keeps the call made before it, ${gl.name} in goal on the report of ${pulled1}: ${moved.join(', ')}`);
-  const sm = run('smoke.js', [], { NHL_STATE: ST4, NHL_DATA: DB, NHL_PREV_STATE: R1, NHL_PREV_LEDGER: fs.existsSync(R1L) ? R1L : 'none', NHL_PREV_SUGGEST: fs.existsSync(R1S) ? R1S : 'none' }, 'smoke.js over the delayed game, against the run before its puck drop');
-  chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over a start moved later after its puck drop, the report re-pulled since: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: ST4, NHL_DATA: DB, NHL_PREV_STATE: R1, NHL_PREV_LEDGER: fs.existsSync(R1L) ? R1L : 'none', NHL_PREV_SUGGEST: fs.existsSync(R1S) ? R1S : 'none' }, 'smoke.js over the delayed game, against the run before its puck drop', sm => chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over a start moved later after its puck drop, the report re-pulled since: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
 }
 
 /* ---------- B5. a day's only game moved by the feed to another day, under the same id: that day answers blank ---------- */
@@ -904,8 +930,7 @@ function partA(B) {
   chk(A2.pass === undefined, 'the second pass\'s state is not marked as the first\'s');
   chk(early.length < 2 || A2.games.some(g => g.id === delayed.id && g.state === 'pre'), 'a game past its puck drop that the feed still has as scheduled is in the test');
   chk(!moved || A2.games.some(g => g.id === moved.id && g.state === 'pre' && g.start === movedStart), 'a game whose puck drop the feed moved later after it passed is in the test');
-  const smE = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json'), NHL_OUT: OUT }, 'smoke.js over the evening, against the morning\'s state');
-  chk(smE.status === 0 && / 0 failures/.test(smE.out), 'smoke over the evening, the morning\'s calls the last published: ' + smE.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json'), NHL_OUT: OUT }, 'smoke.js over the evening, against the morning\'s state', smE => chk(smE.status === 0 && / 0 failures/.test(smE.out), 'smoke over the evening, the morning\'s calls the last published: ' + smE.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   if (shaped) chk(A2.games.some(g => g.state === 'live' && g.hs !== null), 'a game under way has a score');
   for (const g of late) { const n = A2.games.find(x => x.id === g.id); chk(n.line.at === evening && JSON.stringify(n.line) !== JSON.stringify(g.line), `a game still to come takes the moved line: ${g.id}`); }
   /* DraftKings' ids: a game to come takes the moved line's ids; one whose favourite flipped swaps its puck lines' N and P; the
@@ -921,8 +946,7 @@ function partA(B) {
     if (sg) {
       sg.line.dk.over = sg.line.dk.over.replace(/^0OU(\d+)O/, (m, n) => `0OU${+n + 1}O`);
       const MUT = path.join(SCRATCH, 'A-evening-mutated.json'); fs.writeFileSync(MUT, JSON.stringify(mut));
-      const sm = run('smoke.js', [], { NHL_STATE: MUT, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json') }, 'smoke.js over a started game\'s id changed');
-      chk(sm.status === 1 && /moved after puck drop: line/.test(sm.out), `a started game's DraftKings id changed after puck drop fails the smoke ("moved after puck drop: line"): exit ${sm.status}`);
+      smokeLater({ NHL_STATE: MUT, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_STATE: path.join(SCRATCH, 'A-morning.json') }, 'smoke.js over a started game\'s id changed', sm => chk(sm.status === 1 && /moved after puck drop: line/.test(sm.out), `a started game's DraftKings id changed after puck drop fails the smoke ("moved after puck drop: line"): exit ${sm.status}`));
     } else chk(false, 'no started game with an over id to mutate');
   }
   /* run 1c, on a copy: what the scoreboard answers never takes a game it merely leaves out */
@@ -966,8 +990,7 @@ function partA(B) {
   chk(hn && hn.date === E.etDate(hopStart) && hn.state === 'pre' && hn.frozen === later && hn.before === hopStart, `a game under way that the feed moved to another day is a game to come again, called afresh: ${hop.id} ${hn && hn.date} ${hn && hn.frozen}`);
   chk(farGames.length > 0 && farGames.every(g => AP.games.some(x => x.id === g.id && x.date === far)), `a day weeks ahead answered blank keeps its ${farGames.length} games`);
   chk(hn && hn.line && JSON.stringify(hn.line.dk) === JSON.stringify(idsOnly(hopLine.dk)), `the game moved to another day takes its new line's DraftKings ids (${hn && hn.line && JSON.stringify(hn.line.dk)})`);
-  const smP = run('smoke.js', [], { NHL_STATE: SP2, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: EVE, NHL_OUT: P2 }, 'smoke.js over the partial answer');
-  chk(smP.status === 0 && / 0 failures/.test(smP.out), 'smoke over a partial answer: ' + smP.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: SP2, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: EVE, NHL_OUT: P2 }, 'smoke.js over the partial answer', smP => chk(smP.status === 0 && / 0 failures/.test(smP.out), 'smoke over a partial answer: ' + smP.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   /* run 1d, on a copy of the evening: ESPN's prices come through as "Draft Kings" with no link at all, the same numbers but one
      total a goal higher; two games keep their links, one with an over on another number, one with an id in a shape the job does
      not read; one game's links are not URLs at all; one game's links name its DraftKings event and no outcome. The ids of the
@@ -1016,8 +1039,7 @@ function partA(B) {
         else if (W && g.id === W.id) chk(JSON.stringify(idsOnly(dk)) === JSON.stringify(idsOnly(g.line.dk)) && dk.at === evening, `links naming the event and no outcome: the evening's outcome ids kept beside the event, dated ${evening} (${JSON.stringify(dk)})`);
         else chk(JSON.stringify(idsOnly(dk)) === JSON.stringify(idsOnly(g.line.dk)) && dk.at === evening, `${g.id}: no usable link, the same numbers: the evening's ids kept, dated ${evening} (${JSON.stringify(dk)})`);
       }
-      const sm1d = run('smoke.js', [], { NHL_STATE: SP3, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: EVE, NHL_OUT: P3 }, 'smoke.js over prices with no links');
-      chk(sm1d.status === 0 && / 0 failures/.test(sm1d.out), 'smoke over prices with no links: ' + sm1d.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+      smokeLater({ NHL_STATE: SP3, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: EVE, NHL_OUT: P3 }, 'smoke.js over prices with no links', sm1d => chk(sm1d.status === 0 && / 0 failures/.test(sm1d.out), 'smoke over prices with no links: ' + sm1d.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
       /* sources.js: answers with no link at all are a note; answers whose every link is in a shape the job cannot read are broken */
       const DS = mkdir('A-src'); fs.copyFileSync(path.join(B, 'starters.json'), path.join(DS, 'starters.json'));
       const inj = readJSON(path.join(B, 'injuries.json')); inj.pulled = later3; fs.writeFileSync(path.join(DS, 'injuries.json'), JSON.stringify(inj));
@@ -1094,8 +1116,7 @@ function partA(B) {
   const beforeC = fs.readFileSync(STATE, 'utf8');
   run('update.js', ['--offline'], env(T1 + 'T12:00Z'), 'run 3, a quiet rerun');
   chk(fs.readFileSync(STATE, 'utf8') === beforeC, 'a rerun with nothing new leaves state.json alone');
-  const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: path.join(SCRATCH, 'A-evening.json') }, 'smoke.js over A');
-  chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the fabricated season: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGA, NHL_PREV_SUGGEST: SGA_EVE, NHL_PREV_STATE: path.join(SCRATCH, 'A-evening.json') }, 'smoke.js over A', sm => chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the fabricated season: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   return { games, results };
 }
 
@@ -1131,8 +1152,7 @@ function partC(B, games, results) {
     chk(OW[Y].playoff === 1 && OW[Y].cup > 0 && OW[Y].conf > 0, `${Y}, left out by the table but up 2-0 on ${top} in ESPN's first round, is in the playoffs for certain with a Cup chance (${JSON.stringify(OW[Y])})`);
     chk(OW[wc2].playoff === 0 && OW[wc2].cup === 0 && OW[wc2].conf === 0 && OW[wc2].div === 0, `${wc2}, the table's second wild card, is out with no chance (${JSON.stringify(OW[wc2])})`);
     chk(Object.values(OW).filter(o => o.playoff === 1).length === 16 && Object.values(OW).every(o => o.playoff === 0 || o.playoff === 1), 'sixteen clubs in for certain, the rest out');
-    const smW = run('smoke.js', [], { NHL_STATE: STW, NHL_DATA: B, NHL_SUGGEST: path.join(DW, 'suggest_ledger.json'), NHL_PREV_STATE: 'none' }, 'smoke.js over a first round the table did not draw');
-    chk(smW.status === 0 && / 0 failures/.test(smW.out), `smoke over a first round with ${Y}, whom the table left out: ` + smW.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+    smokeLater({ NHL_STATE: STW, NHL_DATA: B, NHL_SUGGEST: path.join(DW, 'suggest_ledger.json'), NHL_PREV_STATE: 'none' }, 'smoke.js over a first round the table did not draw', smW => chk(smW.status === 0 && / 0 failures/.test(smW.out), `smoke over a first round with ${Y}, whom the table left out: ` + smW.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   }
   /* the first round: a sweep, an upset, series under way */
   let n = 0, day = addDays(lastReg, 3);
@@ -1160,8 +1180,7 @@ function partC(B, games, results) {
   const sg = C2.games.find(g => g.id === sched.id);
   chk(sg && sg.type === 3 && sg.line && sg.frozen && sg.line.dk && sg.line.dk.homeML, 'a playoff game to come has a call and a line, with DraftKings\' ids');
   chk(C2.record.byMonth.playoffs && C2.record.byMonth.playoffs.su.w + C2.record.byMonth.playoffs.su.l === po.length, 'the playoffs are their own row of the record');
-  const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGC, NHL_PREV_STATE: 'none' }, 'smoke.js over the playoffs');
-  chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the playoffs: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGC, NHL_PREV_STATE: 'none' }, 'smoke.js over the playoffs', sm => chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the playoffs: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   /* every round to the Final: the higher seed 4-2, the bracket's way */
   const pts = t => C1.teams[t].pts + C1.teams[t].rw / 100;
   const best = (a, b) => pts(a) >= pts(b) ? [a, b] : [b, a];
@@ -1182,8 +1201,7 @@ function partC(B, games, results) {
   const C3 = readJSON(STATE);
   chk(C3.phase === 'over' && C3.playoff.champion === champ, `the season is over and ${champ} won the Cup (${C3.phase}, ${C3.playoff.champion})`);
   chk(C3.playoff.odds[champ].cup === 1 && Object.entries(C3.playoff.odds).every(([t, o]) => t === champ || o.cup === 0), 'the champion has the Cup, nobody else a chance');
-  const sm3 = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGC, NHL_PREV_STATE: 'none' }, 'smoke.js over a finished season');
-  chk(sm3.status === 0 && / 0 failures/.test(sm3.out), 'smoke over a finished season: ' + sm3.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: STATE, NHL_DATA: B, NHL_SUGGEST: SGC, NHL_PREV_STATE: 'none' }, 'smoke.js over a finished season', sm3 => chk(sm3.status === 0 && / 0 failures/.test(sm3.out), 'smoke over a finished season: ' + sm3.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   return { STATE, C3 };
 }
 
@@ -1206,8 +1224,7 @@ function partD(B, C) {
   const carry = model.params.carry;
   const off = E.TEAMS.map(t => Math.abs(Dn.teams[t].rating - (1500 + (C.C3.teams[t].rating - 1500) * carry))).sort((a, b) => b - a)[0];
   chk(off < 0.2, `each club starts the new season at its finished-season rating carried ${carry} of the way (largest gap ${off.toFixed(2)})`);
-  const sm = run('smoke.js', [], { NHL_STATE: STATE, NHL_DATA: DD, NHL_PREV_STATE: 'none' }, 'smoke.js before the schedule is out');
-  chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke with no games: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | '));
+  smokeLater({ NHL_STATE: STATE, NHL_DATA: DD, NHL_PREV_STATE: 'none' }, 'smoke.js before the schedule is out', sm => chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke with no games: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   const pl = run('players.js', [], { NHL_DATA: DD, NHL_STATE: STATE, NHL_TODAY: aug }, 'players.js in August');
   /* the newest season with a box score: the finished one in season, but from the August rollover to the new season's first final
      boxed, the one before it (the job's step that boxes it runs after this simulation) */
@@ -1230,6 +1247,7 @@ try {
   const C = partC(B, games, results);
   partD(B, C);
 } catch (e) { chk(false, 'the simulation itself broke: ' + (e.stack || e.message)); }
+try { smokesDone(); } catch (e) { chk(false, 'the smoke runs could not be collected: ' + (e.stack || e.message)); }
 { const now = fingerprint(), moved = Object.keys(Object.assign({}, BEFORE, now)).filter(f => BEFORE[f] !== now[f]);
   chk(!moved.length, `the simulation writes none of the repo's own files (data/ and state.json): ${moved.slice(0, 6).join(', ') || 'none written'}`); }
 fs.writeSync(1, [`${checks} checks, ${fails.length} failures`].concat(fails.map(f => '  FAIL ' + f)).join('\n') + '\n');

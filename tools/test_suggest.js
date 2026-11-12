@@ -115,8 +115,13 @@ const day = (d, gs, src) => ({ date: d, lock: `${d}T23:00:00.000Z`, taken: `${d}
 /* ---------- the job's step on the real state, booted in the page ---------- */
 (async () => {
   const S0 = JSON.parse(fs.readFileSync(path.join(ROOT, 'state.json'), 'utf8')), PUB = Date.parse(S0.published);
-  const lined = [...new Set(S0.games.filter(g => g.state === 'pre' && Date.parse(g.start) > PUB && g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 6e4) === Math.floor(PUB / 6e4)).map(g => g.date))].sort();
-  if (!lined.length) { console.log('  no day ahead with a fresh line in the published state: the step\'s checks skipped'); return; }
+  /* the first day still open at the publish: a fresh line on a game to come, and the day's own first puck drop (the job's rule, SG.daysOf)
+     still ahead. A state published in the evening has games to come on a day whose first puck drop has passed: the step rightly takes no
+     set for that day (it locked before this run), so it is not the day to try the step on (the state of 12 November 2026, 00:57Z, failed
+     this test on 11 November's late games with the step right) */
+  const firstOf = SG.daysOf(S0);
+  const lined = [...new Set(S0.games.filter(g => g.state === 'pre' && Date.parse(g.start) > PUB && g.line && g.line.at && Math.floor(Date.parse(g.line.at) / 6e4) === Math.floor(PUB / 6e4)).map(g => g.date))].filter(d => firstOf[d] > PUB).sort();
+  if (!lined.length) { console.log('  no day still open with a fresh line in the published state: the step\'s checks skipped'); return; }
   const D = lined[0], onD = S0.games.filter(g => g.date === D).sort((a, b) => Date.parse(a.start) - Date.parse(b.start)), first = Date.parse(onD[0].start);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nhl-suggest-'));
   try {

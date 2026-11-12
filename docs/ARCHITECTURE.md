@@ -172,9 +172,16 @@ has started: the Games tab's Today is the visitor's Eastern date, a game past it
 bet and says it is under way, a live score the job published says when it was read (and the page
 reads ESPN itself once on opening for a game under way), and a leg whose game has started leaves the
 builder. Tabs: Games, Suggested Parlays (`#suggest`), Parlay Builder (`#parlays`, `#parlay` too; browser only, no
-sync), Standings, Power Ratings, Players (the player model's rankings and the sources it stands on), Pick'em Record
-(`#pickem`), Record, and on the owner's devices X Parlays and the X Bet Log (a Playoff tab went in nhl v14: the Standings
-and Power ratings carry the playoff chances).
+sync), Team Rankings (`#ratings`; `#standings` and `#playoff` open it too), Players (the player model's rankings and the sources
+it stands on), Pick'em Record (`#pickem`), Record, and on the owner's devices X Parlays and the X Bet Log. Team Rankings (nhl v26)
+is the NFL hub's tab of that name where the Standings and Power Ratings were (a Playoff tab went in nhl v14): one table of the 32
+clubs in order of the team Elo (`rankRows()`, `renderRankings()`: the rank shared by clubs level on the Elo shown, the record, the
+points, the Elo with its tier's shield on hockey's 30-point ladder (`TEAM_TIERS`, `teamShield()`, the NFL's `tierBadge()`), the Elo
+gained or lost and the places moved over the last 7 days, read off the game rows' `rh` and `ra` from the state's own day, the chance
+against an average club, goals for and against a game, the simulation's playoff and Cup chances), and under it the NFL's Impact
+absences card (`renderAbsences()`: everyone out who is worth 0.13 goals a game or more to his club either way, a goalie by his
+rating's gap to the goalie in net, `outWorth()`). It reads only the
+state as published.
 
 THE LOOK (`index.html`; CLAUDE.md has the rules). Since nhl v25 (12 November 2026, the owner's "match what the NFL hub has") the shell
 is the NFL hub's, staged tab by tab: the stylesheet's first block is its tokens (both looks: `:root` and `html[data-theme="light"]`,
@@ -197,11 +204,12 @@ fits, side, price and the model's chance, a row's two buttons laid out alike, `s
 on its edge with its edge, a side far off the market a "far off" tag and its two numbers under its line, every piece that cannot wrap
 fitting a 320px phone's button); the Lineups drawer, opened from its one toggle in the foot, listing everyone out, the day to day, the
 goalie's how and the injury report, never cut short; a redraw replaces only the cards that changed); every table
-keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (the Standings' four
-sharing their column widths); the Player props window the NBA's sheet with a head that stays put; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
+keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (Team Rankings'
+table fixed on a width a column, laid out by its own words on a phone); the Player props window the NBA's sheet with a head that stays put; the Record's figures stepped down together to fit their tiles; the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
-builder first, then the Top 30 lines a line a row. The smoke's THE LOOK section holds it with its own code, and THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
-and the no-descriptions rule.
+builder first, then the Top 30 lines a line a row. The smoke's THE LOOK section holds it with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
+and the no-descriptions rule, and TEAM RANKINGS the Team Rankings tab, worked out from the state by rules of its own on the state and
+on made-up copies.
 
 REFRESH ODDS (nhl v9, `index.html`; CLAUDE.md has the rules): a button on the Games tab's odds bar and on the Parlay
 Builder tab's, over its panel, reads ESPN's scoreboard in the browser, on a press and never else, for the strip's days

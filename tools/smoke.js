@@ -47,8 +47,13 @@
        buttons laid out alike; who is out cut to the goalies and the players worth OUT_ROW goals, the bar worked out again from the
        model, every out player's row on the card or his status and figure in its Lineups, the day to day and the injury report there), and
        every table keeping every column at every width, scrolling sideways in its wrapper with its hidden names held
-       inside it (the Standings' four on the same column widths); the figures' formats, no Playoff tab (nhl v14), and the Record's figures
-       fitted to their tiles (jsdom lays nothing out: the rules are read, and the Record's fit is held on a made-up layout)
+       inside it (Team Rankings' table fixed on its eleven columns' widths, laid out by its words on a phone); the figures' formats, no
+       Playoff tab (nhl v14) and no Standings tab (nhl v26), and the Record's figures fitted to their tiles (jsdom lays nothing out: the
+       rules are read, and the Record's fit is held on a made-up layout)
+     - Team Rankings (TEAM RANKINGS, nhl v26, the NFL hub's tab where the Standings and Power Ratings were): the one table worked out
+       from the state by rules of this file's own (the order, the shared ranks, each row word for word, the tier of the Elo shown by its
+       own nine numbers, the Elo change and the rank moves over seven days from the game rows' rh and ra), the absences card, nothing
+       stored or fetched, the old addresses, on the state and on made-up copies
    NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page. */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -1863,7 +1868,7 @@ async function refreshOddsChecks() {
     const onLoad = () => espnReqs(w).map(r => r.url);
     chk(canon(onLoad()) === canon(want), `on load the page asks ESPN for nothing but the open day's scores${live ? ' (a game under way)' : ''}, never the odds (${onLoad().join(', ') || 'nothing'})`);
     d.dispatchEvent(new w.Event('visibilitychange')); d.dispatchEvent(new w.Event('visibilitychange'));
-    for (const t of ['parlays', 'standings', 'games', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
+    for (const t of ['parlays', 'ratings', 'games', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     d.dispatchEvent(new w.Event('visibilitychange'));
     chk(canon(onLoad()) === canon(want), `the watch and the tabs ask ESPN for nothing more (${onLoad().join(', ') || 'nothing'})`);
     oddsParity(w);
@@ -2040,7 +2045,7 @@ async function refreshOddsChecks() {
   } finally { S = real; }
   /* the store after the press: tabs visited (each a save) keep the builder's legs as they were before it, the moved price and
      the moved puck line included; a reload on that store is the builder on the published lines, with nothing said changed */
-  for (const t of ['standings', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
+  for (const t of ['ratings', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
   const legsOf = st => JSON.stringify((JSON.parse(st || '{}').legs) || []), storeAfter = w.localStorage.getItem('nhl_v1');
   chk(w.__writes.length > writes0 && legsOf(storeAfter) === legsOf(store0), `after the press, a save (a tab) stores the builder's legs as they were before it (${legsOf(storeAfter).slice(0, 160)} vs ${legsOf(store0).slice(0, 160)})`);
   {
@@ -2335,7 +2340,7 @@ async function playerPropsChecks() {
         d.getElementById('ppClose').click();
       }
       d.dispatchEvent(new w.Event('visibilitychange'));
-      for (const t of ['standings', 'games', 'players', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
+      for (const t of ['ratings', 'games', 'players', 'parlays']) d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     } else console.log('  no game still to come today or tomorrow that the props model projects: the window before a press is not opened');
     chk(!propReqs(w).length, `nothing asks ESPN for props without a press: load, the window, its stats, the watch and the tabs (${propReqs(w).length} asked)`);
     const st1 = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}');
@@ -4022,7 +4027,7 @@ async function theLook() {
   chk([null, 'Today'].includes(dw(today)) && [null, 'Tomorrow'].includes(dw(PBS.nextDay(today))), `the strip says Today and Tomorrow (${dw(today)}, ${dw(PBS.nextDay(today))})`);
   /* nhl v25: the tab bar is words alone, the NFL hub's: no count on a tab (Games and Parlay Builder carried one), on any tab, with a
      leg in the builder or without */
-  const tabWords = { games: 'Games', suggest: 'Suggested Parlays', parlays: 'Parlay Builder', xparlays: 'X Parlays', standings: 'Standings', ratings: 'Power Ratings', players: 'Players', pickem: "Pick'em Record", xbets: 'X Bet Log', record: 'Record' };
+  const tabWords = { games: 'Games', suggest: 'Suggested Parlays', parlays: 'Parlay Builder', xparlays: 'X Parlays', ratings: 'Team Rankings', players: 'Players', pickem: "Pick'em Record", xbets: 'X Bet Log', record: 'Record' };
   const bareTabs = dd => [...dd.querySelectorAll('#tabs button')].every(b => !b.children.length && txt(b) === tabWords[b.dataset.tab]) && !dd.getElementById('gameCount') && !dd.getElementById('legCount');
   chk(bareTabs(d), `every tab is its words alone, no count on any (${[...d.querySelectorAll('#tabs button')].map(txt).join(' | ')})`);
   /* 44px: the toolbar, the tabs, the players' switch, a card's Lineups and Parlay Builder → */
@@ -4111,7 +4116,7 @@ async function theLook() {
   /* a puck drop on the watch, on another tab: the bar stays words alone */
   { const nextToday = S.games.filter(g => g.date === today && !sStarted(g, AT)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
     if (nextToday) {
-      const errsW = [], wW = await boot(AT, errsW, { hash: 'standings' }), dW = wW.document;
+      const errsW = [], wW = await boot(AT, errsW, { hash: 'ratings' }), dW = wW.document;
       const at = Date.parse(nextToday.start) + 60000; wW.__setClock(at); dW.dispatchEvent(new wW.Event('visibilitychange'));
       chk(bareTabs(dW), `after ${nextToday.id}'s puck drop the bar is still words alone (${[...dW.querySelectorAll('#tabs button')].map(txt).join(' | ')})`);
       chk(!errsW.length, 'no runtime error on the watch at a puck drop: ' + errsW.join(' | '));
@@ -4132,16 +4137,16 @@ async function theLook() {
     for (const p of d.querySelectorAll('.pill')) if (p.style.getPropertyValue('--tc') || /^[A-Z]{2,4}$/.test(txt(p)) && byAbbr.has(txt(p))) wrong.push(`${txt(p)}: a club in a .pill`);
     return wrong;
   };
-  for (const t of ['standings', 'ratings', 'players', 'parlays', 'pickem', 'games']) { d.querySelector(`#tabs button[data-tab="${t}"]`).click(); if (t === 'pickem' && d.querySelector('#pkPicksW').hidden) d.querySelector('#pkShow').click(); const wr = pills(); chk(d.querySelectorAll('.ttag').length > 0 && !wr.length, `${t}: every tag is its club's abbreviation filled in its club's colour, the club's own name beside it (${d.querySelectorAll('.ttag').length} tags; ${wr.slice(0, 4).join('; ')})`); }
-  /* the tables: the column each is in order of, marked; the Standings' four */
-  d.querySelector('#tabs button[data-tab="standings"]').click();
-  chk([...d.querySelectorAll('#standings table')].every(t => eqA([...t.querySelectorAll('th.on')].map(txt), ['#', 'PTS'])), 'each Standings table marks # and PTS, its order');
+  for (const t of ['ratings', 'players', 'parlays', 'pickem', 'games']) { d.querySelector(`#tabs button[data-tab="${t}"]`).click(); if (t === 'pickem' && d.querySelector('#pkPicksW').hidden) d.querySelector('#pkShow').click(); const wr = pills(); chk(d.querySelectorAll('.ttag').length > 0 && !wr.length, `${t}: every tag is its club's abbreviation filled in its club's colour, the club's own name beside it (${d.querySelectorAll('.ttag').length} tags; ${wr.slice(0, 4).join('; ')})`); }
+  /* the tables: the column each is in order of, marked. Team Rankings lights none (nhl v26, the NFL's: one order, by Elo, and no sort) */
   d.querySelector('#tabs button[data-tab="ratings"]').click();
-  chk(eqA([...d.querySelectorAll('#ratTable th.on')].map(txt), ['#', 'Rating']), 'Power ratings mark # and Rating');
-  /* no Playoff tab (nhl v14, the owner's call): no button, section, bracket or odds table; the Standings and Power ratings keep their
-     Playoff and Cup columns */
+  chk(!!d.querySelector('#tab-ratings table.rt-v thead th') && !d.querySelector('#tab-ratings th.on'), 'Team Rankings lights no heading: its one order is the Elo, and it does not sort');
+  /* no Playoff tab (nhl v14, the owner's call) and no Standings tab (nhl v26: Team Rankings took its place and Power Ratings'): no button,
+     section, bracket, odds table, division table or conference select; Team Rankings keeps the Playoff and Cup columns. The old addresses
+     are held in TEAM RANKINGS */
   chk(!d.querySelector('#tabs button[data-tab="playoff"]') && !d.getElementById('tab-playoff') && !d.getElementById('bracket') && !d.getElementById('poTable'), 'no Playoff tab: no button, section, bracket or odds table');
-  { const eP = [], wP = await boot(PUB + 60000, eP, { hash: 'playoff' }); chk(!wP.document.getElementById('tab-standings').hidden && wP.location.hash === '#standings' && !eP.length, `an old #playoff link opens the Standings, where the playoff chances are (${wP.location.hash}${eP.length ? '; ' + eP.join(' | ') : ''})`); }
+  chk(!d.querySelector('#tabs button[data-tab="standings"]') && !d.getElementById('tab-standings') && !d.getElementById('standings') && !d.getElementById('ratConf') && !d.getElementById('ratTable') && d.querySelectorAll('#tabs button[data-tab="ratings"]').length === 1,
+    'no Standings tab: no button, section or division table, and no conference select or old Power Ratings table; one Team Rankings button');
   d.querySelector('#tabs button[data-tab="players"]').click();
   if (S.players) chk(eqA([...d.querySelectorAll('#plTable th.on')].map(txt), ['#', 'Rating']) && eqA([...d.querySelectorAll('#plTeams th.on')].map(txt), ['#', 'Strength']), 'the players mark # and Rating, the clubs # and Strength');
   /* every column at every width: no rule in the page's CSS, in any media query, hides a table, a row or a cell (so a phone has every number a
@@ -4154,17 +4159,19 @@ async function theLook() {
   const scrollers = []; const walkO = rules => { for (const r of rules || []) { if (r.cssRules && !r.selectorText) walkO(r.cssRules); else if (r.style && /^(auto|scroll)$/.test(String(r.style.getPropertyValue('overflow-x') || r.style.getPropertyValue('overflow')).trim().split(/\s+/).pop())) scrollers.push(r.selectorText); } };
   for (const sh of d.styleSheets) walkO(sh.cssRules);
   chk(hiders.length > 0 && scrollers.length > 0, `the page's CSS read: ${hiders.length} rules that hide, ${scrollers.length} that scroll`);
-  const COLS = { standings: ['#', 'Team', 'GP', 'W', 'L', 'OTL', 'PTS', 'RW', 'ROW', 'GF', 'GA', 'Diff', 'Rating', 'Playoff'], ratTable: ['#', 'Team', 'Div', 'Rating', 'Record', 'PTS', 'GF/g', 'GA/g', 'Playoff', 'Cup'],
+  /* nhl v26: Team Rankings' one table (the NFL's eight columns with goals a game for its EPA pair, and PTS, Playoff and Cup: what the
+     Standings' fourteen and Power Ratings' ten gave, less the columns the record and the two rates carry) and its absences table */
+  const COLS = { ratings: TR_HEAD, absences: TR_ABS,
     plTable: ['#', 'Player', 'Rating', 'Club', 'Offence', 'Defence', 'Games', 'TOI', 'Five seasons'],
     plGoalies: ['#', 'Goalie', 'Rating', 'Club', 'Starts', 'Five seasons'], plTeams: ['#', 'Club', 'Strength', 'Attack', 'Defence', 'Goalie', 'Out'], recMonth: ['When', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'], recBand: ['Model chance', 'SU', 'Rate', 'ML', 'Puck line', 'Totals'],
     /* nhl v19's Pick'em: a column a week played (Monday's date) and the season; every pick of a day, a column a model */
     pkWeeks: ['Model'].concat(sPkData(S).weeks.map(sPkShort), ['Season']), pkPicks: ['Game', 'Result'].concat(PK_S.map(m => m[1])) };
-  const STICK = { standings: 'Team', ratTable: 'Team', plTable: 'Player', plGoalies: 'Goalie', plTeams: 'Club', recMonth: 'When', recBand: 'Model chance', pkWeeks: 'Model', pkPicks: 'Game' };
+  const STICK = { ratings: 'Team', absences: 'Player', plTable: 'Player', plGoalies: 'Goalie', plTeams: 'Club', recMonth: 'When', recBand: 'Model chance', pkWeeks: 'Model', pkPicks: 'Game' };
   /* a heading as a desktop shows it: its words without the short form a phone shows instead (.t-narrow) */
   const wideTxt = th => { const c = th.cloneNode(true); for (const x of c.querySelectorAll('.t-narrow')) x.remove(); return txt(c); };
   const lost = [], seen = [];
   const tablesHeld = (tab, keyOf) => {
-    for (const tb of d.querySelectorAll(`#tab-${tab} table.tbl`)) {
+    for (const tb of d.querySelectorAll(tab === 'ratings' ? '#tab-ratings table' : `#tab-${tab} table.tbl`)) {      // Team Rankings' two are the NFL's plain tables (table.rt-v, and the absences'): every table of the tab
       const key = keyOf(tb), ths = [...tb.querySelectorAll('thead th')], heads = ths.map(wideTxt), want = COLS[key]; seen.push(key);
       if (!want || !eqA(heads, want)) lost.push(`${key}: columns ${JSON.stringify(heads)}, want ${JSON.stringify(want)}`);
       const wr = tb.parentElement;
@@ -4178,19 +4185,19 @@ async function theLook() {
       if (rows.some(r => r.cells.length !== ths.length)) lost.push(`${key}: a row with a cell missing`);
     }
   };
-  for (const t of ['standings', 'ratings', 'players', 'pickem', 'record']) {
+  for (const t of ['ratings', 'players', 'pickem', 'record']) {
     d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     if (t === 'pickem' && d.querySelector('#pkPicksW').hidden) d.querySelector('#pkShow').click();
-    tablesHeld(t, tb => tb.id || 'standings');
+    tablesHeld(t, tb => tb.id || (tb.classList.contains('rt-v') ? 'ratings' : tb.closest('#injCard') ? 'absences' : 'a table with no name'));
     if (t === 'players' && S.players) { d.querySelector('#plKind button[data-kind="goalies"]').click(); tablesHeld(t, tb => tb.id === 'plTable' ? 'plGoalies' : tb.id); d.querySelector('#plKind button[data-kind="skaters"]').click(); }
   }
-  chk(!lost.length && ['standings', 'ratTable', 'recMonth', 'recBand', 'pkWeeks', 'pkPicks'].every(k => seen.includes(k)) && (!S.players || ['plTable', 'plGoalies', 'plTeams'].every(k => seen.includes(k))), `every table keeps every column at every width, scrolling sideways in its wrapper with its club or player held (${seen.length} tables; ${lost.slice(0, 4).join(' | ')})`);
+  chk(!lost.length && ['ratings', 'recMonth', 'recBand', 'pkWeeks', 'pkPicks'].every(k => seen.includes(k)) && seen.includes('absences') === sTrOuts(S).length > 0 && (!S.players || ['plTable', 'plGoalies', 'plTeams'].every(k => seen.includes(k))), `every table keeps every column at every width, scrolling sideways in its wrapper with its club or player held (${seen.length} tables; ${lost.slice(0, 4).join(' | ')})`);
   const plRows = [...d.querySelectorAll('#plTable tbody tr')];
   if (S.players) {
     const plWrong = plRows.filter(r => { const id = r.cells[3] && r.cells[3].querySelector('.ttag'), k = id && byAbbr.get(txt(id)); return !(r.cells[1] && r.cells[1].querySelector('b') && k && txt(r.cells[3].querySelector('.tn')) === S.teams[k].short); });
     chk(plRows.length > 0 && !plWrong.length, `each player's name in bold, his club in the Club column (${plRows.length} rows${plWrong.length ? '; ' + txt(plWrong[0]).slice(0, 60) : ''})`);
     /* the figures (ratings ×100, one place): a rating or a strength, the column a table is in order of, unsigned; offence, defence and
-       attack signed and coloured by the sign shown, as the NBA's and the Standings' Diff (a lime 29.9 once sat beside a rose -8.3) */
+       attack signed and coloured by the sign shown, as the NBA's (a lime 29.9 once sat beside a rose -8.3) */
     const f1 = v => (v * 100).toFixed(1), sg1 = v => { const t = f1(v), n = +t; return n > 0 ? '+' + t : n < 0 ? t : '0.0'; };
     const clsOf = v => { const n = +f1(v); return n > 0 ? 'pos' : n < 0 ? 'neg' : ''; }, clsHas = c => c.classList.contains('pos') ? 'pos' : c.classList.contains('neg') ? 'neg' : '';
     const byNameClub = new Map(Object.values(S.players.players || {}).filter(p => p.pos !== 'G').map(p => [`${p.name}|${p.team}`, p])), figBad = [];
@@ -4209,48 +4216,39 @@ async function theLook() {
     }
     chk(plRows.length > 0 && tmRows.length > 0 && !figBad.length, `the skaters' rating unsigned, offence and defence signed and coloured by their sign; the clubs' strength unsigned, attack and defence signed (${plRows.length} skaters, ${tmRows.length} clubs; ${figBad.slice(0, 3).join(' | ')})`);
   }
-  /* a column of figures at one place: Rating on Standings and Power ratings and Exp. pts on the odds, 1553.0 beside 1600.5 (a whole
-     number once dropped its place) */
-  const oneBad = [], clubOf = cell => byAbbr.get(txt(cell && cell.querySelector('.ttag'))), at1 = x => typeof x === 'number' ? x.toFixed(1) : '—';
-  d.querySelector('#tabs button[data-tab="standings"]').click();
-  for (const r of d.querySelectorAll('#standings tbody tr')) { const k = clubOf(r.cells[1]); if (!k || txt(r.cells[12]) !== at1(S.teams[k].rating)) oneBad.push(`standings ${k}: ${txt(r.cells[12])}`); }
-  /* the Standings' four tables share every column's width, so GP, W, L and PTS run straight down the page (each once sized its Team
-     column to its own longest name, the Pacific's 40px right of the Central's): laid out fixed on the same widths, never narrower than
-     those widths add to (it scrolls instead), on a desktop and on a phone; jsdom lays nothing out, so this reads the rules */
-  const stT = [...d.querySelectorAll('#standings table')], stW = stT.map(t => [...t.querySelectorAll('thead th')].map(th => w.getComputedStyle(th).width));
-  const pxN = x => parseFloat(String(x || '').replace('px', '')) || 0;
-  const stMin = (media) => { const m = cssWith(w, 'min-width', /px$/).filter(([sel, md]) => md === media && /#standings/.test(sel)); return m.length ? m : null; };
-  const phoneM = (cssWith(w, 'width', /px$/).find(([sel, md]) => /#standings/.test(sel) && md) || [])[1];
-  const phoneSum = phoneM ? cssWith(w, 'width', /px$/).filter(([sel, md]) => md === phoneM && /#standings .*th:nth-child/.test(sel)) : [];
-  const phoneCols = new Set(phoneSum.map(([sel]) => (/nth-child\((\d+)\)/.exec(sel) || [])[1]));
-  const phoneW = phoneM ? RULES.get(w).filter(([sel, md]) => md === phoneM && /#standings .*th:nth-child/.test(sel)).reduce((a, [, , st]) => a + pxN(st.getPropertyValue('width')), 0) : 0;
-  const phoneMin = phoneM ? pxN((RULES.get(w).find(([sel, md, st]) => md === phoneM && /#standings \.tbl$/.test(sel.trim()) && st.getPropertyValue('min-width')) || [, , { getPropertyValue: () => '' }])[2].getPropertyValue('min-width')) : 0;
-  chk(stT.length === 4 && stT.every(t => w.getComputedStyle(t).tableLayout === 'fixed') && stW.every(ws => ws.length === 14 && ws.every(x => /^\d+(\.\d+)?px$/.test(x)) && eqA(ws, stW[0]))
-    && pxN(w.getComputedStyle(stT[0]).minWidth) >= stW[0].reduce((a, x) => a + pxN(x), 0) && !!stMin('') && phoneCols.size === 14 && phoneMin >= phoneW,
-    `the Standings' four tables laid out fixed on the same 14 column widths, never squeezed under them, on a desktop and a phone (${stW[0] ? stW[0].join(',') : 'none'}; min ${stT[0] && w.getComputedStyle(stT[0]).minWidth}; phone ${phoneCols.size} columns, ${phoneW}px, min ${phoneMin}px)`);
+  /* Team Rankings' table (nhl v26) is laid out fixed on a width for each of its eleven columns, never squeezed under what they add up to
+     (it scrolls in its wrapper instead), so every heading stays on one line (the NFL shares what is left among its figure columns, and
+     its headings break in two on a tablet); on a phone it is laid out by its own words, every cell's width let go. jsdom lays nothing
+     out, so this reads the rules */
   d.querySelector('#tabs button[data-tab="ratings"]').click();
-  for (const r of d.querySelectorAll('#ratTable tbody tr')) { const k = clubOf(r.cells[1]); if (!k || txt(r.cells[3]) !== at1(S.teams[k].rating)) oneBad.push(`ratings ${k}: ${txt(r.cells[3])}`); }
-  chk(!oneBad.length, `every Rating at one place (${oneBad.slice(0, 4).join(' | ')})`);
+  { const pxN = x => parseFloat(String(x || '').replace('px', '')) || 0, rt = d.querySelector('#tab-ratings table.rt-v');
+    const rtW = rt ? [...rt.querySelectorAll('thead th')].map(th => w.getComputedStyle(th).width) : [], tdW = rt && rt.querySelector('tbody tr') ? [...rt.querySelector('tbody tr').cells].map(td => w.getComputedStyle(td).whiteSpace) : [];
+    cssWith(w, 'width', /./);
+    const phone = RULES.get(w).filter(([sel, md]) => /max-width:\s*640px/.test(md) && /table\.rt-v/.test(sel));
+    const phoneAuto = phone.some(([sel, , st]) => sel.trim() === 'table.rt-v' && st.getPropertyValue('table-layout') === 'auto') && phone.some(([sel, , st]) => /th:nth-child\(n\)/.test(sel) && /td:nth-child\(n\)/.test(sel) && st.getPropertyValue('width') === 'auto');
+    chk(!!rt && w.getComputedStyle(rt).tableLayout === 'fixed' && rtW.length === 11 && rtW.every(x => /^\d+(\.\d+)?px$/.test(x)) && pxN(w.getComputedStyle(rt).minWidth) >= rtW.reduce((a, x) => a + pxN(x), 0) && tdW.length === 11 && tdW.every(x => x === 'nowrap') && phoneAuto,
+      `Team Rankings' table laid out fixed on its eleven columns' widths, never squeezed under them and no cell broken, and by its own words on a phone (${rtW.join(',') || 'none'}; min ${rt && w.getComputedStyle(rt).minWidth}; phone auto ${phoneAuto})`); }
   /* a hidden name in a table (on a phone a club is its pill, its name absolute for a screen reader) is held by a positioned box inside its
      table, never set against the page: a club cell that was not the held (sticky) column once set the Players' 400 names against main,
      outside the table's scrolling box, and ran the tab on some 14,000px past its last table on a phone. jsdom lays nothing out, so this
      reads the rules: an element some rule sets absolute has an ancestor inside its table that a rule under the same media (or none) positions */
   const absR = cssWith(w, 'position', /^absolute$/), posR = cssWith(w, 'position', /^(relative|sticky|absolute|fixed)$/), loose = [];
   let absN = 0;
-  for (const t of ['standings', 'ratings', 'players', 'pickem', 'record']) {
+  let absRt = 0;
+  for (const t of ['ratings', 'players', 'pickem', 'record']) {
     d.querySelector(`#tabs button[data-tab="${t}"]`).click();
     for (const kind of t === 'players' && S.players ? ['skaters', 'goalies'] : [null]) {
       if (kind) d.querySelector(`#plKind button[data-kind="${kind}"]`).click();
-      for (const tb of d.querySelectorAll(`#tab-${t} table.tbl`)) for (const el of tb.querySelectorAll('span, div, b, i, small, em')) {
+      for (const tb of d.querySelectorAll(t === 'ratings' ? '#tab-ratings table' : `#tab-${t} table.tbl`)) for (const el of tb.querySelectorAll('span, div, b, i, small, em')) {
         const a = absR.find(([sel]) => hitsSel(el, sel)); if (!a) continue;
-        absN++;
+        absN++; if (t === 'ratings') absRt++;
         let held = false; for (let q = el.parentElement; q && q !== tb.parentElement; q = q.parentElement) if (posR.some(([sel, md]) => (md === '' || md === a[1]) && hitsSel(q, sel))) { held = true; break; }
         if (!held) { loose.push(`${tb.id || t}${kind ? ' ' + kind : ''}: ${el.className} "${txt(el).slice(0, 20)}" in ${el.parentElement && el.parentElement.parentElement && el.parentElement.parentElement.tagName.toLowerCase()} (${a[0]})`); break; }
       }
     }
     if (t === 'players' && S.players) d.querySelector('#plKind button[data-kind="skaters"]').click();
   }
-  chk(absN > 0 && !loose.length, `every name a table hides for a screen reader is held by a positioned box inside its table (${absN} held; ${loose.slice(0, 3).join(' | ')})`);
+  chk(absN > 0 && absRt === Object.keys(S.teams).length && !loose.length, `every name a table hides for a screen reader is held by a positioned box inside its table, Team Rankings' ${Object.keys(S.teams).length} among them (${absN} held, ${absRt} in Team Rankings; ${loose.slice(0, 3).join(' | ')})`);
   /* the Record's tiles: a figure and its label, lime where the side picks won more than they lost, rose where fewer, none on the straight-up two */
   d.querySelector('#tabs button[data-tab="record"]').click();
   const R = S.record, rate = r => r.w + r.l ? (r.w / (r.w + r.l) * 100).toFixed(1) + '%' : '—', wl = r => `${r.w}-${r.l}${r.p ? '-' + r.p : ''}`, cl = r => r.w > r.l ? 'good' : r.w < r.l ? 'bad' : '';
@@ -4314,7 +4312,12 @@ async function theLook() {
       chk(!!on && !!off && lit(on) && !lit(off), `${sel}: Added is lit ice and Add is not, by the page's own rules`); }
     if (a2) a2.click();
   }
-  chk(!d.querySelector('svg:not(.spark):not(.pk-chart):not(.ht-sun):not(.ht-moon)') && [...d.querySelectorAll('svg.ht-sun, svg.ht-moon')].every(x => !!x.closest('header [data-theme-toggle]')) && d.querySelectorAll('svg.ht-sun, svg.ht-moon').length === 2, 'no icon drawn on the page but the players\' sparklines, the Pick\'em chart and the two glyphs of the header\'s light/dark switch (nhl v25)');
+  /* nhl v26: the tier shields too (the NFL's, an inline SVG beside a rating, each named for a screen reader), and their gradients, defined
+     once in a zero-size SVG the first shield appends to the body (#peDefs) */
+  { const defs = [...d.querySelectorAll('#peDefs svg')], shields = [...d.querySelectorAll('svg.tierbadge')];
+    chk(!d.querySelector('svg:not(.spark):not(.pk-chart):not(.ht-sun):not(.ht-moon):not(.tierbadge):not(#peDefs svg)') && [...d.querySelectorAll('svg.ht-sun, svg.ht-moon')].every(x => !!x.closest('header [data-theme-toggle]')) && d.querySelectorAll('svg.ht-sun, svg.ht-moon').length === 2
+      && shields.length >= Object.keys(S.teams).length && shields.every(x => x.getAttribute('role') === 'img' && / tier$/.test(x.getAttribute('aria-label') || '') && !!x.querySelector('title')) && d.querySelectorAll('#peDefs').length === 1 && d.getElementById('peDefs').parentElement === d.body && defs.length === 1 && defs[0].getAttribute('aria-hidden') === 'true' && defs[0].getAttribute('width') === '0' && defs[0].getAttribute('height') === '0',
+      `no icon drawn on the page but the players' sparklines, the Pick'em chart, the tier shields (each named, their gradients once in a zero-size SVG) and the two glyphs of the header's light/dark switch (${shields.length} shields, ${defs.length} defs)`); }
   chk(!errs.length, 'no runtime error in THE LOOK: ' + errs.join(' | '));
   holdRequests(w, 'THE LOOK');
 }
@@ -4483,6 +4486,224 @@ function modelsChecks() {
     console.log(`  ${called.length} games called this run, each made again the same; beta ${M.elo.beta}; ${Object.keys(wantBt).length} finals from the backtest`);
   } else console.log(`  ${called.length} games called this run; the calls are not made again here (players.json is not the state's own, or no game was called)`);
 }
+/* ---------- TEAM RANKINGS (nhl v26) ----------
+   The NFL hub's Team Rankings tab in hockey's terms, where the Standings and Power Ratings were: one table of the clubs in order of the
+   team Elo and, under it, the absences that move a call. All of it worked out here from the state by rules of this file's own, never by
+   the page's functions, and every rule an invariant of whatever state the job can publish (no final yet, a summer with no schedule, a
+   day months after the last game, the playoffs, a champion, no player model):
+   - the tab holds its two cards and nothing else: no intro, small print, select, button or link; the heading and its pill;
+   - the order (the rating, best first; level, the key) and the rank (one more than the clubs whose Elo AS SHOWN, a whole number, is
+     greater: clubs level on it share a rank);
+   - each row word for word: the tag and the name, W-L-OTL, the points, the Elo and its shield (the tier of the number shown by the nine
+     numbers below, its words on the shield), the chance against an average club, goals for and against a game, the simulation's two;
+   - the Elo change and the rank chip over seven days from the state's own day: a club's Elo then is the rating going into its first
+     game dated that day or later (the game row's rh or ra, whatever the game's state), its rating as it stands where it has none; the
+     change the difference of the two whole numbers; the rank then every club's on its Elo then; a club with no final this season is
+     ranked then where it stands and wears no chip. The page is held to the state's rows, never to a replay of tools/elo.js: rh and ra
+     are call fields (the rating at the job's last run before the puck drop), and a replay would fail a publish, the job right, on the
+     day a failed run left a row a game behind;
+   - the absences card: exactly the outs worth OUT_ROW_S goals or more either way, the most first, each row's five cells, the stamp;
+     hidden with none and with no player model;
+   - opening the tab stores only the tab's name and asks the network for nothing; #standings, #playoff and a stored Standings tab open it;
+   on the state and on three made-up copies (no final at all; a rating each side of every tier's line, clubs level, a club 40 Elo higher
+   a week ago, one idle all week, one with no final, one with no playoff odds, outs each side of the bar; no out worth a row). */
+const TR_HEAD = ['#', 'Team', 'Record', 'PTS', 'Elo', 'Elo change', 'Vs average', 'GF/G', 'GA/G', 'Playoff', 'Cup'];
+const TR_ABS = ['Team', 'Player', 'Pos', 'Status', 'Goals off predicted margin'];
+const TR_DAYS = 7;
+/* copy B's planted outs worth a row, in the card's order: the size of the figure, then the club, then the name (the day's real outs fall among them) */
+const TR_PLANT = ['Amy Beta', 'Dee Delta', 'Gil Goalie', 'Abe Alpha', 'Zed Alpha', 'Cy Gamma', 'Gia Edge'];
+/* what each figure's heading says on its title, word for word: the page keeps a number's meaning nowhere else */
+const TR_TITLES = ['Wins, losses, losses past regulation', 'Standings points', 'The team Elo, and its tier', `Elo gained or lost over the last ${TR_DAYS} days`, 'The chance of beating an average club on neutral ice',
+  'Goals for a game this season', 'Goals against a game this season', "The simulation's chance of a playoff spot", "The simulation's chance of the Stanley Cup"];
+/* hockey's ladder: the NFL's ten tiers on a 30-point step, Gold from 1500; under the last, Wood */
+const TR_TIERS = [['HOF', 1650], ['Elite', 1620], ['Master', 1590], ['Diamond', 1560], ['Platinum', 1530], ['Gold', 1500], ['Silver', 1470], ['Bronze', 1440], ['Iron', 1410]];
+const sTrTier = elo => { const t = TR_TIERS.find(x => elo >= x[1]); return t ? { name: t[0], words: `${t[0]} tier (Elo ${t[1]}+)` } : { name: 'Wood', words: `Wood tier (Elo under ${TR_TIERS[TR_TIERS.length - 1][1]})` }; };
+const sTrBack = (iso, n) => { const x = new Date(iso + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - n); return x.toISOString().slice(0, 10); };
+const sTrWords = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const sTrCmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+function sTrRows(St) {
+  const from = sTrBack(St.today, TR_DAYS);
+  const rows = Object.keys(St.teams).map(id => {
+    const mine = St.games.filter(g => g.home === id || g.away === id), into = g => g.home === id ? g.rh : g.ra;
+    const fins = mine.filter(g => g.state === 'final' && typeof g.hs === 'number');
+    let first = null;
+    for (const g of mine) { if (!(g.date >= from) || typeof into(g) !== 'number') continue; const a = Date.parse(g.start), b = first ? Date.parse(first.start) : Infinity; if (a < b || (a === b && String(g.id) < String(first.id))) first = g; }
+    const rating = St.teams[id].rating;
+    return { id, rating, elo: Math.round(rating), was: fins.length ? Math.round(first ? into(first) : rating) : null, n: fins.filter(g => g.date >= from).length };
+  }).sort((a, b) => b.rating - a.rating || sTrCmp(a.id, b.id));
+  for (const x of rows) x.then = x.was === null ? x.elo : x.was;
+  for (const x of rows) { x.rank = 1 + rows.filter(y => y.elo > x.elo).length; x.rankWas = x.was === null ? null : 1 + rows.filter(y => y.then > x.then).length; }
+  return { rows, from };
+}
+/* what an out is worth on the card, or null where he has no row: a player with a cost by the player model, that cost at the Games card's
+   bar; a goalie (players.js gives him none), the gap to his replacement, as the NFL sizes a quarterback: his save rating less that of the
+   goalie in net for his club's next game, in whole hundredths (worked in thousandths, as the state writes a rating), at the bar or over
+   and only where he is the better of the two */
+function sTrWorth(St, t, o) {
+  if (typeof o.cost === 'number') return isRowS(o) ? o.cost : null;
+  const P = (St.players && St.players.players) || {}, p = o.pos === 'G' && o.id != null ? P[o.id] : null, n = t.goalie;
+  if (!p || typeof p.gk !== 'number' || !n || typeof n.gk !== 'number') return null;
+  const h = Math.round((Math.round(p.gk * 1000) - Math.round(n.gk * 1000)) / 10);
+  return h >= Math.round(OUT_ROW_S * 100) ? h / 100 : null;
+}
+/* the outs worth a row, in the card's order: the size of the figure, then the club's key, then the name */
+function sTrOuts(St) {
+  const list = [];
+  for (const [club, t] of Object.entries((St.players && St.players.teams) || {})) for (const o of t.out || []) { const cost = sTrWorth(St, t, o); if (cost !== null) list.push({ club, o, cost }); }
+  return list.sort((a, b) => Math.abs(b.cost) - Math.abs(a.cost) || sTrCmp(a.club, b.club) || sTrCmp(String(a.o.name), String(b.o.name)));
+}
+const sTrGoals = x => { const r = Math.round(x * 100) / 100; return `${r > 0 ? '+' : ''}${(r === 0 ? 0 : r).toFixed(2)} goals`; };
+const sTrStatus = s => { const v = String(s || 'Out'); return /^out$/i.test(v) ? 'OUT' : v.charAt(0).toUpperCase() + v.slice(1).toLowerCase(); };
+async function holdRankings(St, ms, tag, opts = {}) {
+  const errs = [], w = await boot(ms, errs, Object.assign({ state: JSON.stringify(St) }, opts.hash ? { hash: opts.hash } : {}, opts.store ? { store: opts.store } : {})), d = w.document;
+  const sec = d.getElementById('tab-ratings'), ck = (ok, msg) => chk(ok, `${tag}: ${msg}`), ids = Object.keys(St.teams);
+  ck(!!sec && !sec.hidden && w.location.hash === '#ratings' && (d.querySelector('#tabs button.on') || { dataset: {} }).dataset.tab === 'ratings' && txt(d.querySelector('#tabs button.on')) === 'Team Rankings' && d.querySelector('#tabs button.on').getAttribute('aria-current') === 'page',
+    `${opts.how || '#ratings'} opens Team Rankings, the address #ratings (${w.location.hash}; ${txt(d.querySelector('#tabs button.on'))})`);
+  if (!sec) { w.close(); return; }
+  /* the two cards and nothing else: no description and no control */
+  ck(eqA([...sec.children].map(c => `${c.tagName.toLowerCase()}#${c.id}.${c.className}`), ['div#ratingsCard.card', 'div#injCard.card']) && !sec.querySelector('select, button, input, a, details, small, .intro, .note') && [...sec.querySelectorAll('p')].every(p => p.classList.contains('inj-asof')),
+    `the tab holds its two cards and nothing else: no intro, small print, select, button or link (${[...sec.children].map(c => c.id || c.tagName).join(', ')}; ${[...sec.querySelectorAll('select, button, input, a, details, small, p')].map(x => x.tagName.toLowerCase() + (x.className ? '.' + x.className : '')).join(' ')})`);
+  const h2 = sec.querySelector('#ratingsCard h2'), pills = h2 ? [...h2.querySelectorAll('.pill')] : [], lead = h2 ? [...h2.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').replace(/\s+/g, ' ').trim() : '';
+  const champ = St.playoff && St.playoff.phase === 'over' && St.playoff.champion;
+  ck(sec.querySelectorAll('h2').length === 1 && lead === 'Team rankings' && pills.length === 2 && txt(pills[0]) === 'Team Elo' && pills[1].id === 'ratChamp' && (champ ? !pills[1].hidden && txt(pills[1]) === `${St.teams[champ].short} won the Cup` : pills[1].hidden && !txt(pills[1])),
+    `the heading is "Team rankings", its pill "Team Elo", and a champion's pill exactly when the season has one (${txt(h2)})`);
+  /* one table, in a wrapper that scrolls sideways; its head the eleven words; a row a club, eleven cells each */
+  const tbs = [...sec.querySelectorAll('#ratingsCard table')], tb = tbs[0], trs = tb ? [...tb.querySelectorAll('tbody tr')] : [];
+  const heads = tb ? [...tb.querySelectorAll('thead th')] : [];
+  ck(tbs.length === 1 && tb.classList.contains('rt-v') && tb.parentElement.classList.contains('wrap') && /^(auto|scroll)$/.test(w.getComputedStyle(tb.parentElement).overflowX) && eqA(heads.map(txt), TR_HEAD) && trs.length === ids.length && trs.every(r => r.cells.length === TR_HEAD.length),
+    `one table (table.rt-v) in a wrapper that scrolls sideways, its head ${TR_HEAD.join(' · ')}, a row a club (${tbs.length} tables; ${heads.map(txt).join(' · ')}; ${trs.length} rows of ${ids.length})`);
+  /* what a number means is on its heading's title, never in a sentence on the page */
+  ck(heads.length === TR_HEAD.length && eqA(heads.slice(2).map(th => th.getAttribute('title')), TR_TITLES) && heads.slice(0, 2).every(th => !th.getAttribute('title')), `each figure's heading says what it is on its title, word for word, the Elo change's its seven days (${heads.slice(2).map(th => th.getAttribute('title')).join(' | ')})`);
+  if (tbs.length !== 1 || trs.length !== ids.length || !trs.every(r => r.cells.length === TR_HEAD.length)) { ck(!errs.length, 'no runtime error: ' + errs.join(' | ')); w.close(); return; }
+  /* every row, by this file's own sums */
+  const { rows, from } = sTrRows(St), since = sTrWords(from), po = (St.playoff && St.playoff.odds) || {}, games = n => `${n} game${n === 1 ? '' : 's'}`, bad = [];
+  const MAPP = pageMap(w), per = (n, gp) => gp ? (n / gp).toFixed(2) : '—', odd = (o, k, places) => o && typeof o[k] === 'number' ? (o[k] * 100).toFixed(places) + '%' : '—';
+  rows.forEach((x, i) => {
+    const r = trs[i], c = r.cells, t = St.teams[x.id], miss = m => bad.push(`row ${i + 1} ${x.id}: ${m}`);
+    if (txt(c[0]) !== String(x.rank)) miss(`rank "${txt(c[0])}", want ${x.rank}`);
+    /* the club: its tag (its abbreviation, filled in its colour, hidden from a screen reader beside its name), its name, then the rank chip; the one held cell */
+    const tg = c[1].querySelector('.ttag'), tw = c[1].querySelector('.tw');
+    if (!tg || !tw || tg.parentElement !== tw || txt(tg) !== t.abbr || !tg.classList.contains('mini') || !tg.classList.contains('win') || tg.getAttribute('aria-hidden') !== 'true' || txt(tw.querySelector('.tn')) !== t.short || (MAPP[x.id] && tagWrong(tg, MAPP[x.id]))) miss(`club "${txt(c[1])}", want the tag ${t.abbr} and ${t.short}`);
+    if (!c[1].classList.contains('sk') || [...c].filter(q => q.classList.contains('sk')).length !== 1) miss('the club is not the one held cell');
+    const mv = c[1].querySelectorAll('.rankmv'), m0 = mv[0], dR = x.rankWas === null ? null : x.rankWas - x.rank;
+    if (dR === null) { if (mv.length) miss(`a rank chip "${txt(m0)}" on a club with no final`); }
+    else if (mv.length !== 1 || m0.parentElement !== tw) miss(`${mv.length} rank chips, want one in the club's box`);
+    else if (dR === 0) { if (!m0.classList.contains('flat') || m0.classList.contains('up') || m0.classList.contains('down') || m0.getAttribute('title') !== `No change since ${since}` || w.getComputedStyle(m0).display !== 'none') miss(`rank chip "${txt(m0)}" (${m0.className}; ${m0.getAttribute('title')}; display ${w.getComputedStyle(m0).display}), want a level one, not shown`); }
+    else { const wds = `${dR > 0 ? 'Up' : 'Down'} ${Math.abs(dR)} since ${since}`, arrow = m0.querySelector('i');
+      if (!m0.classList.contains(dR > 0 ? 'up' : 'down') || m0.classList.contains(dR > 0 ? 'down' : 'up') || m0.classList.contains('flat') || !arrow || txt(arrow) !== (dR > 0 ? '▲' : '▼') || txt(m0) !== `${dR > 0 ? '▲' : '▼'}${Math.abs(dR)}` || m0.getAttribute('title') !== wds || m0.getAttribute('aria-label') !== wds || w.getComputedStyle(m0).display === 'none')
+        miss(`rank chip "${txt(m0)}" (${m0.className}; ${m0.getAttribute('title')}), want ${dR > 0 ? '▲' : '▼'}${Math.abs(dR)}, "${wds}" (rank ${x.rankWas} then, ${x.rank} now)`); }
+    if (txt(c[2]) !== `${t.w}-${t.l}-${t.otl}`) miss(`record "${txt(c[2])}", want ${t.w}-${t.l}-${t.otl}`);
+    if (txt(c[3]) !== String(t.pts)) miss(`points "${txt(c[3])}", want ${t.pts}`);
+    /* the Elo a whole number in bold, the shield before it the tier of that number */
+    const sh = c[4].querySelector('svg.tierbadge'), bb = c[4].querySelector('b'), tier = sTrTier(x.elo);
+    if (!bb || txt(bb) !== String(x.elo) || txt(c[4]).replace(txt(sh && sh.querySelector('title')), '').trim() !== String(x.elo)) miss(`Elo "${txt(bb)}", want ${x.elo} (${x.rating})`);
+    if (!sh || !bb || c[4].querySelectorAll('svg').length !== 1 || sh.getAttribute('aria-label') !== `${tier.name} tier` || sh.getAttribute('role') !== 'img' || txt(sh.querySelector('title')) !== tier.words || !(sh.compareDocumentPosition(bb) & 4)) miss(`shield "${sh && sh.getAttribute('aria-label')}" / "${sh && txt(sh.querySelector('title'))}", want ${tier.words} before the number`);
+    else { const fills = [...sh.querySelectorAll('[fill^="url(#"]')].map(p => /#([\w-]+)\)/.exec(p.getAttribute('fill'))[1]), wantFill = tier.name === 'Wood' ? [] : [tier.name === 'HOF' ? 'tg-hof-gem' : `tg-${tier.name.toLowerCase()}`];
+      if (!eqA(fills, wantFill) || fills.some(f => d.querySelectorAll(`[id="${f}"]`).length !== 1)) miss(`shield filled ${fills.join(',') || 'flat'}, want ${wantFill.join(',') || 'flat'}, each gradient in the page once`); }
+    /* the Elo change over the window */
+    const ev = c[5].querySelectorAll('.elomv'), e0 = ev[0], dE = x.was === null ? null : x.elo - x.was;
+    if (!c[5].classList.contains('movecell')) miss('the Elo change is not in a movecell');
+    if (dE === null) { if (ev.length || txt(c[5])) miss(`an Elo change "${txt(c[5])}" on a club with no final`); }
+    else if (ev.length !== 1 || txt(c[5]) !== txt(e0)) miss(`${ev.length} Elo chips ("${txt(c[5])}"), want one`);
+    else if (dE === 0) { if (!e0.classList.contains('flat') || e0.classList.contains('up') || e0.classList.contains('down') || txt(e0) !== '·' || e0.getAttribute('title') !== `No change since ${since} (${games(x.n)})`) miss(`Elo chip "${txt(e0)}" (${e0.className}; ${e0.getAttribute('title')}), want · "No change since ${since} (${games(x.n)})"`); }
+    else { const wds = `${dE > 0 ? 'Gained' : 'Lost'} ${Math.abs(dE)} Elo since ${since} (${games(x.n)})`, want = `${dE > 0 ? '+' : '−'}${Math.abs(dE)}`;
+      if (!e0.classList.contains(dE > 0 ? 'up' : 'down') || e0.classList.contains(dE > 0 ? 'down' : 'up') || e0.classList.contains('flat') || txt(e0) !== want || e0.getAttribute('title') !== wds || e0.getAttribute('aria-label') !== wds) miss(`Elo chip "${txt(e0)}" (${e0.className}; ${e0.getAttribute('title')}), want ${want} "${wds}" (${x.was} then, ${x.elo} now)`); }
+    const vs = `${Math.round(1 / (1 + Math.pow(10, -(x.rating - 1500) / 400)) * 100)}%`;
+    if (txt(c[6]) !== vs) miss(`vs average "${txt(c[6])}", want ${vs}`);
+    if (txt(c[7]) !== per(t.gf, t.gp) || txt(c[8]) !== per(t.ga, t.gp)) miss(`goals a game "${txt(c[7])}" and "${txt(c[8])}", want ${per(t.gf, t.gp)} and ${per(t.ga, t.gp)}`);
+    if (txt(c[9]) !== odd(po[x.id], 'playoff', 0) || txt(c[10]) !== odd(po[x.id], 'cup', 1)) miss(`playoff "${txt(c[9])}" and Cup "${txt(c[10])}", want ${odd(po[x.id], 'playoff', 0)} and ${odd(po[x.id], 'cup', 1)}`);
+  });
+  ck(!bad.length, `every row by this file's own sums: the order, the shared rank, the club, the record and points, the Elo shown and its tier's shield, the Elo change and the rank chip since ${since}, the chance against an average club, goals a game, the playoff and Cup chances (${bad.length} wrong: ${bad.slice(0, 4).join(' | ')})`);
+  /* the shields' gradients are in the page once, outside the table; no image */
+  ck(d.querySelectorAll('#peDefs').length === (trs.length ? 1 : 0) && d.querySelectorAll('[id="tg-gold"]').length === 1 && !sec.querySelector('img, image, [style*="url("]') && ![...sec.querySelectorAll('*')].some(e => /gradient|defs/i.test(e.localName)), `the shields' gradients are defined once a page, outside the tab (#peDefs ${d.querySelectorAll('#peDefs').length}, #tg-gold ${d.querySelectorAll('[id="tg-gold"]').length})`);
+  /* the absences card: exactly the outs worth a row, the most first */
+  const outs = sTrOuts(St), card = d.getElementById('injCard'), box = d.getElementById('injSuggest'), aBad = [];
+  if (!outs.length) ck(!!card && card.hidden && !!box && !box.children.length && w.getComputedStyle(card).display === 'none', `no out is worth ${OUT_ROW_S} goals${St.players ? '' : ' (no player model in the state)'}: the absences card is hidden and empty`);
+  else {
+    const at = card.querySelectorAll('table'), ar = at[0] ? [...at[0].querySelectorAll('tbody tr')] : [], pulled = St.players.injuries && St.players.injuries.pulled, stamp = [...card.querySelectorAll('p')];
+    ck(!card.hidden && txt(card.querySelector('h3')) === 'Impact absences' && card.querySelectorAll('h2, h3').length === 1 && at.length === 1 && at[0].parentElement.classList.contains('wrap') && eqA([...at[0].querySelectorAll('thead th')].map(txt), TR_ABS) && ar.length === outs.length && ar.every(r => r.cells.length === TR_ABS.length),
+      `the absences card shows: "Impact absences", one table in a wrapper, ${TR_ABS.join(' · ')}, a row for each of the ${outs.length} outs worth ${OUT_ROW_S} goals or more (${ar.length} rows; ${at[0] ? [...at[0].querySelectorAll('thead th')].map(txt).join(' · ') : 'no table'})`);
+    if (ar.length === outs.length && ar.every(r => r.cells.length === TR_ABS.length)) outs.forEach(({ club, o, cost }, i) => {
+      const c = ar[i].cells, tg = c[0].querySelector('.ttag'), fig = c[4].querySelector('b.delta'), pill = c[3].querySelector('.tier');
+      const want = [St.teams[club].abbr, String(o.name), o.pos || '—', sTrStatus(o.status), sTrGoals(-cost)], have = [txt(tg), txt(c[1]), txt(c[2]), txt(pill), txt(fig)];
+      if (!tg || !fig || !pill) { aBad.push(`row ${i + 1}: ${txt(ar[i])}, want ${want.join(' · ')}`); return; }
+      if (!eqA(have, want) || txt(c[0]) !== want[0] || txt(c[3]) !== want[3] || txt(c[4]) !== want[4] || !pill.classList.contains('out') || fig.classList.contains('down') !== (cost > 0) || fig.classList.contains('up') !== !(cost > 0) || !c[1].classList.contains('sk') || (MAPP[club] && tagWrong(tg, MAPP[club])))
+        aBad.push(`row ${i + 1}: ${have.join(' · ')} (${fig ? fig.className : 'no figure'}), want ${want.join(' · ')} ${cost > 0 ? 'down' : 'up'}`);
+    });
+    ck(!aBad.length, `each absence's row: the club's tag, the player, his position, the report's status, and what his absence does to his club's margin (a goalie's the gap to the goalie in net), rose where it costs and lime where it gains (${aBad.slice(0, 3).join(' | ')})`);
+    { const fh = at[0] && at[0].querySelector('thead th:last-child');
+      ck(!!fh && fh.getAttribute('title') === "What his absence does to his club's expected margin, by the player model; a goalie against the goalie in net", `the figure's heading says what it is on its title, a goalie's too (${fh ? fh.getAttribute('title') : 'no heading'})`); }
+    ck(pulled ? stamp.length === 1 && stamp[0].classList.contains('inj-asof') && txt(stamp[0]) === `Injury report of ${new Date(pulled).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}` : !stamp.length, `the card's one line is the injury report's own time, in the visitor's clock (${stamp.map(txt).join(' | ') || 'none'})`);
+  }
+  /* nothing stored but the tab's name, nothing fetched: another tab and back */
+  { const other = d.querySelector('#tabs button[data-tab="record"]'); other.click();
+    const st0 = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), r0 = w.__requests.length, w0 = w.__writes.length, html0 = tb.outerHTML;
+    d.querySelector('#tabs button[data-tab="ratings"]').click();
+    const st1 = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'), wr = w.__writes.slice(w0), tab1 = st1.ui && st1.ui.tab;
+    if (st0.ui) st0.ui.tab = null; if (st1.ui) st1.ui.tab = null;
+    ck(w.__requests.length === r0 && wr.every(k => k === 'nhl_v1') && tab1 === 'ratings' && eqA(st0, st1) && w.location.hash === '#ratings', `opening the tab asks the network for nothing and stores nothing but the tab's name (${w.__requests.length - r0} requests; wrote ${[...new Set(wr)].join(', ') || 'nothing'}; tab ${tab1})`);
+    const tb2 = sec.querySelector('table.rt-v');
+    ck(!!tb2 && tb2.outerHTML === html0 && d.querySelectorAll('#peDefs').length === 1 && d.querySelectorAll('[id="tg-gold"]').length === 1, 'drawn again it is the same table, the gradients still in the page once'); }
+  ck(!errs.length, 'no runtime error: ' + errs.join(' | '));
+  w.close();
+  return { rows, from, outs };
+}
+async function teamRankingsChecks() {
+  console.log('TEAM RANKINGS');
+  const R0 = await holdRankings(S, PUB, 'the state', { hash: 'ratings' });
+  if (R0) console.log(`  the state: ${R0.rows.length} clubs, ${R0.rows.filter(x => x.was !== null).length} with a final; since ${R0.from}: ${R0.rows.filter(x => x.was !== null && x.elo !== x.was).length} moved in Elo, ${R0.rows.filter(x => x.rankWas !== null && x.rankWas !== x.rank).length} in rank; ${new Set(R0.rows.map(x => x.elo)).size} different Elos shown; tiers ${[...new Set(R0.rows.map(x => sTrTier(x.elo).name))].join(', ')}; ${R0.outs.length} absences worth a row`);
+  /* (A) no final at all, as on opening night: every game to come at the ratings as they stand, the records zero, no player model. No
+     chip anywhere, a dash in both rate cells, the card hidden; the old #standings address opens the tab */
+  { const A = JSON.parse(STATE);
+    for (const g of A.games) { g.state = 'pre'; g.hs = null; g.as = null; g.rh = A.teams[g.home].rating; g.ra = A.teams[g.away].rating; }
+    for (const t of Object.values(A.teams)) for (const k of ['w', 'l', 'otl', 'pts', 'rw', 'row', 'gf', 'ga', 'gp']) t[k] = 0;
+    A.players = null;
+    const RA = sTrRows(A);
+    chk(RA.rows.every(x => x.was === null && x.rankWas === null) && !sTrOuts(A).length, 'copy A plants a season with no final and no player model');
+    await holdRankings(A, PUB, 'copy A (no final yet, no player model)', { hash: 'standings', how: 'the old #standings address' }); }
+  /* (B) a rating each side of every tier's line (1649.6 shows 1650 and wears HOF, 1649.4 shows 1649 and wears Elite); three clubs level
+     on the Elo shown; a club 40 Elo higher going into its first game of the window; a club with no game in the window; a club with no
+     final (the others ranked then with it where it stands); a club with no playoff odds; outs each side of the bar, level in size, with
+     no position and no status; the old #playoff address */
+  { const B = JSON.parse(STATE), ord = Object.keys(B.teams).sort((a, b) => B.teams[b].rating - B.teams[a].rating || sTrCmp(a, b)), from = sTrBack(B.today, TR_DAYS);
+    const use = ord.slice(); let planted = use.length >= 28;
+    if (planted) {
+      TR_TIERS.forEach(([, m]) => { B.teams[use.shift()].rating = m - 0.4; B.teams[use.shift()].rating = m - 0.6; });
+      const lv = [use.shift(), use.shift(), use.shift()]; B.teams[lv[0]].rating = 1455.4; B.teams[lv[1]].rating = 1454.6; B.teams[lv[2]].rating = 1455;
+      const hi = use.shift(), idle = use.shift(), none = use.shift(), noOdds = use.shift();
+      const inWin = id => B.games.filter(g => g.date >= from && (g.home === id || g.away === id)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+      B.games = B.games.filter(g => !(g.date >= from && (g.home === idle || g.away === idle)));
+      const g1 = inWin(hi)[0]; if (g1) { if (g1.home === hi) g1.rh = B.teams[hi].rating + 40; else g1.ra = B.teams[hi].rating + 40; }
+      for (const g of B.games) if ((g.home === none || g.away === none) && g.state === 'final') { g.state = 'pre'; g.hs = null; g.as = null; }
+      if (B.playoff && B.playoff.odds) delete B.playoff.odds[noOdds];
+      if (B.players && B.players.teams) { const cl = Object.keys(B.players.teams).sort();
+        if (cl.length >= 3) {
+          B.players.teams[cl[0]].out = [{ id: 'p1', name: 'Zed Alpha', pos: 'C', status: 'Out', cost: 0.13 }, { id: 'p2', name: 'Amy Beta', pos: '', status: 'Suspension', cost: -0.4 }, { id: 'p3', name: 'Low Guy', pos: 'D', status: 'Injured Reserve', cost: 0.129 }, { id: 'p4', name: 'No Cost', pos: 'G', status: 'Injured Reserve' }, { id: 'p5', name: 'Abe Alpha', pos: 'LW', cost: 0.13 }];
+          B.players.teams[cl[1]].out = [{ id: 'p6', name: 'Cy Gamma', pos: 'G', status: 'Injured Reserve', cost: -0.13 }, { id: 'p7', name: 'Dee Delta', pos: 'RW', status: 'Injured Reserve', cost: 0.31 }];
+          B.players.teams[cl[2]].out = [{ id: 'p8', name: 'Under Bar', pos: 'D', status: 'Out', cost: -0.12 }];
+          /* goalies, who have no cost: one 0.25 over the goalie in net, one at the bar to the thousandth (0.125 is 0.13 in hundredths), one
+             just under it, one worse than the goalie in net, one no table rates, one with no id */
+          const t2 = B.players.teams[cl[2]]; if (!t2.goalie || typeof t2.goalie.gk !== 'number') t2.goalie = { id: 'pg0', name: 'In Net', gk: -0.05, how: 'planted' };
+          const k0 = Math.round(t2.goalie.gk * 1000); B.players.players = B.players.players || {};
+          [['pg1', 'Gil Goalie', 250], ['pg2', 'Gia Edge', 125], ['pg3', 'Gus Under', 124], ['pg4', 'Guy Worse', -300]].forEach(([id, name, dk]) => {
+            B.players.players[id] = { name, pos: 'G', team: cl[2], o: 0, d: 0, gk: (k0 + dk) / 1000, v: (k0 + dk) / 1000, gp: 1, toi: 60, seasons: {} };
+            t2.out.push({ id, name, pos: 'G', status: 'Injured Reserve', cost: null }); });
+          t2.out.push({ id: 'pg9', name: 'Not Rated', pos: 'G', status: 'Injured Reserve', cost: null }, { id: null, name: 'No Id', pos: 'G', status: 'Out', cost: null });
+        } }
+      const RB = sTrRows(B), by = Object.fromEntries(RB.rows.map(x => [x.id, x])), names = new Set(RB.rows.map(x => sTrTier(x.elo).name)), oB = sTrOuts(B);
+      chk(names.size === 10 && TR_TIERS.every(([, m]) => RB.rows.some(x => x.elo === m) && RB.rows.some(x => x.elo === m - 1)) && lv.every(id => by[id].elo === 1455 && by[id].rank === by[lv[0]].rank) && RB.rows.filter(x => x.elo < 1455).every(x => x.rank >= by[lv[0]].rank + 3)
+        && (!g1 || by[hi].was === null || by[hi].elo - by[hi].was === -40) && by[idle].n === 0 && (by[idle].was === null || by[idle].was === by[idle].elo) && by[none].was === null && by[none].rankWas === null
+        && (!B.playoff || !B.playoff.odds || !(noOdds in B.playoff.odds)) && (!B.players || !B.players.teams || Object.keys(B.players.teams).length < 3 || (eqA(oB.map(x => x.o.name).filter(n => TR_PLANT.includes(n)), TR_PLANT) && eqA(TR_PLANT.map(n => { const x = oB.find(y => y.o.name === n); return x ? x.cost : null; }), [-0.4, 0.31, 0.25, 0.13, 0.13, -0.13, 0.13]) && !oB.some(x => ['Low Guy', 'No Cost', 'Under Bar', 'Gus Under', 'Guy Worse', 'Not Rated', 'No Id'].includes(x.o.name)))),
+        `copy B plants all ten tiers with a rating each side of every line, three clubs level, a club 40 Elo down on the week${g1 ? '' : ' (not planted: no game of its own in the window)'}, one idle, one with no final, one with no playoff odds, and outs each side of the bar, goalies among them, in the card's order among themselves (${[...names].join(', ')}; ${hi} ${by[hi].was} to ${by[hi].elo}; ${oB.length} outs: ${oB.filter(x => TR_PLANT.includes(x.o.name)).map(x => `${x.o.name} ${x.cost}`).join(', ')})`);
+      await holdRankings(B, PUB, 'copy B (every tier, level clubs, the planted week, the planted outs)', { hash: 'playoff', how: 'the old #playoff address' });
+    } else chk(false, `copy B needs 28 clubs to plant on (${ord.length})`); }
+  /* (C) a player model with no out worth a row: the card hidden; and a Standings tab stored by an older page opens Team Rankings */
+  { const C = JSON.parse(STATE);
+    if (C.players && C.players.teams) for (const t of Object.values(C.players.teams)) t.out = (t.out || []).filter(o => sTrWorth(C, t, o) === null);
+    chk(!sTrOuts(C).length, 'copy C plants a player model with no out worth a row');
+    await holdRankings(C, PUB, 'copy C (no out worth a row; an older page\'s stored Standings tab)', { store: JSON.stringify({ ui: { tab: 'standings' } }), how: 'a stored Standings tab' }); }
+}
+
 /* ---------- THE LOOK: LIGHT AND DARK (nhl v25), and the owner's rule that the page carries no descriptions ----------
    The NFL hub's two looks on hockey's tokens: both palettes in the page, the head's script (the NFL's theme.js, its key nhlhub_theme_v1)
    before the body, the switch in the header. All of it by rules of this file's own: the palettes read from the stylesheet's text and
@@ -4978,23 +5199,13 @@ async function main() {
   }
   closeBets(d);
 
-  /* Standings: four divisions of eight, every club once, the sixteen in the field marked */
-  d.querySelector('#tabs button[data-tab="standings"]').click();
-  const tables = d.querySelectorAll('#standings table');
-  chk(tables.length === 4, `four division tables (${tables.length})`);
-  chk(d.querySelectorAll('#standings tbody tr').length === 32, 'thirty-two clubs in the standings');
-  chk(d.querySelectorAll('#standings tbody tr.in').length === 16, `sixteen clubs in the field (${d.querySelectorAll('#standings tbody tr.in').length})`);
-  for (const t of tables) chk(t.querySelectorAll('tbody tr').length === 8, 'eight clubs in a division');
-
-  /* Power ratings */
+  /* Team Rankings (nhl v26; the Standings' four division tables and Power Ratings' conference select went with their tabs): every club
+     once, the first of them ranked 1. TEAM RANKINGS holds the rest */
   d.querySelector('#tabs button[data-tab="ratings"]').click();
-  chk(d.querySelectorAll('#ratTable tbody tr').length === 32, 'ratings table shows the 32 clubs');
-  chk(txt(d.querySelector('#ratTable tbody tr td')) === '1', 'ratings start at rank 1');
-  $('ratConf').value = 'East'; $('ratConf').dispatchEvent(new w.Event('change'));
-  chk(d.querySelectorAll('#ratTable tbody tr').length === 16, 'a conference is sixteen clubs');
+  chk(d.querySelectorAll('#tab-ratings table.rt-v tbody tr').length === Object.keys(S.teams).length, `Team Rankings shows every club once (${d.querySelectorAll('#tab-ratings table.rt-v tbody tr').length})`);
+  chk(txt(d.querySelector('#tab-ratings table.rt-v tbody tr td')) === '1', 'Team Rankings start at rank 1');
 
-  /* the playoff picture: the simulation the Standings' and Power ratings' Playoff and Cup columns read (the tab that drew the bracket
-     went in nhl v14) */
+  /* the playoff picture: the simulation Team Rankings' Playoff and Cup columns read (the tab that drew the bracket went in nhl v14) */
   const O = S.playoff.odds;
   const sum = k => Object.values(O).reduce((a, o) => a + o[k], 0);
   chk(Math.abs(sum('cup') - 1) < 0.02, 'Cup chances sum to one: ' + sum('cup').toFixed(3));
@@ -5008,10 +5219,11 @@ async function main() {
     chk(f.series.length === 4 && f.series.every(s => s.length === 2), `${conf} has four series`);
     chk(new Set([].concat(...f.series)).size === 8, `${conf}'s first round has each club once`);
   }
-  /* the champion, once the season has one: on the Power ratings' heading, a pill (the header's stamp said it before nhl v25) */
+  /* the champion, once the season has one: on Team Rankings' heading, a pill (the header's stamp said it before nhl v25) */
   d.querySelector('#tabs button[data-tab="ratings"]').click();
-  chk(S.playoff.champion ? !$('ratChamp').hidden && txt($('ratChamp')) === `${S.teams[S.playoff.champion].short} won the Cup` : $('ratChamp').hidden, `the champion is named on the Power ratings' heading exactly when there is one (${$('ratChamp').hidden ? 'hidden' : txt($('ratChamp'))})`);
-  chk(/^Elo: home ice \d+ Elo, \d+ Elo per goal of margin\.$/.test($('ratH').title) && !/home ice/.test(txt($('tab-ratings').querySelector('h2'))), `the Elo's two constants are on the heading's title, not beside it (${$('ratH').title})`);
+  chk(!!$('ratChamp') && !!$('ratChamp').closest('#tab-ratings h2') && (S.playoff.champion ? !$('ratChamp').hidden && txt($('ratChamp')) === `${S.teams[S.playoff.champion].short} won the Cup` : $('ratChamp').hidden), `the champion is named on Team Rankings' heading exactly when there is one (${!$('ratChamp') ? 'no pill' : $('ratChamp').hidden ? 'hidden' : txt($('ratChamp'))})`);
+  { const pillE = $('tab-ratings').querySelector('h2 .pill'), tE = pillE ? pillE.getAttribute('title') || '' : '';
+    chk(/^Home ice \d+ Elo; \d+ Elo a goal of margin$/.test(tE) && tE === `Home ice ${S.model.params.hfa} Elo; ${S.model.gpe.toFixed(0)} Elo a goal of margin` && !/home ice/i.test(txt($('tab-ratings').querySelector('h2'))), `the Elo's two constants are on the Team Elo pill's title, not beside the heading (${tE})`); }
 
   /* Players: the rankings, the clubs, who is out and where the report and the goalies come from */
   d.querySelector('#tabs button[data-tab="players"]').click();
@@ -5118,6 +5330,7 @@ async function main() {
   try { await xParlaysChecks(); } catch (e) { chk(false, `X PARLAYS AND THE X BET LOG stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   try { modelsChecks(); } catch (e) { chk(false, `THE PICK'EM MODELS stopped: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   try { await lightDarkChecks(); } catch (e) { chk(false, `THE LOOK: LIGHT AND DARK stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
+  try { await teamRankingsChecks(); } catch (e) { chk(false, `TEAM RANKINGS stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   try { await pickemChecks(); } catch (e) { chk(false, `THE PICK'EM RECORD stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 2).join(' ')}`); }
   await refreshOddsChecks();
   await playerPropsChecks();

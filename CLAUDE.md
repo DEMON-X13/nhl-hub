@@ -180,7 +180,7 @@ steps stand on:
   from 620px down): the Admin mark first on the owner's devices (`#hubAdmin` holding `#adminMark`; no Sign out, the sign-in is the
   NFL hub's), then `#stamp`, "Updated Wed, Nov 11, 10:11 PM UTC" (when the job published, the visitor's clock, its zone named as
   every time on the page is), then `#buildTag`. **No tagline, no season or record line, no description in the head** (the record
-  is the Record's; the champion, once the season has one, is a pill on the Power ratings' heading, `#ratChamp`). A load that fails
+  is the Record's; the champion, once the season has one, is a pill on Team Rankings' heading, `#ratChamp`). A load that fails
   says so in the stamp (`.bad`) and in an `.empty` first in `main`.
 - **The tab bar** is words alone: **no count on a tab** (Games and the Parlay Builder carried one until v25; the slip bar still
   shows the builder off its tab). The ten tabs and their ids are as they were (the merge to the NFL's eight comes with the Team
@@ -221,8 +221,8 @@ steps stand on:
   (a source warning's bold words, "2 lines far off the market left out.", "Price est.: DraftKings prices same-game parlays its
   own way.", another book's prices, a leg to add by hand, a level with no parlay saying why). A new paragraph of explanation fails
   the smoke.
-- **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("wild cards MTL, WSH", "1161 skaters",
-  "3-leg parlay"): a conference, Power ratings, Player rankings, Club strength tonight, the Pick'em's chart and its week grid, the
+- **Cards.** Every heading is in a `.card`, with a `.pill` where two or three words help ("Team Elo", "1161 skaters",
+  "3-leg parlay"): Team rankings and its absences, Player rankings, Club strength tonight, the Pick'em's chart and its week grid, the
   Record's two tables, the parlay tabs' panels, X Parlays. A stat strip stands bare over its cards, as the NFL's. The Games tab's
   card grid is not wrapped (its rows come with the next step).
 
@@ -244,12 +244,12 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   it. On a phone a club in a table is its pill alone (its name kept for a screen reader, absolute inside the club's own
   box, `.tbl .tw`, positioned: in the players' Club column, which is not the held one, 400 names once set against `main`
   ran the tab on some 14,000px of empty page past its last table), and a few headings and the Record's months are written
-  short (`.t-wide` over `.t-narrow`: words only, never a column). The Standings' four division tables share every
-  column's width (laid out fixed on their heads' widths, each a little over its widest figure of a season, never squeezed
-  under them: a table scrolls instead), so GP, W, L and PTS run straight down the page. A column of figures keeps one
-  format: Rating and Exp. pts at one place (1553.0 beside 1600.5); in the Players tab a rating or a strength, the column a
+  short (`.t-wide` over `.t-narrow`: words only, never a column). Team Rankings' table (nhl v26, below) is laid out fixed on a
+  width for each of its eleven columns, never squeezed under what they add up to (it scrolls instead), and by its own words on a
+  phone, its club's tag held; its absences table holds the player. A column of figures keeps one format: the team Elo a whole
+  number (the number its shield is taken on); in the Players tab a rating or a strength, the column a
   table is in order of, unsigned, offence, defence and attack signed and coloured by their sign (+29.9 lime, -8.3 rose),
-  as the NBA's and the Standings' Diff. The smoke reads every rule
+  as the NBA's. The smoke reads every rule
   in the page's CSS that hides anything and holds every table, row and cell clear of all of them, and every table's
   columns to the list it had before the restyle (a skater's position now beside his name).
 - **No images.** The page loads no team logo or any other image: on the table tabs ESPN's 32 logos were some 2.2 MB
@@ -388,8 +388,58 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   yet: read …", "Not read: try Refresh odds."); the trial's fold and the "how these numbers are worked out" fold went.
 - **No Playoff tab** (nhl v14, the owner's call of 25 October 2026: "can you get rid of the playoff tab, i dont see the
   need for it"): its bracket and its odds table (expected points, division and conference chances) went with it. The job's
-  simulation stays, read by the Standings' Playoff column and Power ratings' Playoff and Cup, and an old `#playoff` link (or
-  a stored tab) opens the Standings.
+  simulation stays, read by Team Rankings' Playoff and Cup columns, and an old `#playoff` link (or a stored tab) opens Team
+  Rankings.
+- **The Team Rankings tab** (`#ratings`; nhl v26, 12 November 2026, the owner's ask of 11 November 2026: "at this point the NFL-hub
+  is pretty much perfect. i think there is a lot of clutter in the nhl one. I want you to match what the NFL hub has, the look, the
+  layout and all the betting stuff + have models etc"): the NFL hub's Team Rankings in hockey's terms, one tab where the Standings
+  (four division tables of fourteen columns, the cut lines, the wild cards) and Power Ratings (a conference select over one table)
+  were. Two cards and nothing else, no intro, control, key or note. **Team rankings**, with a "Team Elo" pill (the Elo's home ice
+  and its Elo a goal of margin on the pill's title; the champion's pill, `#ratChamp`, beside it once the season has one): one table
+  (`table.rt-v` in a `.wrap`) of the 32 clubs in order of the team Elo, eleven columns where the NFL has eight: `#`, Team, Record,
+  PTS, Elo, Elo change, Vs average, GF/G, GA/G, Playoff, Cup, what each figure means on its heading's `title`. Record (W-L-OTL),
+  PTS and Playoff carry what the Standings gave (a division's order and its cut line are on every scoreboard; Playoff prices the
+  race), and the table has one order and no sort, so no heading is lit. All of it is read from the state as published
+  (`rankRows()`, `renderRankings()`, `renderAbsences()`): nothing fetched, nothing stored, no change to the job.
+  - **The Elo** is a whole number, and clubs level on the number shown share a rank, one more than the clubs shown above them (7,
+    7, 9: the NFL's rule; `teams[].rank`, the job's by the unrounded rating, stays in the state unread).
+  - **The shield** before it (`teamShield(elo)`: the NFL's `tierBadge()` word for word, an inline SVG and no image, its gradients
+    appended to the body once by the first shield drawn, `#peDefs`) is the tier of the number shown, on hockey's ladder: the NFL's
+    ten names and shields on a 30-point step where the NFL's is 50 (HOF 1650, Elite 1620, Master 1590, Diamond 1560, Platinum 1530,
+    Gold 1500, Silver 1470, Bronze 1440, Iron 1410, Wood under it; `TEAM_TIERS`). A tier is half a standard deviation of the league
+    at a season's end on both: this Elo's spread was 55 over 2011-12 to 2025-26 where the NFL's shown scale is 100 by construction,
+    and on the NFL's numbers three clubs in four wore Gold or Silver and the top three tiers were never worn. Gold still starts at
+    1500, the average club. `TIERS` keeps the NFL's own numbers for whichever tab draws a shield on that scale.
+  - **Elo change and the rank chip** beside a club's name look back 7 days from the state's own day (`S.today`, `RK_DAYS`), where
+    the NFL's look back to a club's last game: one hockey game moves a club about 3 Elo, a week says who is hot. A club's Elo then
+    is the rating going into its first game dated that day or later, read off the game row (`rh`, `ra`: frozen with the call, so
+    the rating at the job's last run before the puck drop), its rating as it stands where it has no such game; the change is the
+    difference of the two whole numbers ("+6" lime, "−15" rose with a true minus, "·" level; the chip's title "Gained 6 Elo since
+    Nov 4 (2 games)"); the rank chip (▲3, ▼5, nothing when level) is the rank on every club's Elo then against the rank now. A club
+    with no final this season wears neither and is ranked then where it stands. One honest limit: if no run publishes between a
+    club's two games, the second row carries the rating from before the first, and a window starting on that row is one game's
+    step off for that club until the window moves on (none of the 568 pairs of one club's consecutive games measured on 11
+    November 2026 was, the three failed runs of the day before among them); so the smoke holds the page to the rows, never to a
+    replay of `tools/elo.js`.
+  - **The rest.** Vs average is the Elo's chance against a 1500 club on neutral ice (`tools/elo.js`'s `expected()`); GF/G and GA/G
+    the season's plain goals a game (`gf / gp`, a dash before a first game: Power Ratings printed the goals layer's rates, shrunk
+    toward the league's, under those names, Carolina 3.60 for 4.33 scored); Playoff and Cup the simulation's, a dash for a club it
+    has no odds for.
+  - **Impact absences**, the NFL's second card: a row for each player the injury report has out who is worth `OUT_ROW` (0.13)
+    goals a game or more to his club either way (the Games card's own bar), the most first, then the club's key and the name: his
+    club's tag, his name, his position, the report's status in a rose pill ("Injured reserve", "OUT") and what his absence does
+    to his club's expected margin ("-0.15 goals" rose; "+0.17 goals" lime for one the model rates below his replacement), then one
+    line, the injury report's time. A goalie, whom players.js gives no cost, is sized as the NFL sizes a quarterback, by the gap
+    to his replacement (`outWorth`): his save rating less that of the goalie in net for his club's next game, in whole hundredths,
+    at the same bar and only where he is the better of the two (review, 12 November 2026: with skaters alone the card left out the
+    two largest absences in the league, Igor Shesterkin at 0.51 goals and Thatcher Demko at 0.32, three and two times its biggest
+    row). Hidden with none, and with no player model in the state.
+  - **Widths.** The table is laid out fixed, the rank and the club at the NFL's 46px and 230px and each figure column a width of
+    its own (1018px in all; the NFL shares what is left among its figure columns, so its headings break in two on a tablet): under
+    about 1110px it scrolls in its wrapper with the club held. On a phone (640px and under) the NFL's tighter cells and 38px rows,
+    the table laid out by its own words, a club its tag alone (the name kept for a screen reader) with its rank chip, held at the
+    left as the figures pass under; the absences table holds the player.
+  - `#standings`, `#playoff` and a tab stored under either name open it.
 - **The Pick'em Record tab** (`#pickem`, before the Record tab; nhl v19, the owner's ask of 25 October 2026, "i want a tab for
   pickem record and show all the models we have and their records", the NFL hub's Pick'em Record in hockey's terms; the Record
   tab stays beside it, the owner's "Keep both tabs"): every final with a winner, straight up, each model's pick read off the game's
@@ -417,7 +467,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   "145" on a 390 phone).
 - **The Players tab**: the search draws once the typing pauses (200ms); the first 60 rows at once and the rest, to 400,
   eighty at a time between frames, so a keystroke or a press is answered at once.
-- **Headings** carry a small `.pill` for the two or three words that help ("wild cards BOS, NJ", kept whole); the sentences
+- **Headings** carry a small `.pill` for the two or three words that help ("Team Elo", "1161 skaters", kept whole); the sentences
   beside a heading went in nhl v25.
 
 Since nhl v23 a card is the NBA's height: on 8 November 2026's published state at 390px, the day's cards to come 349 to
@@ -577,8 +627,9 @@ rule in the page's CSS, in any media query, hides a table, row or cell; each scr
 column the one held; each has the columns it had before the restyle; every name a table hides for a screen reader held by a
 positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), each player's name in bold
 and his club in the Club column, the Players' figures (ratings and strengths unsigned, offence, defence and attack signed and
-coloured by the sign shown), Rating at one place, the Standings' four tables laid out fixed on the same 14 widths and
-never squeezed under them on a desktop and a phone, no Playoff tab (an old `#playoff` link opening the Standings), the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
+coloured by the sign shown), Team Rankings' table laid out fixed on its eleven columns' widths, never squeezed under them and no cell
+broken, and by its own words on a phone, its two tables' columns and held columns (Team; the absences' Player), no lit heading on it, no
+Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), the Record's figures stepped down together to fit (on a made-up layout and a record of 784-646, on drawing and on a resize), a
 side far off the market said on its own button with both numbers exactly and every other part of the button (in each game's Game
 bets and in Pick your own legs, Both days included), the props window's head naming its game by its pills, the Record's tiles, the lock's words, the card's
 leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE LOOK: LIGHT AND DARK (nhl v25) holds the two looks and the owner's no-descriptions rule, all of it in jsdom by
@@ -598,7 +649,17 @@ build tag and the tabs' words, nothing else; X PARLAYS that the owner's two tabs
 button, select, box, segmented choice and checkbox chip at 44px and the switch 44px by 44px, and every table in its wrapper let out of
 the page's clip (`overflow: visible`), so its held column can stick. What jsdom cannot hold is looked at in a real browser at 1280,
 390, 360 and 320: the wordmark on one line, no sideways scroll, the chosen tab in view, and (before the switch is shown) every
-visible text's contrast in the light look. Its section THE PROPS MODEL (in the state's
+visible text's contrast in the light look. Its section TEAM RANKINGS (nhl v26) works the Team Rankings tab out from the state by rules of its own, each an invariant of
+any state the job can publish: the tab's two cards and nothing else (no intro, small print, select, button or link), the heading and its pills; the
+order and the shared ranks; every row word for word (the tag and the name, W-L-OTL, the points, the Elo a whole number and the shield before it
+the tier of that number by the smoke's own nine numbers, its fill a gradient the page defines once; the Elo change and the rank chip over seven
+days from the game rows' `rh` and `ra`, their classes, words, titles and `aria-label`s, never a replay of `tools/elo.js`; the chance against an
+average club, goals a game, the simulation's two); each figure's heading its title; the absences card row for row by its own filter and order, its
+stamp, hidden with none; another tab and back asking the network for nothing and storing only the tab's name. On the state and on three made-up
+copies: no final at all and no player model (no chip anywhere, a dash in both rate cells, the card hidden; opened by the old `#standings`); a
+rating each side of every tier's line (1649.6 shows 1650 and wears HOF), three clubs level, a club 40 Elo higher a week ago, one idle all week,
+one with no final beside clubs that have one, one with no playoff odds, outs each side of the bar and level in size (opened by the old
+`#playoff`); and a player model with no out worth a row, opened by an older page's stored Standings tab. Its section THE PROPS MODEL (in the state's
 reality) holds the box files' shots (no old-shape line, no `sog`, the skater shots against the goalies' at the
 column level) and starting goalies (at most one mark a side, on a goalie of that side who played, and the sides that
 used two goalies marked), the record of closing props in its shape, one line a final, the ledger by `props_check.js` against
@@ -888,7 +949,8 @@ nhl v15 on the NFL hub's (`props/build/suggest_ledger.js`), with hockey's unit, 
   the state's `suggest` the ledger's summary and its `sets` the ledger's current entries, every day still to lock with a fresh line
   the page's own levels on it at the publish and the brute force's, the tab's pills word for word, and the locked sets drawn on a
   copy carrying them (a past day graded, the publish's day at its first puck drop). `node tools/test_suggest.js` (about a minute) holds the grading,
-  the summary, the check on fourteen broken ledgers and the step end to end on the real state at made-up clocks.
+  the summary, the check on fourteen broken ledgers and the step end to end on the real state at made-up clocks, on the first day still open
+  at the publish (a state published in the evening has games to come on a day already locked, which the step rightly leaves alone).
 
 ### Same-game parlays and player legs
 

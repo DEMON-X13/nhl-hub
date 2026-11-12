@@ -4330,7 +4330,7 @@ function gameHeadCard(g) {
   return `<div class="card ghead" data-ghead="${esc(g.id)}"><div class="gh-grid">
     <div class="gh-when">${lab('Puck drop')}<div class="when"><b>${esc(day)}</b>${when}</div></div>
     <div class="gh-match">${lab('Matchup')}<h2 id="gpTitle">${tag(g.away)}${wck(g.away)} <span class="at">${g.neutral ? 'vs' : 'at'}</span> ${tag(g.home)}${wck(g.home)}</h2>${note ? `<small class="gh-note">${esc(note)}</small>` : ''}</div>
-    <div class="gh-lead">${lab(H.lab)}<div class="lead">${lead || `<span class="muted">${H.lab === 'Leaders' ? boxWord(g) : started ? 'No projections for this game' : 'No projections for this game yet'}</span>`}</div></div>
+    <div class="gh-lead">${lab(H.lab)}<div class="lead">${lead || `<span class="muted">${H.lab === 'Leaders' ? boxWord(g) : started || (sc.st !== 'pre' && sc.st !== 'off') ? 'No projections for this game' : 'No projections for this game yet'}</span>`}</div></div>
     <div class="tot">${lab('Expected score')}${X ? `<b title="${ta} ${X.a.toFixed(1)}, ${th} ${X.h.toFixed(1)}: the model's expected goals">${X.a.toFixed(1)} – ${X.h.toFixed(1)}</b>` : '<b>–</b>'}<small>${ta} / ${th}</small>${sc.fin ? `<small class="act">(actual ${sc.as} – ${sc.hs})</small>` : sc.live ? `<small class="lv">live ${sc.as} – ${sc.hs}</small>` : ''}</div>
     <div class="totpts">${lab('Total')}<b>${X ? g.xt.toFixed(1) : '–'}</b><small>goals</small>${sc.fin ? `<small class="act">(actual ${sc.as + sc.hs})</small>` : ''}</div>
     <div class="winner">${lab('Model pick')}${pick}</div>

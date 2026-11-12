@@ -22,8 +22,8 @@ everything else changes only with a commit.
 
 X NHL Bets is the shape of nfl-hub's college site (one page, one job, one state file) with the
 NBA Hub's unit (and, until each tab is rebuilt, its components inside the tabs; the shell and the look are the NFL hub's since
-nhl v25): the NHL has no weeks, so the page opens on a day strip, yesterday to
-ten days out, one card per game. Moneylines, puck lines and totals; and a player props model, on trial
+nhl v25): the NHL has no weeks, so the Games tab lists one day, chosen in a select (every game day from
+the season's first to ten days out), one row per game. Moneylines, puck lines and totals; and a player props model, on trial
 (below), shown beside DraftKings' own player prices, whose chance ranks DraftKings' player lines in the Top 30 and the
 suggested parlays since the owner's call of 25 October 2026 (nhl v18). Everything is ESPN's public feeds,
 free.
@@ -194,10 +194,13 @@ filled tag (`tag()`, `.ttag`: `TEAM_COLORS` a palette a club, the text white or 
 at 72%; the smoke works each tag out again and keeps every two clubs outside one brand colour 5 apart in CIEDE2000); and the page
 carries no descriptions (the tagline, the keys, the "how" folds and the intro paragraphs cut; state lines, tooltips and money warnings
 kept). The tabs' insides are still the NBA Hub's components of nhl v12 to v23 on the new tokens until each is rebuilt, no image
-anywhere: the game card the NBA's Tonight card of nhl v23, cut in nhl v27 to one button that opens the game's page (badges, the call
-filled, its chance with a confidence pill, High 65%+, Med 60-64, Low 55-59, 50/50, its season's record on its title, the win bar, two
-chips, Margin and Goals, and the tags; no bet, price, out row, drawer or control of its own; a redraw replaces only the cards that
-changed); THE GAME'S PAGE (nhl v27, `#gameModal`: `openGame`, `renderGame`, `gameHeadCard`, `gameBetsCard`, `rungRow`, `rosterFor`,
+anywhere. THE GAMES LIST (nhl v28, `#slateView`: `listDays`, `daySelect`, `renderGames`, `gameRow`, `slateCall`, `slateCols`,
+`slateOutcome`, `slateResult`, `slatePred`, `setDay`, `readLive`, `liveOnce`, `slateStamp`), the NFL hub's game list: a bar (the Day
+select and its steppers, the day's and the season's record of the call, Refresh scores with its stamp), the source note, Refresh
+odds on a day with a game to come, six heads and a row a game, one button that opens the game's page (the date, the two tags with
+the pick's raised and a tick or a cross on the winner's once final, the two chances on a bar in the clubs' colours, the confidence
+band HIGH 65%+, MED 60-64, LOW 55-59, 50/50 with its percentage, the predicted score, where the game stands; no bet, price or
+control of its own; the list drawn again only when its markup changed); THE GAME'S PAGE (nhl v27, `#gameModal`: `openGame`, `renderGame`, `gameHeadCard`, `gameBetsCard`, `rungRow`, `rosterFor`,
 `playerBody`, `gpStatus`, `trialPill`, `legTap`, `ppAdd`), the NFL hub's game page in hockey's numbers, where the Player props window,
 the card's bet chips, who is out and the Lineups drawer were: a window over the page (the whole screen on a phone), its bar (Close,
 the props model's trial as one pill, All skaters), Find a player, Refresh odds with the game's own status line (the score's strip
@@ -216,7 +219,7 @@ and the no-descriptions rule, and TEAM RANKINGS the Team Rankings tab, worked ou
 on made-up copies.
 
 REFRESH ODDS (nhl v9, `index.html`; CLAUDE.md has the rules): a button on the Games tab's odds bar and on the Parlay
-Builder tab's, over its panel, reads ESPN's scoreboard in the browser, on a press and never else, for the strip's days
+Builder tab's, over its panel, reads ESPN's scoreboard in the browser, on a press and never else, for the Day select's days
 from today with a game still to come. `ESPN` in the page is `tools/espn.js`'s `oddsOf`/`dkOf`/`carryDk` and `MODEL`
 is `tools/elo.js`'s goals layer, each word for word (`carryDk`, the carry rule, is the job's too: `update.js` reads
 every line through it); `oddsCall` is the line half of `update.js`'s `callOf`. A game still to come by the clock and
@@ -286,7 +289,7 @@ ledger registered (its edge, resamples, seed, percentiles and clip, held to `BAR
 holds the box files' new columns and starter marks, the record's shape, every distribution and projected player, the state's projections against the
 ledger's open calls, and runs `props_check.js` on the ledger against the last commit's.
 
-THE PROPS VIEW (nhl v10; since nhl v27 on the game's page; CLAUDE.md has the rules and the tests): a game's card opens its page,
+THE PROPS VIEW (nhl v10; since nhl v27 on the game's page; CLAUDE.md has the rules and the tests): a game's row in the Games list opens its page,
 and so does the Player props button of each game in Pick your own legs. On the page a player is a row (the goalie, the forwards and
 the defencemen by expected ice time) and his stats are blocks under it. Before a read: the model's projections (`state.props`). The
 Refresh odds press reads ESPN's DraftKings propBets for every game still to come today and tomorrow beside the scoreboards

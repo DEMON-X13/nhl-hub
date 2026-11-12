@@ -125,7 +125,6 @@ h2 .pill{font-family:var(--body);font-size:12px;font-weight:700;vertical-align:m
 .pb-hd h2{margin:0}
 .muted{color:var(--ink-2)} .small{font-size:12px} .num{font-variant-numeric:tabular-nums}
 .ice{color:var(--ice)} .lime{color:var(--pick)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
 .chip{background:var(--panel-3);border:1px solid var(--line);border-radius:10px;padding:6px 9px;font-size:12px;color:var(--ink-2);display:inline-flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline;max-width:100%}
 .chip b{color:var(--ink);font-family:var(--display);font-size:13px;font-weight:700;white-space:nowrap}   /* a chip wraps between its parts (the puck line's two sides at 360), never inside one */
 .chip>span{white-space:nowrap}
@@ -208,59 +207,98 @@ html[data-theme="light"] .finchip{border-color:rgba(8,95,134,.4)} html[data-them
 .stat::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--ice),rgba(95,212,255,.25))}
 html[data-theme="light"] .stat::before{background:linear-gradient(90deg,var(--ice),rgba(8,95,134,.25))}
 .stat:hover{box-shadow:var(--sh-md);transform:translateY(-1px)}
-/* ---------- the day strip ---------- */
-.days{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;scrollbar-width:none}
-.days::-webkit-scrollbar{display:none}
-.day{flex:none;min-width:86px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;text-align:left;transition:all .18s var(--ease)}
-.day:hover{border-color:var(--line-2);transform:translateY(-1px)}
-.day.on{border-color:var(--ice);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--bg-2)}
-.day .dw{font-size:11px;color:var(--muted-ink);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.day .dn{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.1;margin-top:2px}
-.day .dc{font-size:11px;color:var(--ink-2);margin-top:3px}
-.day.on .dw{color:var(--ink-2)} .day.on .dc{color:var(--ice-2)}
 /* ---------- Refresh odds, Refresh scores: the NFL's control, a button and its one status line ---------- */
 .espn-ctl{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;margin:0 0 12px}
 .pb-row .espn-ctl{margin:0;flex:1 1 auto;min-width:0}
 .espn-btn{min-height:44px;white-space:nowrap;flex:none}
 .espn-btn[aria-disabled="true"]{opacity:.6;cursor:progress;transform:none}
 .espn-st{font-size:12px;color:var(--ink-2);flex:1 1 220px;min-width:0;overflow-wrap:anywhere;line-height:1.4}
-/* ---------- the game card (the NBA's Tonight card of nhl v23, a button that opens the game's page; until the Games tab is rebuilt as the NFL's rows) ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
-@media(max-width:420px){.grid{grid-template-columns:minmax(0,1fr)}}
-.game{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px;position:relative;overflow:hidden;min-width:0;transition:transform .2s var(--ease),border-color .2s var(--ease),box-shadow .2s var(--ease)}
-.game:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 40px -24px rgba(0,0,0,.6)}
+/* ---------- the Games list (nhl v28): the NFL hub's Props list, a row a game ----------
+   Three layouts by the page's width, one markup: six columns from 1161px (the bar's track between the two clubs' labels), six
+   tighter ones from 901px (the labels beside the bar hidden), and at 900px and under a card of four lines (the date and where the
+   game stands, the matchup, the bar with its labels, the confidence and "Predicted 3.2–2.6"). Ice where the NFL's accent is gold
+   (a row's left edge; a finished game's stays the quiet ink); gold stays the MED pill's meaning. The column heads and Completed sit
+   straight on the page, so they are --ink-2 */
+.bar .day-step{display:inline-flex;gap:4px}
+.bar .day-step .btn{min-width:44px;padding:9px 0;font-family:var(--display);font-weight:700;line-height:1}
+.src-note{margin:-6px 0 12px;font-size:12px;color:var(--ink-2)}
+.src-note b{color:var(--ink);font-weight:700}
+.gamehead,.game{display:grid;grid-template-columns:120px 175px minmax(274px,358px) 138px 136px 136px;gap:14px;align-items:center;justify-content:space-between}
+.gamehead{padding:0 16px 8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.gamehead .c{text-align:center}
+.game{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--r-lg);padding:13px 16px;margin-bottom:10px;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit;position:relative;overflow:hidden;transition:box-shadow .2s var(--ease),transform .2s var(--ease),border-color .2s var(--ease)}
 .game::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--ice),transparent)}
 .game.final::before{background:linear-gradient(180deg,var(--muted),transparent)}
-.game .top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:6px 10px;font-size:12px;color:var(--muted-ink);margin-bottom:12px}
-.game .top>span:first-child{min-width:0}
-.game .top b{color:var(--ink-2);font-weight:700}
-.tags{display:flex;gap:4px 6px;flex-wrap:wrap;justify-content:flex-end;min-width:0;margin-left:auto}
-.teams{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px}
-.team{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
-.team.home{align-items:flex-end;text-align:right}
-/* a club on a card: its letters in --ink in a box edged in its tag's fill (--tc: a navy or a forest green would not read as letters on
-   graphite); the model's pick filled, its text the fill's own (--tx, white or #1E2230) and its edge the fill darkened (--tb), as its tag */
-.badge{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:-.01em;line-height:1;padding:8px 10px;border-radius:12px;border:2px solid var(--tc);color:var(--ink);background:rgba(255,255,255,.02);user-select:none;white-space:nowrap}
-.badge.pick{background:var(--tc);color:var(--tx);border-color:var(--tb);box-shadow:0 2px 6px -1px rgba(15,27,45,.35),inset 0 1px 0 rgba(255,255,255,.18)}
-@media(max-width:380px){.badge{font-size:22px;padding:7px 8px}}         /* WPG and WSH inside their column at 360, clear of the chance */
-.team .nm{font-size:12px;color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.team .sc{font-family:var(--display);font-size:30px;font-weight:700;line-height:1}
-.team .sc.lose{color:var(--muted)}
-.vs{font-family:var(--display);font-size:11px;color:var(--muted-ink);text-align:center;line-height:1.3}
-.vs b{display:block;font-size:22px;color:var(--ink);font-weight:900}
-/* the confidence pill under a card's chance: the NFL's (a soft fill and a dot), HIGH lime, MED gold, LOW grey, 50/50 rose, on the NHL's
-   cut-offs (65, 60, 55: the Pick'em's); each band's record this season is on its title */
+.game:hover{transform:translateY(-1px);border-color:var(--line-2);box-shadow:var(--sh-md)}
+.game:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.game>div{min-width:0}
+.game .when{color:var(--ink-2);font-size:12px;line-height:1.35}
+.game .when b{color:var(--ink);font-weight:600;display:block;font-size:13px;margin-bottom:5px}
+.matchup{font-family:var(--display);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;line-height:1;white-space:nowrap}
+.matchup .ttag{font-size:13px;padding:4px 5px;min-width:40px}
+.matchup .at{color:var(--muted);font-size:11px;font-family:var(--body);font-weight:500;letter-spacing:.02em;flex:none}
+.matchup .at.neutral{color:var(--ink-2);font-weight:600}
+.ttag.sl-win{font-weight:800;box-shadow:0 2px 6px -1px rgba(15,27,45,.35),inset 0 1px 0 rgba(255,255,255,.18)}
+.ttag.sl-mini{font-size:10px;padding:3px 5px;min-width:32px;border-radius:5px;border-width:1px}
+/* the tick or the cross on the winner's tag once final: a small circle on its outer corner */
+.sl-tw{position:relative;display:inline-flex;flex:none}
+.sl-res{position:absolute;top:-8px;width:16px;height:16px;border-radius:50%;background:var(--panel);border:1.5px solid currentColor;font-size:11px;font-weight:800;line-height:13px;text-align:center;font-family:var(--body);box-shadow:0 1px 2px rgba(15,27,45,.2)}
+.sl-away .sl-res{left:-9px} .sl-home .sl-res{right:-9px}
+.sl-res.sl-ok{color:var(--pick)} .sl-res.sl-bad{color:var(--miss)}
+.sl-probrow{display:flex;align-items:center;gap:10px;padding:0 14px;justify-content:center;min-width:0}
+.sl-tlab{font-family:var(--display);font-size:15px;font-weight:700;color:var(--muted);letter-spacing:.02em;flex:none;min-width:40px;text-align:center}
+.sl-tlab.sl-win{color:var(--ink);font-weight:800}
+.sl-prob{position:relative;flex:1;min-width:0;height:28px;border-radius:999px;overflow:hidden;background:var(--panel-3);display:flex}
+.sl-prob .sl-a,.sl-prob .sl-h{display:flex;flex-wrap:wrap;align-content:flex-start;align-items:center;height:28px;padding:0 12px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden}
+.sl-prob .sl-a::before,.sl-prob .sl-h::before{content:"";flex:none;width:0;height:28px}      /* a strut: a number its half has no room for wraps under it, out of sight, never cut */
+.sl-prob .sl-a{justify-content:flex-start;border-right:2px solid var(--bg)}
+.sl-prob .sl-h{justify-content:flex-end;margin-left:auto}
+.sl-prob .sl-w{font-weight:800}
+.sl-conf{text-align:center}
+.sl-tier{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px 4px 8px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
+.sl-tier::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.75}
+.sl-tier.sl-high{background:var(--pick-soft);color:var(--pick)} .sl-tier.sl-med{background:var(--gold-soft);color:var(--gold-ink)} .sl-tier.sl-coin{background:var(--miss-soft);color:var(--miss)}
+.sl-pred,.sl-result{text-align:center;line-height:1.2;white-space:nowrap}
+.sl-pred .sl-psc{display:block;font-family:var(--display);font-size:17px;font-weight:700;color:var(--ink-2);letter-spacing:-.3px;font-variant-numeric:tabular-nums;margin-bottom:3px}
+.sl-pred .sl-plab{display:none}
+.sl-pred .sl-pby{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--muted);line-height:1.3}
+.sl-sub{display:block;font-size:11px;color:var(--ink-2);line-height:1.3;white-space:normal}
+.sl-sc{display:block;font-family:var(--display);font-size:20px;font-weight:900;color:var(--ink);letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.sl-sc.sl-pend{color:var(--muted)}
+.sl-result .sl-mwin{display:block;font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:-.3px;font-variant-numeric:tabular-nums;margin-bottom:3px}
+.sl-mwin.sl-ok{color:var(--pick)} .sl-mwin.sl-bad{color:var(--miss)} .sl-mwin.sl-tie{color:var(--ink-2)}
+.slatesep{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:22px 4px 10px;padding-top:12px;border-top:1px solid var(--line)}
+@media(min-width:901px) and (max-width:1160px){
+  .gamehead,.game{grid-template-columns:96px 146px minmax(150px,1fr) 104px 112px 136px;gap:10px;justify-content:normal}
+  .gamehead{padding:0 12px 8px}
+  .game{padding:13px 12px}
+  .sl-probrow{padding:0 4px}
+  .sl-probrow .sl-tlab{display:none}
+  .sl-prob .sl-a,.sl-prob .sl-h{padding:0 8px}
+}
+@media(max-width:900px){
+  .gamehead{display:none}
+  .game{grid-template-columns:1fr 1fr auto;gap:6px 10px;padding:13px 14px;justify-content:normal}
+  .game .when{grid-column:1/3;grid-row:1;display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline;white-space:nowrap}      /* the date and the time each whole: the time under the date where the two will not fit */
+  .game .when b{display:inline;margin:0}
+  .game .sl-result{grid-column:3;grid-row:1/3;align-self:center;padding-left:6px}
+  .game .matchup{grid-column:1/3;grid-row:2}
+  .game .sl-probrow{grid-column:1/-1;grid-row:3;margin-top:4px;padding:0}
+  .game .sl-conf{grid-column:1/3;grid-row:4;text-align:left}
+  .game .sl-pred{grid-column:3;grid-row:4;text-align:right;padding-left:6px}
+  .sl-pred .sl-psc{display:inline;font-size:15px;margin:0}
+  .sl-pred .sl-plab{display:inline;font-size:11px;color:var(--muted);margin-right:6px}
+  .sl-pred .sl-pby,.sl-pred .sl-sub{display:none}
+  .sl-prob .sl-a,.sl-prob .sl-h{padding:0 8px}
+}
+@media(max-width:380px){ .sl-result .sl-mwin{font-size:13px} .game .sl-result{max-width:125px} }      /* "PHI leading 3–1" beside the date on one line at 360; a long clock under it wraps, the matchup keeps its room */
+@media(max-width:340px){ .game{gap:6px 8px;padding:13px 12px} }
+/* a bet's band on a game's page: the NFL's .conf, a soft fill and a dot (High lime, Med gold, Low grey) */
 .conf{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px 4px 7px;border-radius:999px;min-width:60px;text-align:center;white-space:nowrap;background:var(--panel-3);color:var(--ink-2)}
 .conf::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.75;flex:none}
 .conf.high{background:var(--pick-soft);color:var(--pick)} .conf.med{background:var(--gold-soft);color:var(--gold-ink)} .conf.low{background:var(--panel-3);color:var(--ink-2)} .conf.coin{background:var(--miss-soft);color:var(--miss)}
-.vs .conf{display:flex;width:max-content;margin:6px auto 0}
-.prob{margin:14px 0 8px;height:10px;border-radius:999px;background:var(--panel-3);overflow:hidden;display:flex}
-.prob i{display:block;height:100%;background:var(--ac)}
-.prob i.h{margin-left:auto;background:var(--hc);border-left:2px solid var(--panel-3)}
-.pline{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink-2);font-weight:700}
-.pline b{color:var(--ink);font-family:var(--display);font-size:13px}
 .btn.pp-open.has{border-color:var(--ice);color:var(--ice)}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.game:hover,.day:hover,.btn:hover,nav button:hover,.stat:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.game:hover,.btn:hover,nav button:hover,.stat:hover{transform:none}}
 /* ---------- tables: the NFL's base (a rounded panel, small-caps heads on --panel-2, a rule under each row) ----------
    The page clips every table for its corners, and a clipped table would be the box a held column sticks in and would never scroll: so
    a table in .wrap or .scroll (every table here) is let out (overflow:visible) and its wrapper carries the corners, the NFL's own way
@@ -1083,15 +1121,21 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 </header>
 <main>
   <section id="tab-games">
-    <div class="espn-ctl">
-      <button type="button" class="btn quiet" id="refreshScores" title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>
-      <button type="button" class="btn quiet espn-btn" id="refreshOdds" data-odds title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button>
-      <span class="espn-st" id="oddsNote" role="status" aria-live="polite"></span>
+    <div id="slateView">
+      <div class="bar">
+        <label>Day <select id="daySel"></select></label>
+        <span class="day-step"><button type="button" class="btn quiet" id="dayPrev" aria-label="Previous day">‹</button><button type="button" class="btn quiet" id="dayNext" aria-label="Next day">›</button></span>
+        <span class="rec" id="dayRec" title="The model's pick to win, frozen at puck drop and graded straight up"></span>
+        <span class="rec" id="seasonRec" title="The model's pick to win, frozen at puck drop and graded straight up"></span>
+        <span class="grow"></span>
+        <span class="livestamp" id="slateStamp" role="status" aria-live="polite"></span>
+        <button type="button" class="btn quiet" id="slateNow" title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>
+      </div>
+      <p id="sourceNote" class="src-note" hidden></p>
+      <div id="slateOdds" hidden><div class="espn-ctl"><button type="button" class="btn quiet espn-btn" id="refreshOdds" data-odds aria-describedby="oddsNote" title="Read DraftKings' lines and player props from ESPN now, in this browser. Free. Nothing is saved: a reload brings back the published page.">Refresh odds</button><span class="espn-st" id="oddsNote" role="status" aria-live="polite"></span></div></div>
+      <div class="gamehead"><div>Date</div><div>Matchup</div><div class="c">Win probability</div><div class="c">Confidence</div><div class="c">Score prediction</div><div class="c">Final score</div></div>
+      <div id="gamesList"></div>
     </div>
-    <div class="days" id="days"></div>
-    <div id="sourceNote" class="note warn" hidden></div>
-    <div id="opening" hidden></div>
-    <div class="grid" id="games"></div>
   </section>
 
   <section id="tab-ratings" hidden>
@@ -1231,7 +1275,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v27 · 2026-11-12';
+const APP_BUILD = 'nhl v28 · 2026-11-12';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1409,11 +1453,6 @@ function tierBadge(elo){ if(eloTier(elo)[0]==='HOF') return hofBadge(); if(eloTi
   return `<svg class="tierbadge" viewBox="0 0 18 20" role="img" aria-label="${name} tier"><title>${name} tier (Elo ${range})</title>${glow}<path d="M2 2 H16 V10 C16 15 12.5 17.5 9 19 C5.5 17.5 2 15 2 10 Z" fill="url(#${id})" stroke="${edge}" stroke-width="1.1"/><path d="M4.2 4 H13.8 V9.6 C13.8 13.3 11.4 15.2 9 16.4 C6.6 15.2 4.2 13.3 4.2 9.6 Z" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1"/>${inner}</svg>`; }
 /* the gradients, once a page, before the first shield is drawn */
 function tierDefs(){ if(document.getElementById('peDefs')) return; const box=document.createElement('div'); box.id='peDefs'; box.innerHTML=TIER_DEFS; document.body.appendChild(box); }
-/* the goals layer's margin, on the card's chip: the side it favours and by how much, even under 0.05 of a goal. The card's win chance
-   blends that layer with the team Elo (tools/players.js), so the two can favour different clubs on a close game: the chip says Margin,
-   never Model, and its title says why */
-const marginText = g => Math.abs(g.mu) < 0.05 ? 'even' : `${T(g.mu > 0 ? g.home : g.away).abbr} +${Math.abs(g.mu).toFixed(1)}`;
-
 /* ---------- tabs ---------- */
 /* a tab by name; #parlay, the NFL site's name for the builder, opens it too. On a phone the bar scrolls
    sideways, and the chosen tab's button is brought into it by scrolling the bar, never the page */
@@ -1442,32 +1481,141 @@ window.addEventListener('hashchange', () => { const n = tabName(location.hash.sl
 const X_TABS = ['xparlays', 'xbets'];
 const ADMIN = document.documentElement.getAttribute('data-admin') === 'on';
 
-/* ---------- Games: a day strip from yesterday to ten days out, or the season's first days before it opens ---------- */
-/* the strip's days: yesterday to ten days out, or the season's first week before it opens, or its last week once it is over */
-function stripDays() {
-  const today = etToday();
-  let days = []; for (let d = addDays(today, -1); d <= addDays(today, 10); d = addDays(d, 1)) days.push(d);
-  const first = S.games.length ? S.games[0].date : null;
-  if (first && first > days[days.length - 1]) { days = []; for (let d = first; d <= addDays(first, 6); d = addDays(d, 1)) days.push(d); }   // the season has not opened: its first week
-  const last = S.games.length ? S.games[S.games.length - 1].date : null;
-  if (last && last < days[0]) { days = []; for (let d = addDays(last, -6); d <= last; d = addDays(d, 1)) days.push(d); }               // the season is over: its last week
-  return days;
+/* ---------- Games: the NFL hub's list, a row a game (nhl v28) ----------
+   The third step of the owner's ask of 11 November 2026 (under The look in CLAUDE.md): the NFL hub's Props list in hockey's terms,
+   where the day strip and the NBA's Tonight cards were. The unit is the Eastern day: a Day select (every game day from the season's
+   first to ten days out, by month) with two steppers, the day's and the season's record of the call straight up, Refresh scores and
+   its stamp; Refresh odds on a day with a game to come; six column heads; then a row a game, a button that opens the game's page
+   (openGame): its date and puck drop on the visitor's clock, the two clubs' tags (the pick's raised, a tick or a cross on the
+   winner's once final), the model's win probability as a bar in the clubs' colours, its confidence, the goals layer's predicted
+   score, and where the game stands. No bet, price or edge is on a row: they are on the game's page. Games still to play first (those
+   under way too), then Completed. Every number is the state's, or LIVE's for a score */
+const SL_TIERS = [[65, 'high', 'HIGH'], [60, 'med', 'MED'], [55, 'low', 'LOW'], [0, 'coin', '50/50']];      /* the Pick'em's cut-offs, the NFL's words and colours */
+/* clubs of one brand colour (the reds, the blues, the golds, the two oranges: the smoke's COLOR_FAMILIES, which it holds this to) */
+const BAR_FAMILIES = [['CGY', 'CAR', 'CHI', 'DET', 'FLA', 'MTL', 'NJ', 'OTT', 'WSH'], ['BUF', 'CBJ', 'NYI', 'NYR', 'STL', 'TB', 'TOR', 'VAN', 'WPG'], ['BOS', 'NSH', 'PIT'], ['EDM', 'PHI']];
+const BAR_FAM = {}; BAR_FAMILIES.forEach((f, i) => f.forEach(k => { BAR_FAM[k] = i; }));
+const hslOf = c => { const [r, g, b] = hex2rgb(c).map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; const hh = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [hh * 60, d, (mx + mn) / 2]; };
+/* two colours that read as one, the NFL hub's test: two greys of like lightness, or hues within 28 degrees and lightness within .18 */
+const nearCol = (x, y) => { const [h1, c1, l1] = hslOf(x), [h2, c2, l2] = hslOf(y), dh = Math.min(Math.abs(h1 - h2), 360 - Math.abs(h1 - h2)); return c1 < 0.15 || c2 < 0.15 ? c1 < 0.15 && c2 < 0.15 && Math.abs(l1 - l2) < 0.15 : dh < 28 && Math.abs(l1 - l2) < 0.18; };
+/* a bar's two halves: each club's own fill; two clubs of one brand colour (or one fill), the home half the first of the home club's
+   other colours that is a colour (not black, white or grey) and does not read as the away's, else the track (the NFL's slate) */
+function slateCols(a, h) {
+  const ca = tagFill(a); let ch = tagFill(h), ink = textOn(ch);
+  if (ca.toLowerCase() === ch.toLowerCase() || (BAR_FAM[a] !== undefined && BAR_FAM[a] === BAR_FAM[h])) {
+    const alt = teamCols(h).slice(1).map(tagBg).find(c => hslOf(c)[1] >= 0.15 && !nearCol(ca, c));
+    if (alt) { ch = alt; ink = textOn(alt); } else { ch = 'var(--panel-3)'; ink = 'var(--ink)'; }
+  }
+  return [{ bg: ca, ink: textOn(ca) }, { bg: ch, ink }];
 }
-function dayStrip() {
-  const today = etToday();                 // the visitor's day, not the job's: a state published last night is still read on today's strip
-  const counts = {}; for (const g of S.games) counts[g.date] = (counts[g.date] || 0) + 1;
-  const days = stripDays();
-  const first = S.games.length ? S.games[0].date : null;
-  if (!DAY || !days.includes(DAY)) DAY = days.includes(today) && (counts[today] || !counts[addDays(today, 1)]) ? today : (days.find(d => d >= today && counts[d]) || days.find(d => counts[d]) || days[0]);
-  $('days').innerHTML = days.map(d => { const dt = new Date(d + 'T12:00:00Z'); return `<button class="day ${d === DAY ? 'on' : ''}" data-day="${d}">
-    <div class="dw">${d === today ? 'Today' : d === addDays(today, 1) ? 'Tomorrow' : dt.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' })}</div>
-    <div class="dn">${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
-    <div class="dc">${counts[d] ? `${counts[d]} game${counts[d] === 1 ? '' : 's'}` : '—'}</div></button>`; }).join('');
-  const opening = first && first > today ? Math.round((Date.parse(first + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000) : 0;
-  $('opening').hidden = !opening && S.games.length > 0;
-  if (opening) $('opening').innerHTML = `<div class="empty" style="margin-bottom:14px"><div class="countdown">${opening}</div><b>days to opening night</b></div>`;
-  else if (!S.games.length) $('opening').innerHTML = `<div class="empty" style="margin-bottom:14px"><b>The ${S.season - 1}-${String(S.season).slice(2)} schedule is not out yet</b></div>`;
+/* the call the row draws, the state's own: the two chances as whole percentages that add to 100, the side picked, its confidence */
+function slateCall(g) {
+  if (typeof g.pHome !== 'number' || !isFinite(g.pHome)) return null;
+  const side = g.pick === 'home' || g.pick === 'away' ? g.pick : (g.pHome >= 0.5 ? 'home' : 'away'), pa = Math.round((1 - g.pHome) * 100), ph = 100 - pa;
+  return { pa, ph, side, pick: g[side], conf: Math.max(pa, ph) };
+}
+/* where a game stands: this browser's read of ESPN, else the state's own score (a live one the job read says when); null with none */
+function slateOutcome(g) {
+  const L = LIVE[g.id], ok = x => typeof x === 'number' && isFinite(x);
+  if (L && L.state !== 'pre' && ok(L.hs) && ok(L.as)) return { final: L.state === 'final', live: L.state === 'live', as: L.as, hs: L.hs, clock: L.detail || '' };
+  if (g.state === 'final' && ok(g.hs) && ok(g.as)) return { final: true, live: false, as: g.as, hs: g.hs, clock: g.detail || 'Final' };
+  if (g.state === 'live' && ok(g.hs) && ok(g.as)) return { final: false, live: true, as: g.as, hs: g.hs, clock: `${g.detail || ''} · as of ${hhmm(g.scoreAt || S.published)}` };
+  return null;
+}
+const startMoved = g => g.state === 'pre' && Date.parse(g.start) > Date.now() && hasStarted(g);
+/* over: a final score known, or the state's word, or four hours past a puck drop with no score read */
+const rowFinal = g => { const o = slateOutcome(g); return o ? o.final : g.state === 'final' || (hasStarted(g) && !startMoved(g) && Date.now() >= Date.parse(g.start) + 4 * 3600000); };
+/* hit, miss or null: the job's grade, else the same rule on the final this browser read */
+function rowHit(g, c, o) { if (isObj(g.result) && typeof g.result.su === 'boolean') return g.result.su; if (!o || !o.final || !c || o.as === o.hs) return null; return c.pick === (o.as > o.hs ? g.away : g.home); }
+function slateResult(g, c) {
+  const o = slateOutcome(g);
+  if (!o) return startMoved(g) ? '<b class="sl-sc sl-pend">0 : 0</b><span class="sl-sub">start moved · call kept</span>'
+    : rowFinal(g) ? '<b class="sl-sc sl-pend">Final</b>' : hasStarted(g) ? '<b class="sl-sc sl-pend">LIVE</b>' : '<b class="sl-sc sl-pend">0 : 0</b>';
+  const win = o.as > o.hs ? g.away : o.hs > o.as ? g.home : null, score = `${o.as}–${o.hs}`, ab = win ? esc(T(win).abbr) : '';
+  if (o.live) { const cls = !c || !win ? 'tie' : c.pick === win ? 'ok' : 'bad'; return `<span class="sl-mwin sl-${cls}">${win ? `${ab} leading ${score}` : `Tied ${score}`}</span><span class="sl-sub">${esc(o.clock)}</span>`; }
+  const hit = rowHit(g, c, o), ot = /SO/.test(o.clock) ? ' · SO' : /OT/.test(o.clock) ? ' · OT' : '';
+  const replay = isObj(g.result) && !g.frozen ? ' title="the call is the replay\'s: this game was over before the job first ran"' : '';
+  return `<span class="sl-mwin sl-${hit === null ? 'tie' : hit ? 'ok' : 'bad'}">${win ? `${ab} won ${score}` : `Tied ${score}`}</span><span class="sl-sub"${replay}>${hit === null ? '' : hit ? 'Pick hit' : 'Pick missed'}${ot}</span>`;
+}
+/* the score prediction: the goals layer's two rates (xgOf), each rounded once to a tenth, away first; the margin is the difference of
+   the two numbers shown, so "3.2–2.6" never reads "by 0.5" */
+function slatePred(g) {
+  const X = xgOf(g), d = Math.round(Math.abs(X.a - X.h) * 10) / 10, lead = X.a > X.h ? g.away : g.home;
+  const by = d === 0 ? '<span class="sl-pby">even</span>' : `<span class="sl-pby">${tag(lead, 'sl-mini')} by ${d.toFixed(1)}</span>`;
+  return `<span class="sl-plab">Predicted</span><span class="sl-psc" title="${esc(T(g.away).abbr)} ${X.a.toFixed(1)}, ${esc(T(g.home).abbr)} ${X.h.toFixed(1)}: the model's expected goals">${X.a.toFixed(1)}–${X.h.toFixed(1)}</span>${by}`;
+}
+function gameRow(g) {
+  const c = slateCall(g), o = slateOutcome(g), fin = rowFinal(g), started = hasStarted(g) || !!o, pc = slateCols(g.away, g.home), ta = esc(T(g.away).abbr), th = esc(T(g.home).abbr);
+  const day = new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const pick = c ? c.pick : null, win = o && o.final && o.as !== o.hs ? (o.as > o.hs ? g.away : g.home) : null, hit = win ? rowHit(g, c, o) : null;
+  const mk = t => win === t && hit !== null ? `<span class="sl-res ${hit ? 'sl-ok' : 'sl-bad'}" title="${hit ? 'Pick hit' : 'Pick missed'}">${hit ? '✓' : '✗'}</span>` : '';
+  const tg = t => tag(t, pick === t ? 'sl-win' : ''), tier = c ? SL_TIERS.find(x => c.conf >= x[0]) : null, pa = c ? c.pa : 50, ph = c ? c.ph : 50;
+  if (!started) SHOWN.add(g.id);                              // the watch redraws the list when its puck drops
+  return `<button type="button" class="game${fin ? ' final' : started ? ' locked' : ''}" data-game="${esc(g.id)}" aria-haspopup="dialog">
+    <div class="when"${g.note ? ` title="${esc(g.note)}"` : ''}><b>${esc(day)}</b>${esc(hhmm(g.start))}</div>
+    <div class="matchup"><span class="sl-tw sl-away">${tg(g.away)}${mk(g.away)}</span>${g.neutral ? '<span class="at neutral" title="Neutral site">vs</span>' : '<span class="at">at</span>'}<span class="sl-tw sl-home">${tg(g.home)}${mk(g.home)}</span></div>
+    <div class="sl-probrow" aria-label="${ta} ${pa}%, ${th} ${ph}%" title="the model's chance to win, overtime included">
+      <span class="sl-tlab${pick === g.away ? ' sl-win' : ''}">${ta}</span>
+      <div class="sl-prob"><div class="sl-a" style="width:${pa}%;background:${pc[0].bg};color:${pc[0].ink}"><span${pick === g.away ? ' class="sl-w"' : ''}>${pa >= 14 ? pa + '%' : ''}</span></div><div class="sl-h" style="width:${ph}%;background:${pc[1].bg};color:${pc[1].ink}"><span${pick === g.home ? ' class="sl-w"' : ''}>${ph >= 14 ? ph + '%' : ''}</span></div></div>
+      <span class="sl-tlab${pick === g.home ? ' sl-win' : ''}">${th}</span>
+    </div>
+    <div class="sl-conf">${c ? `<span class="sl-tier sl-${tier[1]}">${tier[2]} ${c.conf}%</span>` : '<span class="sl-tier">no call yet</span>'}</div>
+    <div class="sl-pred">${slatePred(g)}</div>
+    <div class="sl-result">${slateResult(g, c)}</div>
+  </button>`;
+}
+/* the days the Day select lists: every Eastern day with a game from the season's first to ten days out, and today itself where it has
+   none; before the season opens, today (the countdown) and its first week's game days; once it is over, every game day */
+function listDays() {
+  const today = etToday(), set = new Set(); for (const g of S.games) set.add(g.date);
+  const all = [...set].sort(); if (!all.length) return [today];
+  const first = all[0], last = all[all.length - 1];
+  if (first > today) return [today].concat(all.filter(d => d <= addDays(first, 6)));
+  if (last < today) return all;
+  const out = all.filter(d => d <= addDays(today, 10)); if (!set.has(today)) out.push(today);
+  return out.sort();
+}
+const dayWord = (d, today) => d === today ? 'Today' : d === addDays(today, 1) ? 'Tomorrow' : d === addDays(today, -1) ? 'Yesterday' : null;
+const monthDay = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+let DAYS = [], DAYS_KEY = '', LIST_HTML = null;
+/* the select and its steppers: the day opened on is today where today has games or tomorrow has none, else the next day with games,
+   else the last (in this page's memory alone, as the NFL's week: never stored); the options are drawn again only when they change */
+function daySelect() {
+  const today = etToday(), has = new Set(S.games.map(g => g.date));
+  DAYS = listDays();
+  if (!DAY || !DAYS.includes(DAY)) DAY = DAYS.includes(today) && (has.has(today) || !has.has(addDays(today, 1))) ? today : (DAYS.find(d => d >= today && has.has(d)) || DAYS.slice().reverse().find(d => has.has(d)) || DAYS[0]);
+  const sel = $('daySel'), key = `${today}|${DAYS.join(',')}`;
+  if (key !== DAYS_KEY) {
+    const groups = new Map();
+    for (const d of DAYS) { const k = new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(d); }
+    sel.innerHTML = [...groups].map(([k, ds]) => `<optgroup label="${esc(k)}">${ds.map(d => `<option value="${d}">${esc(dayWord(d, today) ? `${dayWord(d, today)}, ${monthDay(d)}` : dayText(d))}</option>`).join('')}</optgroup>`).join('');
+    DAYS_KEY = key;
+  }
+  sel.value = DAY;
+  const i = DAYS.indexOf(DAY); $('dayPrev').disabled = i <= 0; $('dayNext').disabled = i < 0 || i >= DAYS.length - 1;
+}
+/* what the list says of a day with no game: the countdown before the season opens, a schedule not out yet, else that the day has none */
+function emptyDay() {
+  const today = etToday(); let first = null; for (const g of S.games) if (first === null || g.date < first) first = g.date;
+  if (first === null) return `<div class="empty" id="opening"><b>The ${S.season - 1}-${String(S.season).slice(2)} schedule is not out yet</b></div>`;
+  if (first > today && DAY < first) { const n = Math.round((Date.parse(first + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000); return `<div class="empty" id="opening"><div class="countdown">${n}</div><b>day${n === 1 ? '' : 's'} to opening night</b></div>`; }
+  return '<div class="empty">No games scheduled for this day.</div>';
+}
+function renderGames() {
+  daySelect();
+  const today = etToday(), gs = S.games.filter(g => g.date === DAY).sort(gameCmp);
+  /* the two pills: the call straight up on the day shown, as its rows show it, and the season's published record */
+  let hit = 0, miss = 0; for (const g of gs) { const r = rowHit(g, slateCall(g), slateOutcome(g)); if (r === true) hit++; else if (r === false) miss++; }
+  const su = S.record && isObj(S.record.su) ? S.record.su : { w: 0, l: 0 };
+  $('dayRec').innerHTML = `${esc(dayWord(DAY, today) || monthDay(DAY))} <b>${hit}–${miss}</b>`;
+  $('seasonRec').innerHTML = `Season <b>${+su.w || 0}–${+su.l || 0}</b>`;
   sourceNote();
+  $('slateOdds').hidden = !(DAY >= today && gs.some(g => !hasStarted(g)));
+  const live = gs.filter(g => !rowFinal(g)), fin = gs.filter(rowFinal);
+  const html = !gs.length ? emptyDay() : live.map(gameRow).join('') + (fin.length ? '<div class="slatesep">Completed</div>' + fin.map(gameRow).join('') : '');
+  if (html === LIST_HTML) return;                           // nothing moved: the rows, and the keyboard on one, stay as they are
+  const box = $('gamesList'), a = document.activeElement, on = a && box.contains(a) && a.dataset ? a.dataset.game : null;
+  box.innerHTML = html; LIST_HTML = html;
+  if (on) { const nb = [...box.querySelectorAll('button.game')].find(b => b.dataset.game === on); if (nb) nb.focus(); }
 }
 /* what the published calls stand on, said when it is not the latest, in a few words (a warning that a call stands on old data is the
    one kind of note the page keeps): an injury report that could not be read on the last runs, DailyFaceoff's goalies not read */
@@ -1476,103 +1624,22 @@ function sourceNote() {
   if (PL && PL.injuries && PL.injuries.pulled && ago(PL.injuries.pulled) > STALE_H) msgs.push(`<b>Injury report from ${esc(dateClock(PL.injuries.pulled))}.</b>`);
   if (PL && PL.injuries === null && PL.teams) msgs.push('<b>No injury report.</b>');
   if (PL && PL.starters && PL.starters.ok === false && S.games.some(g => g.date === etToday() && !hasStarted(g))) msgs.push('<b>No announced goalies this run.</b>');
-  $('sourceNote').hidden = !msgs.length; $('sourceNote').innerHTML = msgs.join('<br>');
+  $('sourceNote').hidden = !msgs.length; $('sourceNote').innerHTML = msgs.join(' ');
 }
-$('days').addEventListener('click', e => { const b = e.target.closest('button[data-day]'); if (!b) return; DAY = b.dataset.day; renderGames(); });
+/* a day chosen, by the select or a stepper: the list drawn for it, the keyboard left on the control used (a stepper at its end hands
+   it to the select), and the day's scoreboard read once where it has a game under way */
+function setDay(d, from) {
+  if (!d || !DAYS.includes(d)) { $('daySel').value = DAY; return; }
+  DAY = d; renderGames(); liveOnce(DAY);
+  if (from && from.disabled) $('daySel').focus();
+}
+$('daySel').addEventListener('change', e => setDay(e.target.value, null));
+$('dayPrev').addEventListener('click', e => setDay(DAYS[DAYS.indexOf(DAY) - 1], e.currentTarget));
+$('dayNext').addEventListener('click', e => setDay(DAYS[DAYS.indexOf(DAY) + 1], e.currentTarget));
+$('gamesList').addEventListener('click', e => { const b = e.target.closest('button.game[data-game]'); if (b) openGame(b.dataset.game, b); });
 
-/* a redraw replaces only the cards whose markup changed (CARD_HTML: each card as last drawn), so a bet tapped redraws its own card and
-   leaves the day's others, and the keyboard's focus with them, as they were; another day, or another set of games, is drawn whole */
-const CARD_HTML = new Map();
-function renderGames() {
-  dayStrip();
-  const gs = S.games.filter(g => g.date === DAY).sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
-  const box = $('games');
-  /* Refresh scores only while the day shown has a game under way (or a read of it runs), as the NBA's odds bar carries Refresh odds alone */
-  const rs = $('refreshScores');
-  rs.hidden = !rs.disabled && !gs.some(g => LIVE[g.id] ? LIVE[g.id].state === 'live' : g.state !== 'final' && hasStarted(g));
-  if (!gs.length) { box.innerHTML = '<div class="empty">No games this day.</div>'; CARD_HTML.clear(); return; }
-  CONF_REC = confRecord();
-  const html = gs.map(g => [g.id, gameCard(g)]), cur = [...box.children];
-  if (cur.length === html.length && cur.every((el, i) => el.dataset && el.dataset.id === html[i][0] && CARD_HTML.has(html[i][0]))) {
-    html.forEach(([id, h], i) => { if (CARD_HTML.get(id) === h) return; const t = document.createElement('template'); t.innerHTML = h; cur[i].replaceWith(t.content.firstElementChild); });
-  } else box.innerHTML = html.map(x => x[1]).join('');
-  CARD_HTML.clear(); for (const [id, h] of html) CARD_HTML.set(id, h);
-}
-/* ---------- confidence, the NBA's (nhl v23) ----------
-   The band of the chance a card shows (the call's chance on its pick), on the pill under the card's chance (confPill): High 65%+, Med
-   60-64%, Low 55-59%, 50/50 under 55%, the Pick'em's bands (the key over the day's cards went in nhl v25: no descriptions). The chance is
-   rounded to a whole percent as the card shows it (pct), so a pill and the percentage beside it never disagree. Each band's record is
-   the call's this season straight up, every graded game (the Record tab's SU record, band by band) */
-const CONF = { high: ['High', '65%+'], med: ['Med', '60-64%'], low: ['Low', '55-59%'], coin: ['50/50', 'under 55%'] };
-const CONF_ORDER = ['high', 'med', 'low', 'coin'];
-const confBand = c => { const r = +(c * 100).toFixed(0); return r >= 65 ? 'high' : r >= 60 ? 'med' : r >= 55 ? 'low' : 'coin'; };
-const gameConf = pHome => confBand(Math.max(pHome, 1 - pHome));
-function confRecord() {
-  const t = {}; for (const k of CONF_ORDER) t[k] = [0, 0];
-  for (const g of S.games) if (g.result && typeof g.result.su === 'boolean' && typeof g.pHome === 'number') t[gameConf(g.pHome)][g.result.su ? 0 : 1]++;
-  return t;
-}
-let CONF_REC = null;
-const confWl = x => x && x[0] + x[1] ? `${x[0]}-${x[1]}` : '';
-const confSay = (k, rec) => { const [name, range] = CONF[k], wl = confWl(rec && rec[k]);
-  return `Confidence: ${name}, the model gives its pick ${range}.${wl ? ` Its ${name} picks this season: ${wl}.` : ''}`; };
-function confPill(c, rec) {
-  const k = confBand(c), say = confSay(k, rec);
-  return `<span class="conf ${k}" data-conf="${k}" title="${say}"><span aria-hidden="true">${CONF[k][0]}</span><span class="sr">${say}</span></span>`;
-}
-/* ---------- a game card (the NBA's Tonight card of nhl v23, cut to what a list shows: nhl v27) ----------
-   One button a game, which opens the game's page (openGame): the top line (puck drop, the date, the tags: live, final, the start
-   moved, neutral ice, the call right or wrong, replayed); the two clubs' badges, the model's pick filled (the state's own straight-up
-   call, kept after the game); its chance in the middle with its confidence pill; the win bar with each side's chance; the model's
-   margin and goals. The game's bets, its prices, who is out, the lineups and the players are on its page. Every number is the
-   state's, or LIVE's for a score */
-function gameCard(g) {
-  const live = LIVE[g.id], state = live ? live.state : g.state;
-  const hs = live ? live.hs : g.hs, as = live ? live.as : g.as;
-  const th = T(g.home), ta = T(g.away);
-  const final = state === 'final';
-  const scored = (final || state === 'live') && typeof hs === 'number' && typeof as === 'number' && isFinite(hs) && isFinite(as);
-  const line = g.line;
-  const started = final || state === 'live' || hasStarted(g);
-  /* the tags: a live score is the job's, as of its run, unless this browser read ESPN since; a game the state has as to come whose
-     puck drop has passed says so instead */
-  const tags = [];
-  if (live && live.state === 'live') tags.push(`<span class="finchip live">${esc(live.detail)}</span>`);
-  else if (live && live.state === 'final') tags.push(`<span class="finchip">${esc(live.detail || 'Final')}</span>`);
-  else if (g.state === 'live') tags.push(`<span class="finchip live">${esc(g.detail)}</span>`, `<span class="pill warn" title="the score when the job last read it; Refresh scores reads ESPN now">as of ${esc(hhmm(g.scoreAt || S.published))}</span>`);
-  else if (g.state === 'final') tags.push(`<span class="finchip">${esc(g.detail || 'Final')}</span>`);
-  else if (g.state === 'pre' && Date.parse(g.start) > Date.now() && started) tags.push('<span class="pill warn" title="the feed moved the start after the first puck drop; the call shown is the one made before it">start moved · call kept</span>');
-  else if (started) tags.push('<span class="pill warn" title="Refresh scores reads ESPN now">under way · no score yet</span>');
-  if (g.neutral) tags.push('<span class="pill">neutral ice</span>');
-  if (g.result) tags.push(g.result.su ? '<span class="pill ok">call right</span>' : '<span class="pill bad">call wrong</span>');
-  if (g.result && !g.frozen) tags.push('<span class="pill ice" title="this game was over before the job first ran; the call is the replay\'s">replayed</span>');
-  const date = new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-  const homeWon = final && scored && hs > as, awayWon = final && scored && as > hs;
-  const team = (side, id, sc, lose) => `<div class="team ${side}" style="--tc:${tagFill(id)};--tx:${textOn(tagFill(id))};--tb:${darken(tagFill(id), .72)}"><span class="badge${g.pick === side ? ' pick' : ''}" title="${esc(T(id).short)}${g.pick === side ? ": the model's pick" : ''}">${esc(T(id).abbr)}</span><span class="nm">${esc(T(id).short)}</span>${scored ? `<span class="sc${lose ? ' lose' : ''}">${sc}</span>` : ''}</div>`;
-  const pickId = g.pick ? g[g.pick] : (g.pHome >= 0.5 ? g.home : g.away), c = Math.max(g.pHome, 1 - g.pHome);
-  const wpT = "the model's chance to win, overtime included";
-  if (!started) SHOWN.add(g.id);                 // the watch redraws the card when its puck drops
-  return `<button type="button" class="game${final ? ' final' : ''}" data-id="${g.id}" data-game="${g.id}" aria-haspopup="dialog">
-    <div class="top when"><span><b>${esc(hhmm(g.start))}</b> · ${esc(date)}${g.note ? ' · ' + esc(g.note) : ''}</span>${tags.length ? `<span class="tags">${tags.join('')}</span>` : ''}</div>
-    <div class="teams">
-      ${team('away', g.away, as, homeWon)}
-      <div class="vs"><b title="${wpT}">${pct(c)}</b>${esc(T(pickId).abbr)}${confPill(c, CONF_REC)}</div>
-      ${team('home', g.home, hs, awayWon)}
-    </div>
-    <div class="prob" style="--ac:${tagFill(g.away)};--hc:${tagFill(g.home)}"><i style="width:${Math.round((1 - g.pHome) * 100)}%"></i><i class="h" style="width:${Math.round(g.pHome * 100)}%"></i></div>
-    <div class="pline" title="${wpT}"><span>${esc(ta.abbr)} <b class="wp">${pct(1 - g.pHome)}</b></span><span><b class="wp">${pct(g.pHome)}</b> ${esc(th.abbr)}</span></div>
-    <div class="chips">${cardChips(g)}</div>
-  </button>`;
-}
-/* the card's two chips: the model's expected goal margin and its expected goals (a game's bets and prices are on its page) */
-function cardChips(g) {
-  return `<span class="chip" data-ck="model" title="the model's expected goal margin, from its goals layer; the win chance above blends that layer with the team Elo, so on a close game the two can favour different clubs">Margin <b>${esc(marginText(g))}</b></span>`
-    + `<span class="chip" data-ck="xt" title="the model's expected goals, both clubs">Goals <b>${g.xt.toFixed(1)}</b></span>`;
-}
-$('games').addEventListener('click', e => { const b = e.target.closest('button.game[data-game]'); if (b) openGame(b.dataset.game, b); });
-
-/* live scores, read from ESPN in this browser: on the button, and once on opening when the open day
-   has a game under way that the job has no final for */
+/* live scores, read from ESPN in this browser: on Refresh scores (always there, its stamp beside it), and once a day shown this load
+   where it has a game under way that the job has no final for; never on a timer, nothing stored */
 async function readLive(day) {
   const r = await fetch(`${ESPN_SB}?dates=${day.replace(/-/g, '')}&limit=100`, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
   const j = await r.json(); let n = 0;
@@ -1585,16 +1652,31 @@ async function readLive(day) {
   }
   return n;
 }
-$('refreshScores').addEventListener('click', async () => {
-  const btn = $('refreshScores'); btn.disabled = true; btn.textContent = 'Reading…';
-  try { btn.textContent = `Scores read (${await readLive(DAY)})`; } catch (e) { btn.textContent = 'ESPN did not answer'; }
-  setTimeout(() => { btn.textContent = 'Refresh scores'; btn.disabled = false; }, 2500);
-  renderGames();
-});
-async function autoLive() {
-  const day = DAY; if (!day || !S.games.some(g => g.date === day && g.state !== 'final' && hasStarted(g))) return;
-  try { if (await readLive(day) && !$('tab-games').hidden) renderGames(); } catch (e) {}
+const SCORES = { busy: false, at: '', bad: false, read: new Set() };
+/* the stamp beside Refresh scores, the NFL's words: nothing before a read, "reading…" while one runs, when it was read, or that it failed */
+function slateStamp() {
+  const el = $('slateStamp'), bad = !SCORES.busy && SCORES.bad;
+  el.textContent = SCORES.busy ? 'reading…' : bad ? 'scores not loading' : SCORES.at ? `scores ${SCORES.at}` : '';
+  el.classList.toggle('bad', bad);
 }
+$('slateNow').addEventListener('click', async () => {
+  if (SCORES.busy || !S) return;                            // a press while a read runs does nothing
+  SCORES.busy = true; slateStamp();
+  const day = DAY; let bad = false;
+  try { await readLive(day); } catch (e) { bad = true; }
+  SCORES.busy = false; SCORES.bad = bad; SCORES.read.add(day);
+  if (!bad) SCORES.at = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  slateStamp();
+  if (!$('tab-games').hidden) renderGames();
+  if (gameOpen()) renderGame();
+});
+/* the one read of a day shown: only where it has a game under way that the state has no final for, and only once a load */
+function liveOnce(day) {
+  if (!day || SCORES.read.has(day) || !S.games.some(g => g.date === day && g.state !== 'final' && hasStarted(g))) return;
+  SCORES.read.add(day);
+  readLive(day).then(n => { if (!n) return; if (!$('tab-games').hidden) renderGames(); if (gameOpen()) renderGame(); }, () => {});
+}
+const autoLive = () => liveOnce(DAY);
 
 /* ---------- Team Rankings (nhl v26: the NFL hub's tab of that name, its ratingsViz(), in hockey's terms) ----------
    The owner's ask of 11 November 2026: "match what the NFL hub has, the look, the layout". One table of the 32 clubs in order of the
@@ -3530,14 +3612,14 @@ function renderParlays() {
 }
 function rerender() {
   const t = curTab(), a = document.activeElement, ds = a && a.dataset ? a.dataset : null;
-  const key = ds ? ['leg', 'pp', 'game'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#games, #plLines, #pbBody, #spBody');
+  const key = ds ? ['leg', 'pp'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#plLines, #pbBody, #spBody');      // the Games list keeps the keyboard on its own row (renderGames)
   /* a suggested leg's Add: the levels of a day share legs, so it is found again in its own day and level, never the first copy */
   const tier = box && box.id === 'spBody' && a.closest('.pb-tier'), day = tier && a.closest('.sp-day');
   const scope = tier && day ? `#spBody .sp-day[data-sp-day="${day.dataset.spDay}"] .pb-tier[data-tier="${tier.dataset.tier}"]` : null;
   if (t === 'parlays') renderParlays(); else if (t === 'games') { SHOWN = new Set(); renderGames(); } else if (t === 'suggest') { SHOWN = new Set(); renderSuggest(); }
   if (gameOpen()) renderGame();                                    // a game's page drawn on the builder as it now stands, its place and its focus kept
   updateSlip();
-  /* a bet button, a game's card or a Player props button redrawn under the visitor's finger keeps the focus, where it is still offered */
+  /* a bet button or a Player props button redrawn under the visitor's finger keeps the focus, where it is still offered */
   if (key && box && !document.contains(a)) { const nb = [...document.querySelectorAll(`${scope || '#' + box.id} button[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}]`)].find(x => x.dataset[key] === val); if (nb) nb.focus(); }
 }
 /* every half minute, and when the page comes back into view: a game shown as still to come that has
@@ -3551,7 +3633,8 @@ function pbWatch() {
   let said = false;
   if (over(PB_NOTICE)) { PB_NOTICE = null; said = true; }
   if (over(PB_DROP)) { PB_DROP = null; said = true; }
-  if (pruneLegs() || shownGone || (said && curTab() === 'parlays')) rerender();      // once: a pruned builder holds no leg the watch would see again
+  /* the Games list is drawn again too once the Eastern day turns: Today and Tomorrow move at midnight */
+  if (pruneLegs() || shownGone || (said && curTab() === 'parlays') || (curTab() === 'games' && !DAYS_KEY.startsWith(today + '|'))) rerender();      // once: a pruned builder holds no leg the watch would see again
   /* a game's page whose puck has dropped since it was drawn (or whose game left the schedule) is drawn again: its boxes go, the strip comes in */
   if (gameOpen()) { const g = gb[GP.gid]; if (!g || hasStarted(g) !== GP.locked) renderGame(); }
 }
@@ -3774,7 +3857,7 @@ async function readOddsDay(day) {
 }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 function oddsSay(text) { ODDS.said = text; for (const id of ['oddsNote', 'pbOddsNote', 'spOddsNote']) if ($(id)) $(id).textContent = text; }      // a game's page says its own game's state (gpStatus)
-function oddsIdle() { if (!ODDS.said && S) oddsSay(`Lines published ${hhmm(S.published)}, the job's last run.`); }
+function oddsIdle() { if (!ODDS.said && S) oddsSay(`DraftKings via ESPN, ${hhmm(S.published)}.`); }      // the job's own read, until a press
 function oddsBusy(on) { ODDS.busy = on; for (const b of document.querySelectorAll('[data-odds]')) { if (on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); b.setAttribute('aria-busy', String(on)); } if (on && $('ppOddsNote')) $('ppOddsNote').textContent = 'reading…'; }
 function oddsText(r) {
   const when = hhmm(r.at);
@@ -3809,7 +3892,7 @@ function cardAfterRead(at) {
 }
 async function refreshOdds(btn) {
   if (!S || ODDS.busy) return;                            // a press while a read runs does nothing
-  const shown = new Set(stripDays().filter(d => d >= etToday()));
+  const shown = new Set(listDays().filter(d => d >= etToday()));
   const come = S.games.filter(g => shown.has(g.date) && !hasStarted(g));
   const days = [...new Set(come.map(g => g.date))].sort();
   if (!days.length) { oddsSay('No game still to come on the days shown: there are no lines to read.'); return; }
@@ -4393,7 +4476,7 @@ function closeGame(quiet) {
   document.body.classList.remove('modal-open');
   if (quiet) return;
   const vis = el => !!el && el.isConnected && !el.closest('[hidden]');
-  const back = vis(op) ? op : [...document.querySelectorAll('#games [data-game], button[data-pp]')].find(b => vis(b) && (b.dataset.game || b.dataset.pp) === gid) || $('tabs').querySelector('button.on');
+  const back = vis(op) ? op : [...document.querySelectorAll('#gamesList [data-game], button[data-pp]')].find(b => vis(b) && (b.dataset.game || b.dataset.pp) === gid) || $('tabs').querySelector('button.on');
   if (back && back.focus) back.focus();
 }
 /* one listener each on the page's own box: nothing is bound again on a draw */
@@ -4549,12 +4632,14 @@ function statSplit(x, y, lo) {
 function teamStatsBody(g) {
   const a = g.away, h = g.home, SA = isObj(S.teams[a]) ? S.teams[a] : {}, SH = isObj(S.teams[h]) ? S.teams[h] : {}, num = v => v === null || v === undefined || v === '' || !isFinite(+v) ? null : +v;
   const fmt = (v, sign, pc) => v === null ? '–' : (v < 0 ? '-' + Math.abs(v) : (sign && v > 0 ? '+' : '') + v) + (pc ? '%' : '');
+  /* each half in its club's colour, as the list's win bar (slateCols): two clubs of one colour, the home half its other colour, or the quiet ink where it has none */
+  const bc = slateCols(a, h).map(x => /^var\(/.test(x.bg) ? 'var(--ink-2)' : x.bg);
   let na = 0, nh = 0;
   const rows = SROWS.map(([k, lab, note, f, lo, sign, pc]) => {
     const x = num(f(SA, a)), y = num(f(SH, h)); if (x === null && y === null) return '';
     const [pa, ph] = statSplit(x, y, lo), ba = x !== null && y !== null && x !== y && (lo ? x < y : x > y), bh = x !== null && y !== null && x !== y && !ba;
     if (ba) na++; if (bh) nh++;
-    return `<div class="gs-sbar" data-gs-srow="${k}"><span class="gs-sva">${gsV(`<b data-gs-sval="${esc(a)}">${fmt(x, sign, pc)}</b>`, ba)}</span><div class="gs-smid"><span class="gs-slb">${lab}${note ? `<small>${note}</small>` : ''}</span><span class="gs-strack" aria-hidden="true"><span class="gs-shalf gs-shl"><i style="width:${pa}%;--gs-tc:${tagFill(a)}"></i></span><span class="gs-shalf gs-shr"><i style="width:${ph}%;--gs-tc:${tagFill(h)}"></i></span></span></div><span class="gs-svh">${gsV(`<b data-gs-sval="${esc(h)}">${fmt(y, sign, pc)}</b>`, bh)}</span></div>`; }).join('');
+    return `<div class="gs-sbar" data-gs-srow="${k}"><span class="gs-sva">${gsV(`<b data-gs-sval="${esc(a)}">${fmt(x, sign, pc)}</b>`, ba)}</span><div class="gs-smid"><span class="gs-slb">${lab}${note ? `<small>${note}</small>` : ''}</span><span class="gs-strack" aria-hidden="true"><span class="gs-shalf gs-shl"><i style="width:${pa}%;--gs-tc:${bc[0]}"></i></span><span class="gs-shalf gs-shr"><i style="width:${ph}%;--gs-tc:${bc[1]}"></i></span></span></div><span class="gs-svh">${gsV(`<b data-gs-sval="${esc(h)}">${fmt(y, sign, pc)}</b>`, bh)}</span></div>`; }).join('');
   if (!rows) return '<p class="gs-msg">No team stats yet.</p>';
   const g1 = n => `${+n || 0} game${+n === 1 ? '' : 's'}`, yr = `${S.season - 1}-${String(S.season).slice(2)}`;
   let thru = null; for (const x of S.games) if (x.state === 'final' && (thru === null || x.date > thru)) thru = x.date;

@@ -244,11 +244,13 @@ score for keeps its projections and says so; nobody "did not play" without a box
 when a read, the puck drop or another tab changes this game's legs; nothing of it stored; and its little windows (`#gsModal`: `gameWindow`, `unitsBody`, `mmGameBody`, `lineupsBody`,
 `teamStatsBody`): Matchup (the player model's attack against the defence and goalie it meets, the clubs with each one's "Elo rating", every
 model's call as the Pick'em Record reads it, a backtest said; no Team Elo pick since nhl v32), Mismatches (nhl v35, only on a game with a
-listed row: its listed skaters), Lineups (the drawer's lists) and Team Stats (the NFL's bars on what the state carries); THE MISMATCHES
-(nhl v35: `mmRows`, `mmSay`, `mmPick`, `mismatchCard`, `mmOpen`, `mmWindow`, `mmClose`, `mmWinFollow`, `mmTagOf`, `mmLegTag`), the NFL hub's
-card in hockey's terms: on the Games tab after the bar's source line, a bubble a club (five at most) for the skaters whose chance of a point
-the job's context factor lifts by 1.5 points or more, "Show the top N" (`#peMmModal`, three a club, thirty at most), the MISMATCH tag at 3.5
-on a game's page row and a suggested leg, a bubble opening the game's page at his row, ringed (CLAUDE.md, The Mismatches); every table
+listed row: its listed skaters), Lineups (the drawer's lists, the Mismatches' tag beside a tagged skater) and Team Stats (the NFL's bars
+on what the state carries); THE MISMATCHES (nhl v35: `mmGone`, `mmRows`, `mmSay`, `mmPick`, `mismatchCard`, `mmOpen`, `mmWindow`, `mmClose`,
+`mmWinFollow`, `mmGameBody`, `mmGsFollow`, `mmTagOf`, `mmLegTag`), the NFL hub's card in hockey's terms: on the Games tab after the bar's
+source line, a bubble a club (five at most) for the skaters whose chance of a point the job's context factor lifts by 1.5 points or more,
+on games still to come by the clock and by ESPN's word on a scores read in the browser (`mmGone`), "Show the top N" (`#peMmModal`, three a
+club, thirty at most), the MISMATCH tag at 3.5 on a game's page row, in its Lineups window and on a suggested leg, a bubble opening the
+game's page at his row, ringed, All skaters ticked for him alone (`GP.mmAll`) (CLAUDE.md, The Mismatches); every table
 keeping every column at every width, scrolling sideways in its wrapper with its club or player column held (Team Rankings'
 table fixed on a width a column, laid out by its own words on a phone; ELO Ratings' players in a box that scrolls both ways under a
 held head); the suggested levels as the NBA's

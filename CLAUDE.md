@@ -548,7 +548,11 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   the NFL hub's app v147 in hockey's terms, its anatomy and computed values copied, ice where it has gold as an accent, every control 44px
   where the NFL's are 40): the builder's note, the builder's card, the pairs that move together, then the Top 50 lines. **The builder's
   note** (`#bMsg`, above the card, gold on gold-soft): what the builder refused, replaced or let go (a leg out at its puck drop or after a
-  read), the words they always had, drawn with every redraw on any tab. **The builder's card** (`#builder`): empty, its title "Parlay
+  read), the words they always had, drawn with every redraw on any tab; and, since its review (the note is off screen from a list's
+  foot, where the slip bar used to say it), a refusal or a replacement on a tap in the Top 50 or on a Suggested Parlays level is said
+  where the tap was too (`TAP_SAID`, `.pb-tapsaid`, gold): under the line tapped, across its row (over the list, in `#pbNotes`, while
+  that line is not drawn), or in the level tapped between its legs and its buttons, going with the note at the visitor's next change to
+  the builder. **The builder's card** (`#builder`): empty, its title "Parlay
   Builder", Refresh odds with its status line (`#pbRefreshOdds`, `#pbOddsNote`) and "No legs yet." alone (`#bNone`; the rest, `#bFull`, is
   drawn once a leg is in); with legs, "3-leg parlay" with a "building" pill (`#bTitle`, `tabindex="-1"`), Refresh odds, then the legs as
   the NFL's table (`#bLegs`: Player | The bet | Projected | Fair | Price | Remove): a player's tag, name and his mark on the injury report
@@ -570,7 +574,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   ("model 25.8%, props model on trial"); the price ("+364 est." on a same-game parlay, "the legs multiplied +496" under it; the book's
   name where it is not DraftKings) and the fair price; "$76.55" in lime, "returned if it lands, $56.55 profit". A price typed in your
   book's box takes DraftKings' place in what it pays and in the expected return, the boxes saying "your price" (DraftKings' price and the
-  fair price under it). Finish parlay (lime) and Clear all (quiet), at the right under a rule. **Legs that move together** (`#pbPairs`,
+  fair price under it); what does not read ("+99", "abc") applies none, DraftKings' price shown and the box marked `aria-invalid` (a rose
+  edge) until it reads. Finish parlay (lime) and Clear all (quiet), at the right under a rule. **Legs that move together** (`#pbPairs`,
   the NFL's card, only while the builder holds a same-game pair): Pair | Strength, every two legs of one game, the correlation the
   same-game table prices them by (tools/sgp.js's `rho` on `S.sgp`, read from the end each leg lands at), strongest first; legs of two
   games never. **The Top 50** under them (The Parlay Builder, below), its controls box the NFL's (Bet amount, Odds with the second Refresh
@@ -581,7 +586,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   their small-caps labels (Price, Projected, Fair, Model, Wins), three a row under the name from 1100px down; Add, 44px, Added and lit ice
   once in the parlay; a tap keeps the button under the finger though the builder above grows (the NFL hub's pbLegClick). Each part's head
   is a row of 44px buttons, # and the five columns (the Game bets' with an empty slot for Projected), each with its arrow (▼ highest first,
-  ▲ lowest first, ⇅ on the others), aria-pressed on the one sorting. The parlay card's leg-by-leg DraftKings links are 44px chips, "Leg
+  ▲ lowest first, ⇅ on the others), aria-pressed on the one sorting; on a phone (640px and under) a head too wide for its third puts its
+  arrow under its word (Projected and its arrow are 76px in a 67px third at 320), nothing cut. The parlay card's leg-by-leg DraftKings links are 44px chips, "Leg
   1", "Leg 2", on a line of their own; Start over, smaller, on a line of its own under the actions. **Gone in nhl v33**: Pick your own
   legs (`#plLines`; a game's page, nhl v27, offers every bet it did, each side of the moneyline, the puck line and the total of every
   game with a fresh line, whole-number totals and sides far off the market among them, and DraftKings' player lines besides), its bets
@@ -936,12 +942,21 @@ h3 and count; each head's buttons, their order, aria-pressed and arrows), the he
 first, # back to the rounds; the order by its own sort, the ranks kept, the keyboard on the head, nothing written; 44px), the game tiles
 plain bold abbreviations with the puck drop (the day too on Both days), the reason for none, the controls, a line's Add and a second
 tap; the builder's card (nhl v33): empty, its title, Refresh odds and "No legs yet." alone; with legs on a copy planting an Out, an IR and
-a day-to-day player, a same-game group of three beside two other games, the moneyline's DraftKings id gone and the total's on another
-number: its title and pill, every row cell by cell (the chip word for word, each slip note the smoke's own reading of the ids and equal
-to `dkPlan`'s verdict), who is not expected to play, the read line and the mixed line word for word, the pairs that move together with
-each strength worked out from data/corr.json's keys, and your book's price (what +250 and -120 pay and the expected return at them,
-"your price", its legs' key in the store and the store's one new field, kept through a reload, a price that does not read changing
-nothing, an empty box clearing it, and cleared by a leg added, a leg removed, Start over and Clear all); every open day's suggested levels by the smoke's own search
+a day-to-day player, a same-game group of three (a player's Over, the moneyline and the total's Under) beside two other games each a
+player and a puck line (since the review), the moneyline's DraftKings id gone, the total's on another number, the second game's puck
+line with its id on its number and the third's on another (only games ten minutes or more past the boot): its title and pill, every row
+cell by cell (the chip word for word, each slip note the smoke's own reading of the ids and equal to `dkPlan`'s verdict, none on the
+puck line whose id is on its number), who is not expected to play, the read line and the mixed line word for word, the pairs that move
+together, every two legs of one game, with each strength worked out from data/corr.json's keys (the Under's two pairs on their own
+sign), and your book's price (what +250 and -120 pay and the expected return at them, "your price", its legs' key in the store, each
+bet and a total's or a puck line's number, and the store's one new field, kept through a reload; the card at +250, its sub line, what
+it pays, its chance line, its Share title and text and its image at it; "+99" and "abc" applying none, DraftKings' price shown and the
+box marked invalid while typed in, emptied once left; an empty box clearing it; cleared by a leg added, a leg removed, Start over and
+Clear all; and a read moving the total's number, then the puck line's, the price kept for the legs stored while the builder shows
+DraftKings', and the new number taken in its place clearing it, the box emptied though the keyboard is in it); what the builder said of
+a tap where the tap was (a Top 50 line's Add replacing its slot-mate, said under that line and over the list while its game is
+unticked, a refused one beside the player's nested line put in from the read, a level leg's Add replacing its slot-mate, said in that
+level and no other; each word for word the note's first sentence, gone at the next change); every open day's suggested levels by the smoke's own search
 (`sLevel`, nhl v31) on every game of the day and every bet type (the legs and their order, the size pill, the rule line and its
 title, the chance, its expected return and the model's line, the price and pays, each leg's Add, the lock words with the weekday,
 the rule each level hands the record, an empty level's words) and a locked day as the record's set, graded, by its own rule's words; the Bet amount, a level's Add to builder (asked first, then the Parlay Builder opened on
@@ -956,7 +971,9 @@ whole-number total, a game priced at another book and one with no book named, an
 (no games, every game started, no line, a two-game night, every game alike); only `state.json` and ESPN are read and only
 `nhl_v1` written. Every rule is an invariant of the state it is given, so it passes on any day: the
 games it plants on or clicks are taken from the day the panel shows (the Day control set where it needs a
-day kept), never from the whole schedule. Its section REFRESH ODDS holds the page's own read of ESPN (below)
+day kept), never from the whole schedule, and (since the review) only games whose puck drop is ten minutes or more past the publish,
+so a state published a minute before the evening's puck drops (the 7 PM slot is aimed there) holds a right page: fourteen of the
+edges' checks had failed one so, the boots at the publish's next minute finding the games they planted on under way. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the game's page on them (under The props model) on answers it makes from the state's own
 projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19, rewritten for nhl v30) works the Pick'em tab out from the state by rules of its own: the address (and the old ones, `#record` and a stored `record` tab), a visitor's six tabs with no Record tab, the anatomy (the tiles, the three cards by their headings, the one state line), the six tiles (DraftKings' record, the call in each confidence band on its rounded chance, the total's average miss) with their titles, the legend word for word with its swatches, the chart (its label for a screen reader, each line's weekly sums from zero and its side of the zero line, every line solid, exactly the four models' lines and their end labels and DraftKings', the end labels, every word in the page's ink, every week pointed at and pointed away from, a touch's and a pen's tap's numbers kept through its own out until the next tap, on that week, another or off the chart, the page's CSS stroking every line and its end marker and filling every dot with the line's own `--c`, none hidden), the chart's geometry in its drawing's own coordinates by `sPkGeom` (since the review of nhl v30, which found halved heights, negated figures, shifted week names, dots off their lines and upside-down end labels all passing: the axis's figures every step by its own rule, the units a game from the top and bottom figures over the plot's height, each figure and grid line at its height, every point and dot at the zero line less its weekly sum in units within 0.1 and at its week's x, a dot a week where the weeks stand 8 or more apart and the last alone under that, the weeks named by their Mondays at their x, "Start" at the origin, the last week and every so many back, the end labels in their values' order down the chart, a tie DraftKings then the legend's, each at its place by the nudging rule within 0.1 (14 apart where closer, all lifted by as much as the lowest passes the plot's foot), beside their lines' ends, every word inside the drawing at a generous 6.5 a character, and every mark carrying only what its kind draws with; the second review of nhl v30 found a line's last dot alone with the weeks 120 apart, end labels 24 apart, an invisible line, every line in one colour, a tip and a crosshair a week late on the middle weeks and days named on the visitor's clock all passing until then), drawn 900 wide and again in boxes stubbed 242, 320, 200 and 1400 wide (242, 320, 240 and 900 drawn), a week's numbers inside a stubbed 242 by 230 box and short where taller than it, short or full by its own rows whatever week was shown before (a layout stubbed as a browser's: a row as wide as the room right of the tip's place), each day of the Day select by its weekday and date, every cell of the week grid (its record, rate, shade and title), the bets record row for row from the state's `record`, the injury-report line, every pick of the day it opens on, of a past day and of the latest day with a backtest's pick, nothing stored or fetched, no inline colour but by a token, the four line colours 3:1 on a card in both looks, and (nhl v32) no Team Elo anywhere on the tab: no word of it, on a title or for a screen reader either, no row, column, line, end label or legend entry keyed `elo`, nothing dashed or called the baseline, no `--m-base` or dashed swatch in the page's CSS and no Team Elo among its Pick'em models; on the state as given it also grades every final again from its score and its call and holds the state's `record` to that, the season and month by month, and the call's season and the four bands to its straight-up record. It runs on the state, on a copy with no final yet, and on a copy of one month (finals made up where the month has under nine) planting an unlined final, a game whose club ratings part from the call (the call's column its own pick, no column the ratings'), a level price, a model's own call beside a backtest of the same game, a final with neither, one called by its backtest alone, a total and a puck line that push, no HIGH pick at all, a 54.51% pick and an away pick at pHome 0.455 (both LOW 55%), that copy run on a visitor's clock in Los Angeles (`process.env.TZ` set for it alone and put back, held both ways: the smoke runs on UTC, as GitHub's runners do, where a date read at midnight UTC and written on the visitor's clock reads right), and on a copy of one week of finals, at most four, so the axis is a figure a game; every rule is an invariant of the state it is given (tried on a state with no final, with one, with every game final, with one month, with no line, with no model and with no schedule). Its section THE GAME'S PAGE (nhl v27) holds the page a game opens and its three windows by a model of its own, on any
@@ -1277,7 +1294,10 @@ stored at a number a read has moved since is in the new leg's slot (replaced, sa
 the slip bar said it): a refusal or a replacement stands until the visitor's next change to the builder (a leg added or taken out
 anywhere, a level's Add to builder, Clear all, Start over), and what it says of legs a read or the clock took out is said once and goes
 at that next change too (the slip bar ran it nine seconds); it is drawn with every redraw on any tab, and a reason the clock gave on
-another tab, or before a reload, is kept in the store (`ui.bmsg`) until the builder is drawn. A game priced at another book, or a
+another tab, or before a reload, is kept in the store (`ui.bmsg`) until the builder is drawn. A refusal or a replacement on a tap in
+the Top 50 or on a Suggested Parlays level is said where the tap was as well (since the review: at a long list's foot the note is
+off screen, and the slip bar that said it there went): under the line tapped or in the level tapped, in this page's memory alone
+(`TAP_SAID`), going with the note at the next change. A game priced at another book, or a
 publish with no same-game table, takes one leg a game, as before;
 where only a Refresh odds read puts a game's lines at another book (or names none), the builder draws one of its legs (its
 first, or the one the visitor last put in) and keeps the rest stored: a leg added is drawn alone in place of the one drawn,
@@ -1374,17 +1394,27 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
 - **Your book's parlay price** (nhl v33, the NFL's `#pBook`): American odds typed in `#bookPrice` ("+250", "-120", "250" read as +250;
   +100 or more, -100 or less; `bookRead`) take DraftKings' place in what the parlay pays and in its expected return, the boxes saying
   "your price"; it fixes the builder's weakest number, a same-game price being an estimate on an untested hold. It is stored in `nhl_v1`
-  with its legs' key (`book: { am, legs }`, the stored legs' ids sorted) and any change to the stored legs clears it as the store is
-  written (a leg added, taken out, replaced or gone at its puck drop, a level's Add to builder, Clear all, Start over), so it can never
-  price another parlay; while a Refresh odds read leaves one of its legs out of the parlay the builder shows DraftKings' price, and a
-  reload brings the legs and the price back together. An empty box clears it; a box left with what does not read shows the price kept.
+  with its legs' key (`book: { am, legs }`: each stored leg's bet and number, sorted, `bookIdOf`; a moneyline and a player's line by its
+  id, a player's carrying its number, a total or a puck line by its id and its number, `401892697|over|ou@6.5`) and any change to the
+  stored legs clears it as the store is written (a leg added, taken out, replaced or gone at its puck drop, a level's Add to builder,
+  Clear all, Start over), so it can never price another parlay. The number is in the key since the review: a total's or a puck line's
+  id (`game|side|kind`) stays when a Refresh odds read moves its number, and a visitor taking the new number in its place kept the
+  price typed for the old one (+250 on Over 5.5 that was typed for Over 6.5). While a read leaves one of its legs out of the parlay the
+  builder shows DraftKings' price, and a reload brings the legs and the price back together. An empty box clears it, and so does what
+  does not read ("+99", "abc"): DraftKings' price is shown and the box marked `aria-invalid` while it is typed in, and a box left so is
+  emptied (the review: the price typed before went on paying beside the junk). The box shows the price applied, and is left alone while
+  typed in but for a price that reads and is no longer the one applied (the legs it was typed for changed under the visitor's hand).
 - **The card** (`#pcWin`): the parlay drawn as a card, Download image (a canvas, context calls only, never a
   remote image), Share link (`{title, text}`, the DraftKings link inside the text, never a `url`), Open in
   DraftKings ("Open 1 of 3 legs in DraftKings" where some legs cannot go on the slip, "Open DraftKings" where none can: nhl v33, the
   NFL's), and, smaller and on a line of its own, Start over from the builder. Its chance line is the NFL's, "Fair chance all 3 land 20.1%
   (est.) · expected −23% · the price says 26.1%", and the model's after it, "· model 25.8% (props model on trial)" (the levels and the
-  Top 50 rank on it), on the card, its image and its Share text alike; it is drawn at DraftKings' price (your book's price is the
-  builder's). Nothing is saved by finishing. Close, Escape and a click outside give the focus back to the button that opened it (or Finish
+  Top 50 rank on it), on the card, its image and its Share text alike. It is drawn at the price the builder pays: your book's, where one
+  was typed for exactly these legs (the review; the NFL hub's card carries its typed price as "your book's price"): the price, "3.50
+  decimal · 28.6% implied · your book's price (DraftKings +281)" under it, what the stake pays and the chance line on it, the Share title
+  "2-leg parlay +250 (your book's price)" and its text "Stake $20.00 · Pays $70.00 at your book's price" and "Your book's price +250;
+  DraftKings' price would be +281."; else DraftKings' (an estimate on a same-game parlay) or the book's. A level's card is at its own
+  price. Nothing is saved by finishing. Close, Escape and a click outside give the focus back to the button that opened it (or Finish
   parlay, if the watch redrew it away).
 - **Clocks.** Every time on the page is the visitor's own and names its zone ("3:30 PM PDT": the game
   tiles, the level and builder rows, the Top 50's rows, the Games list's rows, the builder's read line, "as read at" and the header's
@@ -1416,7 +1446,7 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   the record, and the smoke grades legs with them on copies.
 
 `nhl_v1` also holds `stake`, `ui.pb` (`k` the five boxes, a store from before nhl v18 opening with the two player boxes ticked, `off` the games unticked, `gx` the
-games fold, `day`), until the builder is next drawn `ui.bmsg`, since nhl v33 `book` (your book's parlay price and its legs' key) while one
+games fold, `day`), until the builder is next drawn `ui.bmsg`, since nhl v33 `book` (your book's parlay price and its legs' key, each bet and a total's or a puck line's number) while one
 is typed, and a store's `saved` list as an older page left it. A player leg in `legs` is `{game, kind: 'prop', pid, name, team, grp, stat,
 mk, side, line, k, odds, other, at, p, fair, label, text, date, start}`: the player's ESPN athlete id, club and group (F, D or G), the stat,
 a main line's side and number or a Yes milestone's k (side over, line k - 0.5), DraftKings' price and the other side's as read, and `at`,
@@ -1873,7 +1903,9 @@ and player legs), at DraftKings' price as read.
   the page on it (and always on a copy with a read, none posted and a failure planted): the page's read equal to the state's,
   nothing asked on load, every Player props button's words, every game's page row for row, a price added at the job's read and drawn so after a
   reload, a press that fails keeping it and one that answers replacing it, a reload the job's read again, and (nhl v18) the Top
-  30 and the suggested levels on it by the smoke's own sums with a player line's Add and a level's Add to builder; the other props
+  30 (the Top 50 since nhl v33) and the suggested levels on it by the smoke's own sums with a player line's Add and a level's Add to
+  builder; on the planted copy (since nhl v33's review, none qualifying on 12 November's state) an anytime goal made to qualify (a
+  skater's goals a coin flip, his anytime goal +110), held in the Top 50 with its "fair, est."; the other props
   sections boot on the state without it (`noDk`), so they hold the press as before. The simulation plants an answer, a 404 and
   failures on the games to come and holds props.js's read, the state's copy and sources.js on both kinds of failure.
 - **The props view** (nhl v10; since nhl v27 the game's page, under The look, where it was a window of its own with six stat

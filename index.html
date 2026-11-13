@@ -121,7 +121,7 @@ h2 small{font-family:var(--body);font-weight:500;color:var(--ink-2);font-size:13
 @media(max-width:640px){h2 small{display:block;margin:4px 0 0}}             /* a phone: the small print under its heading, never broken beside it */
 h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin:16px 0 8px}
 .card h2 .btn{font-family:var(--body);font-size:13px;font-weight:700}
-/* a heading's small pill ("Team rankings [Elo ratings]", "Top 30 lines [Today]"): the NFL's .pill, grey, and its three meanings; ice is hockey's own */
+/* a heading's small pill ("Team rankings [Elo ratings]", "Top 50 lines [Today]"): the NFL's .pill, grey, and its three meanings; ice is hockey's own */
 .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-3);color:var(--ink-2);white-space:nowrap}
 h2 .pill{font-family:var(--body);font-size:12px;font-weight:700;vertical-align:middle;letter-spacing:.02em;margin-left:6px}
 .pill.warn{background:var(--gold-soft);color:var(--gold-ink)}
@@ -596,6 +596,10 @@ table.rv-grid .rv-season{border-left:2px solid var(--line-2)}
 
 .pb-notes p{margin:8px 0 0;font-size:12.5px;color:var(--ink-2)}
 .pb-notes p b{color:var(--gold-ink)}
+/* what the builder refused or replaced on a tap, where the tap was: under the Top 50 line (across its row) or in the level, in gold */
+.pb-tapsaid{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink-2)}
+.pb-tapsaid b{color:var(--gold-ink)}
+.pb-trow .pb-tapsaid{grid-column:1/-1}
 .pb-wide{margin-top:12px}
 /* the three levels: the NFL hub's Suggested Parlays cards (nhl v22, the owner's "i feel like the suggested parlays are really hard to
    read. i want it to match the visuals of the nfl one"), its values copied: three a row on a wide screen, two from 760px to 1100px,
@@ -641,7 +645,7 @@ table.rv-grid .rv-season{border-left:2px solid var(--line-2)}
 .pb-tl .pr em{display:block;font-style:normal;font-size:11px;font-weight:500;color:var(--muted-ink)}
 .pb-tl .sp-add{align-self:center}
 .pb-tl .sp-st{flex:none;align-self:center;display:inline-flex;justify-content:flex-end;min-width:44px;font-size:12px;color:var(--ink-2);white-space:nowrap}
-/* a leg's Add (a suggested level's and a Top 30 line's): a text toggle, Add or Added (aria-pressed), lit ice in the parlay */
+/* a leg's Add (a suggested level's and a Top 50 line's): a text toggle, Add or Added (aria-pressed), lit ice in the parlay */
 .sp-add,.t30-add{flex:none;min-width:58px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;color:var(--ink);cursor:pointer;padding:0 10px;font:700 12.5px var(--body)}
 .sp-add:hover,.t30-add:hover{border-color:var(--ink-2)}
 .sp-add[aria-pressed=true],.t30-add[aria-pressed=true],.pb-tl .sp-add[aria-pressed=true]{border-color:var(--ice);color:var(--ice-2);background:linear-gradient(var(--ice-soft),var(--ice-soft)),var(--bg-2)}
@@ -695,7 +699,8 @@ table.rv-grid .rv-season{border-left:2px solid var(--line-2)}
 @media(max-width:1100px){ .pb-trow{grid-template-columns:26px minmax(0,1fr) auto;grid-template-areas:"rk nm ad" ". cs cs"}
   .pb-thead{grid-template-columns:26px minmax(0,1fr) auto;grid-template-areas:"rk cs cs";align-items:start}
   .pb-figs,.pb-thcs{justify-content:start} .pb-fig{text-align:left} .pb-thcs .pb-sth{justify-content:flex-start} .pb-thnm,.pb-thad{display:none} }
-@media(max-width:640px){ .pb-figs,.pb-thcs{grid-template-columns:repeat(3,minmax(0,1fr));width:100%} }
+@media(max-width:640px){ .pb-figs,.pb-thcs{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+  .pb-thcs .pb-sth{flex-wrap:wrap;align-content:center;row-gap:0;line-height:1.3} }      /* a head too wide for its third (Projected and its arrow, 76px in 67 at 320) puts its arrow under the word, nothing cut */
 .pill.thin,.pill.sg{margin-top:3px}
 .pb-empty{font-size:13px;color:var(--ink-2);margin:0}
 /* the builder (nhl v33, the NFL hub's card): its notes above it in gold (a refusal, a replacement, the legs the clock or a read took
@@ -738,6 +743,7 @@ table.pb-ltab td.pb-rmc{padding:6px 8px 6px 6px}
 .pb-book input{width:118px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);color:var(--ink);padding:0 10px;font:600 16px var(--body);font-variant-numeric:tabular-nums}
 .pb-book input::placeholder{color:var(--muted);opacity:1}
 .pb-book input:focus{outline:none;border-color:var(--ink);box-shadow:var(--ring)}
+.pb-book input[aria-invalid=true]{border-color:var(--miss)}      /* a price that does not read: DraftKings' price stands until it does */
 /* the six amounts, one segmented group (the NFL's stake chips) */
 .stake-chips{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;max-width:100%}
 .stake-chips button{background:var(--panel);color:var(--ink-2);border:0;border-left:1px solid var(--line-2);padding:0 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
@@ -1408,7 +1414,7 @@ function stakeRead(v) {
   if (typeof v !== 'number' || !isFinite(v) || v <= 0) return null;
   return Math.round(Math.min(100000, Math.max(1, v)) * 100) / 100;
 }
-/* the builder's legs. A game's: a side and a kind that go together. A player's (kind 'prop', added from a game's page, or from the Top 30 and the levels, after a
+/* the builder's legs. A game's: a side and a kind that go together. A player's (kind 'prop', added from a game's page, or from the Top 50 and the levels, after a
    Refresh odds press): DraftKings' line on one player and stat as read, its price, its read time (at), the player's club and group
    (F a forward, D a defenceman, G the goalie, whose stat is saves alone), a main line's Over or Under at its number or a Yes
    milestone k+ (side over, line k - 0.5). The same-game rule (placeLeg below): one side bet a game (the moneyline or the puck line,
@@ -1466,10 +1472,16 @@ function load() {
 }
 /* your book's parlay price as typed: American odds, +100 or more or -100 or less ("250" reads +250), else null */
 function bookRead(v) { const m = /^\s*([+-]?)\s*(\d{3,6})\s*$/.exec(v === null || v === undefined ? '' : String(v)); if (!m || +m[2] < 100) return null; return m[1] === '-' ? -(+m[2]) : +m[2]; }
-/* the legs a typed price belongs to: the stored legs' ids, sorted. Any change to them (a leg added, taken out, replaced or gone at its puck
-   drop, Clear all, Start over, a level put in) clears it as the store is written, so it can never price another parlay */
+/* the legs a typed price belongs to: each stored leg's bet and number, sorted. Any change to them (a leg added, taken out, replaced or gone
+   at its puck drop, Clear all, Start over, a level put in) clears it as the store is written, so it can never price another parlay. A
+   moneyline and a player's line are keyed by their ids (a player's carries its number); a total or a puck line by its id and its number,
+   since its id (game|side|kind) stays when a Refresh odds read moves the number and the visitor takes the new one in its place: that is
+   another bet, and the price typed for the old number goes (nhl v33 after its review) */
 const legsKey = ids => ids.slice().sort().join(',');
-const storedKey = () => legsKey(P.legs.map(legIdOf));
+const bookNum = v => v === null || v === undefined || v === '' ? '' : String(+v);
+const bookIdOf = l => isProp(l) || l.kind === 'ml' ? legIdOf(l) : `${legIdOf(l)}@${bookNum(l.line)}`;      // a stored leg
+const bookIdL = L => L.prop || L.kind === 'ml' ? L.id : `${L.id}@${bookNum(L.num)}`;                      // a drawn leg
+const storedKey = () => legsKey(P.legs.map(bookIdOf));
 const DELETED = new Set();     // saved parlays deleted in this tab, never merged back from another's copy
 let NO_SAVE = false;           // true while Refresh odds redraws: the lines it read are this page's alone, never stored
 function save() {
@@ -2162,7 +2174,7 @@ const ETZ = { timeZone: 'America/New_York' };
 const PB_TIERS = [['safe', 'Safe', 2, 0, 2.1], ['med', 'Medium', 2, 0, 4], ['aggr', 'Aggressive', 2, 0, 8]];
 const PB_TIERS_V30 = [['safe', 'Safe', 2, 0], ['med', 'Medium', 3, 0.25], ['aggr', 'Aggressive', 4, 0.12]];
 const PB_LV_CAP = 12, PB_PICK = 'likeliest-any', PB_CHANCE = 'model';
-/* the Top 30's bet types: the three team markets and, since nhl v18, DraftKings' player lines, Overs (the anytime goal among them) and
+/* the Top 50's bet types: the three team markets and, since nhl v18, DraftKings' player lines, Overs (the anytime goal among them) and
    Unders; Build from's three mixes, the NFL hub's */
 const PB_KINDS = ['ml', 'pl', 'ou', 'po', 'pu'];
 const PB_MIX = { all: { ml: true, pl: true, ou: true, po: true, pu: true }, teams: { ml: true, pl: true, ou: true, po: false, pu: false }, players: { ml: false, pl: false, ou: false, po: true, pu: true } };
@@ -2229,10 +2241,10 @@ const farText = L => `model ${whole(L.p)} · market ${whole(L.fair)}: far off th
    margin left in), no push (a whole-number line never goes in a level), and not far off the market.
    'far' when only the last fails, so the panel can count it */
 /* ---------- DraftKings' player lines as legs (nhl v18) ----------
-   The owner's call of 25 October 2026 ("Use player lines now"): the Top 30 and the suggested parlays rank DraftKings' player lines
+   The owner's call of 25 October 2026 ("Use player lines now"): the Top 30 (the Top 50 since nhl v33) and the suggested parlays rank DraftKings' player lines
    beside the team bets, on the props model's chance, though its trial (under The props model) has not shown it beats DraftKings' own
    prices; the page says "props model" and "on trial" wherever it shows that chance. A game's player legs are DraftKings' main lines,
-   the Over and the Under, and the anytime goal (no k+ ladders, as the NFL hub's Top 30 lists none), on a read of the game's props
+   the Over and the Under, and the anytime goal (no k+ ladders, as the NFL hub's list has none), on a read of the game's props
    that is fresh: the job's at its last run (`propRead`: read within PROP_FRESH of the publish) or a Refresh odds press's; each on a
    player the props model projects for one of the game's clubs, in a stat of his group. Its chance is the model's (`propModelP`), its
    fair chance DraftKings' (a main line's Over 1 - the Under's implied, its Under its own implied; the anytime goal its price over
@@ -2261,14 +2273,14 @@ function propLegsOf(g, over, under) {
   }
   return out.sort(legCmp);
 }
-/* a player leg for the levels and the Top 30, as a team leg qualifies: the props model's chance and DraftKings' fair chance, both
+/* a player leg for the levels and the Top 50, as a team leg qualifies: the props model's chance and DraftKings' fair chance, both
    prices on a main line, the chance 45% to 97%, at or above the price, no push (a whole-number line), not far off the market */
 function propQual(L) {
   if (!L || L.p === null || L.fair === null || L.edge === null || (L.mk === 'main' && L.other === null)) return null;
   if (!(L.p >= PB_PMIN && L.p < PB_PMAX) || !(L.edge >= 0) || (L.mk === 'main' && Number.isInteger(+L.line))) return null;
   return L.p - L.fair >= FAR_OFF ? 'far' : 'ok';
 }
-/* a player leg by its id ("401892578|p|4024854|pts|over0.5", "...|g|k1"), as the Top 30 or a level offers it now */
+/* a player leg by its id ("401892578|p|4024854|pts|over0.5", "...|g|k1"), as the Top 50 or a level offers it now */
 function propLegById(id) {
   const g = gameById()[String(id).split('|')[0]]; if (!g) return null;
   return propLegsOf(g, true, true).find(L => L.id === id) || null;
@@ -2658,7 +2670,7 @@ function placeLeg(nl, g) {
    else the note said before goes. Returns what was said, or '' */
 function takeOut(gid, keep) {
   const before = builderLegs(false).filter(L => L.game === gid), had = new Set(before.map(L => L.id));
-  P.legs = P.legs.filter(keep); BMSG = [];
+  P.legs = P.legs.filter(keep); BMSG = []; TAP_SAID = null;
   const left = new Set(P.legs.map(legIdOf)), out = before.filter(L => !left.has(L.id)), now = builderLegs(false).filter(L => L.game === gid && !had.has(L.id));
   const msg = now.length && out.length ? `On ${now[0].mu}, ${andList(now.map(L => L.desc))} ${now.length > 1 ? 'are' : 'is'} in the parlay in place of ${andList(out.map(L => L.desc))}: one leg a game here, ${sgWhyNot(now[0].g)}.` : '';
   if (msg) BMSG = [msg];
@@ -2674,24 +2686,24 @@ const pbStake = () => stakeRead(P.stake) || 20;
 const tierBet = L => L.kind === 'ml' ? 'to win' : L.kind === 'pl' ? fmtLine(L.num) : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num}`;
 const legPills = L => L.kind === 'ou' ? tag(L.g.away, 'mini', true) + tag(L.g.home, 'mini', true) : tag(L.prop ? L.team : L.g[L.side], 'mini', true);
 
-/* ---------- the Parlay Builder's Top 30 lines (#pbPanel) and the Suggested Parlays tab (#tab-suggest) ----------
+/* ---------- the Parlay Builder's Top 50 lines (#pbPanel) and the Suggested Parlays tab (#tab-suggest) ----------
    nhl v17 (the owner's ask, 25 October 2026: the NFL hub's Parlay Builder and its Suggested Parlays tab, "the content to exactly
-   match"). The Parlay Builder is the visitor's: the builder first, then the Top 30 lines on the visitor's picks (the bet types, the
-   games and the day ticked here), then Pick your own legs and the saved parlays. The Suggested Parlays tab is the site's: each day's
-   three levels from every game and every bet type, locked at the day's first puck drop and graded in the record (tools/suggest.js).
+   match"), laid out as the NFL hub's v147 in nhl v33. The Parlay Builder is the visitor's: the builder's note, the builder, the pairs
+   that move together, then the Top 50 lines on the visitor's picks (the bet types, the games and the day ticked here). The Suggested
+   Parlays tab is the site's: each day's three levels from every game and every bet type, locked at the day's first puck drop and graded
+   in the record (tools/suggest.js).
 
-   The slate of the Top 30 is one Eastern day: today or tomorrow by the visitor's clock (each offered while it has a game still to
+   The slate of the Top 50 is one Eastern day: today or tomorrow by the visitor's clock (each offered while it has a game still to
    come), Both days when both have a fresh line, else the next day with a game to come. A line qualifies as a level's leg does
    (pbQual: both of DraftKings' prices, the model at 45% to 97%, at or above the price with the margin left in, no push, not far off the
-   market). Value picks are 5 points (S.edge) or more above the price, the model's calls a game's page marks Value; Other lines are above it
-   by less. Each part is ranked by the expected return on $1 (the model's chance times the decimal price, less the stake), ties to the
-   lower leg id, and the list stops at 30.
+   market). The list is two parts, Player lines (up to 40, in rounds across the stats) and Game bets (by the expected return on $1),
+   under topList below.
 
    A day's levels (nhl v31): each the likeliest parlay by PB_CHANCE of 2 to 12 legs, one leg a game, paying its own least price (pbLevel
-   below); no floor and no fallback, so a level no parlay pays is empty. Thin legs decide nothing there (the Top 30's Value part still
-   reads them). The search is exact, and every number of a level is worked in leg order, the builder's, so Add to builder shows exactly
-   what the level did */
-let PB_CUR = null;                          // the Top 30 as last drawn: { sl, ui, pool, top }
+   below); no floor and no fallback, so a level no parlay pays is empty. Thin legs (under the site's bar, S.edge) decide nothing there.
+   The search is exact, and every number of a level is worked in leg order, the builder's, so Add to builder shows exactly what the
+   level did */
+let PB_CUR = null;                          // the Top 50 as last drawn: { sl, ui, pool, top }
 /* the lines said when the clock changes the list under the visitor: the slate moved on (every game of the day shown has dropped the
    puck), or a game the list showed dropped the puck. Each holds while the panel is on the slate it was said on and its day is still
    today (Eastern), and goes at the visitor's next pick; the days last drawn tell the first */
@@ -2953,6 +2965,9 @@ function renderPb() {
     $('pbBody').innerHTML = `<div class="pb-t50" id="t50">${part('player', 'Player lines', top.player, 1, `${top.player.length} player line${top.player.length > 1 ? 's' : ''} on your picks, a mix of bet types, each type's likeliest first`)}`
       + `${part('game', 'Game bets', top.game, top.player.length + 1, `${top.game.length} game bet${top.game.length > 1 ? 's' : ''} on your picks, by the expected return on $1`)}</div>`;
   }
+  /* what the builder refused or replaced on a tap here, under the line tapped; in the notes over the list where that line is not drawn now */
+  const ts = TAP_SAID && TAP_SAID.in === 'pb' ? TAP_SAID : null, tr = ts && [...$('pbBody').querySelectorAll('li.pb-trow')].find(r => r.dataset.id === ts.leg);
+  if (tr) tr.insertAdjacentHTML('beforeend', tapSaidHtml(ts)); else if (ts) { $('pbNotes').insertAdjacentHTML('afterbegin', tapSaidHtml(ts)); $('pbNotes').hidden = false; }
   for (const g of sl.games) SHOWN.add(g.id);
 }
 let PB_GX_QUIET = false;
@@ -3107,7 +3122,7 @@ function spCard(t, res, D, inB, drawnIds) {
   return `<div class="pb-tier" data-tier="${id}">
     ${spHead(id, label, res.legs.length, '', lvRule(id, res))}
     ${spNums(res, `<div class="pb-n pay" data-pb-pay="${res.dec}"><div class="v">${money(cents(stake * res.dec))}</div><div class="k">${stakeShort(stake)} pays</div></div>`, res.legs.some(L => L.prop), res.legs.some(L => L.fairEst))}
-    <ul class="pb-tlegs">${rows}</ul>
+    <ul class="pb-tlegs">${rows}</ul>${TAP_SAID && TAP_SAID.in === 'sp' && TAP_SAID.date === D.date && TAP_SAID.tier === id ? tapSaidHtml(TAP_SAID) : ''}
     <div class="pb-acts"><button type="button" class="btn quiet" data-sp-add="${key}"${all ? ' disabled' : ''}>${all ? 'In the builder' : 'Add to builder'}</button><button type="button" class="btn go" data-sp-finish="${key}">Finish</button></div>
   </div>`;
 }
@@ -3297,7 +3312,7 @@ $('spBody').addEventListener('click', e => {
   const ask = !lose ? `Replace the ${legsN(have)} in the builder with the ${what}?` : !have ? `Replace the ${legsN(lose)} kept on this device that the builder leaves out of the parlay with the ${what}?`
     : `Replace the ${legsN(have)} in the builder, and the ${legsN(lose)} kept on this device that it leaves out of the parlay, with the ${what}?`;
   if (((have && !sameLegs(drawn.map(L => L.id), res.legs.map(L => L.id))) || lose) && !confirm(ask)) return;
-  P.legs = res.legs.map(storeLeg); BMSG = []; save();      // a refusal or a replacement said before no longer stands (a typed price goes with the legs)
+  P.legs = res.legs.map(storeLeg); BMSG = []; TAP_SAID = null; save();      // a refusal or a replacement said before no longer stands (a typed price goes with the legs)
   showTab('parlays');
   scrollToEl($('builder'));
   try { $('bTitle').focus({ preventScroll: true }); } catch (err) { $('bTitle').focus(); }   // the keyboard follows the legs to the builder
@@ -3316,20 +3331,25 @@ function legTap(leg0, b) {
   /* on the Parlay Builder tab the builder is above the list: a leg it gains or loses moves the list, so the page is scrolled back by as
      much and the button pressed stays under the finger (the NFL hub's pbLegClick) */
   const box = b.closest('#pbBody'), top0 = box && typeof b.getBoundingClientRect === 'function' ? b.getBoundingClientRect().top : null;
-  /* a team bet "gid|side|kind", or (nhl v18, from the Top 30 and the levels) a player's line by its id, "gid|p|pid|stat|over0.5" */
+  /* a team bet "gid|side|kind", or (nhl v18, from the Top 50 and the levels) a player's line by its id, "gid|p|pid|stat|over0.5" */
   const prop = /\|p\|/.test(leg0), [gid, side, kind] = leg0.split('|'), id = prop ? leg0 : `${gid}|${side}|${kind}`; const g = gameById()[gid];
   const cur = g && (prop ? propLegById(id) : legOf(g, side, kind));
   const inWin = !!b.closest('#gameView'), tell = t => { if (inWin) { GP.msg = t; renderGame(); } };
   if (inWin) GP.sig = null;                             // a tick on a game's page: what it says stands at the next draw
+  /* a tap in the Top 50 or on a level: what the builder refused or replaced is said there too, under the line or in the level tapped */
+  const tier = b.closest('#spBody') && b.closest('.pb-tier'), day = tier && b.closest('.sp-day');
+  const at = box ? { in: 'pb', leg: leg0 } : tier && day ? { in: 'sp', date: day.dataset.spDay, tier: tier.dataset.tier } : null;
+  const tapSay = t => { if (t && at) TAP_SAID = Object.assign({ text: t }, at); };
   let said = '';
-  if (builderLegs(false).some(B => B.id === id)) { const m = takeOut(gid, l => legIdOf(l) !== id); said = `Taken out of your parlay: ${cur ? cur.desc : 'that bet'}.${m ? ' ' + m : ''}`; }   // a refusal or a replacement said before no longer stands
+  if (builderLegs(false).some(B => B.id === id)) { const m = takeOut(gid, l => legIdOf(l) !== id); tapSay(m); said = `Taken out of your parlay: ${cur ? cur.desc : 'that bet'}.${m ? ' ' + m : ''}`; }   // a refusal or a replacement said before no longer stands
   else {
     if (!g || hasStarted(g) || (prop ? !propRead(g) : !freshLine(g))) { rerender(); return; }        // a page left open past puck drop, or a line gone: no bet
     const L = cur; if (!L) { if (inWin) renderGame(); return; }
     const { msg, refused } = placeLeg(storeLeg(L), g);   // by the same-game rule: a second side bet or total on a game takes the first's place
-    if (refused) { BMSG = [refused]; if (inWin) GP.msg = refused; rerender(); return; }   // past the most legs of one game: nothing changes
+    TAP_SAID = null;                                     // the visitor's next change: what a tap said before goes, as the builder's note does
+    if (refused) { BMSG = [refused]; tapSay(refused); if (inWin) GP.msg = refused; rerender(); return; }   // past the most legs of one game: nothing changes
     BMSG = []; builderLegs(true);                       // in the builder's order, every other leg read again
-    if (msg) BMSG.unshift(msg);
+    if (msg) { BMSG.unshift(msg); tapSay(msg); }
     said = `${msg ? msg + ' ' : ''}Added to your parlay: ${L.desc}, ${fmtOdds(L.price)}.`;
   }
   save();
@@ -3352,6 +3372,12 @@ document.addEventListener('click', e => { const b = e.target.closest('button[dat
    any leg. More than one leg of a game stands by the same-game rule; a game that can take one leg alone (sgWhyNot) draws its first,
    or, where only a read keeps it to one, the leg the visitor last put in (SG_ONE) */
 let BMSG = [];
+/* what the builder refused or replaced on a tap in the Top 50 or on a level (nhl v33 after its review: the slip bar that said it went, and
+   the note above the builder is off screen from a list's foot): { text, in: 'pb', leg } drawn under the Top 50 line tapped, or { text,
+   in: 'sp', date, tier } in the level tapped; said in the builder's note too, and going with it at the visitor's next change to the
+   builder (a leg added or taken out anywhere, a level put in, Clear all, Start over). This page's memory alone */
+let TAP_SAID = null;
+const tapSaidHtml = t => `<p class="pb-said pb-tapsaid"><b>${esc(t.text)}</b></p>`;
 const RSAID = new Set();
 /* the builder's note (#bMsg, above its card; nhl v33, where the slip bar said it): what the builder refused, replaced or let go, drawn
    with every redraw on any tab, so it is what the builder says the moment the visitor opens it */
@@ -3494,7 +3520,7 @@ if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then =
 if (document.fonts && typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', () => { fitTiles(); });
 /* your book's parlay price (nhl v33, the NFL's): the one typed for these legs, where the builder draws exactly the legs it was typed for
    (a leg a Refresh odds read left out of the parlay is another parlay: DraftKings' price is shown till a reload brings the legs back) */
-const bookNow = legs => isObj(P.book) && P.book.legs === storedKey() && legs.length && legsKey(legs.map(L => L.id)) === P.book.legs ? P.book.am : null;
+const bookNow = legs => isObj(P.book) && P.book.legs === storedKey() && legs.length && legsKey(legs.map(bookIdL)) === P.book.legs ? P.book.am : null;
 function renderBuilder(legs) {
   const n = legs.length, q = quote(legs);
   for (const L of legs) SHOWN.add(L.game);
@@ -3524,7 +3550,10 @@ function renderBuilder(legs) {
   $('bNotes').innerHTML = notes.join('');
   /* What it pays: your book's price, where one was typed for these legs */
   const bk = bookNow(legs), useDec = bk === null ? q.dec : dec(bk), pays = cents(q.stake * useDec), profit = cents(pays - q.stake);
-  if (document.activeElement !== $('bookPrice')) $('bookPrice').value = bk === null ? '' : fmtOdds(bk);
+  /* the box shows the price applied; while it is typed in it is left alone, but for a price that reads and is not the one applied (the legs
+     it was typed for changed under the visitor's hand: it went with them) */
+  { const bp = $('bookPrice'), tv = bookRead(bp.value);
+    if (document.activeElement !== bp || (tv !== null && tv !== bk)) { bp.value = bk === null ? '' : fmtOdds(bk); bp.removeAttribute('aria-invalid'); } }
   /* three boxes (the NFL's): DraftKings' fair chance (est. where a same-game correction or a Yes price's margin is in it) and what the stake is
      expected to return at it, the model's chance under; the price (est. on a same-game parlay, the legs multiplied under it) and the fair
      price; what it pays. A price you typed takes DraftKings' place in what it pays and is said so */
@@ -3575,19 +3604,21 @@ $('stake').addEventListener('input', () => { const v = stakeRead($('stake').valu
 $('stake').addEventListener('change', () => { const v = stakeRead($('stake').value); setStake(v === null ? pbStake() : v); $('stake').value = String(pbStake()); });
 $('chips').addEventListener('click', e => { const b = e.target.closest('[data-chip]'); if (b) setStake(+b.dataset.chip); });
 /* your book's price: as it is typed, a price that reads takes DraftKings' place in what the parlay pays (stored with its legs' key); an empty
-   box clears it; a box left with what does not read shows the price kept, or nothing, once left */
+   box clears it; what does not read ("+99", "abc") leaves no price applied (nhl v33 after its review: the one typed before went on paying):
+   DraftKings' price is shown and the box marked invalid until it reads, and a box left so is emptied */
 $('bookPrice').addEventListener('input', () => {
-  const legs = builderLegs(false); if (!legs.length || legsKey(legs.map(L => L.id)) !== storedKey()) return;
+  const legs = builderLegs(false); if (!legs.length || legsKey(legs.map(bookIdL)) !== storedKey()) return;
   const v = $('bookPrice').value.trim(), am = bookRead(v);
-  if (!v) P.book = undefined; else if (am === null) return; else P.book = { am, legs: storedKey() };
+  P.book = v && am !== null ? { am, legs: storedKey() } : undefined;
+  if (v && am === null) $('bookPrice').setAttribute('aria-invalid', 'true'); else $('bookPrice').removeAttribute('aria-invalid');
   save(); renderBuilder(legs);
 });
-$('bookPrice').addEventListener('change', () => { const legs = builderLegs(false), bk = bookNow(legs); $('bookPrice').value = bk === null ? '' : fmtOdds(bk); });
+$('bookPrice').addEventListener('change', () => { const legs = builderLegs(false), bk = bookNow(legs); $('bookPrice').value = bk === null ? '' : fmtOdds(bk); $('bookPrice').removeAttribute('aria-invalid'); });
 $('pFinish').addEventListener('click', () => { const legs = builderLegs(true); if (legs.length < 2) { rerender(); return; } openCard(legs, 'Your parlay', $('pFinish'), true); });
 $('clearParlay').addEventListener('click', () => {
   const drawn = builderLegs(false), n = drawn.length, h = heldOut(drawn).length; if (!n) return;
   if ((n >= 2 || h) && !confirm(`Clear the ${legsN(n)} from the builder${h ? `, and the ${legsN(h)} kept on this device that it leaves out of the parlay` : ''}?`)) return;
-  P.legs = []; P.book = undefined; BMSG = []; save(); rerender();
+  P.legs = []; P.book = undefined; BMSG = []; TAP_SAID = null; save(); rerender();
 });
 
 /* ---------- grading a leg (X Parlays' slips; the saved parlays' grading until nhl v33, which took the list off the page and keeps it in
@@ -3693,22 +3724,30 @@ function cardOf(legs, origin, fromBuilder) {
   const days = [...new Set(legs.map(L => etDay(L.start)))];
   const dates = days.length > 1 ? `${days[0]} – ${days[days.length - 1]}` : days[0] || '';
   const allDK = legs.every(legDK);
+  /* the price it pays (nhl v33 after its review, the NFL's card): your book's, where one was typed for exactly these legs in the builder
+     (the card, its image and its Share text then say "your book's price", DraftKings' beside it), else DraftKings' (an estimate on a
+     same-game parlay) or the book's */
+  const bk = fromBuilder ? bookNow(legs) : null, own = bk !== null, pd = own ? dec(bk) : q.dec, est = !own && q.est;
+  const px = { own, am: own ? fmtOdds(bk) : q.am, dec: pd, imp: 1 / pd, est, pays: own ? cents(q.stake * pd) : q.pays };
+  px.profit = own ? cents(px.pays - q.stake) : q.profit;
+  px.note = own ? `your book's price (${allDK ? 'DraftKings' : 'the book'} ${q.am}${q.est ? ' est.' : ''})` : allDK ? "DraftKings' price" : "the book's price";
   /* DraftKings' fair chance first, the model's beside it (with a player leg the props model's part is on trial: never "model says"),
      then the chance the price implies; a same-game price is an estimate, and says so on the card, its image and its Share text */
-  const priceSays = `the price says ${pct1(q.imp)}${q.est ? ' (est.)' : ''}`;
+  const priceSays = `the price says ${pct1(px.imp)}${est ? ' (est.)' : ''}`;
   const modelBit = q.p === null ? '' : `model ${pct1(q.p)}${q.props ? ' (props model on trial)' : ''}`;
   const fairTxt = q.fair === null ? null : `Fair chance all ${n} land ${pct1(q.fair)}${q.fairEst ? ' (est.)' : ''}`;
   /* nhl v33, the NFL's line: the fair chance, what $1 is expected to return at it on the price, the price's own chance; the model's after it
      (the levels and the Top 50 rank on it) */
-  const evR = q.fair === null ? 0 : Math.round((q.fair * q.dec - 1) * 100), evTxt = `expected ${evR < 0 ? '−' : evR > 0 ? '+' : ''}${Math.abs(evR)}%`;
+  const evR = q.fair === null ? 0 : Math.round((q.fair * px.dec - 1) * 100), evTxt = `expected ${evR < 0 ? '−' : evR > 0 ? '+' : ''}${Math.abs(evR)}%`;
   const chance = fairTxt !== null ? [fairTxt, [evTxt, priceSays, modelBit].filter(Boolean).join(' · ')]
     : q.p !== null ? [`Model's chance all ${n} land ${pct1(q.p)} · ${priceSays}`, "No fair chance: it needs both of DraftKings' prices on every leg"]
-    : [`The price's chance all ${n} land ${pct1(q.imp)}${q.est ? ' (est.)' : ''}`, "No fair or model chance on every leg"];
-  const title = `${n}-leg parlay ${q.am}${q.est ? ' (estimated price)' : ''}`;
+    : [`The price's chance all ${n} land ${pct1(px.imp)}${est ? ' (est.)' : ''}`, "No fair or model chance on every leg"];
+  const title = `${n}-leg parlay ${px.am}${own ? " (your book's price)" : est ? ' (estimated price)' : ''}`;
   const lines = legs.map((L, i) => `${i + 1}. ${L.who}: ${L.bet} (${fmtOdds(L.price)}${L.prop ? `, DraftKings as read ${etClock(L.at)}` : ''})`);
-  lines.push(`Stake ${money(q.stake)} · Pays ${money(q.pays)}${q.est ? ' (est.)' : ''}`);
+  lines.push(`Stake ${money(q.stake)} · Pays ${money(px.pays)}${own ? " at your book's price" : est ? ' (est.)' : ''}`);
   lines.push(fairTxt !== null ? chance.join(' · ') : chance[0]);
-  if (q.est) lines.push(`Estimated price: ${SGP_WHY}; the legs' prices multiplied would be ${q.productAm}.`);
+  if (own) lines.push(`Your book's price ${px.am}; ${allDK ? "DraftKings'" : "the book's"} ${q.est ? 'estimated ' : ''}price would be ${q.am}.`);
+  else if (q.est) lines.push(`Estimated price: ${SGP_WHY}; the legs' prices multiplied would be ${q.productAm}.`);
   const hand = plan.rows.filter(r => !r.id), k = plan.open.length;
   if (k) {
     const handNums = hand.map(r => r.n), handText = handNums.length ? `; add leg${handNums.length > 1 ? 's' : ''} ${handNums.length > 1 ? handNums.slice(0, -1).join(', ') + ' and ' + handNums[handNums.length - 1] : handNums[0]} by hand` : '';
@@ -3718,17 +3757,19 @@ function cardOf(legs, origin, fromBuilder) {
   if (hand.length) { lines.push('Add by hand at DraftKings:'); for (const r of hand) lines.push(`${r.n}. ${r.L.who} ${r.L.bet} (${r.short})`); }
   lines.push(SITE);
   const first = legs.map(L => L.start).sort((a, b) => Date.parse(a) - Date.parse(b))[0];
-  return { legs, q, plan, origin, fromBuilder, dates, allDK, chance, title, text: lines.join('\n'), file: `nhl-parlay-${etDate(first)}-${n}legs.png`, made: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
+  return { legs, q, px, plan, origin, fromBuilder, dates, allDK, chance, title, text: lines.join('\n'), file: `nhl-parlay-${etDate(first)}-${n}legs.png`, made: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
 }
+/* the card's sub line under the price: its decimal and implied chance, and whose price it is */
+const pcSub = c => { const q = c.q, x = c.px; return x.est ? `${x.dec.toFixed(2)} decimal · ${pct1(x.imp)} implied · an estimate of DraftKings' same-game price · the legs multiplied ${q.productAm}` : `${x.dec.toFixed(2)} decimal · ${pct1(x.imp)} implied · ${x.note}`; };
 function cardHtml(c) {
-  const q = c.q;
+  const q = c.q, x = c.px;
   return `<div class="pc-card">
     <div class="pc-head"><div class="pc-mark"><span>X NHL BETS</span><i></i><span class="pc-kick">${esc(c.origin.toUpperCase())}</span></div>
-      <div class="pc-row"><div class="pc-title">${q.n}-leg parlay</div><div class="pc-price">${q.am}${q.est ? '<span class="pc-est">est.</span>' : ''}</div></div>
+      <div class="pc-row"><div class="pc-title">${q.n}-leg parlay</div><div class="pc-price"${x.own ? ` title="Your book's price"` : ''}>${x.am}${x.est ? '<span class="pc-est">est.</span>' : ''}</div></div>
       <div class="pc-sub">${esc(c.dates)}</div>
-      <div class="pc-sub">${q.est ? `${q.dec.toFixed(2)} decimal · ${pct1(q.imp)} implied · an estimate of DraftKings' same-game price · the legs multiplied ${q.productAm}` : `${q.dec.toFixed(2)} decimal · ${pct1(q.imp)} implied · ${c.allDK ? "DraftKings' price" : "the book's price"}`}</div>${q.est ? `<div class="pc-sub">${esc(SGP_WHY)}.</div>` : ''}</div>
+      <div class="pc-sub">${esc(pcSub(c))}</div>${x.est ? `<div class="pc-sub">${esc(SGP_WHY)}.</div>` : ''}</div>
     <ol class="pc-legs">${c.legs.map((L, i) => `<li><span class="pc-n">${i + 1}</span><div><span class="pc-who">${esc(L.who)}</span><span class="pc-what">${esc(L.bet)}</span><span class="pc-meta">${esc(L.mu)} · ${esc(etWhen(L.start))}${L.prop ? ` · DraftKings, read ${esc(etClock(L.at))}` : ''}</span></div><span class="pc-lp">${fmtOdds(L.price)}</span></li>`).join('')}</ol>
-    <div class="pc-money"><div><span>Stake</span><b>${money(q.stake)}</b></div><div><span>Pays</span><b>${money(q.pays)}</b></div><div class="pc-win"><span>Profit</span><b>+${money(q.profit)}</b></div></div>
+    <div class="pc-money"><div><span>Stake</span><b>${money(q.stake)}</b></div><div><span>Pays</span><b>${money(x.pays)}</b></div><div class="pc-win"><span>Profit</span><b>+${money(x.profit)}</b></div></div>
     <div class="pc-chance">${c.chance.map(t => `<div>${esc(t).replace(/(\d+\.\d%)/g, '<b>$1</b>')}</div>`).join('')}</div>
     <div class="pc-foot"><b>${SITE}</b><span>Made ${esc(c.made)}</span></div></div>`;
 }
@@ -3786,7 +3827,7 @@ document.addEventListener('keydown', e => {
   if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); }
   else if (!e.shiftKey && (i === -1 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
 });
-$('pcAgain').addEventListener('click', () => { P.legs = []; P.book = undefined; BMSG = []; save(); rerender(); closeCard($('bTitle')); });
+$('pcAgain').addEventListener('click', () => { P.legs = []; P.book = undefined; BMSG = []; TAP_SAID = null; save(); rerender(); closeCard($('bTitle')); });
 /* Share link: one plain text, the link inside it, by the share sheet; else copied */
 async function copyText(t) {
   let ok = false;
@@ -3809,7 +3850,7 @@ $('pcLink').addEventListener('click', async () => {
 });
 /* the card as a picture: the same card drawn on a canvas 540 CSS px wide, at twice its size */
 function drawCard(ctx, c, paint) {
-  const W = 540, pad = 22, q = c.q;
+  const W = 540, pad = 22, q = c.q, x = c.px;
   const F = (w, s, fam) => `${w} ${s}px ${fam === 'd' ? 'Unbounded, Manrope, system-ui, sans-serif' : 'Manrope, system-ui, -apple-system, "Segoe UI", sans-serif'}`;
   const col = { bg: '#2A3043', bg2: '#30374B', panel: '#363D52', line: '#4A5269', line2: '#59627B', ink: '#F6F7FB', ink2: '#CDD2DF', muted: '#B3B9CB', ice: '#5FD4FF', gold: '#FFD166', lime: '#CDFF4F' }; /* the page's --bg to --ink-2; muted is --muted-ink, since the image's quiet text sits on --panel */
   const text = (s, x, y, font, color, align) => { ctx.font = font; if (paint) { ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.fillText(s, x, y); } };
@@ -3826,10 +3867,10 @@ function drawCard(ctx, c, paint) {
   const kick = c.origin.toUpperCase(), kf = F(800, 11), kw = width(kick, kf) + 20;
   rect(W - pad - kw, 18, kw, 24, 12, 'rgba(95,212,255,.16)'); text(kick, W - pad - kw / 2, 34, kf, col.ice, 'center');
   text(`${q.n}-leg parlay`, pad, 76, F(700, 24, 'd'), col.ink);
-  text(q.am, W - pad, 78, F(900, 30, 'd'), col.gold, 'right');
-  if (q.est) text('est.', W - pad, 98, F(800, 12), col.gold, 'right');
+  text(x.am, W - pad, 78, F(900, 30, 'd'), col.gold, 'right');
+  if (x.est) text('est.', W - pad, 98, F(800, 12), col.gold, 'right');
   text(c.dates, pad, 100, F(600, 13), col.ink2);
-  text(q.est ? `${q.dec.toFixed(2)} decimal · an estimate of DraftKings' same-game price` : `${q.dec.toFixed(2)} decimal · ${pct1(q.imp)} implied · ${c.allDK ? "DraftKings' price" : "the book's price"}`, pad, 120, F(600, 13), col.ink2);
+  text(x.est ? `${x.dec.toFixed(2)} decimal · an estimate of DraftKings' same-game price` : pcSub(c), pad, 120, F(600, 13), col.ink2);
   y = headH + 6;
   /* the legs */
   const lw = W - pad * 2 - 34 - 70;
@@ -3847,7 +3888,7 @@ function drawCard(ctx, c, paint) {
     y += h;
   });
   /* the money: three tiles a row, the figures stepping down from 19px to 14px, then onto a second row */
-  const tiles = [['STAKE', money(q.stake), col.ink], ['PAYS', money(q.pays), col.ink], ['PROFIT', '+' + money(q.profit), col.lime]];
+  const tiles = [['STAKE', money(q.stake), col.ink], ['PAYS', money(x.pays), col.ink], ['PROFIT', '+' + money(x.profit), col.lime]];
   const gap = 8, inner = W - pad * 2;
   let size = 19, perRow = 3;
   const fits = (s, k) => tiles.every(t => width(t[1], F(700, s, 'd')) + 20 <= (inner - gap * (k - 1)) / k);
@@ -3861,7 +3902,7 @@ function drawCard(ctx, c, paint) {
   }
   /* the chances */
   y += 10;
-  for (const s of c.chance.concat(q.est ? [`Estimated price: ${SGP_WHY}.`] : [])) for (const part of wrap(s, F(600, 13.5), inner)) { text(part, pad, y + 4, F(600, 13.5), col.ink2); y += 20; }
+  for (const s of c.chance.concat(x.est ? [`Estimated price: ${SGP_WHY}.`] : [])) for (const part of wrap(s, F(600, 13.5), inner)) { text(part, pad, y + 4, F(600, 13.5), col.ink2); y += 20; }
   /* the footer */
   y += 12;
   if (paint) { ctx.fillStyle = col.line; ctx.fillRect(0, y, W, 1); }
@@ -3909,15 +3950,15 @@ function renderParlays() {
 }
 function rerender() {
   const t = curTab(), a = document.activeElement, ds = a && a.dataset ? a.dataset : null;
-  const key = ds ? ['leg', 'pp'].find(k => ds[k] !== undefined) : null, val = key ? ds[key] : null, box = key && a.closest('#pbBody, #spBody');      // the Games list keeps the keyboard on its own row (renderGames)
+  const key = ds && ds.leg !== undefined ? 'leg' : null, val = key ? ds[key] : null, box = key && a.closest('#pbBody, #spBody');      // the Games list keeps the keyboard on its own row (renderGames)
   /* a suggested leg's Add: the levels of a day share legs, so it is found again in its own day and level, never the first copy */
   const tier = box && box.id === 'spBody' && a.closest('.pb-tier'), day = tier && a.closest('.sp-day');
   const scope = tier && day ? `#spBody .sp-day[data-sp-day="${day.dataset.spDay}"] .pb-tier[data-tier="${tier.dataset.tier}"]` : null;
   if (t === 'parlays') renderParlays(); else if (t === 'games') { SHOWN = new Set(); renderGames(); } else if (t === 'suggest') { SHOWN = new Set(); renderSuggest(); }
   if (gameOpen()) renderGame();                                    // a game's page drawn on the builder as it now stands, its place and its focus kept
   noteB();
-  /* a bet button or a Player props button redrawn under the visitor's finger keeps the focus, where it is still offered */
-  if (key && box && !document.contains(a)) { const nb = [...document.querySelectorAll(`${scope || '#' + box.id} button[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}]`)].find(x => x.dataset[key] === val); if (nb) nb.focus(); }
+  /* a Top 50 line's or a level leg's Add redrawn under the visitor's finger keeps the focus, where it is still offered */
+  if (key && box && !document.contains(a)) { const nb = [...document.querySelectorAll(`${scope || '#' + box.id} button[data-leg]`)].find(x => x.dataset.leg === val); if (nb) nb.focus(); }
 }
 /* every half minute, and when the page comes back into view: a game shown as still to come that has
    started leaves every level, the lists and the builder (said there), and an emptied slate moves on */
@@ -4415,8 +4456,6 @@ function ppText(q) {
   if (q.off) parts.push(`${plural(q.off, 'game', 'games')} called off at ESPN: not shown`);
   return ` DraftKings' player props: ${parts.join(', ')}.`;
 }
-/* the button in Pick your own legs (a game's card opens its page itself), which opens the game's page: there for a game still to come
-   with projections, a read or a fresh line */
 
 /* every player of the game: the props model's projection for each stat (the published distribution), DraftKings' main line
    and Yes ladder for each stat from the read, matched by ESPN's athlete id; the club and name from the projections, else the
@@ -4803,7 +4842,7 @@ function closeGame(quiet) {
   document.body.classList.remove('modal-open');
   if (quiet) return;
   const vis = el => !!el && el.isConnected && !el.closest('[hidden]');
-  const back = vis(op) ? op : [...document.querySelectorAll('#gamesList [data-game], button[data-pp]')].find(b => vis(b) && (b.dataset.game || b.dataset.pp) === gid) || $('tabs').querySelector('button.on');
+  const back = vis(op) ? op : [...document.querySelectorAll('#gamesList [data-game]')].find(b => vis(b) && b.dataset.game === gid) || $('tabs').querySelector('button.on');
   if (back && back.focus) back.focus();
 }
 /* one listener each on the page's own box: nothing is bound again on a draw */
@@ -5011,8 +5050,6 @@ window.addEventListener('keydown', e => {
   if (e.shiftKey && (at === first || !md.contains(at))) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && (at === last || !md.contains(at))) { e.preventDefault(); first.focus(); }
 }, true);
 
-/* a Player props button (Pick your own legs) opens the game's page */
-document.addEventListener('click', e => { const b = e.target.closest('button[data-pp]'); if (b) openGame(b.dataset.pp, b); });
 /* a player's price ticked on the game's page: that leg into the builder (or out of it), by the builder's same-game rule, said in the
    page's own status line; the page drawn again with its place and the keyboard's kept, a refusal leaving the box unticked */
 function ppAdd(key) {
@@ -5040,7 +5077,7 @@ function ppAdd(key) {
   else {
     const r = placeLeg(st, g);
     if (r.refused) { GP.msg = r.refused; renderGame(); return; }
-    BMSG = []; builderLegs(true);
+    BMSG = []; TAP_SAID = null; builderLegs(true);
     if (r.msg) BMSG.unshift(r.msg);
     said = `${r.msg ? r.msg + ' ' : ''}Added to your parlay: ${L.desc}, ${fmtOdds(L.price)}, DraftKings as read ${hhmm(L.at)}.`;
   }

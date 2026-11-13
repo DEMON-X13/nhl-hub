@@ -1254,22 +1254,33 @@ five at most; the window `mm.club` a club, thirty at most; "Goalies confirmed: n
 state as published, every day of the select, the card or none and every "Show the top N" row for row; (b) on made-up copies two days
 out by the page's clock, three made-up games planting a skater at the tag, two under it, a tie on the shift ordered by the part and
 another by the id, one just under the floor, a side below 1 and a club with five listed (one bubble, three window rows), then the tag
-null, a side's factor junk with a game's `cx` half gone, a factor of 0 with a game's `cx` gone and the block gone; (c) the behaviour: the
-card's place (after the bar's source line, over Refresh odds), a bubble opening its game's page at its player (All skaters ticked where
-the cut leaves him out, his lines open, his row and lines ringed, the keyboard on his row, the focus back on the bubble), the tag on
-his row alone with the row's title and on a suggested level's leg exactly by the rule (open and locked: his Over in points, goals or
-assists and his anytime goal; never shots, blocks, an Under, 2+ goals, a listed skater under the tag or a team bet), the Mismatches
-button exactly on a game with a listed row and its window row for row, the window's focus, Tab, Escape, an outside click, a row's name,
-another tab, its table held as every table is (`tableHeldWrongs`), a Refresh odds press leaving the card as it was; (d) the clock: each
-puck drop taking its game's rows (the window open follows; a game's window open says the puck dropped; the card goes with the last),
-two days out no card, button or tag and a day on the card; (e) nothing asked or stored; and both looks' contrast and focus rings on
-the card, the window, the game's page from a bubble and its Mismatches window. THE GAME'S PAGE holds the tag and the Mismatches window on
-every game it walks, so a published state with the block is held game by game. Its checks were proved on 20 faults planted in a copy of
-the page, each caught (a row under the floor drawn, two bubbles of one club, the tag at the floor, on an Under and on a shots leg, a card
-on a state without the block, a bubble's words off, the window's focus not given back, Tab let out of it, the card left after the last
-listed puck drop, the button on every game, a tie ordered the wrong way, a likely goalie counted confirmed, a card past tomorrow, Show the
-top N with no more to show, no ring, the window left open on another tab, a game's window not told the puck dropped, the tag's title not
-the row's, four a club in the window). `NHL_HTML`
+null, a side's factor junk with a game's `cx` half gone, a factor of 0 with a game's `cx` gone, the block gone, five games more on the day
+(thirteen clubs listed and 35 rows for the window, so five bubbles and thirty rows bind) and the floor and the tag each set to a planted
+row's own shift (both listed and tagged: the edges are inclusive); (c) the behaviour: the card's place (after the bar's source line,
+over Refresh odds), a bubble opening its game's page at its player (All skaters ticked where the cut leaves him out and left behind with
+his page, a tick of the visitor's own kept, his lines open, his row and lines ringed, the keyboard on his row, the focus back on the
+bubble), the tag on his row alone with the row's title, in the game's Lineups window beside the tagged skater alone, and on a suggested
+level's leg exactly by the rule (open and locked: his Over in points, goals or assists and his anytime goal; never shots, blocks, an
+Under, 2+ goals, a listed skater under the tag or a team bet), the Mismatches button exactly on a game with a listed row and its window
+row for row, the window's focus, Tab, Escape, an outside click, a row's name, another tab, its table held as every table is
+(`tableHeldWrongs`), Refresh odds presses ESPN answers with a DraftKings line for every planted game (from the Games tab and from the
+bubble's game's page, every price moved) leaving the card, the ring and the tag as they were; (d) the clock: each puck drop taking its
+game's rows (the window open follows; a game's window open says the puck dropped; the card goes with the last), two days out no card,
+button or tag (at 14:00Z and at 03:45Z, late in the Eastern evening with the UTC date a day on) and a day on the card; (e) nothing
+asked or stored; (f) ESPN's word on a Refresh scores read: a game under way before its puck drop by the clock and a game postponed
+each leaving the card, the window and its page's button and tags, a game's window open saying "The puck has dropped." or "Postponed at
+ESPN.", and on again its rows back; and both looks' contrast and focus rings on the card, the window, the game's page from a bubble,
+its Mismatches window and its Lineups window with the tag. THE GAME'S PAGE holds the tag (on the rows and in Lineups) and the
+Mismatches window on every game it walks, so a published state with the block is held game by game. Its checks were proved on 20
+faults planted in a copy of the page, each caught (a row under the floor drawn, two bubbles of one club, the tag at the floor, on an
+Under and on a shots leg, a card on a state without the block, a bubble's words off, the window's focus not given back, Tab let out of
+it, the card left after the last listed puck drop, the button on every game, a tie ordered the wrong way, a likely goalie counted
+confirmed, a card past tomorrow, Show the top N with no more to show, no ring, the window left open on another tab, a game's window not
+told the puck dropped, the tag's title not the row's, four a club in the window), and after the build's review on 15 more, each caught:
+seven the build's smoke passed (six bubbles, twenty window rows, the floor and the tag exclusive at their edges, today from the UTC date,
+a press's line dropping the rows or the ring) and eight on what the review changed (All skaters left ticked, ESPN's word ignored, a
+postponed game said dropped, a window not following a scores read, the count line counting a game ESPN has under way or one the props
+model does not project, the Lineups tag missing or on every listed skater). `NHL_HTML`
 tries another page in place of `index.html`. The season is the Eastern date's
 (`E.seasonOf`), nowhere else. Between seasons the first run from August closes the old one into
 `data/season_<year>.json` (read beside `history.json` by `tools/hist.js`), so its results stay in
@@ -2128,14 +2139,18 @@ terms and gated, on the spec of 12 November 2026 (its section 7's recommendation
   the focus goes back to Show the top N; a row's name is a 44px button, and it or a click on the row opens the player as a bubble does;
   another tab closes it; its table in `.wrap` with the Player held). A bubble opens **the game's page at his row** (since nhl v27 the
   page took the Player props window's place): his lines open, All skaters ticked where the page's cut of six forwards and four defencemen
-  leaves him out (the NFL's fold opened), scrolled to 72px from the top, his row and its lines ringed in `--pick` until another row is
+  leaves him out (the NFL's fold opened; ticked for him alone, `GP.mmAll`: that page shut or the next game opened goes back to the cut,
+  while a tick of the visitor's own stays), scrolled to 72px from the top, his row and its lines ringed in `--pick` until another row is
   tapped (no `--pick-soft` wash: the role and the arrow fell under 4.5:1 on it in the dark look), the keyboard on his row and back on the
-  bubble when the page shuts. **The tag** beside a tagged skater's name on his row of the game's page, and on a suggested level's leg
-  (open or locked) on his Over in points, goals or assists or his anytime goal in that game: never his shots, blocks or saves, an Under,
-  2+ goals or a team bet. A game's page draws the Mismatches button only on a game with a listed row (about 85% of games have none: a
-  button opening "No mismatches in this game." would be a dead end). The watch (a game the card lists is in its set) draws the card
-  again at each puck drop, its rows gone, and a window open follows; a Refresh odds press changes no row (the projections are the job's).
-  Nothing is fetched or stored.
+  bubble when the page shuts. **The tag** beside a tagged skater's name on his row of the game's page and in the game's Lineups window
+  (wherever a game's page lists him; not in the head's three biggest projections, a short name and a figure in a narrow cell), and on a
+  suggested level's leg (open or locked) on his Over in points, goals or assists or his anytime goal in that game: never his shots,
+  blocks or saves, an Under, 2+ goals or a team bet. A game's page draws the Mismatches button only on a game with a listed row (about
+  85% of games have none: a button opening "No mismatches in this game." would be a dead end). A game leaves the Mismatches at its puck
+  drop by the visitor's clock or as soon as a scores read in this browser has ESPN calling it under way, over or off (`mmGone`, the
+  game's page's own lock): its rows, its page's button and tags go, and its window open says "The puck has dropped." or "Postponed at
+  ESPN."; on again at ESPN, back. The watch (a game the card lists is in its set) draws the card again at each puck drop, its rows gone,
+  and a window open follows; a Refresh odds press changes no row (the projections are the job's). Nothing is fetched or stored.
 - **The job's part** (`tools/props.js`, `MM` and `project()`): `props.mm = { v, stat, line, list, tag, club, ctx }` and each projected
   game's `cx = { home: { xg, f }, away: { xg, f } }`, `f` the factor its skaters' goals, assists and points were multiplied by
   (`r4((xg / ctx)^e)`, the lead stat's constants). `update.js` copies both into the state unchanged (it copies props.json whole and

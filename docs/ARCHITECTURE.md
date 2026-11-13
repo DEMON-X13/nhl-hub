@@ -277,11 +277,13 @@ shades are tokens (`--m-alpha`, `--m-joker`, `--m-elom`, `--m-call`, `--rv-up`, 
 
 THE PARLAY BUILDER (nhl v7, laid out as the NFL hub's in nhl v17 and as its app v147 in nhl v33, `index.html`, every class `pb-` for
 the tab, `sp-` for the Suggested Parlays tab and `pc-` for the card; CLAUDE.md has the rules): on the Parlay Builder tab the builder's
-note (`#bMsg`: what the builder refused, replaced or let go, drawn with every redraw, `noteB`), the builder's card (`#builder`,
+note (`#bMsg`: what the builder refused, replaced or let go, drawn with every redraw, `noteB`; a refusal or a replacement on a tap in
+the Top 50 or on a level said where the tap was too, `TAP_SAID`, `.pb-tapsaid`, under the line or in the level), the builder's card (`#builder`,
 `renderBuilder`, re-read from the state on every draw: empty its title, Refresh odds and "No legs yet."; with legs the legs as a table,
 `#bLegs`, `legRow`, Player held at the left and Remove at the right, a player's mark on the injury report by `injOf`, what DraftKings' slip
 will not take by the card's own `dkPlan`; the read line; What it pays, the stake, its six amounts and your book's price, `#bookPrice`,
-`bookRead`, stored with its legs' key as `book` and cleared by `save()` whenever the stored legs change; three boxes, `#parlayTotals`;
+`bookRead`, stored with its legs' key as `book` (each leg's bet and a total's or a puck line's number, `bookIdOf` and `bookIdL`) and
+cleared by `save()` whenever the stored legs change, what does not read applying none (`aria-invalid`); three boxes, `#parlayTotals`;
 Finish parlay and Clear all), the pairs that move together (`#pbPairs`, `renderPairs`: each same-game pair's correlation from `SGP.rho`
 on `S.sgp`), and the Top 50 lines (`#pbPanel`, `renderPb`: Bet amount, Odds, Build from, Bet types, Day, Games, the notes, then
 `topList`'s two parts, up to 40 player lines in rounds across their stats by `PB_CHANCE` (`typeRounds`) and the game bets by the
@@ -290,7 +292,8 @@ Parlays tab (`#tab-suggest`) the record's row and today's and tomorrow's sets (`
 nhl v31 each the likeliest parlay by the model (`PB_CHANCE`) of 2 to 12 legs paying +110, +300 or +700 or more, found by an exact Pareto
 search (`pbLevel`) on every game and bet type of the day while it is open, the record's locked set from its first puck drop, each level
 drawn by its own rule's words; the one dated line on the change of rule, `#spChange`, for seven days); and the card window (`#pcWin`:
-"Open N of M legs in DraftKings", the NFL's chance line, Start over on a line of its own). Pick your own legs (`#plLines`, its bets
+"Open N of M legs in DraftKings", the NFL's chance line, Start over on a line of its own; from the builder at your book's price where
+one was typed for its legs, `cardOf`'s `px`). Pick your own legs (`#plLines`, its bets
 board), Save on this device, the saved list (`#savedList`; the list stays in `nhl_v1` untouched) and the slip bar (`#slip`) went in nhl v33. Its numbers are the state's alone: a leg is the game row's own chance, edge
 and prices, offered only on a fresh line (`line.at` is `published`) and a game not started by the visitor's
 clock. The levels take one leg a game, so their chance and price are products; since nhl v18 (the owner's call) a leg can be a

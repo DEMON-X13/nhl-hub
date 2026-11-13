@@ -1382,14 +1382,93 @@ async function parlayBuilder() {
   chk(!errors.length, 'no runtime error in the builder boot: ' + errors.join(' | '));
   holdRequests(w, 'the builder boot');
   await builderCardChecks();
+  await tapSaidChecks();
   return levelsOn;
+}
+/* ---- what the builder said of a tap, where the tap was (nhl v33 after its review: the slip bar that said it went, and the note over the
+   builder, #bMsg, is off screen from a list's foot): a Top 50 line's Add that replaces a stored leg of its slot, and one refused where the
+   list holds a player's points beside his own goals or assists; a level leg's Add that replaces one. The builder's sentence under the line
+   tapped (across its row) or in the level tapped, word for word as the note says it first, and nowhere else; over the list where the line
+   is not drawn now (its game unticked); gone at the visitor's next change to the builder ---- */
+async function tapSaidChecks() {
+  const AT = PUB + 60000, errs = [], w = await boot(AT, errs, { hash: 'parlays', keepDk: true }), d = w.document, $ = id => d.getElementById(id);
+  const said = () => [...d.querySelectorAll('.pb-tapsaid')], legsNow = () => JSON.parse(w.eval('JSON.stringify(P.legs.map(legIdOf))'));
+  const first = () => { const m = d.getElementById('bMsg').innerHTML.split('<br>')[0]; const x = d.createElement('div'); x.innerHTML = m; return txt(x); };
+  /* a leg's slot-mate: the other side of its total or its game's side bet, the player's other side at the same number */
+  const mateOf = id => { const s = id.split('|'); if (s[1] === 'p') { const m = /^(over|under)([\d.]+)$/.exec(s[4] || ''); return m ? `${s[0]}|p|${s[2]}|${s[3]}|${m[1] === 'over' ? 'under' : 'over'}${m[2]}` : null; } return s[2] === 'ou' ? `${s[0]}|${s[1] === 'over' ? 'under' : 'over'}|ou` : `${s[0]}|${s[1] === 'home' ? 'away' : 'home'}|${s[2]}`; };
+  const putMate = id => { const m = mateOf(id); if (!m) return false; w.eval(`legTap(${JSON.stringify(m)}, document.createElement('button'))`); if (canon(legsNow()) === canon([m])) return true; w.__confirm = true; $('clearParlay').click(); return false; };
+  const rows = [...d.querySelectorAll('#pbBody li.pb-trow')].map(r => r.dataset.id);
+  /* the Top 50: a replacement */
+  const rid = rows.slice(0, 12).find(id => putMate(id));
+  if (rid) {
+    const add = () => d.querySelector(`#pbBody button.t30-add[data-leg="${rid}"]`), row = () => d.querySelector(`#pbBody li.pb-trow[data-id="${rid}"]`);
+    add().click();
+    const s = said(), t = s.length ? txt(s[0]) : '';
+    chk(s.length === 1 && s[0].parentElement === row() && s[0].matches('p.pb-said.pb-tapsaid') && !!s[0].querySelector('b') && / replaced /.test(t) && t === first() && txt(add()) === 'Added' && canon(legsNow()) === canon([rid]),
+      `a Top 50 line's Add replacing a stored leg of its slot says so under the line tapped, across its row, as the builder's note says it first, and nowhere else (${rid}: "${t}"; ${s.length} said; the note "${first()}")`);
+    holdPanel(w, AT, 'a replacement said under its line');
+    /* its game unticked (a pick, not a change to the builder): the line is not drawn, and it is said over the list; ticked again, under it */
+    const box = d.querySelector(`#pbGrid input[data-g="${rid.split('|')[0]}"]`);
+    if (box) {
+      box.checked = false; box.dispatchEvent(new w.Event('change', { bubbles: true }));
+      const s2 = said();
+      chk(!row() && s2.length === 1 && s2[0].parentElement === $('pbNotes') && !$('pbNotes').hidden && txt(s2[0]) === t, `its game unticked, the line gone: said over the list instead (${s2.map(x => x.parentElement.id || x.parentElement.className).join(', ')})`);
+      d.querySelector(`#pbGrid input[data-g="${rid.split('|')[0]}"]`).checked = true; d.querySelector(`#pbGrid input[data-g="${rid.split('|')[0]}"]`).dispatchEvent(new w.Event('change', { bubbles: true }));
+      chk(said().length === 1 && said()[0].parentElement === row(), 'ticked again: under its line again');
+    }
+    add().click();
+    chk(!said().length && !legsNow().length && !txt($('bMsg')).includes(t), `the visitor's next change (the line taken out): the sentence goes, here and in the note (${said().length} said; "${txt($('bMsg'))}")`);
+  } else console.log('  no line of the Top 50 whose slot-mate the builder takes: a replacement said under its line is not held on this state');
+  w.__confirm = true; $('clearParlay').click();
+  /* the Top 50: a refusal. A player's points, goals or assists line of the list, his other line DraftKings posts that it nests with (his
+     goals or assists beside his points, his points beside them) put in first from the page's read, then the list line's Add */
+  const reads = JSON.parse(w.eval('JSON.stringify(PROPS.games)'));
+  const nestOf = id => { const s = id.split('|'), rd = reads[s[0]]; if (s[1] !== 'p' || !['pts', 'a', 'g'].includes(s[3]) || !rd || rd.status !== 200) return [];
+    const want = s[3] === 'pts' ? ['a', 'g'] : ['pts']; return rd.main.filter(r => String(r[0]) === s[2] && want.includes(r[1])).map(r => `${s[0]}|p|${s[2]}|${r[1]}|over${r[2]}`); };
+  let ref = null;
+  for (const id of rows.filter(x => /\|p\|/.test(x))) {
+    for (const m of nestOf(id)) { w.eval(`legTap(${JSON.stringify(m)}, document.createElement('button'))`); if (canon(legsNow()) === canon([m])) { ref = [id, m]; break; } w.__confirm = true; $('clearParlay').click(); }
+    if (ref) break;
+  }
+  if (ref) {
+    const [other, m] = ref, ob = () => d.querySelector(`#pbBody button.t30-add[data-leg="${other}"]`);
+    ob().click();
+    const s = said(), t = s.length ? txt(s[0]) : '';
+    chk(s.length === 1 && s[0].parentElement === d.querySelector(`#pbBody li.pb-trow[data-id="${other}"]`) && /^Not added: .* points and his own (assists|goals) are nearly one bet/.test(t) && t === first() && txt(ob()) === 'Add' && ob().getAttribute('aria-pressed') === 'false' && canon(legsNow()) === canon([m]),
+      `a refused Add in the Top 50 says why under the line tapped, which stays Add, as the builder's note says it (${other} beside ${m}: "${t}")`);
+    w.eval(`legTap(${JSON.stringify(m)}, document.createElement('button'))`);
+    chk(!said().length && !legsNow().length, 'the next change (the other line taken out) takes the refusal away');
+  } else console.log('  no points, goals or assists line in the Top 50 whose nested line DraftKings posts: a refusal said under its line is not held on this state');
+  w.__confirm = true; $('clearParlay').click();
+  /* a level: its first leg's slot-mate put in first, then the leg's Add in that level: said in that level alone, between its legs and its
+     buttons; gone at the next change */
+  d.querySelector('#tabs button[data-tab="suggest"]').click();
+  /* a day with the most levels drawn first, so "in no other level" is held where there is another */
+  const nLv = t => t.closest('.sp-day').querySelectorAll('.pb-tier:not(.none)').length;
+  const lv = [...d.querySelectorAll('#spBody .sp-day[data-sp-state="open"] .pb-tier:not(.none)')].sort((a, b) => nLv(b) - nLv(a)).map(t => ({ day: t.closest('.sp-day').dataset.spDay, tier: t.dataset.tier, n: nLv(t), legs: [...t.querySelectorAll('button.sp-add')].map(b => b.dataset.leg) }))
+    .flatMap(x => x.legs.map(leg => Object.assign({ leg }, x))).find(x => putMate(x.leg));
+  if (lv && lv.n < 2) console.log(`  ${lv.day} draws one level alone: a tap said in no other level of its day is not held on this state`);
+  if (lv) {
+    const card = () => d.querySelector(`#spBody .sp-day[data-sp-day="${lv.day}"] .pb-tier[data-tier="${lv.tier}"]`), ab = () => card().querySelector(`button.sp-add[data-leg="${lv.leg}"]`);
+    ab().click();
+    const s = said(), t = s.length ? txt(s[0]) : '';
+    chk(s.length === 1 && s[0].parentElement === card() && s[0].previousElementSibling && s[0].previousElementSibling.matches('ul.pb-tlegs') && s[0].nextElementSibling && s[0].nextElementSibling.matches('.pb-acts') && / replaced /.test(t) && t === first() && txt(ab()) === 'Added',
+      `a level leg's Add replacing a stored leg of its slot says so in that level, under its legs, as the builder's note says it first, and in no other level (${lv.tier} of ${lv.day}, ${lv.leg}: "${t}"; ${s.length} said)`);
+    holdSuggest(w, AT, 'a replacement said in its level');
+    ab().click();
+    chk(!said().length, `the next change (the leg taken out) takes it away (${said().length})`);
+  } else console.log('  no open level with a leg whose slot-mate the builder takes: a replacement said in its level is not held on this state');
+  chk(!errs.length, 'no runtime error saying a tap where it was: ' + errs.join(' | '));
+  w.close(); OPEN.delete(w);
 }
 /* ---- the builder's card (nhl v33, the NFL hub's) ----
    Its empty and full states; a row a leg by this smoke's own reading (the player and his mark on the injury report, the club or the
    total's two, the bet, "same game", the projection, the fair chance, the price, Remove); who is not expected to play, word for word; what
    DraftKings' slip will not take, by this smoke's reading of the ids and as the card's own plan (dkPlan) says it; the pairs that move
-   together, each strength worked out from data/corr.json's keys; and your book's price: what it pays, kept with its legs through a reload,
-   cleared by any change to them, by Clear all and Start over, and the one field the store gains */
+   together, each strength worked out from data/corr.json's keys; and your book's price: what it pays, kept with its legs (each bet and a
+   total's or a puck line's number) through a reload, carried by the card, its Share text and its image, none applied while what is typed
+   does not read, cleared by any change to them, by Clear all and Start over and by a read's new number taken in place of the one it was
+   typed for, and the one field the store gains */
 const S_SLIP_PROP = "Not on DraftKings' slip: no betslip id in ESPN's feed: add it by hand";
 function sSlip(L) {
   if (L.kind === 'prop') return S_SLIP_PROP;
@@ -1416,12 +1495,15 @@ async function builderCardChecks() {
     w.close(); OPEN.delete(w);
   }
   /* a copy of the state: three games with a fresh line and DraftKings' player lines read by the job; one player's line of each (the
-     first Out on the injury report, the second on injured reserve, the third day to day), and the first game's moneyline and total
-     beside its player (a same-game group beside two other games), the moneyline's DraftKings id gone and the total's on another number */
+     first Out on the injury report, the second on injured reserve, the third day to day), and the first game's moneyline and total Under
+     beside its player (a same-game group beside two other games), the moneyline's DraftKings id gone and the total's on another number;
+     and (nhl v33 after its review) a puck line on each of the other two, the second game's with its DraftKings id on its number and the
+     third's with an id on another number, so each of the three is a same-game pair or more and the Under's sign is held in the pairs.
+     Only games whose puck drop is ten minutes or more past the boot, so the page's running clock never reaches one */
   const reads = {}; for (const [gid, r] of Object.entries((M.props && M.props.games) || {})) { const x = dkSeed(r.dk); if (x) reads[gid] = x; }
   S = M;
   try {
-    const GP = M.games.filter(g => !sStarted(g, AT) && sFresh(g) && reads[g.id] && reads[g.id].status === 200 && g.line.total !== null && g.line.total !== undefined && g.ou && sLeg(g, 'home', 'ml') && sLeg(g, 'over', 'ou'))
+    const GP = M.games.filter(g => !sStarted(g, AT + 600000) && sFresh(g) && reads[g.id] && reads[g.id].status === 200 && g.line.total !== null && g.line.total !== undefined && g.ou && sLeg(g, 'home', 'ml') && sLeg(g, 'under', 'ou'))
       .map(g => [g, sPropLegs(g, reads, true, false).filter(L => L.mk === 'main' && L.grp !== 'G')]).filter(([, ls]) => ls.length).slice(0, 3);
     if (GP.length < 3) { console.log(`  fewer than three games with a fresh line and the job's player lines (${GP.length}): the builder's card is held on the levels' legs above`); return; }
     const [[G1, l1], [G2, l2], [G3, l3]] = GP, X = l1[0], Y = l2[0], Z = l3[0];
@@ -1431,9 +1513,20 @@ async function builderCardChecks() {
     plant(Z.team, { id: String(Z.pid), name: Z.name, pos: 'C' }, false);
     const n1 = String(+String(G1.id).slice(-6) + 86000000), tot = G1.line.total;
     G1.line.dk = { event: String(34000000 + +String(G1.id).slice(-6)), awayML: `0ML${n1}_3`, over: `0OU${n1}O${Math.round((tot + 1) * 100)}_1`, under: `0OU${n1}U${Math.round((tot + 1) * 100)}_3` };
+    /* the puck lines: a side DraftKings prices, its id in the gateway's shape, on its own number (add 0) or a goal past it (add 1) */
+    const plSide = g => ['home', 'away'].find(s => sLeg(g, s, 'pl')) || null;
+    const plDk = (g, side, add) => { const n = String(+String(g.id).slice(-6) + 86000000), hl = +g.line.homeLine, c = Math.round((Math.abs(hl) + add) * 100), sg = side === 'home' ? (hl < 0 ? 'N' : 'P') : (hl < 0 ? 'P' : 'N');
+      return { event: String(34000000 + +String(g.id).slice(-6)), [side + 'PL']: `0HC${n}${sg}${c}_${side === 'home' ? 1 : 3}` }; };
+    const s2 = plSide(G2), s3 = plSide(G3);
+    if (s2) G2.line.dk = plDk(G2, s2, 0); else console.log(`  ${G2.id} has no puck line priced: the puck line with its id on its number is not planted`);
+    if (s3) G3.line.dk = plDk(G3, s3, 1); else console.log(`  ${G3.id} has no puck line priced: the puck line with its id on another number is not planted`);
     const prop = L => ({ game: L.game, kind: 'prop', pid: String(L.pid), name: L.name, team: L.team, grp: L.grp, stat: L.stat, mk: L.mk, side: L.side, line: L.line, k: L.k, odds: L.price, other: L.other, at: reads[L.game].at, p: L.p, fair: L.fair, label: L.mu, text: `${L.name} ${L.bet}`, date: L.g.date, start: L.g.start });
     const team = L => ({ game: L.game, side: L.side, kind: L.kind, odds: L.price, line: L.num, p: L.p, fair: L.fair, label: L.mu, text: L.who, date: L.g.date, start: L.g.start });
-    const ML = sLeg(G1, 'home', 'ml'), OV = sLeg(G1, 'over', 'ou'), legs = [X, Y, Z, ML, OV].sort(sOrder), stored = legs.map(L => L.kind === 'prop' ? prop(L) : team(L));
+    const ML = sLeg(G1, 'home', 'ml'), UN = sLeg(G1, 'under', 'ou'), P2 = s2 ? sLeg(G2, s2, 'pl') : null, P3 = s3 ? sLeg(G3, s3, 'pl') : null;
+    const legs = [X, Y, Z, ML, UN, P2, P3].filter(Boolean).sort(sOrder), stored = legs.map(L => L.kind === 'prop' ? prop(L) : team(L));
+    const per = {}; for (const L of legs) per[L.game] = (per[L.game] || 0) + 1;
+    /* your book's price is kept with each leg's bet and number: a moneyline and a player's line by id, a total or a puck line by id and number */
+    const sBk = L => L.kind === 'prop' || L.kind === 'ml' ? L.id : `${L.id}@${+L.num}`, bkKey = ls => ls.map(sBk).sort().join(',');
     const sid = l => l.kind === 'prop' ? `${l.game}|p|${l.pid}|${l.stat}|${l.side}${l.line}` : `${l.game}|${l.side}|${l.kind}`;
     const errs = [], w = await boot(AT, errs, { state: JSON.stringify(M), hash: 'parlays', store: JSON.stringify({ legs: stored, ui: { tab: 'parlays' } }) }), d = w.document, $ = id => d.getElementById(id);
     const store = () => JSON.parse(w.localStorage.getItem('nhl_v1') || '{}');
@@ -1453,7 +1546,7 @@ async function builderCardChecks() {
       const tags = [...c[0].querySelectorAll('.ttag')].map(txt), wantTags = L.kind === 'ou' ? [S.teams[L.g.away].abbr, S.teams[L.g.home].abbr] : [S.teams[club].abbr];
       const st = statusOf(L), chip = c[0].querySelector('.pb-inj');
       const bet = L.kind === 'prop' ? L.bet : L.kind === 'ml' ? 'To win' : L.kind === 'pl' ? `${PBS.line(L.num)} puck line` : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num} goals`;
-      const sg = L.game === G1.id, slip = sSlip(L), pl = plan.find(x => x.id === L.id), planNote = !pl || pl.ok ? '' : L.kind === 'prop' ? S_SLIP_PROP : `Not on DraftKings' slip: ${pl.short}`;
+      const sg = per[L.game] > 1, slip = sSlip(L), pl = plan.find(x => x.id === L.id), planNote = !pl || pl.ok ? '' : L.kind === 'prop' ? S_SLIP_PROP : `Not on DraftKings' slip: ${pl.short}`;
       const why = [txt(own) !== name && `name "${txt(own)}" not "${name}"`, txt(c[0].querySelector('small')) !== sub && `under it "${txt(c[0].querySelector('small'))}"`, !eqA(tags, wantTags) && `tags ${tags}`,
         (st ? !chip || txt(chip) !== st[0] || chip.classList.contains('out') !== !!st[1] : !!chip) && `chip "${txt(chip)}"`,
         txt(c[1].querySelector('b')) !== bet && `bet "${txt(c[1].querySelector('b'))}"`, !!c[1].querySelector('.pill.sg') !== sg && 'same game', txt(c[1].querySelector('.dkslip')) !== slip && `slip note "${txt(c[1].querySelector('.dkslip'))}" not "${slip}"`, slip !== planNote && `the card's plan says "${planNote}"`,
@@ -1461,21 +1554,28 @@ async function builderCardChecks() {
         (txt(c[5]) !== 'Remove' || !c[5].querySelector('button.pb-rm') || !/^Remove /.test(c[5].querySelector('button.pb-rm').getAttribute('aria-label'))) && 'Remove'].filter(Boolean);
       if (why.length) bad.push(`${L.id}: ${why.join(', ')}`);
     });
-    chk(!bad.length && rows.length === legs.length, `every row: the player (his tag, name, his mark on the injury report: Out, IR, Day to day) or the club or the total's two, his position or "Game" and club v club; the bet, "same game" on the game of three legs, what DraftKings' slip will not take (this smoke's reading of the ids and the card's own plan alike: a player's line, the moneyline's id gone, the total's id on another number); the projection, the fair chance, the price; Remove (${bad.slice(0, 3).join(' | ')})`);
+    chk(!bad.length && rows.length === legs.length, `every row: the player (his tag, name, his mark on the injury report: Out, IR, Day to day) or the club or the total's two, his position or "Game" and club v club; the bet, "same game" on each game of two legs or more, what DraftKings' slip will not take (this smoke's reading of the ids and the card's own plan alike: a player's line, the moneyline's id gone, the total's id on another number, a puck line's id on another number, and nothing on a puck line whose id is on its number); the projection, the fair chance, the price; Remove (${bad.slice(0, 3).join(' | ')})`);
+    chk((!P2 || sSlip(P2) === '') && (!P3 || /^Not on DraftKings' slip: DraftKings had it at [+-]?[\d.]+ when its lines were last read$/.test(sSlip(P3))) && sSlip(UN) !== '', `the plants are what they say: ${P2 ? `${P2.id}'s id on its number` : 'no first puck line'}, ${P3 ? `${P3.id}'s on another (${sSlip(P3)})` : 'no second'}, the Under's on another (${sSlip(UN)})`);
     /* who is not expected to play, the read line, the mixed same-game line */
     const outs = legs.filter(L => L === X || L === Y), notes = [...$('bNotes').querySelectorAll('p')].map(txt);
     const outW = `${outs.length > 1 ? outs.slice(0, -1).map(L => L.name).join(', ') + ' and ' + outs[outs.length - 1].name : outs[0].name} ${outs.length > 1 ? 'are' : 'is'} not expected to play (${outs.map(L => L === X ? 'out' : 'injured reserve').join('; ')}).`;
     const ats = legs.map(L => L.kind === 'prop' ? Date.parse(reads[L.game].at) : Date.parse(L.g.line.at));
     chk(eqA(notes, [outW, `DraftKings' prices via ESPN, read ${sDayClock(Math.min(...ats))}${new Set(ats).size > 1 ? ' (the oldest)' : ''}; check the slip.`, 'Mixed same-game parlay: DraftKings may not open it as one slip.']) && $('bNotes').querySelector('p.pb-outs') && txt($('bNotes').querySelector('p.pb-outs')) === outW, `under the table, word for word: who is not expected to play, the read line, the mixed same-game line (${notes.join(' | ')})`);
-    /* the pairs that move together: G1's three legs, each pair's strength the same-game table's (data/corr.json's keys, signed by the end
-       each leg lands at), strongest first */
-    const g1 = legs.filter(L => L.game === G1.id), pairs = [];
-    for (let i = 0; i < g1.length; i++) for (let j = i + 1; j < g1.length; j++) pairs.push({ A: g1[i], B: g1[j], r: SG.rho(M.sgp, sgOf(M, stored[legs.indexOf(g1[i])]), sgOf(M, stored[legs.indexOf(g1[j])])), i, j });
+    /* the pairs that move together: every two legs of one game (G1's three, a player's Over, the moneyline and the total's Under; G2's and
+       G3's player and puck line), each pair's strength the same-game table's (data/corr.json's keys, signed by the end each leg lands at,
+       so the Under's pairs are held on their own sign), strongest first, then in the builder's order */
+    const pairs = [];
+    for (let i = 0; i < legs.length; i++) for (let j = i + 1; j < legs.length; j++) {
+      if (legs[i].game !== legs[j].game) continue;
+      const r = SG.rho(M.sgp, sgOf(M, stored[i]), sgOf(M, stored[j])); if (typeof r !== 'number' || !isFinite(r)) continue;
+      pairs.push({ A: legs[i], B: legs[j], r, i, j });
+    }
     pairs.sort((a, b) => Math.abs(b.r) - Math.abs(a.r) || a.i - b.i || a.j - b.j);
-    const pn = L => L.kind === 'prop' ? `${L.name} ${L.bet}` : L.kind === 'ml' ? `${S.teams[L.g[L.side]].short} to win` : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num} goals`;
+    const pn = L => L.kind === 'prop' ? `${L.name} ${L.bet}` : L.kind === 'ml' ? `${S.teams[L.g[L.side]].short} to win` : L.kind === 'pl' ? `${S.teams[L.g[L.side]].short} ${PBS.line(L.num)} puck line` : `${L.side === 'over' ? 'Over' : 'Under'} ${L.num} goals`;
     const prs = [...d.querySelectorAll('#pbPairs tbody tr')].map(r => [[...r.cells[0].querySelectorAll('b')].map(txt), txt(r.cells[1])]);
     const want = pairs.map(x => [[pn(x.A), pn(x.B)], `${x.r > 0 ? '+' : x.r < 0 ? '−' : ''}${Math.abs(x.r).toFixed(2)}`]);
-    chk(!$('pbPairs').hidden && txt($('pbPairs').querySelector('h2')) === 'Legs that move together' && canon(prs) === canon(want), `the pairs that move together: ${G1.id}'s three, each strength data/corr.json's by this smoke's own reading, strongest first, no pair of two games (${JSON.stringify(prs)} vs ${JSON.stringify(want)})`);
+    const unP = pairs.filter(x => x.A === UN || x.B === UN);
+    chk(!$('pbPairs').hidden && txt($('pbPairs').querySelector('h2')) === 'Legs that move together' && canon(prs) === canon(want) && unP.length === 2 && unP.some(x => Math.abs(x.r) >= 0.005), `the pairs that move together: every two legs of one game (${G1.id}'s three, the Under's two among them, ${unP.map(x => x.r.toFixed(2)).join(' and ')}; ${G2.id}'s and ${G3.id}'s), each strength data/corr.json's by this smoke's own reading, strongest first, no pair of two games (${JSON.stringify(prs)} vs ${JSON.stringify(want)})`);
     /* your book's price: +250 typed takes DraftKings' place in what it pays, said "your price"; kept with its legs through a reload */
     const bp = $('bookPrice'), type = v => { bp.value = v; bp.dispatchEvent(new w.Event('input', { bubbles: true })); bp.dispatchEvent(new w.Event('change', { bubbles: true })); };
     const q = JSON.parse(w.eval('JSON.stringify(quote(builderLegs(false)))')), box = () => [...d.querySelectorAll('#parlayTotals .box')].map(txt);
@@ -1484,11 +1584,47 @@ async function builderCardChecks() {
       chk(ok && bx[2].startsWith(PBS.money(pays)) && bx[2].endsWith(`returned if it lands at your price, ${PBS.money(PBS.cents(pays - 20))} profit`) && bx[0].includes(`expected ${sg(20 * ev)}${PBS.money(Math.abs(20 * ev))} on $20 (${sg(ev * 100)}${Math.abs(ev * 100).toFixed(1)}%)`), `${tag}: ${PBS.odds(am)} typed is what the parlay pays, the boxes saying "your price" (${bx.join(' | ')})`); };
     type('+250'); typedOk(250, 'your book\'s price');
     const st1 = store();
-    chk(canon(st1.book) === canon({ am: 250, legs: legs.map(L => L.id).sort().join(',') }) && Object.keys(st1).every(k => ['legs', 'saved', 'ui', 'stake', 'book'].includes(k)) && bp.value === '+250', `it is stored with its legs' key, the one field the store gains (${canon(st1.book)}; ${Object.keys(st1).join(', ')})`);
+    chk(canon(st1.book) === canon({ am: 250, legs: bkKey(legs) }) && Object.keys(st1).every(k => ['legs', 'saved', 'ui', 'stake', 'book'].includes(k)) && bp.value === '+250', `it is stored with its legs' key, each leg's bet and (a total's, a puck line's) number, the one field the store gains (${canon(st1.book)}; ${Object.keys(st1).join(', ')})`);
     { const e2 = [], w2 = await boot(AT, e2, { state: JSON.stringify(M), hash: 'parlays', store: w.localStorage.getItem('nhl_v1') });
       chk(w2.document.getElementById('bookPrice').value === '+250' && !e2.length, `a reload keeps it with its legs (${w2.document.getElementById('bookPrice').value})`); typedOk(250, 'after a reload', w2); w2.close(); OPEN.delete(w2); }
+    /* the card carries it (nhl v33 after its review, the NFL hub's card: "your book's price"): the price, the sub line with DraftKings' beside
+       it, what it pays and the profit, the chance line on it; the Share title and text and the image the same */
+    {
+      const dc = PBS.decOf(250), pays = PBS.cents(20 * dc), evR = Math.round((q.fair * dc - 1) * 100), evW = `expected ${evR < 0 ? '−' : evR > 0 ? '+' : ''}${Math.abs(evR)}%`;
+      const subW = `${dc.toFixed(2)} decimal · ${PBS.pct1(1 / dc)} implied · your book's price (DraftKings ${PBS.toAm(q.dec)} est.)`, payW = PBS.money(pays), profW = '+' + PBS.money(PBS.cents(pays - 20));
+      $('pFinish').click();
+      const pr = d.querySelector('#pcView .pc-price'), sub = [...d.querySelectorAll('#pcView .pc-sub')].map(txt), mon = [...d.querySelectorAll('#pcView .pc-money b')].map(txt), ch = [...d.querySelectorAll('#pcView .pc-chance > div')].map(txt).join(' · ');
+      chk(!$('pcWin').hidden && txt(pr) === '+250' && !pr.querySelector('.pc-est') && sub.length === 2 && sub[1] === subW && eqA(mon, [PBS.money(20), payW, profW]) && ch.includes(` · ${evW} · the price says ${PBS.pct1(1 / dc)}`),
+        `the card is at your book's price: +250, "${subW}", pays ${payW}, ${profW}, ${evW} on it (${txt(pr)}; ${sub.join(' / ')}; ${mon.join(', ')}; ${ch})`);
+      const shared = [];
+      Object.defineProperty(w.navigator, 'share', { value: async x => { shared.push(x); }, configurable: true });
+      Object.defineProperty(w.navigator, 'canShare', { value: () => true, configurable: true });
+      $('pcLink').click(); await wait(20);
+      const sent = shared[0] || {}, tl = String(sent.text || '').split('\n');
+      chk(sent.title === `${legs.length}-leg parlay +250 (your book's price)` && tl.includes(`Stake ${PBS.money(20)} · Pays ${payW} at your book's price`) && tl.includes(`Your book's price +250; DraftKings' estimated price would be ${PBS.toAm(q.dec)}.`) && !tl.some(l => /^Estimated price: /.test(l)), `its Share title and text say your book's price (${sent.title}; ${tl.filter(l => /Pays|price/.test(l)).join(' / ')})`);
+      const rec = [], gc = w.HTMLCanvasElement.prototype.getContext, tb = w.HTMLCanvasElement.prototype.toBlob, cu = w.URL.createObjectURL, ru = w.URL.revokeObjectURL, ac = w.HTMLAnchorElement.prototype.click;
+      w.HTMLCanvasElement.prototype.getContext = function () { const self = this; return new Proxy({}, { get(t, k) { if (k === 'canvas') return self; if (k === 'measureText') return s => ({ width: String(s).length * 7 }); if (k in t) return t[k]; return (...a) => { rec.push([k, a]); }; }, set(t, k, v) { t[k] = v; return true; } }); };
+      w.HTMLCanvasElement.prototype.toBlob = function (cb) { cb(new w.Blob(['png'], { type: 'image/png' })); };
+      w.URL.createObjectURL = () => 'blob:card'; w.URL.revokeObjectURL = () => {};
+      w.HTMLAnchorElement.prototype.click = function () { if (!this.download) ac.call(this); };
+      $('pcDown').click(); await wait(50);
+      const drawn = rec.filter(r => r[0] === 'fillText').map(r => String(r[1][0]));
+      w.HTMLCanvasElement.prototype.getContext = gc; w.HTMLCanvasElement.prototype.toBlob = tb; w.URL.createObjectURL = cu; w.URL.revokeObjectURL = ru; w.HTMLAnchorElement.prototype.click = ac;
+      chk(drawn.includes('+250') && drawn.includes(subW) && drawn.includes(payW) && drawn.includes(profW) && !drawn.includes('est.') && !drawn.includes(PBS.toAm(q.dec)), `its image says the same: +250, "${subW}", ${payW}, ${profW} (${drawn.slice(0, 8).join(' | ')})`);
+      d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    }
     type('-120'); typedOk(-120, '-120');
-    type('abc'); chk(canon(store().book) === canon({ am: -120, legs: legs.map(L => L.id).sort().join(',') }) && bp.value === '-120', `a price that does not read changes nothing, the box showing the price kept (${bp.value})`);
+    /* what does not read ("+99", "abc") leaves no price applied (nhl v33 after its review: the one typed before went on paying): DraftKings'
+       price shown and the box marked invalid while it is typed in, and emptied, unmarked, once left */
+    for (const junk of ['+99', 'abc']) {
+      type('-120'); bp.focus(); bp.value = junk; bp.dispatchEvent(new w.Event('input', { bubbles: true }));
+      const bx = box();
+      chk(store().book === undefined && bp.value === junk && bp.getAttribute('aria-invalid') === 'true' && bx[1].startsWith(`${PBS.toAm(q.dec)} est.`) && !txt($('parlayTotals')).includes('your price') && bx[2].startsWith(PBS.money(PBS.cents(20 * q.dec))),
+        `"${junk}" typed: no price applied, DraftKings' price shown, the box marked invalid (${canon(store().book)}; "${bp.value}", aria-invalid ${bp.getAttribute('aria-invalid')}; ${bx[1]} | ${bx[2]})`);
+      bp.dispatchEvent(new w.Event('change', { bubbles: true })); bp.blur();
+      chk(bp.value === '' && !bp.hasAttribute('aria-invalid') && store().book === undefined, `"${junk}" left: the box emptied and no longer marked ("${bp.value}")`);
+    }
+    type('-120'); chk(store().book && store().book.am === -120 && bp.value === '-120' && !bp.hasAttribute('aria-invalid'), `a price that reads again applies again, unmarked (${bp.value})`);
     type(''); chk(store().book === undefined && bp.value === '' && box()[1].startsWith(`${PBS.toAm(q.dec)} est.`), `an empty box clears it: DraftKings' price again (${box()[1]})`);
     /* any change to the legs clears it: a leg added, a leg taken out, Clear all, Start over */
     const again = () => { type('+400'); return store().book && store().book.am === 400; };
@@ -1505,6 +1641,26 @@ async function builderCardChecks() {
     chk(again(), 'typed again on the legs put back');
     w.__confirm = true; $('clearParlay').click();
     chk(store().book === undefined && !(store().legs || []).length, 'Clear all clears it with the legs');
+    /* a read moving the number of a total, and of a puck line, and the visitor taking the new number in its place: another bet, so the price
+       typed goes (nhl v33 after its review: a total's id stays when its number moves, and the price stayed on the new one). The read is
+       made in the page's memory as Refresh odds leaves it (the published line kept in PUB_LINE, the line refreshed) */
+    for (const L0 of [UN, P2].filter(Boolean)) {
+      w.localStorage.setItem('nhl_v1', JSON.stringify(Object.assign(store(), { legs: stored }))); w.eval('P = load(); PUB_LINE.clear(); rerender();');
+      chk(again(), `typed again on the legs put back (${L0.kind})`);
+      const g0 = L0.g, n1 = L0.kind === 'ou' ? g0.line.total - 1 : L0.num < 0 ? -2.5 : 2.5;
+      const moved = L0.kind === 'ou' ? { total: n1, overOdds: -150, underOdds: 125 } : { homeLine: L0.side === 'home' ? n1 : -n1, homeSpreadOdds: 160, awaySpreadOdds: -190 };
+      bp.focus();      // the keyboard left in the box, as a visitor's who typed it: the box must not go on showing a price that went
+      w.eval(`(() => { const g = gameById()[${JSON.stringify(g0.id)}]; if (!PUB_LINE.has(g.id)) PUB_LINE.set(g.id, g.line); g.line = Object.assign({}, g.line, ${JSON.stringify(moved)}, { refreshed: true, at: new Date(Date.now()).toISOString() }); delete g.line.dk; rerender(); })()`);
+      const was = `${L0.kind === 'ou' ? 'the Under' : 'the puck line'} at ${L0.num}`;
+      chk(!d.querySelector(`#legs tr.leg[data-id="${L0.id}"]`) && !txt($('parlayTotals')).includes('your price') && !!store().book && store().book.am === 400, `a read moving ${g0.id}'s ${L0.kind === 'ou' ? 'total' : 'puck line'} to ${n1}: ${was} left out, DraftKings' price shown, the price typed kept for the legs stored (${canon(store().book)})`);
+      w.eval(`legTap(${JSON.stringify(L0.id)}, document.createElement('button'))`);
+      const st2 = store(), l2 = (st2.legs || []).find(l => l.game === g0.id && l.kind === L0.kind);
+      chk(!!l2 && +l2.line === n1 && st2.book === undefined && bp.value === '' && !txt($('parlayTotals')).includes('your price') && /replaced/.test(txt($('bMsg'))),
+        `${L0.kind === 'ou' ? 'the Under' : 'the puck line'} at ${n1} taken in its place: the price typed for ${was} goes, the box emptied though the keyboard is in it, DraftKings' price shown (${canon(st2.book)}; the box "${bp.value}"; stored at ${l2 && l2.line}; ${txt($('bMsg')).slice(0, 120)})`);
+      bp.blur();
+      w.eval(`(() => { const g = gameById()[${JSON.stringify(g0.id)}]; g.line = PUB_LINE.get(g.id); PUB_LINE.delete(g.id); })()`);
+      $('clearParlay').click();
+    }
     chk(!errs.length, 'no runtime error on the builder\'s card: ' + errs.join(' | '));
     holdRequests(w, "the builder's card");
     w.close(); OPEN.delete(w);
@@ -1671,7 +1827,10 @@ const isDKBook = line => String(line && line.book || '').toLowerCase().replace(/
 async function parlayEdges() {
   const real = S, legOn = (g, side, kind) => { const L = sLeg(g, side, kind); return L && { game: g.id, side, kind, odds: L.price, line: L.num, p: L.p, label: L.mu, text: L.who, date: g.date }; };
   const firstLeg = g => { for (const k of PBS.KINDS) for (const s of PBS.SIDES[k]) { const l = legOn(g, s, k); if (l) return l; } return null; };
-  const fresh = S.games.filter(g => !sStarted(g, PUB) && sFresh(g)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  /* the games planted on: a fresh line and a puck drop ten minutes or more past the publish, so none drops the puck at the minute the boots
+     below run at (PUB + 1 minute) or while they run: the evening slot publishes a minute or two before the 7 PM puck drops, and a game
+     planted on then was under way in the page before its step looked (nhl v33 after its review: fourteen checks failed a right page so) */
+  const fresh = S.games.filter(g => !sStarted(g, PUB + 600000) && sFresh(g)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
   /* at a puck drop: the game in no level, no tile, no list, no card button, and out of the builder, said; then the next one, by the watch */
   if (fresh.length >= 2) {
     const next = fresh[0], at = Date.parse(next.start) + 60000, later = fresh.find(g => Date.parse(g.start) > at && g.id !== next.id);
@@ -2915,7 +3074,7 @@ function dkSeed(dk) {
 }
 
 
-async function holdJobRead(body, tag) {
+async function holdJobRead(body, tag, yesId = null) {
   const J = JSON.parse(body), pg = (J.props && J.props.games) || {}, AT = PUB + 60000;
   const want = {}; for (const id of Object.keys(pg)) { const s = dkSeed(pg[id].dk); if (s) want[id] = s; }
   const sbFn = async url => { const mm = /dates=(\d{4})(\d{2})(\d{2})/.exec(url), dd = mm && `${mm[1]}-${mm[2]}-${mm[3]}`; return { ok: true, json: async () => ({ events: S.games.filter(g => g.date === dd).map(g => espnEvent(g, null)) }) }; };
@@ -2997,6 +3156,8 @@ async function holdJobRead(body, tag) {
     const e4 = [], w4 = await boot(AT, e4, { hash: 'parlays', keepDk: true, state: body }), d4 = w4.document, ids = () => JSON.parse(w4.eval('JSON.stringify(P.legs.map(legIdOf))'));
     const PN = holdPanel(w4, AT, `${tag}: the Top 50 with the job's player lines`); holdSuggest(w4, AT, `${tag}: the suggested levels with the job's player lines`);
     const nP = PN.top ? PN.top.player.length : 0;
+    if (yesId) { const r = d4.querySelector(`#pbBody li.pb-trow[data-id="${yesId}"]`), f = r && r.querySelector('.pb-fig[data-c="fair"] small');
+      chk(!!r && txt(f) === 'fair, est.' && !!PN.top && PN.top.player.some(L => L.id === yesId && L.fairEst), `${tag}: the anytime goal planted to qualify is in the Top 50 by this smoke's own list, its fair chance marked "fair, est." (${yesId}: ${r ? txt(f) : 'not listed'})`); }
     console.log(`  ${tag}: ${nP} player lines in the Top 50 (${PN.top ? Object.entries(PN.top.player.reduce((o, L) => (o[L.stat] = (o[L.stat] || 0) + 1, o), {})).map(([k, v]) => k + ' ' + v).join(', ') : ''}), ${PN.top ? PN.top.game.length : 0} game bets, ${PN.pool ? PN.pool.legs.filter(L => L.prop).length : 0} player lines qualifying`);
     const pr0 = d4.querySelector('#pbBody .pb-trow[data-id*="|p|"] button.t30-add');
     if (pr0) {
@@ -3061,7 +3222,24 @@ async function jobLinesChecks() {
     if (i % 3 === 0) { q.read++; q.lines += pr.main.length; } else if (i % 3 === 1) q.none++; else q.failed++;
   });
   J.props.dk = q;
-  await holdJobRead(JSON.stringify(J), 'a planted read');
+  /* an anytime goal that qualifies (nhl v33 after its review: none qualified on 12 November's state, so the Top 50's "fair, est." on a Yes
+     price was never drawn): on the first answered game of the panel's day, its first projected skater's goals made a coin flip (P(1+) 50%,
+     a whole distribution of mean 0.68) and his anytime goal +110 (implied 47.6%, DraftKings' fair chance 41.5% est.), so it qualifies and,
+     the goals' first line of the rounds, is in the Top 50 by every rule of it. The smoke works the list out on this copy (S is the copy
+     while it runs) */
+  const sl = sSlate(AT), gy = come.find((g, i) => i % 3 === 0 && sl.dates.includes(g.date) && !sStarted(g, AT + 600000)), yes = {};
+  if (gy) {
+    const pr = J.props.games[gy.id], sk = (pr.awayP.skaters || []).concat(pr.homeP.skaters || []).find(x => x && x.g && x.pos !== 'G');
+    if (sk) {
+      sk.g = { mu: 0.68, d: [5000, 3500, 1200, 300] };
+      const dk = J.props.games[gy.id].dk; dk.yes = dk.yes.filter(r => !(String(r[0]) === String(sk.id) && r[1] === 'g' && r[2] === 1)).concat([[String(sk.id), 'g', 1, 110]]);
+      dk.main = dk.main.filter(r => !(String(r[0]) === String(sk.id) && r[1] === 'g'));
+      Object.assign(yes, { id: `${gy.id}|p|${sk.id}|g|k1`, name: sk.name });
+    }
+  }
+  if (!yes.id) console.log('  no answered game on the panel\'s day with a skater: the anytime goal in the Top 50 is not planted');
+  const real = S; S = J;
+  try { await holdJobRead(JSON.stringify(J), 'a planted read', yes.id || null); } finally { S = real; }
 }
 async function sameGameChecks() {
   console.log('SAME-GAME PARLAYS AND PLAYER LEGS');
@@ -6847,7 +7025,7 @@ async function lightDarkChecks() {
      change of the levels' rule for its seven days (a model change, the one thing worth a banner); and one that is not a description: a
      level with no parlay says why (.pb-tier.none). A game's page and its windows are outside main: THE
      GAME'S PAGE holds them to the same rule, game by game */
-  const KEPT = ['#sourceNote', '#bNotes', '#pbNotes', '#pbRead', '#spRead', '#xpNote', '#xbNote', '#bMsg', '.pb-tier.none', '#spChange'];      // #spChange: the one dated line on a change of rule (nhl v31), seven days
+  const KEPT = ['#sourceNote', '#bNotes', '#pbNotes', '#pbRead', '#spRead', '#xpNote', '#xbNote', '#bMsg', '.pb-tier.none', '#spChange', '.pb-tapsaid'];      // #spChange: the one dated line on a change of rule (nhl v31), seven days; .pb-tapsaid: the builder's note, said where the tap was (nhl v33)
   const showing = el => { for (let x = el; x && x !== dP.body; x = x.parentElement) if (x.hidden) return false; return true; };
   const long = [];
   const sweep = tag => { for (const el of dP.querySelectorAll('main p, main small, main .intro')) { if (!showing(el) || KEPT.some(k => el.closest(k))) continue; const t = txt(el); if (t.length > 90) long.push(`${tag}: ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : el.className ? '.' + String(el.className).split(' ')[0] : ''} "${t.slice(0, 70)}…" (${t.length})`); } };

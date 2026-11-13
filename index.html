@@ -18,6 +18,9 @@
 :root{
   --bg:#2A3043; --bg-2:#30374B; --panel:#363D52; --panel-2:#3D455B; --panel-3:#475068;
   --ink:#F6F7FB; --ink-2:#CDD2DF; --muted:#B3B9CB; --line:#4A5269; --line-2:#59627B;
+  /* a field's edge (nhl v34: a select, a text, search or amount box): 3:1 on every ground a field sits on, the page's own under its glow
+     to --panel-3, where --line-2 was 1.6 to 2.2 (the contrast sweep of every tab); the rules and the cards keep --line and --line-2 */
+  --field:#9AA1B3;
   --ice:#5FD4FF; --ice-2:#8EE3FF; --ice-soft:rgba(95,212,255,.14);
   --gold:#FFD166; --gold-2:#FFE08F; --gold-soft:rgba(255,209,102,.14); --gold-ink:#FFD166;
   --pick:#CDFF4F; --pick-soft:rgba(205,255,79,.14);
@@ -41,11 +44,13 @@
   --lime:var(--pick); --lime-soft:var(--pick-soft); --rose-ink:var(--miss); --rose-soft:var(--miss-soft); --muted-ink:var(--muted); --r:var(--r-lg);
   color-scheme:dark;
 }
-/* the light look (the NFL hub's, its ice a dark step read as text and as a fill under white): built, and its switch hidden until every
-   tab is rebuilt on these tokens. Dark is every visitor's default whatever the system says: nothing here follows the system's scheme */
+/* the light look (the NFL hub's, its ice a dark step read as text and as a fill under white), its switch in the header since nhl v34, every
+   tab rebuilt on these tokens and swept for contrast in both looks. Dark is every visitor's default whatever the system says: nothing here
+   follows the system's scheme. A chart's colours are these tokens too (var() in its attributes), so a press redraws nothing */
 html[data-theme="light"]{
   --bg:#E8EBF1; --bg-2:#F1F3F7; --panel:#FFFFFF; --panel-2:#F7F8FB; --panel-3:#E7EAF0;
   --ink:#1E2230; --ink-2:#3A4256; --muted:#545D72; --line:#D8DCE5; --line-2:#BEC5D3;
+  --field:#6C7485;
   --ice:#085F86; --ice-2:#074F70; --ice-soft:rgba(8,95,134,.11);
   --gold:#FFD166; --gold-2:#FFC53D; --gold-soft:rgba(255,196,64,.24); --gold-ink:#7A5205;
   --pick:#146638; --pick-soft:rgba(20,102,56,.12);
@@ -84,9 +89,10 @@ html[data-theme="light"] .brand h1::after{box-shadow:0 0 18px rgba(8,95,134,.35)
 .hub-stamp #stamp{color:var(--ink-2);font-weight:600}
 .hub-stamp #buildTag{color:var(--ink-2)}
 .hub-stamp #stamp.bad{color:var(--miss)}
-@media(min-width:621px){ .hub-stamp{padding-right:56px} .hub-stamp:has(>.hub-theme[hidden]){padding-right:0} }   /* clear of the switch (44px and a 12px gap) while it shows */
+@media(min-width:621px){ .hub-stamp{padding-right:56px} }   /* clear of the switch (44px and a 12px gap) */
 @media(max-width:620px){ .hub-stamp{flex-basis:100%;align-items:flex-start;text-align:left} .hub-admin{justify-content:flex-start} }
-/* the switch: a round 44px button laid over the header's corner, out of the flow (hidden for now by its attribute: [hidden] above) */
+/* the switch (shown since nhl v34): a round 44px button laid over the header's corner, out of the flow, its glyph the look a press gives
+   (a sun while dark, a moon while light) */
 .hub-theme{position:absolute;top:26px;right:22px;z-index:2;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--ink-2);cursor:pointer}
 .hub-theme:hover{color:var(--ink);border-color:var(--line-2)}
 .hub-theme svg{width:20px;height:20px;display:block;pointer-events:none}
@@ -162,7 +168,7 @@ h2 .pill{font-family:var(--body);font-size:12px;font-weight:700;vertical-align:m
 .btn:active{transform:translateY(0);filter:brightness(.98)}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.6;cursor:default;transform:none;filter:none}
 .btn.small{padding:6px 14px;font-size:12.5px}
-select,input[type=number],input[type=text],input[type=search]{background:var(--panel);color:var(--ink);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 11px;min-width:0;min-height:44px;box-shadow:none;transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
+select,input[type=number],input[type=text],input[type=search]{background:var(--panel);color:var(--ink);border:1px solid var(--field);border-radius:var(--r-sm);padding:8px 11px;min-width:0;min-height:44px;box-shadow:none;transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
 select:hover,input[type=number]:hover,input[type=text]:hover,input[type=search]:hover{border-color:var(--ink-2)}
 select:focus,input[type=number]:focus,input[type=text]:focus,input[type=search]:focus{border-color:var(--ink);box-shadow:var(--ring)}
 input[type=checkbox]{width:16px;height:16px;cursor:pointer}
@@ -556,7 +562,7 @@ table.rv-grid .rv-season{border-left:2px solid var(--line-2)}
 .pb-ctl{display:flex;flex-direction:column;gap:12px;padding:14px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-md);margin:0 0 14px}
 .pb-row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap}
 .pb-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:84px}
-.pb-amt{display:inline-flex;align-items:center;min-height:44px;padding:0 2px 0 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);box-shadow:var(--sh-xs);transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
+.pb-amt{display:inline-flex;align-items:center;min-height:44px;padding:0 2px 0 12px;border:1px solid var(--field);border-radius:10px;background:var(--panel);box-shadow:var(--sh-xs);transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
 .pb-amt:hover{border-color:var(--ink-2)}
 .pb-amt:focus-within{border-color:var(--ink);box-shadow:var(--ring)}
 .pb-amt>span{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2)}
@@ -740,7 +746,7 @@ table.pb-ltab td.pb-rmc{padding:6px 8px 6px 6px}
 .pb-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
 .pb-stake,.pb-book{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pb-blab{font-size:13.5px;font-weight:600;color:var(--ink-2)}
-.pb-book input{width:118px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);color:var(--ink);padding:0 10px;font:600 16px var(--body);font-variant-numeric:tabular-nums}
+.pb-book input{width:118px;border:1px solid var(--field);border-radius:10px;background:var(--panel);color:var(--ink);padding:0 10px;font:600 16px var(--body);font-variant-numeric:tabular-nums}
 .pb-book input::placeholder{color:var(--muted);opacity:1}
 .pb-book input:focus{outline:none;border-color:var(--ink);box-shadow:var(--ring)}
 .pb-book input[aria-invalid=true]{border-color:var(--miss)}      /* a price that does not read: DraftKings' price stands until it does */
@@ -844,7 +850,7 @@ html[data-theme="light"] .pc-card{--bg:#2A3043;--bg-2:#30374B;--panel:#363D52;--
 #gameView .bar label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 #gameView .bar .pill{white-space:nowrap}
 .gsearch{margin:0 0 12px}
-.gsearch input{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:15px}
+.gsearch input{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--field);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:15px}
 @media(max-width:640px){.gsearch input{font-size:16px}}
 /* the page's status line: the last thing on the page and held at the foot of the screen while the page is longer than it (sticky), so
    a tick's word, a refusal or what the builder said of this game's legs is in view wherever the visitor is, and no row moves when it
@@ -1160,8 +1166,9 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
    top right of the header ([data-theme-toggle], a 44px button named "Light mode", aria-pressed while the light look is on) puts
    html[data-theme="light"] on the page and back again. The choice is kept in this browser alone under its own key, nhlhub_theme_v1 ('light'
    or 'dark'), never in nhl_v1 and never sent anywhere. Storage that throws, or holds anything but 'light', reads as dark and throws nothing.
-   In the head, before the body is parsed, so a light visitor's first paint is light. The NFL hub's theme.js, the key renamed. (nhl v25: the
-   light look is built and the switch is in the header, hidden until every tab is rebuilt on the new tokens.) */
+   In the head, before the body is parsed, so a light visitor's first paint is light. The NFL hub's theme.js, the key renamed. (nhl v25 built
+   the light look with the switch hidden; nhl v34 shows it, every tab rebuilt on the tokens and swept for contrast in both looks.) A press
+   changes the attribute and nothing else: every colour the page draws, its charts' among them, is a token the stylesheet resolves. */
 (function(){
   var KEY='nhlhub_theme_v1', root=document.documentElement;
   var stored=function(){ try{ return localStorage.getItem(KEY)==='light'?'light':'dark'; }catch(e){ return 'dark'; } };
@@ -1198,7 +1205,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 <header>
   <div class="brand">
     <div><h1>X NHL <em>Bets</em></h1></div>
-    <div class="hub-stamp"><button type="button" class="hub-theme" data-theme-toggle hidden aria-label="Light mode" aria-pressed="false" title="Switch to light mode"><svg class="ht-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg><svg class="ht-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg></button><span class="hub-admin" id="hubAdmin" hidden><span class="ha-mark" id="adminMark" title="Signed in on this device through the NFL hub's admin link: X Parlays and the X Bet Log show">Admin</span></span><span class="sub" id="stamp">Loading…</span><span class="sub" id="buildTag"></span></div>
+    <div class="hub-stamp"><button type="button" class="hub-theme" data-theme-toggle aria-label="Light mode" aria-pressed="false" title="Switch to light mode"><svg class="ht-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg><svg class="ht-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg></button><span class="hub-admin" id="hubAdmin" hidden><span class="ha-mark" id="adminMark" title="Signed in on this device through the NFL hub's admin link: X Parlays and the X Bet Log show">Admin</span></span><span class="sub" id="stamp">Loading…</span><span class="sub" id="buildTag"></span></div>
   </div>
   <nav id="tabs">
     <button data-tab="games" class="on">Games</button>
@@ -1364,7 +1371,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v33 · 2026-11-12';
+const APP_BUILD = 'nhl v34 · 2026-11-13';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';

@@ -71,8 +71,13 @@
        spread of each group's goals-a-game figures), every row's Elo, tier, figures, Career, Trend and Peak, the histogram's counts,
        the clubs' four unit tables, the pills, the search and what is stored, by this file's own sums, on the state and on made-up
        copies
+     - the Mismatches (THE MISMATCHES, nhl v35, the NFL hub's card in hockey's terms): the card, its bubbles, "Show the top N" and its
+       window, a game's Mismatches window and the tag, worked out from the state by this file's own rule (a skater's chance of a point at
+       the published distribution less at his mean with the job's context factor taken out), on the state as published and on made-up
+       copies two days out by the page's clock (at the tag, under it, the floor, a tie, a club of five, the tag null, the block gone, a
+       game's cx gone, f 0 and junk); the bubble and the window's focus and ways out, the clock, both looks, nothing fetched or stored
    NHL_STATE, NHL_DATA, NHL_PREV_STATE and NHL_OUT move the files (simulate.js); NHL_HTML tries another page; NHL_SMOKE_ALL=1 lists every
-   failure; NHL_SMOKE_ONLY=list,page,look,... runs the named sections alone, a development aid that always ends as a failure. */
+   failure; NHL_SMOKE_ONLY=list,page,look,...,mismatches runs the named sections alone, a development aid that always ends as a failure. */
 'use strict';
 /* The heap. Every section boots the page in jsdom several times. On 12 November 2026 a review measured the whole run at 2,009 MB of the
    2,096 MB Node 22 allows by default, and a page three small edits bigger died there ("Reached heap limit", exit 134); with THE GAMES LIST
@@ -495,6 +500,25 @@ function propsReality(toCome, isOut, listedElsewhere) {
     }
   }
   chk(!badGame.length, `the props model projects only games still to come, on the state's own clubs and puck drops (${badGame.length} not: ${badGame.slice(0, 3).join(', ')})`);
+  /* the Mismatches' block (nhl v35, props.js's MM and cx): written together, so a state with either carries both. props.mm the rule's
+     constants (points at 0.5, 0 < list < tag or the tag null, the rows a club takes, the model's average game); each game a side's
+     expected goals and the factor its skaters' points were multiplied by, (xg / mm.ctx)^0.5 to four places; and where the game's call is
+     this publish's, xg the call's own expected goals, (xt +- mu) / 2 (the call carries both to the hundredth) */
+  if (PR.mm !== undefined || Object.values(PR.games).some(r => isO(r) && r.cx !== undefined)) {
+    const M = PR.mm, mmOk = isO(M) && M.v === 1 && M.stat === 'pts' && M.line === 0.5 && typeof M.list === 'number' && M.list > 0 && (M.tag === null || (typeof M.tag === 'number' && M.tag > M.list)) && Number.isInteger(M.club) && M.club >= 1 && +M.ctx > 0;
+    chk(mmOk, `props.mm is the Mismatches' rule: points at 0.5, listed at 0 < list < tag (or the tag null), a club's rows, the model's average game (${JSON.stringify(M)})`);
+    const offCx = [];
+    for (const [gid, row] of Object.entries(PR.games)) {
+      const g = byId.get(gid);
+      for (const side of ['home', 'away']) {
+        const c = isO(row) && isO(row.cx) ? row.cx[side] : null;
+        if (!isO(c) || typeof c.f !== 'number' || !(c.f > 0) || typeof c.xg !== 'number' || !(c.xg > 0)) { offCx.push(`${gid} ${side}: no cx`); continue; }
+        if (mmOk && Math.abs(c.f - Math.round(Math.pow(c.xg / M.ctx, 0.5) * 1e4) / 1e4) > 1e-9) offCx.push(`${gid} ${side}: f ${c.f} where (${c.xg} / ${M.ctx})^0.5 is ${(Math.pow(c.xg / M.ctx, 0.5)).toFixed(4)}`);
+        if (g && g.frozen && Date.parse(g.frozen) === PUB && isO(g.pm) && typeof g.pm.xt === 'number' && typeof g.pm.mu === 'number') { const want = (g.pm.xt + (side === 'home' ? 1 : -1) * g.pm.mu) / 2; if (Math.abs(c.xg - want) > 0.006) offCx.push(`${gid} ${side}: xg ${c.xg} where the call's is ${want.toFixed(3)}`); }
+      }
+    }
+    chk(!offCx.length, `each projected game carries both sides' expected goals and the factor on its skaters' points, (xg / mm.ctx)^0.5, the call's own expected goals where it is this publish's (${offCx.length} not: ${offCx.slice(0, 3).join('; ')})`);
+  }
   chk(!bad.length, `every projection is a whole distribution on a player in his club's lineup and not out (${bad.length} not: ${bad.slice(0, 4).join('; ')})`);
   /* each game projected is the ledger's open call, number for number, while the ledger takes calls */
   if (L && PR.model && L.model && L.model.sha === PR.model.sha && !(L.decision && L.decision.verdict === 'FAIL')) {
@@ -4780,8 +4804,10 @@ function gpWrongs(w, g, ms, rd, o = {}) {
     else ck(!!pt && txt(pt) === ab(pickId) && !tagWrong(pt, MAP[pickId]) && txt(acts[0]) === `${CW.conf}%` && (actW ? acts.length === 2 && txt(acts[1]) === actW && acts[1].classList.contains(won === pickId ? 'right' : 'wrong') : acts.length === 1), `the model's pick: the state's call and its chance as the list writes it, right or wrong once final (${ab(pickId)} ${CW.conf}% ${actW || ''}: ${txt(cells[5])})`);
   }
   /* the windows' buttons */
-  const wins = [...view.querySelectorAll('.gwin [data-gp-pop]')];
-  ck(eqA(wins.map(b => `${b.dataset.gpPop}:${txt(b)}`), ['units:Matchup', 'lineups:Lineups', 'stats:Team Stats']) && wins.every(b => b.tagName === 'BUTTON' && b.getAttribute('aria-haspopup') === 'dialog') && hd && hd.nextElementSibling === view.querySelector('.gwin'), `three buttons under the head: Matchup, Lineups, Team Stats (${wins.map(txt).join(', ')})`);
+  const wins = [...view.querySelectorAll('.gwin [data-gp-pop]')], MMR = new Map(sMmRows(S, g.date, ms).filter(v => v.gid === String(g.id)).map(v => [v.pid, v]));
+  /* the Mismatches' window (nhl v35) only on a game with a listed row, between Matchup and Lineups */
+  const winW = ['units:Matchup'].concat(MMR.size ? ['mism:Mismatches'] : [], ['lineups:Lineups', 'stats:Team Stats']);
+  ck(eqA(wins.map(b => `${b.dataset.gpPop}:${txt(b)}`), winW) && wins.every(b => b.tagName === 'BUTTON' && b.getAttribute('aria-haspopup') === 'dialog') && hd && hd.nextElementSibling === view.querySelector('.gwin'), `the buttons under the head: Matchup, Mismatches where the game has a listed row, Lineups, Team Stats (${wins.map(txt).join(', ')})`);
   /* Game bets */
   const BW = gpBetsS(g, sc, locked, o.inB || new Set()), blocks = [...card.querySelectorAll('.statblk')];
   ck(txt(card.querySelector('h2')) === 'Game bets' && (BW.src ? txt(card.querySelector('.gp-src')) === BW.src : !card.querySelector('.gp-src')) && (BW.why ? txt(card.querySelector('.gp-why')) === BW.why : !card.querySelector('.gp-why')), `Game bets says where its lines were read and why it has none or offers none ("${BW.src}", "${BW.why}": ${txt(card.querySelector('.gp-src'))} | ${txt(card.querySelector('.gp-why'))})`);
@@ -4819,11 +4845,14 @@ function gpWrongs(w, g, ms, rd, o = {}) {
       const r = rows[i]; if (!r || (r.dataset.open || r.dataset.nohist) !== x.id) return; rowsN++;
       /* he "did not play" only on the word of a box score the state carries: a final with none keeps his projection */
       const nProj = Object.keys(x.proj).length, boxed = sc.fin && gpBoxOnS(g), act = boxed ? gpBoxS(g, x.id) : null, hasBody = locked ? (boxed && !!act) || nProj > 0 : nProj > 0 || x.dk, role = gpRoleS(x);
-      const who = r.querySelector('.who'), nmEl = [...who.childNodes].find(c => c.nodeType === 3 && c.textContent.trim()), inj = who.querySelector('.inj'), chip = who.querySelector('.stbtn'), rs = [...who.children].find(c => !c.classList.contains('inj') && !c.classList.contains('stbtn'));
+      const who = r.querySelector('.who'), nmEl = [...who.childNodes].find(c => c.nodeType === 3 && c.textContent.trim()), inj = who.querySelector('.inj'), chip = who.querySelector('.stbtn'), rs = [...who.children].find(c => !c.classList.contains('inj') && !c.classList.contains('stbtn') && !c.classList.contains('pe-mmtag'));
       const nmW = x.name || `ESPN athlete ${x.id}`;
       ck((r.tagName === 'BUTTON') === hasBody && (hasBody ? r.dataset.open === x.id && r.hasAttribute('aria-expanded') : r.dataset.nohist === x.id), `${nmW}: a row that opens exactly where he has something under it`);
       ck(!!nmEl && nmEl.textContent.trim() === nmW && !!rs && txt(rs) === role.t && (rs.getAttribute('title') || '') === role.title, `${nmW}: his name and his role ("${role.t}", title "${role.title}": "${txt(who)}")`);
       ck(!!inj === (!locked && x.dtd) && (!inj || (txt(inj) === 'DTD' && /^Day to day/.test(inj.title))), `${nmW}: a DTD chip exactly where the report has him day to day and the game is to come`);
+      /* the Mismatches (nhl v35): the tag beside his name exactly where THE MISMATCHES' rule tags him, its title the row's */
+      const mmv = locked ? null : MMR.get(String(x.id)), mt = who.querySelector('.pe-mmtag');
+      ck(mmv && mmv.tag ? !!mt && txt(mt) === 'Mismatch' && mt.title === mmv.w.title && mt.previousSibling === nmEl : !mt, `${nmW}: the Mismatch tag beside his name exactly where the rule tags him (${mmv ? `${mmv.shift.toFixed(4)}, ${mmv.tag ? 'tagged' : 'under the tag'}` : 'not listed'}; ${mt ? 'drawn' : 'none'})`);
       ck(hasBody ? !!chip && chip.getAttribute('role') === 'button' && chip.getAttribute('tabindex') === '0' && chip.dataset.stats === x.id && txt(chip) === (chip.getAttribute('aria-pressed') === 'true' ? 'Hide stats' : 'Show stats') : !chip, `${nmW}: Show stats on a row that opens`);
       const sum = r.querySelector('.sum'), fc = sum.querySelector('.finchip');
       const figs = boxed && !act ? 'did not play' : ((GP_HEAD_S[x.grp] || []).filter(st => act ? act[st] !== undefined : x.proj[st]).map(st => act ? `${act[st]} ${GP_SHORT_S[st]}${x.proj[st] ? ` (proj ${ppMuS(st, x.proj[st].mu)})` : ''}` : `${ppMuS(st, x.proj[st].mu)} ${GP_SHORT_S[st]}`).join(' · ') || 'No projection yet');
@@ -4920,6 +4949,8 @@ function gpWindowWrongs(w, g, ms) {
     ck(!md.querySelector('p') || [...md.querySelectorAll('p')].every(p => txt(p).length <= 90), 'Matchup: no description');
     close();
   } else ck(false, 'the Matchup window did not open');
+  /* Mismatches (nhl v35), on a game with a listed row: every listed skater of the game by THE MISMATCHES' rule */
+  if (d.querySelector('#gameView [data-gp-pop="mism"]')) { if (open('mism')) { shell('mism', 'Mismatches'); for (const m of sMmGameWinWrongs(w, S, g, ms)) bad.push(m); close(); } else ck(false, 'the Mismatches window did not open'); }
   /* Lineups */
   if (open('lineups')) {
     shell('lineups', 'Lineups');
@@ -5349,6 +5380,385 @@ async function gamePageChecks() {
   }
 }
 
+/* ================= THE MISMATCHES (nhl v35) =================
+   The NFL hub's Mismatches card in hockey's terms (CLAUDE.md, The Mismatches), worked out here from the state by rules of this file's
+   own, never the page's functions: a skater of a day still to come whose projected points the job multiplied by his side's context
+   factor (props.games[id].cx[side].f) is listed where that factor lifts his chance of a point by props.mm.list or more (his chance at
+   the published distribution less his chance at the mean with the factor taken out, mu / f, Poisson or the published dispersion's
+   negative binomial), tagged at props.mm.tag (null: none anywhere), ranked by the shift, the gain in points, then his id. The card on the
+   day shown, today or tomorrow by the page's clock: one bubble a club, five at most; "Show the top N" where the window (props.mm.club a
+   club, thirty at most) holds more than the bubbles; "Goalies confirmed: n of m." while any side still to play lacks a confirmed goalie.
+   (a) on the state as published, every day of the select; (b) on made-up copies planting the block two days out by the page's clock, each
+   case the rule has (at the tag, under it, just under the floor, a side below 1, a tie on the shift ordered by the part then the id, a club
+   with five listed, tag null, the block gone, a game's cx gone, f 0 and junk); (c) the behaviour (a bubble opens its game at its player,
+   ringed, the keyboard on his row; the window's focus, Tab, Escape, an outside click, a row's name, another tab; a game's Mismatches window;
+   the tag on the game's page and on a suggested leg by the spec's rule 7; a Refresh odds press leaving every row as it was); (d) the clock
+   (each puck drop takes its game's rows away, the window follows, a game's window says the puck dropped, the card goes with the last);
+   (e) nothing fetched or stored; and both looks' contrast and focus rings on what it draws. The game's page and its windows hold the tag
+   and the Mismatches window on every game they walk (gpWrongs, gpWindowWrongs) */
+const mmAddS = (dd, n) => { const x = new Date(dd + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+const sMmOn = St => !!(St && isO(St.props) && isO(St.props.mm) && St.props.mm.stat === 'pts' && St.props.mm.line === 0.5 && typeof St.props.mm.list === 'number' && St.props.mm.list > 0
+  && +St.props.mm.ctx > 0 && isO(St.props.games) && St.players && isO(St.players.teams));
+const mmSgnS = x => { const r = Math.round(x * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); };
+const mmAbS = (St, id) => St.teams && St.teams[id] ? St.teams[id].abbr : id;
+/* every listed skater of a day, ranked, with his words */
+function sMmRows(St, day, ms) {
+  if (!day || !sMmOn(St) || day > mmAddS(etDate(ms), 1)) return [];
+  const M = St.props.mm, Tm = St.players.teams, rp = isO(St.props.params) && isO(St.props.params.r) ? St.props.params.r.pts : null, tagAt = typeof M.tag === 'number' && isFinite(M.tag) ? M.tag : null;
+  const hfa = St.players.params ? +St.players.params.hfa || 0 : 0, out = [];
+  for (const g of St.games) {
+    const pr = St.props.games[g.id];
+    if (g.date !== day || !isO(pr) || sStarted(g, ms) || !isO(pr.cx) || pr.home !== g.home || pr.away !== g.away) continue;
+    for (const side of ['away', 'home']) {
+      const o = side === 'home' ? 'away' : 'home', cx = pr.cx[side], Q = pr[side + 'P'];
+      if (!isO(cx) || typeof cx.f !== 'number' || !isFinite(cx.f) || !(cx.f > 0) || typeof cx.xg !== 'number' || !(cx.xg > 0) || !isO(Q) || !Array.isArray(Q.skaters) || !isO(Tm[g[side]]) || !isO(Tm[g[o]])) continue;
+      const gl0 = isO(g.pm) && isO(g.pm[o]) ? g.pm[o].goalie : null, gl = isO(gl0) && gl0.name && typeof gl0.gk === 'number' ? gl0 : null;
+      for (const p of Q.skaters) {
+        const D = isO(p) ? p.pts : null; if (!isO(p) || !p.id || !p.name || !isO(D) || !Array.isArray(D.d) || !(D.mu > 0)) continue;
+        const lo = +D.lo || 0, pm = D.d.reduce((a, x, i) => a + (lo + i >= 1 ? x : 0), 0) / 10000, base = D.mu / cx.f;
+        const pb = typeof rp === 'number' && rp > 0 ? 1 - Math.pow(rp / (rp + base), rp) : 1 - Math.exp(-base), shift = pm - pb;
+        if (!(shift >= M.list)) continue;
+        out.push({ gid: String(g.id), pid: String(p.id), name: String(p.name), pos: String(p.pos || ''), team: g[side], opp: g[o], vs: g.neutral || side === 'home' ? 'vs' : 'at', date: day,
+          mu: D.mu, base, part: D.mu - base, f: cx.f, xg: cx.xg, pm, pb, shift, pct: Math.round(100 * shift), tag: tagAt !== null && shift >= tagAt, goalie: gl, hfa: side === 'home' && !g.neutral ? hfa : 0 });
+      }
+    }
+  }
+  out.sort((x, y) => y.shift - x.shift || y.part - x.part || (x.pid < y.pid ? -1 : x.pid > y.pid ? 1 : 0));
+  /* the words, by this file's own sentence: the size, the side's goals, the defence's place among the state's clubs (the figure to a
+     tenth of a hundredth, 1 the best) and the goalie, the projection, and the title with the parts in goals a game */
+  const rank = c => { const v = k => isO(Tm[k]) && typeof Tm[k].defence === 'number' ? +(Tm[k].defence * 100).toFixed(1) : -Infinity; return 1 + Object.keys(Tm).filter(k => v(k) > v(c)).length; };
+  out.forEach((v, i) => {
+    const a = mmAbS(St, v.team), b = mmAbS(St, v.opp), pct = `+${v.pct}%`;
+    const parts = [`the ${a} attack ${mmSgnS(+Tm[v.team].offence || 0)}`, `the ${b} defence ${mmSgnS(-(+Tm[v.opp].defence || 0))}`].concat(v.goalie ? [`${v.goalie.name} in goal ${mmSgnS(-v.goalie.gk)}`] : [], v.hfa ? [`home ice ${mmSgnS(v.hfa)}`] : []);
+    Object.assign(v, { n: i + 1, w: { pct, xg: `${a} ${v.xg.toFixed(2)} goals expected`, goals: `${v.xg.toFixed(2)} goals`,
+      facing: `${b} Defence ${gpOrdS(rank(v.opp))} of ${Object.keys(Tm).length}${v.goalie ? ' · ' + String(v.goalie.name).split(' ').pop() : ''}`, proj: `${v.mu.toFixed(2)} points`, part: mmSgnS(v.part),
+      title: `${v.tag ? 'Mismatch: the' : 'The'} matchup moves his points from ${v.base.toFixed(2)} to ${v.mu.toFixed(2)} (${mmSgnS(v.part)} points): ${a} are expected ${v.xg.toFixed(2)} goals where the props model's average game is ${(+St.props.mm.ctx).toFixed(2)} (×${v.f.toFixed(2)} on a skater's points). In goals a game: ${parts.join(', ')}. His chance of a point goes from ${(100 * v.pb).toFixed(1)}% to ${(100 * v.pm).toFixed(1)}%: ${pct}.` } });
+  });
+  return out;
+}
+/* the bubbles (each club's first, five at most) and the window (each club's first mm.club, thirty at most) */
+function sMmPick(St, rows) {
+  const per = {}, bubbles = [], win = [], cap = Math.max(1, Math.floor(+(isO(St.props) && isO(St.props.mm) ? St.props.mm.club : 3)) || 3);
+  for (const v of rows) { const k = v.gid + '|' + v.team, c = per[k] || 0; per[k] = c + 1; if (!c && bubbles.length < 5) bubbles.push(v); if (c < cap && win.length < 30) win.push(v); }
+  return { bubbles, win };
+}
+/* the card on the day the page shows: where it stands, its heading, the count line, every bubble part by part, Show the top N */
+function sMmCardWrongs(w, St, ms) {
+  const d = w.document, bad = [], ck = (ok, m) => { if (!ok) bad.push(m); }, day = d.getElementById('daySel').value, rows = sMmRows(St, day, ms), card = d.getElementById('peMism');
+  ck(d.querySelectorAll('.pe-mm, #peMism').length === (rows.length ? 1 : 0), `${day}: ${rows.length ? 'one card' : 'no card'} (${rows.length} rows listed; ${d.querySelectorAll('.pe-mm').length} drawn)`);
+  if (!rows.length || !card) return bad;
+  ck(card.previousElementSibling === d.getElementById('sourceNote') && card.nextElementSibling === d.getElementById('slateOdds') && card.parentElement === d.getElementById('slateView'), `${day}: the card stands after the bar and its source line, over Refresh odds and the list`);
+  const MAP = pageMap(w), { bubbles, win } = sMmPick(St, rows), max = rows[0].shift || 1;
+  const h2 = card.querySelector('h2');
+  ck(txt(h2) === `Mismatches ${new Date(day + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })}`, `${day}: the heading and the day (${txt(h2)})`);
+  const sides = St.games.filter(g => g.date === day && !sStarted(g, ms) && isO(St.props.games[g.id])).flatMap(g => ['home', 'away'].map(s => isO(g.pm) && isO(g.pm[s]) ? g.pm[s].goalie : null));
+  const conf = sides.filter(x => isO(x) && x.announced === 'Confirmed').length, cnt = card.querySelector('.pe-mm-cnt');
+  ck(sides.length && conf < sides.length ? !!cnt && txt(cnt) === `Goalies confirmed: ${conf} of ${sides.length}.` : !cnt, `${day}: "Goalies confirmed" exactly while a side still to play has no confirmed goalie (${conf} of ${sides.length}: ${cnt ? txt(cnt) : 'none'})`);
+  const bs = [...card.querySelectorAll('.pe-mm-row > .pe-mm-b')];
+  ck(eqA(bs.map(b => `${b.dataset.mmGame}|${b.dataset.mmPid}`), bubbles.map(v => `${v.gid}|${v.pid}`)), `${day}: the bubbles, one a club, five at most, in order (${bs.map(b => b.dataset.mmPid).join(',')}; want ${bubbles.map(v => v.pid).join(',')})`);
+  bubbles.forEach((v, i) => {
+    const b = bs[i]; if (!b || b.dataset.mmPid !== v.pid) return;
+    const tags = [...b.querySelectorAll('.pe-mm-vs .ttag')], sc = b.querySelector('.pe-mm-score'), bar = b.querySelector('.pe-mm-bar i'), tg = b.querySelector(':scope > .pe-mmtag');
+    ck(b.tagName === 'BUTTON' && b.type === 'button' && txt(b.querySelector('.pe-mm-n')) === String(i + 1) && txt(b.querySelector('.pe-mm-nm')) === `${v.name}(${v.pos})` && txt(b.querySelector('.pe-mm-nm small')) === `(${v.pos})`
+      && eqA(tags.map(txt), [mmAbS(St, v.team), mmAbS(St, v.opp)]) && tags.every((t, k) => !tagWrong(t, MAP[k ? v.opp : v.team])) && txt(b.querySelector('.pe-mm-vs > span:not(.ttag)')) === v.vs
+      && b.title === `Open ${v.name}'s props in ${mmAbS(St, v.team)} ${v.vs} ${mmAbS(St, v.opp)}`, `${day}, bubble ${i + 1}: a button, its rank, ${v.name} (${v.pos}), the two clubs' tags and "${v.vs}" (${txt(b).slice(0, 80)})`);
+    ck(!!sc && txt(sc.querySelector('b')) === `+${v.pct}%` && sc.querySelector('b').dataset.peMmpct === String(v.pct) && sc.title === v.w.title && !!bar && bar.style.width === `${Math.max(6, Math.round(100 * v.shift / max))}%`
+      && txt(b.querySelector('.pe-mm-sub')) === `${v.w.xg}.${v.w.proj} projected (${v.w.part} from the matchup).` && b.querySelector('.pe-mm-sub b') && txt(b.querySelector('.pe-mm-sub b')) === v.w.proj,
+      `${day}, bubble ${i + 1}: "+${v.pct}%", the bar at the shift over the day's largest, "${v.w.xg}." and "${v.w.proj} projected (${v.w.part} from the matchup).", the title word for word (${sc ? txt(sc) : ''} | ${txt(b.querySelector('.pe-mm-sub'))} | ${sc ? sc.title.slice(0, 120) : ''})`);
+    ck(v.tag ? !!tg && txt(tg) === 'Mismatch' && tg.title === v.w.title : !tg, `${day}, bubble ${i + 1}: the tag exactly at the tag (${v.shift.toFixed(4)} against ${St.props.mm.tag}; ${tg ? 'tagged' : 'none'})`);
+  });
+  const more = d.getElementById('peMmMore');
+  ck(win.length > bubbles.length ? !!more && txt(more) === `Show the top ${win.length}` && more.tagName === 'BUTTON' && more.closest('#peMism') === card : !more, `${day}: "Show the top ${win.length}" exactly where the window holds more than the bubbles (${more ? txt(more) : 'none'})`);
+  ck(card.querySelectorAll('.pe-mmtag').length === bubbles.filter(v => v.tag).length, `${day}: no tag on the card but a tagged bubble's`);
+  return bad;
+}
+/* the window's rows and cells, opened from Show the top N */
+function sMmWinWrongs(w, St, ms) {
+  const d = w.document, bad = [], ck = (ok, m) => { if (!ok) bad.push(m); }, day = d.getElementById('daySel').value, rows = sMmRows(St, day, ms), { win } = sMmPick(St, rows), m = d.getElementById('peMmModal');
+  if (!m || m.hidden) return ['the window is not open'];
+  const p = m.querySelector('.modal-panel'), h2 = m.querySelector('h2'), trs = [...m.querySelectorAll('table.pe-mm-t tbody tr')];
+  ck(p.getAttribute('role') === 'dialog' && p.getAttribute('aria-modal') === 'true' && p.getAttribute('aria-label') === 'Mismatches' && m.closest('#tab-games') && d.body.classList.contains('modal-open'), 'the window is a dialog, named Mismatches, the Games tab\'s own, the page under it locked');
+  ck(txt(h2) === `Mismatches, ${new Date(day + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })} top ${win.length}Close` && txt(h2.querySelector('.pill')) === `top ${win.length}`, `its heading, the day and "top ${win.length}", Close (${txt(h2)})`);
+  ck(eqA([...m.querySelectorAll('thead th')].map(txt), ['#', 'Player', 'Game', 'Facing', 'Chance', 'Projection']), 'its six columns: #, Player, Game, Facing, Chance, Projection');
+  ck(eqA(trs.map(r => `${r.dataset.mmGame}|${r.dataset.mmPid}`), win.map(v => `${v.gid}|${v.pid}`)), `its rows, each club's first ${isO(St.props) && isO(St.props.mm) ? St.props.mm.club : 'three'}, thirty at most (${trs.length}, want ${win.length})`);
+  win.forEach((v, i) => {
+    const r = trs[i]; if (!r || r.dataset.mmPid !== v.pid) return;
+    const c = [...r.cells], nb = c[1] && c[1].querySelector('button.pe-plbtn[data-mm-open]'), tg = c[4] && c[4].querySelector('.pe-mmtag');
+    ck(c.length === 6 && txt(c[0]) === String(i + 1) && !!nb && nb.type === 'button' && txt(nb) === v.name && txt(c[1]) === `${v.name} (${v.pos})` && eqA([...c[2].querySelectorAll('.ttag')].map(txt), [mmAbS(St, v.team), mmAbS(St, v.opp)]) && txt(c[2]) === `${mmAbS(St, v.team)} ${v.vs} ${mmAbS(St, v.opp)}`
+      && txt(c[3]) === `${v.w.goals}${v.w.facing}` && txt(c[3].querySelector('small')) === v.w.facing && txt(c[4].querySelector('b')) === v.w.pct && (v.tag ? !!tg && txt(tg) === 'Mismatch' : !tg)
+      && txt(c[5]) === `${v.w.proj}${v.w.part} from the matchup` && r.title === v.w.title, `the window's row ${i + 1}: ${v.name} word for word (${txt(r).slice(0, 140)})`);
+  });
+  return bad;
+}
+/* a game's Mismatches window: every listed skater of the game, his rank among the day's */
+function sMmGameWinWrongs(w, St, g, ms) {
+  const d = w.document, bad = [], ck = (ok, m) => { if (!ok) bad.push(m); }, md = d.getElementById('gsModal'), rows = sMmRows(St, g.date, ms).filter(v => v.gid === String(g.id));
+  const lis = [...md.querySelectorAll('ul.gs-mm > li')], none = md.querySelector('#gsMmNone');
+  if (sStarted(g, ms)) { ck(txt(md.querySelector('.gs-secbody')) === 'The puck has dropped.' && !lis.length, `${g.id}: once the puck has dropped the window says so (${txt(md.querySelector('.gs-secbody'))})`); return bad; }
+  ck(rows.length ? !none && eqA(lis.map(l => l.dataset.pid), rows.map(v => v.pid)) : !!none && txt(none) === 'No mismatches in this game.' && !lis.length, `${g.id}: the window lists every listed skater of the game in order (${lis.map(l => l.dataset.pid).join(',')}; want ${rows.map(v => v.pid).join(',')})`);
+  rows.forEach((v, i) => {
+    const li = lis[i]; if (!li || li.dataset.pid !== v.pid) return;
+    const tg = li.querySelector('.gs-mmtag');
+    ck(txt(li.querySelector('.gs-mmn')) === `#${v.n}` && txt(li.querySelector('.gs-mmwho')) === `${v.name} ${v.pos}${mmAbS(St, v.team)}${v.vs}${mmAbS(St, v.opp)}` && txt(li.querySelector('.gs-mmsub')) === `${v.w.xg}. ${v.w.proj} projected (${v.w.part} from the matchup).`
+      && txt(li.querySelector('.gs-mmsc b')) === v.w.pct && (v.tag ? !!tg && txt(tg) === 'Mismatch' : !tg) && li.title === v.w.title, `${g.id}, the window's row ${i + 1}: #${v.n} ${v.name} word for word (${txt(li).slice(0, 140)})`);
+  });
+  return bad;
+}
+/* the rule every table of the page is held to (THE LOOK's tablesHeld, written here for a table it does not reach): its columns, in a
+   wrapper that scrolls sideways, let out of the clip, nothing hidden by any rule, its `stick` column the one held at the left and let
+   go by no rule under any media query, every row whole */
+function tableHeldWrongs(w, tb, key, want, stick) {
+  const d = w.document, lost = [], hiders = [], scrollers = [];
+  const walk = (rules, f) => { for (const r of rules || []) { if (r.cssRules && !r.selectorText) walk(r.cssRules, f); else if (r.style) f(r); } };
+  for (const sh of d.styleSheets) walk(sh.cssRules, r => { if (/^none$/i.test(String(r.style.getPropertyValue('display')).trim())) hiders.push(r.selectorText); if (/^(auto|scroll)$/.test(String(r.style.getPropertyValue('overflow-x') || r.style.getPropertyValue('overflow')).trim().split(/\s+/).pop())) scrollers.push(r.selectorText); });
+  const hits = (el, sel) => { try { return el.matches(sel); } catch (e) { return String(sel).split(',').some(x => { try { return el.matches(x); } catch (e2) { return false; } }); } };
+  const unheld = cssWith(w, 'position', /^(?!sticky$).+/).concat(cssWith(w, 'left', /^(?!0(px)?$).+/));
+  const heads = [...tb.querySelectorAll('thead th')].map(txt);
+  if (!eqA(heads, want)) lost.push(`${key}: columns ${JSON.stringify(heads)}, want ${JSON.stringify(want)}`);
+  if (!tb.parentElement || !scrollers.some(sel => hits(tb.parentElement, sel))) lost.push(`${key}: not inside a wrapper that scrolls sideways`);
+  if (w.getComputedStyle(tb).overflow !== 'visible') lost.push(`${key}: its table is clipped, so its held column cannot stick`);
+  for (const el of [tb, ...tb.querySelectorAll('thead, tbody, tr, th, td')]) { const h = hiders.find(sel => hits(el, sel)); if (h) { lost.push(`${key}: ${el.tagName.toLowerCase()} hidden by ${h}`); break; } }
+  const si = heads.indexOf(stick), rows = [...tb.querySelectorAll('tr')];
+  if (si < 0 || !rows.length || rows.some(r => !r.cells[si] || !r.cells[si].classList.contains('sk') || [...r.cells].filter(c => c.classList.contains('sk')).length !== 1)) lost.push(`${key}: the ${stick} column is not the one held at the left`);
+  else for (const r of [rows[0], rows[rows.length - 1]]) { const un = unheld.find(([sel]) => hits(r.cells[si], sel)); if (un) { lost.push(`${key}: the held ${stick} column is let go by ${un[0]}${un[1] ? ' under ' + un[1] : ''}`); break; } }
+  if (rows.some(r => r.cells.length !== heads.length)) lost.push(`${key}: a row with a cell missing`);
+  return lost;
+}
+/* the made-up copies: three games two days out by the page's clock, the block planted on them, the published state's other projections
+   taken away (so whatever the day holds, the rows are these) */
+function mmPlant(opts = {}) {
+  const M = JSON.parse(STATE), AT = PUB + 60000, D = mmAddS(etDate(AT), 2);
+  const clubs = Object.keys(M.teams || {}).sort().slice(0, 6), [CA, HA, CB, HB, CC, HC] = clubs;
+  M.players = M.players || {}; M.players.teams = isO(M.players.teams) ? M.players.teams : {}; M.players.params = Object.assign({ hfa: 0.15 }, M.players.params || {});
+  clubs.forEach((c, i) => { if (!isO(M.players.teams[c])) M.players.teams[c] = { offence: 0.1 - i * 0.05, defence: -0.1 + i * 0.03, lineup: [] }; });
+  const gk = (id, name, gkv, how, ann) => Object.assign({ id, name, gk: gkv, how }, ann ? { announced: ann } : {});
+  const game = (id, away, home, hhmm, gA, gH) => ({ id, date: D, start: `${D}T${hhmm}:00Z`, state: 'pre', home, away, neutral: false, type: 2, pHome: 0.48, mu: -0.1, xt: 6.2, tie: 0.2, pick: 'away', by: 'players', frozen: new Date(PUB).toISOString().slice(0, 16) + 'Z',
+    line: null, pm: { pHome: 0.48, mu: -0.1, xt: 6.2, home: { goalie: gH, strength: 0.1, out: [], dtd: [] }, away: { goalie: gA, strength: 0.2, out: [], dtd: [] }, inj: null } });
+  const A = game('990000001', CA, HA, '23:00', gk('9190001', 'Planted Keeper', 0.04, 'likely by DailyFaceoff', 'Likely'), gk('9190002', 'Home Keeper', 0.06, 'confirmed by DailyFaceoff', 'Confirmed'));
+  const B = game('990000002', CB, HB, '23:30', gk('9190003', 'Road Keeper', -0.02, 'confirmed by DailyFaceoff', 'Confirmed'), gk('9190004', 'Last Keeper', 0.1, 'confirmed by DailyFaceoff', 'Confirmed'));
+  const C = game('990000003', CC, HC, '23:45', gk('9190005', 'Flat Keeper', 0, 'most starts, 6 of the last 10', null), gk('9190006', 'Even Keeper', 0, 'most starts, 7 of the last 10', null));
+  M.games = M.games.filter(g => ![A.id, B.id, C.id].includes(g.id)).concat([A, B, C]);
+  const pois = mu => { const d = []; let p = Math.exp(-mu), left = 10000; for (let k = 0; k < 6; k++) { const v = Math.round(p * 10000); d.push(v); left -= v; p = p * mu / (k + 1); } d.push(Math.max(0, left)); const s = d.reduce((a, x) => a + x, 0); d[0] += 10000 - s; return d; };
+  const sk = (id, name, pos, toi, mu, d0) => ({ id, name, pos, toi, g: { mu: +(mu * 0.35).toFixed(3), d: pois(mu * 0.35) }, a: { mu: +(mu * 0.65).toFixed(3), d: pois(mu * 0.65) }, pts: { mu, d: [d0, 10000 - d0] }, s: { mu: 2.1, d: pois(2.1) }, bs: { mu: 0.8, d: pois(0.8) } });
+  const fill = (pre, n, toi0, mu, f) => Array.from({ length: n }, (_, i) => sk(`${pre}${i}`, `Filler ${pre.slice(-2)}${i}`, ['C', 'LW', 'RW'][i % 3], toi0 + i, mu, Math.round(Math.exp(-mu / f) * 10000)));
+  /* CA (f 1.25): one at the tag, two under it, a tie on the shift with CB's (the part apart) and with each other (the id apart), one just
+     under the floor; five listed in all, the one at the tag outside the page's cut of six forwards (All skaters ticked to reach him) */
+  const caSk = [sk('9100001', 'Planted Tagged', 'C', 10, 1.25, 3200), sk('9100004', 'Planted Second', 'LW', 19, 1.25, 3380), sk('9100005', 'Planted Third', 'RW', 9, 1.25, 3450), sk('9100002', 'Planted Level Low', 'D', 22, 1.25, 3500), sk('9100003', 'Planted Level High', 'C', 8, 1.25, 3500), sk('9100006', 'Planted Under Floor', 'D', 23, 1.25, 3530)].concat(fill('91000f', 5, 21, 0.4, 1.25));
+  const props = isO(M.props) ? M.props : { v: 1, label: 'on trial', fair: { main: 'over', yes: null }, ledger: null };
+  props.params = Object.assign({ svSd: 7.2 }, isO(props.params) ? props.params : {}); props.params.r = Object.assign({}, isO(props.params.r) ? props.params.r : {}, { pts: null });
+  props.mm = { v: 1, stat: 'pts', line: 0.5, list: 0.015, tag: 0.035, club: 3, ctx: 2.935087 };
+  const P = (cx, awayS, homeS, g) => ({ start: g.start, date: g.date, home: g.home, away: g.away, inj: null, cx, awayP: { goalie: null, skaters: awayS }, homeP: { goalie: null, skaters: homeS } });
+  props.games = {
+    [A.id]: P({ away: { xg: 4.586, f: 1.25 }, home: { xg: 1.878, f: 0.8 } }, caSk, [sk('9100011', 'Planted Below One', 'C', 20, 0.8, Math.round(Math.exp(-0.8) * 10000))].concat(fill('91001f', 3, 15, 0.5, 0.8)), A),
+    [B.id]: P({ away: { xg: 6.604, f: 1.5 }, home: { xg: 3.551, f: 1.1 } }, [sk('9100021', 'Planted Level Part', 'RW', 18, 1.5, 3500)], [sk('9100031', 'Planted Home Listed', 'C', 18, 1.1, 3429), sk('9100032', 'Planted Home Floor', 'D', 21, 1.1, 3529)], B),
+    [C.id]: P({ away: { xg: 2.935, f: 1 }, home: { xg: 2.935, f: 1 } }, [sk('9100041', 'Planted Even', 'C', 18, 0.9, Math.round(Math.exp(-0.9) * 10000))], [sk('9100051', 'Planted Even Home', 'C', 18, 0.9, Math.round(Math.exp(-0.9) * 10000))], C) };
+  M.props = props;
+  if (opts.f) opts.f(M, { A, B, C });
+  return { M, D, A, B, C, body: JSON.stringify(M) };
+}
+async function mismatchesChecks() {
+  console.log('THE MISMATCHES');
+  const T0 = Date.now(), AT = PUB + 60000, show = process.env.NHL_SMOKE_ALL ? 40 : 4;
+  /* ---- the stylesheet's words: 44px controls, a name never cut, the row of bubbles scrolling on a phone, no image ---- */
+  {
+    const css = HTML.slice(HTML.indexOf('<style>'), HTML.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
+    const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => [m[1].trim(), m[2]]);
+    const nm = rules.filter(([sel]) => sel.split(',').some(s => /\.pe-mm-nm\s*$/.test(s.trim())));
+    chk(nm.length && nm.every(([, b]) => !/text-overflow\s*:\s*ellipsis|white-space\s*:\s*nowrap|overflow\s*:\s*hidden/.test(b)) && !/\.pe-mm[\w-]*[^{]*\{[^}]*text-overflow\s*:\s*ellipsis/.test(css), `a bubble's name wraps and is never cut with an ellipsis, under any media query (${nm.map(x => x[1]).join(' | ').slice(0, 160)})`);
+    chk(/@media\s*\(max-width:\s*900px\)\s*\{\s*\.pe-mm-row\{[^}]*grid-auto-flow:column;[^}]*overflow-x:auto/.test(css), 'at 900px and under the bubbles are one row that scrolls sideways inside the card');
+    chk(/\.pe-mm-t \.pe-plbtn\{[^}]*min-height:44px/.test(css) && /#peMmClose\{[^}]*min-height:44px/.test(css) && /\.pe-mm-b\{[^}]*min-height:44px/.test(css), "a bubble, the window's Close and a row's name are 44px or more");
+    chk(!/url\(/.test(rules.filter(([sel]) => /pe-mm|gs-mm|pe-hl|peMm/.test(sel)).map(x => x[1]).join(';')), "no rule of the Mismatches names an image");
+  }
+  /* ---- (a) the state as published: every day of the select, the card as the rule has it; the window where it opens ---- */
+  {
+    const errs = [], w = await boot(AT, errs, { keepDk: true }), d = w.document;
+    d.querySelector('#tabs button[data-tab="games"]').click();
+    const r0 = w.__requests.length, wr0 = w.__writes.length;
+    const bad = [], badW = []; let cards = 0, days = 0;
+    for (const day of dayList(d)) {
+      openDay(d, day); days++;
+      const ms = w.Date.now(); for (const m of sMmCardWrongs(w, S, ms)) bad.push(m);
+      if (d.getElementById('peMism')) cards++;
+      const more = d.getElementById('peMmMore');
+      if (more) { more.click(); for (const m of sMmWinWrongs(w, S, w.Date.now())) badW.push(`${day}: ${m}`); d.getElementById('peMmClose').click(); }
+    }
+    chk(!bad.length, `the state as published: on each of the ${days} days of the select the card is the rule's, one bubble a club, five at most, word for word, or none (${cards} cards; ${bad.slice(0, show).join(' | ')})`);
+    chk(!badW.length, `the state as published: each "Show the top N" opens the rule's window, row for row (${badW.slice(0, show).join(' | ')})`);
+    chk(w.__requests.slice(r0).every(r => /scoreboard\?dates=\d{8}&limit=100$/.test(r.url)) && w.__writes.length === wr0, `the card and its window ask for nothing and store nothing (a day shown reads only its own scoreboard, the list's: ${w.__requests.slice(r0).map(r => r.url).filter(u => !/scoreboard\?dates=\d{8}&limit=100$/.test(u)).join(', ') || 'none else'}; ${w.__writes.length - wr0} writes)`);
+    const today = etDate(AT), rT = sMmRows(S, today, AT), rM = sMmRows(S, mmAddS(today, 1), AT);
+    console.log(`  the state as published: ${sMmOn(S) ? `the block carried (list ${S.props.mm.list}, tag ${S.props.mm.tag}); ${today} ${rT.length} rows listed, ${mmAddS(today, 1)} ${rM.length}` : 'no block (props.mm): no card on any day'}`);
+    chk(!errs.length, 'no runtime error on the state as published: ' + errs.join(' | '));
+    w.close();
+  }
+  /* ---- (b) the made-up copy, the page on its day ---- */
+  const P1 = mmPlant(), D = P1.D, msD = Date.parse(`${D}T14:00:00Z`);
+  const real = S; S = P1.M;
+  try {
+    const rows = sMmRows(P1.M, D, msD), ids = rows.map(v => v.pid), pick = sMmPick(P1.M, rows);
+    /* the plant itself, by the rule: the order (the tie on the shift ordered by the part, then the id), the floor, the side below 1 */
+    chk(eqA(ids, ['9100001', '9100004', '9100031', '9100005', '9100021', '9100002', '9100003']) && rows[4].shift === rows[5].shift && rows[5].shift === rows[6].shift && rows[4].part > rows[5].part,
+      `the plant: at the tag, under it, the tie on the shift ordered by the part then the id; just under the floor and the side below 1 never listed (${ids.join(',')})`);
+    chk(eqA(pick.bubbles.map(v => v.pid), ['9100001', '9100031', '9100021']) && eqA(pick.win.map(v => v.pid), ['9100001', '9100004', '9100031', '9100005', '9100021']) && rows.filter(v => v.tag).map(v => v.pid).join() === '9100001',
+      `the plant: one bubble a club (a club with five listed gives one bubble and three window rows), the tag on one (${pick.bubbles.map(v => v.pid).join(',')} | ${pick.win.map(v => v.pid).join(',')})`);
+    const errs = [], w = await boot(msD, errs, { state: P1.body }), d = w.document, $ = id => d.getElementById(id), MAP = pageMap(w);
+    const key = (k, o = {}) => new w.KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true, cancelable: true }, o));
+    d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, D);
+    /* what is stored, but for the tab the visitor was on (the page's own, written by a change of tab) */
+    const storeNoTab = () => { let j = {}; try { j = JSON.parse(w.localStorage.getItem('nhl_v1') || '{}'); } catch (e) { j = { junk: true }; } if (isO(j.ui)) delete j.ui.tab; return JSON.stringify(j); };
+    const req0 = w.__requests.length, wr0 = w.__writes.length, st0 = storeNoTab();
+    const bad = sMmCardWrongs(w, S, w.Date.now());
+    chk(!bad.length, `the made-up copy on ${D}: the card is the rule's, word for word (${bad.slice(0, show).join(' | ')})`);
+    chk(txt($('peMism').querySelector('.pe-mm-cnt')) === 'Goalies confirmed: 3 of 6.', `"Goalies confirmed: 3 of 6.": one side's goalie only likely and two the model chose, of the sides the props model projects (the day's other games left out) (${txt($('peMism').querySelector('.pe-mm-cnt'))})`);
+    /* (c) a bubble: the game's page at his row, All skaters ticked to reach him (the page's cut leaves him out), his lines open, ringed, the
+       keyboard on his row; the tag on him alone; nothing stored or asked; Close gives the focus back to the bubble */
+    const bub = $('peMism').querySelector('.pe-mm-b'); bub.focus(); bub.click();
+    const row = () => d.querySelector('#gameView .plrbtn[data-open="9100001"]'), body = () => { const r = row(); let n = r && r.nextElementSibling; while (n && !n.matches('.plrbtn, .teamhdr')) { if (n.classList.contains('plrbody')) return n; n = n.nextElementSibling; } return null; };
+    chk(pageOn(d, P1.A.id) && !!row() && row().getAttribute('aria-expanded') === 'true' && row().classList.contains('pe-hl') && !!body() && body().classList.contains('pe-hl') && d.activeElement === row() && $('allCb').checked && d.querySelectorAll('#gameView .pe-hl').length === 2,
+      `a bubble opens its game's page at its player: All skaters ticked where the cut leaves him out, his lines open, his row and its lines ringed, the keyboard on his row (${pageOn(d, P1.A.id)}, ${row() ? row().className : 'no row'}, focus ${d.activeElement && d.activeElement.dataset && d.activeElement.dataset.open})`);
+    const v1 = rows[0], tags = [...d.querySelectorAll('#gameView .pe-mmtag')], who = row() && row().querySelector('.who'), nmEl = who && [...who.childNodes].find(c => c.nodeType === 3 && c.textContent.trim());
+    chk(tags.length === 1 && tags[0].closest('.plrbtn') === row() && tags[0].parentElement === who && txt(tags[0]) === 'Mismatch' && tags[0].title === v1.w.title && tags[0].dataset.peMmtag === String(v1.pct) && !!nmEl && nmEl.textContent.trim() === v1.name && nmEl.nextSibling === tags[0],
+      `the tag beside his name on the game's page, his alone (the page's other listed skaters are under it), its title the row's; his name still the row's first words (${tags.length} tags)`);
+    chk(!/\bedge\b|model says/i.test(tags.map(t => t.title).join(' ')), 'the tag says neither edge nor "model says"');
+    const btns = [...d.querySelectorAll('#gameView .gwin [data-gp-pop]')].map(b => b.dataset.gpPop);
+    chk(eqA(btns, ['units', 'mism', 'lineups', 'stats']) && txt(d.querySelector('#gameView [data-gp-pop="mism"]')) === 'Mismatches', `a game with a listed row: Matchup, Mismatches, Lineups, Team Stats (${btns.join(', ')})`);
+    /* a row clicked takes the ring away */
+    row().click(); chk(!d.querySelector('#gameView .pe-hl'), 'another tap on his row takes the ring away'); row().click();
+    /* the game's Mismatches window */
+    d.querySelector('#gameView [data-gp-pop="mism"]').click();
+    const bW = sMmGameWinWrongs(w, S, P1.A, w.Date.now());
+    chk(!bW.length && txt($('gsTitle')) === `${ab(P1.A.away)}at${ab(P1.A.home)}Mismatches · ${gpDayS(P1.A.start)}` && d.activeElement === $('gsClose'), `the game's Mismatches window: every listed skater of the game, his rank among the day's, word for word, titled by the game and the day, its Close holding the focus (${bW.slice(0, 2).join(' | ')}; ${txt($('gsTitle'))})`);
+    { const ev = key('Escape'); d.dispatchEvent(ev); }
+    chk($('gsModal').hidden && pageOn(d, P1.A.id) && d.activeElement === d.querySelector('#gameView [data-gp-pop="mism"]'), 'Escape closes it alone, the focus back on its button');
+    closeBets(d);
+    chk(!pageOn(d) && d.activeElement === $('peMism').querySelector('.pe-mm-b'), `the page shut, the focus is back on the bubble (${d.activeElement && d.activeElement.className})`);
+    /* a game with no listed row: three buttons */
+    betsOn(d, P1.C.id);
+    chk(eqA([...d.querySelectorAll('#gameView .gwin [data-gp-pop]')].map(b => b.dataset.gpPop), ['units', 'lineups', 'stats']) && !d.querySelector('#gameView .pe-mmtag'), 'a game with no listed row: no Mismatches button, no tag');
+    closeBets(d); d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, D);
+    /* Show the top N: the window's rows, its focus, Tab kept inside, Escape and an outside click, a row's name, another tab */
+    const more = () => $('peMmMore'), mw = () => $('peMmModal');
+    more().click();
+    const bWin = sMmWinWrongs(w, S, w.Date.now());
+    chk(!bWin.length && d.activeElement === $('peMmClose'), `"Show the top 5" opens the window, row for row, its Close holding the focus (${bWin.slice(0, show).join(' | ')}; focus ${d.activeElement && d.activeElement.id})`);
+    const tbl = mw().querySelector('table.pe-mm-t'), heldBad = tableHeldWrongs(w, tbl, 'the Mismatches window', ['#', 'Player', 'Game', 'Facing', 'Chance', 'Projection'], 'Player');
+    chk(!heldBad.length && tbl.parentElement.classList.contains('wrap') && tbl.classList.contains('pe-t'), `the window's table keeps every column at every width, scrolling sideways in its .wrap with the player held (${heldBad.join(' | ')})`);
+    chk([...mw().querySelectorAll('.pe-plbtn')].every(b => w.getComputedStyle(b).minHeight === '44px') && w.getComputedStyle($('peMmClose')).minHeight === '44px' && w.getComputedStyle(more()).minHeight === '44px' && w.getComputedStyle(bub).minHeight === '44px', 'Show the top N, Close, a row\'s name and a bubble are 44px tall');
+    { const f = [...mw().querySelectorAll('button, a[href], input, select, [tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled);
+      f[f.length - 1].focus(); d.dispatchEvent(key('Tab')); const wrapF = d.activeElement === f[0];
+      f[0].focus(); d.dispatchEvent(key('Tab', { shiftKey: true })); const wrapB = d.activeElement === f[f.length - 1];
+      chk(wrapF && wrapB && f[0] === $('peMmClose'), `Tab stays inside the window: from its last control round to Close, and back (${f.length} controls)`); }
+    d.dispatchEvent(key('Escape'));
+    chk(mw().hidden && d.activeElement === more() && !d.body.classList.contains('modal-open'), `Escape closes the window, the focus back on Show the top N (${d.activeElement && d.activeElement.id})`);
+    more().click(); mw().dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+    chk(mw().hidden && d.activeElement === more(), 'a click outside the window closes it, the focus back on Show the top N');
+    more().click();
+    const nameB = mw().querySelectorAll('tbody tr')[1].querySelector('button[data-mm-open]'); nameB.focus();
+    chk(d.activeElement === nameB && nameB.type === 'button', "a row's name is a button the keyboard reaches");
+    nameB.click();
+    const r2 = d.querySelector('#gameView .plrbtn[data-open="9100004"]');
+    chk(mw().hidden && pageOn(d, P1.A.id) && !!r2 && r2.classList.contains('pe-hl') && r2.getAttribute('aria-expanded') === 'true' && d.activeElement === r2, `a row's name closes the window and opens the player as a bubble does (${pageOn(d)}, ${r2 && r2.className})`);
+    closeBets(d);
+    chk(d.activeElement === more(), `the page shut, the focus is back on Show the top N, the window's opener (${d.activeElement && (d.activeElement.id || d.activeElement.className)})`);
+    chk(w.__requests.length === req0 && storeNoTab() === st0 && w.__writes.slice(wr0).every(k => k === 'nhl_v1'), `the card, its bubbles, the window and the game's pages ask for nothing and store nothing but the tab a tab's press keeps (${w.__requests.length - req0} requests; ${storeNoTab() === st0 ? 'the store as it was' : 'the store changed'})`);
+    more().click(); d.querySelector('#tabs button[data-tab="ratings"]').click();
+    chk(mw().hidden && !d.body.classList.contains('modal-open'), 'another tab closes the window: it is the Games tab\'s own');
+    d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, D);
+    /* a Refresh odds press leaves every row as it was */
+    { const c0 = $('peMism').outerHTML; $('refreshOdds').click(); await oddsDone(w);
+      chk($('peMism') && $('peMism').outerHTML === c0, 'a Refresh odds press leaves the card as it was (the projections are the job\'s)'); }
+    /* the tag on a suggested level's leg, the spec's rule 7: his Over in points, goals or assists, or his anytime goal, in that game; never
+       his shots or blocks, an Under, a listed skater under the tag, or a team bet. A level drawn by the page on these legs, and a locked one */
+    const legSet = [['9100001', 'pts', 'main', 'over', 0.5, null, true], ['9100001', 'g', 'main', 'over', 0.5, null, true], ['9100001', 'a', 'main', 'over', 0.5, null, true], ['9100001', 'g', 'yes', 'over', 0.5, 1, true],
+      ['9100001', 's', 'main', 'over', 2.5, null, false], ['9100001', 'bs', 'main', 'over', 1.5, null, false], ['9100001', 'pts', 'main', 'under', 0.5, null, false], ['9100001', 'g', 'yes', 'over', 1.5, 2, false], ['9100004', 'pts', 'main', 'over', 0.5, null, false]];
+    const mkLegs = `(() => { const g = gameById()[${JSON.stringify(P1.A.id)}], at = new Date().toISOString();
+      const P = ${JSON.stringify(legSet)}.map(([pid, stat, mk, side, line, k]) => propDrawn(g, { game: g.id, kind: 'prop', pid, name: pid === '9100001' ? 'Planted Tagged' : 'Planted Second', team: g.away, grp: 'F', stat, mk, side, line, k }, -110, mk === 'main' ? -110 : null, at));
+      const t = { id: g.id + '|home|ml', game: g.id, kind: 'ml', side: 'home', g, price: -120, other: 100, fair: 0.5, fairEst: false, p: 0.5, prop: false, who: T(g.home).short, bet: 'To win', desc: T(g.home).short + ' to win', mu: matchup(g), start: g.start, num: null };
+      return P.concat([t]); })()`;
+    const levelTags = () => {
+      const html = w.eval(`(() => { const L = ${mkLegs}; return spCard(PB_TIERS[0], { legs: L, p: 0.2, fair: 0.2, dec: 5, chance: 'model', pick: true, minDec: 2.1 }, { date: ${JSON.stringify(D)}, pool: [] }, new Set(), []); })()`);
+      const locked = w.eval(`(() => { const L = ${mkLegs}.map(x => ({ id: x.id, game: x.game, kind: x.kind, pid: x.pid, name: x.name, team: x.team, stat: x.stat, mk: x.mk, side: x.side, line: x.line, k: x.k, price: x.price, fair: x.fair, p: x.p, mu: x.mu, start: x.start }));
+        return spLockedCard(PB_TIERS[0], { date: ${JSON.stringify(D)}, tiers: { safe: { legs: L, dec: 5, p: 0.2, fair: 0.2, pick: true, minDec: 2.1 } }, grade: {} }); })()`);
+      const read = h => { const box = d.createElement('div'); box.innerHTML = h; return [...box.querySelectorAll('li.pb-tl')].map(li => { const t = li.querySelector('.pb-who .pe-mmtag'); return t ? (t.previousElementSibling && t.previousElementSibling.tagName === 'B' ? t.title : 'misplaced') : null; }); };
+      return [read(html), read(locked)];
+    };
+    { const [open, locked] = levelTags(), want = legSet.map(x => x[6] ? v1.w.title : null).concat([null]);
+      chk(eqA(open, want) && eqA(locked, want), `a suggested level's leg wears the tag after his name exactly on his Over in points, goals or assists and his anytime goal, never his shots, blocks, an Under, his 2+ goals, a listed skater under the tag or a team bet, open and locked (${JSON.stringify(open.map(x => !!x))} | ${JSON.stringify(locked.map(x => !!x))})`); }
+    /* (d) the clock: the window open at the first game's puck drop follows it; a game's Mismatches window open at its puck drop says so; the
+       card goes with the last */
+    more().click();
+    const tA = Date.parse(P1.A.start) + 60000; w.__setClock(tA); d.dispatchEvent(new w.Event('visibilitychange'));
+    const bA = sMmCardWrongs(w, S, w.Date.now()), rowsA = sMmRows(S, D, w.Date.now());
+    chk(!bA.length && eqA(rowsA.map(v => v.pid), ['9100031', '9100021']) && !!$('peMism') && !more(), `at ${P1.A.id}'s puck drop the watch draws the card again without its rows (${rowsA.map(v => v.pid).join(',')}; ${bA.slice(0, 2).join(' | ')})`);
+    chk(!mw().hidden ? !sMmWinWrongs(w, S, w.Date.now()).length && eqA([...mw().querySelectorAll('tbody tr')].map(r => r.dataset.mmPid), ['9100031', '9100021']) : false, `the window open then follows: its rows the rule's at the new clock (${[...mw().querySelectorAll('tbody tr')].map(r => r.dataset.mmPid).join(',')})`);
+    mw().querySelector('#peMmClose').click();
+    betsOn(d, P1.B.id); d.querySelector('#gameView [data-gp-pop="mism"]').click();
+    const tB = Date.parse(P1.B.start) + 60000; w.__setClock(tB); d.dispatchEvent(new w.Event('visibilitychange'));
+    const bB = sMmGameWinWrongs(w, S, P1.B, w.Date.now());
+    chk(!bB.length && txt($('gsView')) === 'The puck has dropped.', `a game's Mismatches window open at its puck drop says "The puck has dropped." (${txt($('gsView'))})`);
+    $('gsClose').click(); closeBets(d); d.querySelector('#tabs button[data-tab="games"]').click(); openDay(d, D);
+    chk(!$('peMism') && !d.querySelector('.pe-mm') && !sMmCardWrongs(w, S, w.Date.now()).length, 'with the last listed game under way the card is gone');
+    /* (e) only the press's reads, nothing stored */
+    { const odd = w.__requests.slice(req0).map(r => r.url).filter(u => !/scoreboard\?dates=\d{8}&limit=100(&_=\d+)?$/.test(u) && !PROPS_RX.test(u));
+      chk(!odd.length && storeNoTab() === st0 && [...new Set(w.__writes)].every(k => k === 'nhl_v1'), `nothing asked but the Refresh odds press's reads and a day's scoreboard, nothing stored but the tab (${odd.slice(0, 3).join(', ') || 'none else'})`); }
+    chk(!errs.length, 'no runtime error on the made-up copy: ' + errs.join(' | '));
+    w.close();
+    /* the past-tomorrow rule: two days out by the page's clock, no card, no button, no tag; a day on, tomorrow, the card */
+    { const e2 = [], w2 = await boot(Date.parse(`${mmAddS(D, -2)}T14:00:00Z`), e2, { state: P1.body }), d2 = w2.document;
+      d2.querySelector('#tabs button[data-tab="games"]').click(); openDay(d2, D);
+      const none = !d2.getElementById('peMism') && !sMmRows(S, D, w2.Date.now()).length; betsOn(d2, P1.A.id);
+      chk(none && !d2.querySelector('#gameView [data-gp-pop="mism"]') && !d2.querySelector('#gameView .pe-mmtag'), 'two days out by the page\'s clock: no card, no Mismatches button, no tag (a day past tomorrow)');
+      closeBets(d2); w2.__setClock(Date.parse(`${mmAddS(D, -1)}T14:00:00Z`)); d2.dispatchEvent(new w2.Event('visibilitychange'));
+      d2.querySelector('#tabs button[data-tab="games"]').click(); openDay(d2, D);
+      const b2 = sMmCardWrongs(w2, S, w2.Date.now());
+      chk(!!d2.getElementById('peMism') && !b2.length, `a day on (tomorrow by the page's clock) the card is drawn, the rule's (${b2.slice(0, 2).join(' | ')})`);
+      chk(!e2.length, 'no runtime error two days out: ' + e2.join(' | ')); w2.close(); }
+    /* both looks: every text the card, the window, the game's page with the tag and its Mismatches window draw, 4.5:1 (3:1 large), every
+       focus ring 3:1, by THE LOOK: LIGHT AND DARK's own sums */
+    { const e3 = [], w3 = await boot(msD, e3, { state: P1.body }), d3 = w3.document, root = d3.documentElement;
+      const sheet = thSheet(HTML.slice(HTML.indexOf('<style>') + 7, HTML.indexOf('</style>')));
+      const block = sel => sheet.rules.filter(([s, , m]) => !m && s === sel).map(([, b]) => b.trim().replace(/;?$/, ';')).join(''), toks = b => { const o = {}; for (const m of b.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) o[m[1]] = m[2].trim(); return o; };
+      const DARK = toks(block(':root')), PALS = { dark: DARK, light: Object.assign({}, DARK, toks(block('html[data-theme="light"]'))) }, acc = {}, accF = {}, accR = {};
+      const take = (tag, roots) => { for (const lk of ['dark', 'light']) { if (lk === 'light') root.setAttribute('data-theme', 'light'); else root.removeAttribute('data-theme'); thPairs(w3, d3, PALS, sheet, roots, tag, acc, accF, accR); } root.removeAttribute('data-theme'); };
+      const unfocus = thFocusSheet(w3);
+      d3.querySelector('#tabs button[data-tab="games"]').click(); openDay(d3, D);
+      take('the Mismatches card', [d3.getElementById('peMism')]);
+      d3.getElementById('peMmMore').click(); take('the Mismatches window', [d3.getElementById('peMmModal')]); d3.getElementById('peMmClose').click();
+      d3.getElementById('peMism').querySelector('.pe-mm-b').click(); take("a game's page from a bubble, the tag and the ring", [d3.getElementById('gameModal')]);
+      d3.querySelector('#gameView [data-gp-pop="mism"]').click(); take("a game's Mismatches window", [d3.getElementById('gsModal')]);
+      unfocus();
+      const pairs = Object.values(acc), low = pairs.filter(p => p.r < p.need && !p.disabled), rs = Object.values(accR), noneR = rs.filter(x => x.none), lowR = rs.filter(x => !x.none && x.r < 3);
+      chk(pairs.filter(p => p.look === 'light').length >= 10 && pairs.filter(p => p.look === 'dark').length >= 10 && !low.length, `the Mismatches' every text is 4.5:1 or more on its ground (3:1 large) in each look (${pairs.length} pairs; under: ${low.slice(0, 4).map(p => `${p.look} ${p.fg} on ${p.bg} ${p.r} at ${p.at}`).join(' | ') || 'none'})`);
+      chk(rs.length >= 4 && !noneR.length && !lowR.length, `every control of the Mismatches shows a focus ring 3:1 or more in each look (${rs.length} kinds; no ring: ${noneR.slice(0, 3).map(x => `${x.look} ${x.at}`).join(' | ') || 'none'}; under: ${lowR.slice(0, 3).map(x => `${x.look} ${x.ring} on ${x.bg} ${x.r}`).join(' | ') || 'none'})`);
+      chk(!d3.querySelectorAll('img, image').length && ![...d3.querySelectorAll('#peMism [style], #peMmModal [style], #gsModal [style]')].some(x => /url\(/.test(x.getAttribute('style'))), 'no image in the card, its window or the game\'s window');
+      chk(!e3.length, 'no runtime error on both looks: ' + e3.join(' | ')); w3.close(); }
+  } finally { S = real; }
+  /* ---- (b) the cases that draw less: tag null (no tag anywhere), a side's f junk and a game's cx half gone (one row, no Show the top
+     N), f 0 with a game's cx gone (no card), the block gone (no card, no button, no tag), each without a runtime error ---- */
+  const variants = [
+    ['the tag null', M => { M.props.mm.tag = null; }, rows => rows.length === 7 && !rows.some(v => v.tag)],
+    ["a side's f junk and a game's cx half gone", (M, G) => { M.props.games[G.A.id].cx.away.f = 'junk'; delete M.props.games[G.B.id].cx.home; }, rows => eqA(rows.map(v => v.pid), ['9100021'])],
+    ["f 0 and a game's cx gone", (M, G) => { M.props.games[G.A.id].cx.away.f = 0; delete M.props.games[G.B.id].cx; }, rows => !rows.length],
+    ['the block gone (props.mm)', M => { delete M.props.mm; }, rows => !rows.length]];
+  for (const [name, f, want] of variants) {
+    const Pv = mmPlant({ f }), realV = S; S = Pv.M;
+    try {
+      const e = [], wv = await boot(msD, e, { state: Pv.body }), dv = wv.document, rows = sMmRows(Pv.M, D, wv.Date.now());
+      dv.querySelector('#tabs button[data-tab="games"]').click(); openDay(dv, D);
+      const bad = sMmCardWrongs(wv, S, wv.Date.now());
+      if (dv.getElementById('peMmMore')) { dv.getElementById('peMmMore').click(); for (const m of sMmWinWrongs(wv, S, wv.Date.now())) bad.push(m); dv.getElementById('peMmClose').click(); }
+      for (const g of [Pv.A, Pv.B]) { if (!betsOn(dv, g.id)) { bad.push(`${g.id}: no page`); continue; } const listed = rows.some(v => v.gid === g.id), btn = dv.querySelector('#gameView [data-gp-pop="mism"]');
+        if (!!btn !== listed) bad.push(`${g.id}: a Mismatches button ${btn ? 'with' : 'without'} a listed row`);
+        const allT = [...dv.querySelectorAll('#gameView .pe-mmtag')].map(t => t.closest('.plrbtn').dataset.open), wantT = rows.filter(v => v.gid === g.id && v.tag && dv.querySelector(`#gameView .plrbtn[data-open="${v.pid}"]`)).map(v => v.pid);
+        if (!eqA(allT, wantT)) bad.push(`${g.id}: tags on ${allT.join(',')} where the rule has ${wantT.join(',')}`);
+        if (btn) { btn.click(); for (const m of sMmGameWinWrongs(wv, S, g, wv.Date.now())) bad.push(m); dv.getElementById('gsClose').click(); }
+        closeBets(dv); }
+      chk(want(rows) && !bad.length && (rows.some(v => v.tag) || !dv.querySelector('.pe-mmtag')), `${name}: the card, the window, the game's pages and the tags are the rule's (${rows.map(v => v.pid).join(',') || 'no rows'}; ${bad.slice(0, 3).join(' | ')})`);
+      chk(!e.length, `no runtime error with ${name}: ${e.join(' | ')}`);
+      wv.close();
+    } finally { S = realV; }
+  }
+  console.log(`  the made-up copy on ${D}: 7 rows listed in three clubs (a tag, the floor, a tie, five in a club), and ${variants.length} variants; the section ran in ${((Date.now() - T0) / 1000).toFixed(1)}s`);
+}
 async function theLook() {
   console.log('THE LOOK');
   const AT = PUB + 60000;
@@ -6779,7 +7189,8 @@ async function eloRatingsChecks() {
   /* the stylesheet's own words, read as text (jsdom lays nothing out and resolves no colour): the tab's rules write no colour but the
      tiers' on the legend's swatch, so both looks follow the tokens; a bar's edge is half --ink, 3:1 or more on the card in both looks */
   { const css = HTML.slice(HTML.indexOf('<style>'), HTML.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
-    const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => [m[1].trim(), m[2]]).filter(([sel]) => /(^|[\s,>+~(])(\.pe-(?!badge)[\w-]*|#pe[A-Z]\w*|table\.pe-t)/.test(sel));
+    /* the Mismatches' rules (nhl v35) wear the NFL's pe- names too (its Mismatches lived on its ELO tab): they are THE MISMATCHES' to hold */
+    const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => [m[1].trim(), m[2]]).filter(([sel]) => /(^|[\s,>+~(])(\.pe-(?!badge)[\w-]*|#pe[A-Z]\w*|table\.pe-t)/.test(sel) && !/pe-mm|pe-hl\b|pe-plbtn|#peMm|#peMism/.test(sel));
     const loud = rules.filter(([sel, body]) => /#[0-9A-Fa-f]{3,8}\b|rgba?\(|hsla?\(/.test(body) && !/^\.pe-cv-key b$/.test(sel));
     const swatch = rules.find(([sel]) => sel === '.pe-cv-key b');
     chk(rules.length >= 30 && !loud.length && !!swatch && ['Bronze', 'Gold', 'Diamond', 'Elite'].every(t => swatch[1].toUpperCase().includes(PE_HEX[t])), `the tab's ${rules.length} rules write no colour of their own but the tiers' on the legend's swatch: every other is a token, in both looks (${loud.map(x => x[0]).slice(0, 3).join(' | ') || 'none'})`);
@@ -7505,7 +7916,7 @@ async function lightDarkChecks() {
      among them since nhl v34's review: drawn by the page, its edge, its ticked fill and its tick */
   { const fs = Object.values(accF), lowF = fs.filter(f => f.r < 3), ids = new Set(Object.keys(accF).map(k => k.split(' ')[1])), boxes = Object.keys(accF).filter(k => / input\[checkbox\]/.test(k));
     chk(ids.has('select#daySel') && (!d.querySelector('#gameView') || !row || ids.has('input#gameSearch')) && !lowF.length && boxes.some(k => /ticked fill/.test(k)) && boxes.some(k => /unticked edge/.test(k)),
-      `every field's edge is 3:1 or more on what it sits on, in each look, a checkbox's edge, ticked fill and tick among them (${fs.length} edges of ${ids.size} fields, ${boxes.length} of checkboxes; least ${fs.length ? Math.min(...fs.map(f => f.r)).toFixed(2) : '–'}; under: ${lowF.slice(0, 4).map(f => `${f.look} ${f.edge} on ${f.bg} ${f.r} (${f.at})`).join(' | ') || 'none'})`);
+      `every field's edge is 3:1 or more on what it sits on, in each look, a checkbox's edge, ticked fill and tick among them (${fs.length} edges of ${ids.size} fields: ${[...ids].join(', ')}; ${boxes.length} of checkboxes: ${boxes.slice(0, 6).join('; ')}; least ${fs.length ? Math.min(...fs.map(f => f.r)).toFixed(2) : '–'}; under: ${lowF.slice(0, 4).map(f => `${f.look} ${f.edge} on ${f.bg} ${f.r} (${f.at})`).join(' | ') || 'none'})`);
     const lowT = []; for (const lk of ['dark', 'light']) for (const g of GROUNDS) { const r = crH(PALS[lk]['--field'] || '#000000', PALS[lk][g]); if (!(r >= 3)) lowT.push(`${lk} --field on ${g} ${r.toFixed(2)}`); }
     chk(hexT(DARK, '--field') && hexT(LIGHT, '--field') && !lowT.length, `the field's edge, --field, is 3:1 or more on every ground in each look (${lowT.join('; ') || `dark ${DARK['--field']}, light ${LIGHT['--field']}`})`); }
   /* every rule's own pair: a rule that sets a text colour and a background of its own, in each look (its light rule's values over its own
@@ -8167,7 +8578,8 @@ async function main() {
   const ONLY = process.env.NHL_SMOKE_ONLY ? process.env.NHL_SMOKE_ONLY.split(',').map(x => x.trim()).filter(Boolean) : null;
   const SECTIONS = [['list', 'THE GAMES LIST', gamesListChecks], ['page', "THE GAME'S PAGE", gamePageChecks], ['look', 'THE LOOK', theLook], ['builder', 'THE PARLAY BUILDER', parlayBuilder], ['edges', "THE PARLAY BUILDER's edges", parlayEdges], ['suggest', "THE SUGGESTED PARLAYS' RECORD", suggestRecord],
     ['x', 'X PARLAYS AND THE X BET LOG', xParlaysChecks], ['models', "THE PICK'EM MODELS", async () => modelsChecks()], ['theme', 'THE LOOK: LIGHT AND DARK', lightDarkChecks], ['teams', 'TEAM RANKINGS', teamRankingsChecks], ['elo', 'ELO RATINGS', eloRatingsChecks], ['pickem', "THE PICK'EM RECORD", pickemChecks], ['odds', 'REFRESH ODDS', refreshOddsChecks],
-    ['props', 'PLAYER PROPS', playerPropsChecks], ['job', "THE JOB'S PLAYER LINES", jobLinesChecks], ['sgp', 'SAME-GAME PARLAYS AND PLAYER LEGS', sameGameChecks]];
+    ['props', 'PLAYER PROPS', playerPropsChecks], ['job', "THE JOB'S PLAYER LINES", jobLinesChecks], ['sgp', 'SAME-GAME PARLAYS AND PLAYER LEGS', sameGameChecks],
+    ['mismatches', 'THE MISMATCHES', mismatchesChecks]];
   /* a page that breaks a section's steps (a button missing, a leg not where it should be) fails it, never ends the smoke unheard */
   for (const [key, name, fn] of SECTIONS) { if (ONLY && !ONLY.includes(key)) continue; const had = new Set(OPEN); try { await fn(); } catch (e) { chk(false, `${name} stopped at a step the page broke: ${String(e && e.stack || e).split('\n').slice(0, 3).join(' ')}`); } closeSince(had); heapNow();
     if (global.gc) { global.gc(); global.gc(); }

@@ -1161,6 +1161,73 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
   #gsModal .ddrks{gap:3px}
   #gsModal .ddelo{padding:1px 4px}
 }
+/* ---------- the Mismatches (nhl v35): the NFL hub's card over the game list, its "Show the top N" window, the MISMATCH tag and the
+   ring on the row a bubble opened, its values as the NFL's page resolves them (spec PART 1, PART 2's list), with hockey's own: the tags
+   are the shell's .ttag, the rank's disc on --on-fill, a name wraps and is never cut (a phone shows no title), a window row's name a 44px
+   button the keyboard reaches, the window's table in .wrap with its Player held. The tag's blue is its own in both looks (white on #2563EB
+   to #1E4FA8, 5.2:1 and up); the bar and the ring are --pick ---------- */
+.pe-mm{margin:0 0 16px}
+.pe-mm h2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pe-mm h2 small{font-family:var(--body);font-size:12px;font-weight:500;color:var(--muted);margin:0}
+.pe-mm .pe-mm-cnt{margin:6px 0 0;font-size:12px;color:var(--ink-2);line-height:1.4}
+.pe-mm-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;padding:10px 0 0 10px}
+.pe-mm-b{position:relative;background:var(--panel-2);border:1px solid var(--line);border-radius:16px;padding:14px 12px 10px;display:flex;flex-direction:column;gap:6px;min-width:0;min-height:44px;cursor:pointer;text-align:left;font:inherit;color:inherit;transition:border-color .15s,transform .15s}
+.pe-mm-b:hover{border-color:var(--line-2);transform:translateY(-1px)}
+.pe-mm-top{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;flex-wrap:wrap}
+.pe-mm-n{position:absolute;top:-10px;left:-10px;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--on-fill);border:1px solid var(--line-2);box-shadow:0 1px 3px rgba(15,27,45,.18);font-family:var(--display);font-weight:700;font-size:12px}
+.pe-mm-nm{font-weight:700;font-size:13px;color:var(--ink);white-space:normal;overflow-wrap:anywhere;text-align:center}
+.pe-mm-nm small{font-weight:600;color:var(--muted);margin-left:3px;white-space:nowrap}
+.pe-mm-vs{display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;color:var(--ink-2)}
+.pe-mm-vs .ttag{font-size:10.5px;padding:3px 4px;min-width:32px;border-radius:5px}
+.pe-mm-score{display:flex;align-items:center;gap:8px}
+.pe-mm-score b{font-family:var(--display);font-size:20px;line-height:1;color:var(--ink);white-space:nowrap}
+.pe-mm-score b small{font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink-2);margin-left:1px}
+.pe-mm-bar{flex:1;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.pe-mm-bar i{display:block;height:100%;border-radius:999px;background:var(--pick)}
+.pe-mm-sub{font-size:12px;color:var(--ink-2);line-height:1.4}
+.pe-mm-sub b{color:var(--ink-2);font-weight:600}
+.pe-mm .pe-mmtag,.pe-mm-t .pe-mmtag{display:inline-block;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,#2563EB,#1E4FA8);color:#FFFFFF!important;font-family:var(--body);font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;line-height:1.3;white-space:nowrap;box-shadow:0 0 0 1px rgba(59,130,246,.35),0 2px 6px rgba(37,99,235,.35)}
+.pe-mm-b .pe-mmtag{position:absolute;top:-10px;right:10px}
+.pe-mm-more{margin-top:12px;display:flex;justify-content:center}
+@media(max-width:900px){ .pe-mm-row{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78%;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 0 4px 10px} .pe-mm-b{scroll-snap-align:start} }
+/* the tag beside a player's name, on his row of the game's page and on a suggested level's leg: one word, the same blue */
+.plrbtn .who .pe-mmtag,.pb-tl .pb-who .pe-mmtag{display:inline-block;margin-left:8px;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,#2563EB,#1E4FA8);color:#FFFFFF!important;font-family:var(--body);font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;line-height:1.3;vertical-align:2px;white-space:nowrap;box-shadow:0 0 0 1px rgba(59,130,246,.35),0 2px 6px rgba(37,99,235,.35)}
+.pb-tl .pb-who .pe-mmtag{margin-left:6px;padding:2px 8px;font-size:10px;letter-spacing:.5px;vertical-align:1px;box-shadow:0 0 0 1px rgba(59,130,246,.35)}
+/* the player a bubble (or a window row) opened, on his game's page: ringed in the pick colour, a short pulse twice */
+.plrbtn.pe-hl{border-color:var(--pick);box-shadow:0 0 0 2px var(--pick);animation:pe-hl 1.6s ease-out 2}      /* no --pick-soft wash (the NFL's): its role and arrow fell to 4.4 and 3.4:1 on it in the dark look */
+.plrbody.pe-hl{border-color:var(--pick);box-shadow:0 0 0 2px var(--pick)}
+@keyframes pe-hl{0%{box-shadow:0 0 0 2px var(--pick),0 0 0 0 rgba(27,122,78,.45)}100%{box-shadow:0 0 0 2px var(--pick),0 0 0 12px rgba(27,122,78,0)}}
+@media (prefers-reduced-motion:reduce){.plrbtn.pe-hl{animation:none}}
+/* "Show the top N": the NFL's window (the page's .modal and .modal-panel), the whole screen on a phone; its table the ELO Ratings tab's
+   table.pe-t in .wrap, the Player held */
+#peMmModal{z-index:50}
+.pe-mm-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.pe-mm-h .gs-grow{flex:1}
+#peMmClose{min-height:44px;min-width:64px}
+#peMmView .card{margin:0}
+.pe-mm-t td,.pe-mm-t th{white-space:nowrap}
+.pe-mm-t .pe-c{text-align:center;width:17%}
+.pe-mm-t .pe-c>small,.pe-mm-t td.pe-n>small{display:block;font-size:11px;color:var(--ink-2)}
+.pe-mm-t .pe-pts b{font-family:var(--display);font-size:15px} .pe-mm-t .pe-pts .pe-mmtag{display:table;margin:4px auto 0;font-size:10px;padding:2px 8px}
+.pe-mm-t .pe-plbtn{all:unset;cursor:pointer;font-weight:600;color:var(--ink);min-height:44px;display:inline-flex;align-items:center}
+.pe-mm-t .pe-plbtn:hover{text-decoration:underline;text-underline-offset:3px}
+.pe-mm-t .pe-plbtn:focus-visible{box-shadow:var(--ring);border-radius:6px}
+.pe-mm-t .pe-name .muted{font-weight:600;color:var(--ink-2)}
+@media(max-width:760px){ #peMmModal{padding:0} #peMmModal .modal-panel{border-radius:0;border:0;min-height:100%;padding:12px 12px 24px} }
+/* a game's Mismatches window (#gsModal, its one card): a row a mismatch, its rank among the day's, who and against whom, the goals and
+   the projection, its size and the tag */
+ul.gs-mm{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+ul.gs-mm li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin:0;border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;line-height:1.4}
+.gs-mmn{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:28px;padding:0 6px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line-2);font-family:var(--display);font-weight:700;font-size:var(--gs-t2);color:var(--ink)}
+.gs-mmwho{display:block;font-weight:600;font-size:var(--gs-t3);color:var(--ink);overflow-wrap:anywhere}
+.gs-mmwho small{color:var(--ink-2);font-weight:600;font-size:var(--gs-t2)}
+.gs-mmvs{display:inline-flex;align-items:center;gap:6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.gs-mmsub{display:block;font-size:var(--gs-t2);color:var(--ink-2);margin-top:4px;line-height:1.5}
+.gs-mmsub b{color:var(--ink);font-weight:700}
+.gs-mmsc{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:72px}
+.gs-mmsc b{font-family:var(--display);font-size:var(--gs-t4);line-height:1;color:var(--ink);white-space:nowrap}
+#gsModal .gs-mmsc .gs-mmtag{display:inline-block;padding:2px 8px;border-radius:999px;background:linear-gradient(135deg,#2563EB,#1E4FA8);color:#FFFFFF!important;font-size:var(--gs-t1);font-weight:800;letter-spacing:.5px;text-transform:uppercase;line-height:1.3;white-space:nowrap}
+@media(max-width:760px){ ul.gs-mm li{grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:11px 12px} ul.gs-mm li .gs-mmn{grid-column:1/-1;justify-self:start;height:24px} .gs-mmvs{display:flex;margin:6px 0 0} }
 /* ---------- the tables at narrower widths ----------
    No column ever gives way: a table wider than the screen scrolls sideways inside its own wrapper (.wrap, .scroll), its club or player
    column (.sk) held at the left as the figures pass under it, so every number on a desktop is a swipe away on a phone. A heading or a
@@ -1378,7 +1445,7 @@ html[data-theme="light"] #gsModal .gs-shalf i{background:var(--gs-tc,var(--ink-2
 </div>
 <script>
 'use strict';
-const APP_BUILD = 'nhl v34 · 2026-11-13';
+const APP_BUILD = 'nhl v35 · 2026-11-13';
 const STATE_URL = 'state.json';
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard';
 const KEY = 'nhl_v1';
@@ -1587,6 +1654,7 @@ function navTo(b) {
 function showTab(name) {
   name = tabName(name); if (!$('tab-' + name) || (!ADMIN && X_TABS.includes(name))) name = 'games';
   closeGame(true);                                  // a game's page goes with a change of tab
+  mmClose(false);                                   // the Mismatches' window is the Games tab's own
   for (const b of $('tabs').querySelectorAll('button')) { const on = b.dataset.tab === name; b.classList.toggle('on', on); if (on) { b.setAttribute('aria-current', 'page'); navTo(b); } else b.removeAttribute('aria-current'); }
   for (const s of document.querySelectorAll('main > section')) s.hidden = s.id !== 'tab-' + name;
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
@@ -1751,6 +1819,7 @@ function renderGames() {
   $('dayRec').innerHTML = `${esc(dayWord(DAY, today) || monthDay(DAY))} <b>${hit}–${miss}</b>`;
   $('seasonRec').innerHTML = `Season <b>${+su.w || 0}–${+su.l || 0}</b>`;
   sourceNote();
+  mismatchCard();                                          // the Mismatches over the list, on the day shown (none on a day with no row)
   $('slateOdds').hidden = !(DAY >= today && gs.some(g => !hasStarted(g)));
   const live = gs.filter(g => !rowFinal(g)), fin = gs.filter(rowFinal);
   const html = !gs.length ? emptyDay() : live.map(gameRow).join('') + (fin.length ? '<div class="slatesep">Completed</div>' + fin.map(gameRow).join('') : '');
@@ -1768,6 +1837,200 @@ function sourceNote() {
   if (PL && PL.injuries === null && PL.teams) { msgs.push('<b>No injury report.</b>'); why.push('No injury report could be read: every lineup is who dressed last.'); }
   if (PL && PL.starters && PL.starters.ok === false && S.games.some(g => g.date === etToday() && !hasStarted(g))) { msgs.push('<b>No announced goalies this run.</b>'); why.push('DailyFaceoff could not be read at the last run: the model chose each goalie.'); }
   $('sourceNote').hidden = !msgs.length; $('sourceNote').innerHTML = msgs.join(' '); $('sourceNote').title = why.join(' ');
+}
+/* ---------- the Mismatches (nhl v35): the NFL hub's card over its game list, in hockey's terms ----------
+   A skater's projected points (tools/props.js) are his own rate an hour times the minutes he is expected to play times the game's context:
+   his club's expected goals over the props model's average game, to its fitted power. props.js publishes that factor a side
+   (props.games[id].cx: { xg, f }) and the rule's constants (props.mm). A mismatch is what the factor adds to his chance of a point (his
+   chance at the published mean less his chance at the mean with the factor taken out, mu / f, by the same distribution's family): listed
+   at mm.list, tagged at mm.tag (null: no tag anywhere). The club, not the player: every skater of a side shares one factor, so the card
+   takes one a club (its largest shift), the window three a club. Points only (the shots context does not land on the positive side, and
+   the saves model runs high), never an edge: DraftKings' closing points lines carry the same matchup (spec, 12 November 2026). On the day
+   shown, today or tomorrow (Eastern), on games still to come by the visitor's clock. Drawn from the state alone: nothing fetched, nothing
+   stored */
+const mmOn = () => !!(S && isObj(S.props) && isObj(S.props.mm) && S.props.mm.stat === 'pts' && S.props.mm.line === 0.5 && typeof S.props.mm.list === 'number' && S.props.mm.list > 0
+  && +S.props.mm.ctx > 0 && isObj(S.props.games) && S.players && isObj(S.players.teams));
+const mmTagAt = () => { const t = S.props.mm.tag; return typeof t === 'number' && isFinite(t) ? t : null; };      // null, or anything but a number: no tag anywhere
+/* his chance of a point at a mean, by tools/props.js's own family: Poisson where the dispersion is null, else the negative binomial's mass at 0 */
+const mmP1 = (mu, r) => typeof r === 'number' && r > 0 ? 1 - Math.exp(r * Math.log(r / (r + mu))) : 1 - Math.exp(-mu);
+/* goals a game to the hundredth with a true minus, 0.00 unsigned (ELO Ratings' figures) */
+const mmSgn = x => { const r = Math.round(x * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(2); };
+/* a club's place on a unit among the state's clubs, 1 the best (the figure to a tenth of a hundredth, as ELO Ratings' club table shows it) */
+const mmRank = (club, key) => { const Tm = S.players.teams, v = c => isObj(Tm[c]) && typeof Tm[c][key] === 'number' ? +(Tm[c][key] * 100).toFixed(1) : -Infinity; return 1 + Object.keys(Tm).filter(c => v(c) > v(club)).length; };
+const MM_C = new WeakMap();
+/* every listed skater of a day, ranked by the shift, then the gain in points, then his id; [] on a state without the block, a day past
+   tomorrow or one with nothing projected. Kept for the state and the day's games still to come, so a draw asks it again for nothing */
+function mmRows(day) {
+  if (!day || !mmOn() || day > addDays(etToday(), 1)) return [];
+  const M = S.props.mm, Tm = S.players.teams, gs = S.games.filter(g => g.date === day && isObj(S.props.games[g.id]));
+  const key = `${day}|${gs.filter(g => !hasStarted(g)).map(g => g.id).join(',')}`;
+  let C = MM_C.get(S); if (!C) { C = new Map(); MM_C.set(S, C); } if (C.has(key)) return C.get(key);
+  const rp = isObj(S.props.params) && isObj(S.props.params.r) ? S.props.params.r.pts : null, tagAt = mmTagAt(), hfa = S.players.params && +S.players.params.hfa || 0, out = [];
+  for (const g of gs) {
+    const pr = S.props.games[g.id];
+    if (hasStarted(g) || !isObj(pr.cx) || pr.home !== g.home || pr.away !== g.away) continue;
+    for (const side of ['away', 'home']) {
+      const cx = pr.cx[side], Q = pr[side + 'P'], o = side === 'home' ? 'away' : 'home';
+      if (!isObj(cx) || typeof cx.f !== 'number' || !(cx.f > 0) || !isFinite(cx.f) || typeof cx.xg !== 'number' || !(cx.xg > 0) || !isObj(Q) || !Array.isArray(Q.skaters) || !isObj(Tm[g[side]]) || !isObj(Tm[g[o]])) continue;
+      const gl = isObj(g.pm) && isObj(g.pm[o]) && isObj(g.pm[o].goalie) && g.pm[o].goalie.name && typeof g.pm[o].goalie.gk === 'number' ? g.pm[o].goalie : null;
+      for (const p of Q.skaters) {
+        const D = isObj(p) ? p.pts : null; if (!p || !p.id || !p.name || !isObj(D) || !Array.isArray(D.d) || !(D.mu > 0)) continue;
+        const base = D.mu / cx.f, pm = pOver(ppDist(D), M.line), pb = mmP1(base, rp), shift = pm - pb;
+        if (!(shift >= M.list)) continue;
+        out.push({ gid: String(g.id), pid: String(p.id), name: String(p.name), pos: String(p.pos || ''), team: g[side], opp: g[o], home: side === 'home', neutral: !!g.neutral, date: day,
+          mu: D.mu, base, part: D.mu - base, f: cx.f, xg: cx.xg, pm, pb, shift, pct: Math.round(100 * shift), tag: tagAt !== null && shift >= tagAt, goalie: gl, hfa: side === 'home' && !g.neutral ? hfa : 0 });
+      }
+    }
+  }
+  out.sort((x, y) => y.shift - x.shift || y.part - x.part || strCmp(x.pid, y.pid));
+  out.forEach((v, i) => { v.n = i + 1; v.say = mmSay(v); });
+  if (C.size > 12) C.clear();
+  C.set(key, out);
+  return out;
+}
+/* a row's words: its size ("+3%": in hockey "pts" is the stat), the side's expected goals, the defence's place and the goalie, the
+   projection and what the matchup adds, and its title, the whole of it, the parts in goals a game */
+function mmSay(v) {
+  const Tm = S.players.teams, ab = T(v.team).abbr, ob = T(v.opp).abbr, pct = `+${v.pct}%`;
+  const parts = [`the ${ab} attack ${mmSgn(+Tm[v.team].offence || 0)}`, `the ${ob} defence ${mmSgn(-(+Tm[v.opp].defence || 0))}`].concat(v.goalie ? [`${v.goalie.name} in goal ${mmSgn(-v.goalie.gk)}`] : []).concat(v.hfa ? [`home ice ${mmSgn(v.hfa)}`] : []);
+  return { pct, xg: `${ab} ${v.xg.toFixed(2)} goals expected`, goals: `${v.xg.toFixed(2)} goals`,
+    facing: `${ob} Defence ${ordinal(mmRank(v.opp, 'defence'))} of ${Object.keys(Tm).length}${v.goalie ? ' · ' + String(v.goalie.name).split(' ').slice(-1)[0] : ''}`,
+    proj: `${v.mu.toFixed(2)} points`, part: mmSgn(v.part),
+    title: `${v.tag ? 'Mismatch: the' : 'The'} matchup moves his points from ${v.base.toFixed(2)} to ${v.mu.toFixed(2)} (${mmSgn(v.part)} points): ${ab} are expected ${v.xg.toFixed(2)} goals where the props model's average game is ${(+S.props.mm.ctx).toFixed(2)} (×${v.f.toFixed(2)} on a skater's points). In goals a game: ${parts.join(', ')}. His chance of a point goes from ${(100 * v.pb).toFixed(1)}% to ${(100 * v.pm).toFixed(1)}%: ${pct}.` };
+}
+/* the bubbles: each club's first row, five at most; the window: each club's first mm.club rows, thirty at most */
+function mmPick(rows) {
+  const per = new Map(), bubbles = [], win = [], cap = Math.max(1, Math.floor(+S.props.mm.club) || 3);
+  for (const v of rows) { const k = v.gid + '|' + v.team, c = per.get(k) || 0; per.set(k, c + 1); if (c === 0 && bubbles.length < 5) bubbles.push(v); if (c < cap && win.length < 30) win.push(v); }
+  return { bubbles, win };
+}
+/* a skater's tagged row on a game still to come, or null (the game's page and a suggested leg wear the tag) */
+const mmTagOf = (gid, pid) => { const g = S ? gameById()[gid] : null; return g ? mmRows(g.date).find(v => v.gid === String(gid) && v.pid === String(pid) && v.tag) || null : null; };
+const mmTagEl = v => `<span class="pe-mmtag" data-pe-mmtag="${v.pct}" title="${esc(v.say.title)}">Mismatch</span>`;
+/* a suggested leg's tag (the spec's rule 7): his Over in points, goals or assists, or his anytime goal, in that game; never his shots,
+   blocks or saves, an Under, or a team bet */
+const mmLegTag = L => { if (!L || L.kind !== 'prop' || !['pts', 'g', 'a'].includes(L.stat) || L.side !== 'over' || !(L.mk === 'main' || (L.mk === 'yes' && L.stat === 'g' && +L.k === 1))) return ''; const v = mmTagOf(L.game, L.pid); return v ? mmTagEl(v) : ''; };
+const mmVs = v => v.neutral ? 'vs' : v.home ? 'vs' : 'at';
+const mmBubble = (v, i, max) => `<button type="button" class="pe-mm-b" data-mm-game="${esc(v.gid)}" data-mm-pid="${esc(v.pid)}" aria-haspopup="dialog" title="Open ${esc(v.name)}'s props in ${esc(T(v.team).abbr)} ${mmVs(v)} ${esc(T(v.opp).abbr)}">
+  <span class="pe-mm-n" title="Mismatch rank, one a club">${i + 1}</span>${v.tag ? `<span class="pe-mmtag" title="${esc(v.say.title)}">Mismatch</span>` : ''}
+  <div class="pe-mm-top"><span class="pe-mm-nm">${esc(v.name)}<small>(${esc(v.pos)})</small></span></div>
+  <div class="pe-mm-vs">${tag(v.team, 'mini')}<span>${mmVs(v)}</span>${tag(v.opp, 'mini')}</div>
+  <div class="pe-mm-score" title="${esc(v.say.title)}"><b data-pe-mmpct="${v.pct}">+${v.pct}<small>%</small></b><span class="pe-mm-bar" aria-hidden="true"><i style="width:${Math.max(6, Math.round(100 * v.shift / max))}%"></i></span></div>
+  <div class="pe-mm-sub">${esc(v.say.xg)}.<br><b>${esc(v.say.proj)}</b> projected (${esc(v.say.part)} from the matchup).</div></button>`;
+let MM_HTML = null;
+/* the card, straight after the tab's bar and its source line (the NFL's place: under the Day and the records, over Refresh odds and the
+   list), drawn again only when its markup changed (the keyboard kept on its bubble); none on a day with no listed row */
+function mismatchCard() {
+  const rows = mmRows(DAY), old = $('peMism');
+  if (!rows.length) { if (old) old.remove(); MM_HTML = null; mmWinFollow(); return; }
+  const { bubbles, win } = mmPick(rows), max = rows[0].shift || 1;
+  /* how firm the list is: the day's clubs still to play the props model projects, and how many have a goalie DailyFaceoff confirms */
+  const sides = S.games.filter(g => g.date === DAY && !hasStarted(g) && isObj(S.props.games[g.id])).flatMap(g => ['home', 'away'].map(s => isObj(g.pm) && isObj(g.pm[s]) ? g.pm[s].goalie : null));
+  const conf = sides.filter(x => isObj(x) && x.announced === 'Confirmed').length;
+  const html = `<div class="card pe-mm" id="peMism"><h2>Mismatches <small>${esc(dayText(DAY))}</small></h2>${sides.length && conf < sides.length ? `<p class="pe-mm-cnt">Goalies confirmed: ${conf} of ${sides.length}.</p>` : ''}
+    <div class="pe-mm-row">${bubbles.map((v, i) => mmBubble(v, i, max)).join('')}</div>
+    ${win.length > bubbles.length ? `<div class="pe-mm-more"><button type="button" class="btn quiet" id="peMmMore" aria-haspopup="dialog">Show the top ${win.length}</button></div>` : ''}</div>`;
+  for (const g of new Set(rows.map(v => v.gid))) SHOWN.add(g);                    // the watch redraws the tab when one of these drops the puck
+  if (old && html === MM_HTML) { mmWinFollow(); return; }
+  const a = document.activeElement, was = a && old && old.contains(a) ? (a.id || (a.dataset ? `${a.dataset.mmGame}|${a.dataset.mmPid}` : '')) : null;
+  if (old) old.remove();
+  $('sourceNote').insertAdjacentHTML('afterend', html); MM_HTML = html;
+  if (was) { const nb = was === 'peMmMore' ? $('peMmMore') : [...$('peMism').querySelectorAll('.pe-mm-b')].find(b => `${b.dataset.mmGame}|${b.dataset.mmPid}` === was); (nb || $('daySel')).focus(); }
+  mmWinFollow();
+}
+/* a bubble or a window's row: the game's page at his row, his lines open (All skaters ticked where the page's cut leaves him out, the
+   NFL's fold opened), scrolled to 72px from the top and ringed, the keyboard on his row; the focus goes back to `opener` when it shuts */
+function mmOpen(gid, pid, opener) {
+  if (!S || !gameById()[gid]) return;
+  openGame(gid, opener);
+  if (!GP.gid) return;
+  const row = () => [...$('gameView').querySelectorAll('.plrbtn[data-open]')].find(b => b.dataset.open === String(pid));
+  GP.open = String(pid); GP.hl = String(pid); renderGame();
+  if (!row() && !GP.all) { GP.all = true; renderGame(); }
+  const r = row(); if (!r) return;
+  const m = $('gameModal'); m.scrollTop += r.getBoundingClientRect().top - m.getBoundingClientRect().top - 72;
+  try { r.focus({ preventScroll: true }); } catch (e) { r.focus(); }
+}
+$('slateView').addEventListener('click', e => {
+  const b = e.target.closest('#peMism .pe-mm-b'); if (b) { mmOpen(b.dataset.mmGame, b.dataset.mmPid, b); return; }
+  if (e.target.closest('#peMmMore')) mmWindow(e.target.closest('#peMmMore'));
+});
+/* "Show the top N": the NFL's window, its table the window's rows (each club's first three, thirty at most); its Close takes the focus, Tab
+   stays inside, Escape and a click outside close it and the focus goes back to Show the top N; a row's name (a button) or a click on the
+   row closes it and opens the player as a bubble does; leaving the tab closes it */
+const MM_HEAD = `<th class="pe-n">#</th><th class="sk">Player</th><th class="pe-c">Game</th><th class="pe-c">Facing</th><th class="pe-c" title="What the matchup adds to his chance of a point, in percentage points">Chance</th><th class="pe-n">Projection</th>`;
+const mmRow = (v, i) => `<tr data-mm-game="${esc(v.gid)}" data-mm-pid="${esc(v.pid)}" title="${esc(v.say.title)}"><td class="pe-n">${i + 1}</td>
+  <td class="pe-name sk"><button type="button" class="pe-plbtn" data-mm-open>${esc(v.name)}</button> <span class="muted">(${esc(v.pos)})</span></td>
+  <td class="pe-c">${tag(v.team, 'mini')} <span class="muted">${mmVs(v)}</span> ${tag(v.opp, 'mini')}</td>
+  <td class="pe-c">${esc(v.say.goals)}<small>${esc(v.say.facing)}</small></td>
+  <td class="pe-c pe-pts"><b>${esc(v.say.pct)}</b>${v.tag ? '<span class="pe-mmtag">Mismatch</span>' : ''}</td>
+  <td class="pe-n">${esc(v.say.proj)}<small>${esc(v.say.part)} from the matchup</small></td></tr>`;
+let MMW = null;                                               /* { day, opener } while the window is open */
+function mmWindowHtml(day) {
+  const rows = mmRows(day); if (!rows.length) return null;
+  const { win } = mmPick(rows);
+  return `<div class="card"><h2 class="pe-mm-h">Mismatches, ${esc(dayText(day))} <span class="pill">top ${win.length}</span><span class="gs-grow"></span><button type="button" class="btn quiet" id="peMmClose">Close</button></h2>
+    <div class="wrap"><table class="pe-t pe-mm-t"><thead><tr>${MM_HEAD}</tr></thead><tbody>${win.map(mmRow).join('')}</tbody></table></div></div>`;
+}
+function mmWindow(from) {
+  const html = mmWindowHtml(DAY); if (!html) return;
+  let m = $('peMmModal');
+  if (!m) {
+    m = document.createElement('div'); m.id = 'peMmModal'; m.className = 'modal'; m.hidden = true;
+    m.innerHTML = '<div class="modal-panel" role="dialog" aria-modal="true" aria-label="Mismatches"><div id="peMmView"></div></div>';
+    $('tab-games').appendChild(m);
+    m.addEventListener('click', e => {
+      if (e.target === m) { mmClose(true); return; }
+      if (e.target.closest('#peMmClose')) { mmClose(true); return; }
+      const tr = e.target.closest('tr[data-mm-game]'); if (tr) { mmClose(false); mmOpen(tr.dataset.mmGame, tr.dataset.mmPid, $('peMmMore') || MMW_OPENER); }
+    });
+  }
+  $('peMmView').innerHTML = html; MMW = { day: DAY, opener: from || $('peMmMore') }; MMW_OPENER = MMW.opener;
+  m.hidden = false; document.body.classList.add('modal-open'); m.scrollTop = 0;
+  try { $('peMmClose').focus({ preventScroll: true }); } catch (e) { $('peMmClose').focus(); }
+}
+let MMW_OPENER = null;
+const mmWinOpen = () => !!$('peMmModal') && !$('peMmModal').hidden;
+/* shut: the focus back to Show the top N (found again where the card was drawn since), else the card's first bubble, else the tab */
+function mmClose(restore) {
+  const m = $('peMmModal'); if (!m || m.hidden) return;
+  m.hidden = true; $('peMmView').innerHTML = ''; const w = MMW; MMW = null;
+  if ($('gameModal').hidden && $('gsModal').hidden) document.body.classList.remove('modal-open');
+  if (!restore) return;
+  const vis = el => !!el && el.isConnected && !el.closest('[hidden]');
+  const back = (w && vis(w.opener) ? w.opener : null) || (vis($('peMmMore')) ? $('peMmMore') : null) || ($('peMism') && $('peMism').querySelector('.pe-mm-b')) || $('tabs').querySelector('button.on');
+  if (back) try { back.focus({ preventScroll: true }); } catch (e) { back.focus(); }
+}
+/* the window follows the card: drawn again on the rows as they now stand (the keyboard kept on its control), shut once its day has no
+   row or another day is shown */
+function mmWinFollow() {
+  if (!mmWinOpen() || !MMW) return;
+  const html = MMW.day === DAY ? mmWindowHtml(DAY) : null;
+  if (!html) { mmClose(true); return; }
+  const v = $('peMmView'); if (v.innerHTML === html) return;
+  const a = document.activeElement, tr = a && v.contains(a) ? a.closest('tr[data-mm-game]') : null, key = tr ? `${tr.dataset.mmGame}|${tr.dataset.mmPid}` : null;
+  v.innerHTML = html;
+  const nb = key ? [...v.querySelectorAll('tr[data-mm-game]')].find(r => `${r.dataset.mmGame}|${r.dataset.mmPid}` === key) : null;
+  const f = nb ? nb.querySelector('[data-mm-open]') : $('peMmClose'); if (f) f.focus();
+}
+document.addEventListener('keydown', e => {
+  if (!mmWinOpen()) return;
+  const m = $('peMmModal');
+  if (e.key === 'Escape') { e.preventDefault(); mmClose(true); return; }
+  if (e.key !== 'Tab') return;                                 /* Tab stays inside the window */
+  const f = focusIn(m); if (!f.length) return;
+  const first = f[0], last = f[f.length - 1], at = document.activeElement;
+  if (e.shiftKey && (at === first || !m.contains(at))) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && (at === last || !m.contains(at))) { e.preventDefault(); first.focus(); }
+});
+/* a game's Mismatches window: every listed skater of the game (his rank among the day's rows), the puck dropped said once it has */
+const mmLi = v => `<li data-pid="${esc(v.pid)}" title="${esc(v.say.title)}"><span class="gs-mmn" title="Mismatch rank on ${esc(dayText(v.date))}">#${v.n}</span>
+  <div><span class="gs-mmwho">${esc(v.name)} <small>${esc(v.pos)}</small><span class="gs-mmvs">${tag(v.team, 'mini')}<small>${mmVs(v)}</small>${tag(v.opp, 'mini')}</span></span>
+  <span class="gs-mmsub">${esc(v.say.xg)}. <b>${esc(v.say.proj)}</b> projected (${esc(v.say.part)} from the matchup).</span></div>
+  <div class="gs-mmsc"><b data-gs-mm="${v.pct}">${esc(v.say.pct)}</b>${v.tag ? '<small class="gs-mmtag">Mismatch</small>' : ''}</div></li>`;
+function mmGameBody(g) {
+  if (hasStarted(g) || (LIVE[g.id] && LIVE[g.id].state !== 'pre')) return '<p class="gs-msg">The puck has dropped.</p>';
+  const rows = mmRows(g.date).filter(v => v.gid === String(g.id));
+  return rows.length ? `<ul class="gs-mm">${rows.map(mmLi).join('')}</ul>` : '<p class="gs-msg" id="gsMmNone">No mismatches in this game.</p>';
 }
 /* a day chosen, by the select or a stepper: the list drawn for it, the keyboard left on the control used (a stepper at its end hands
    it to the select), and the day's scoreboard read once where it has a game under way */
@@ -3120,7 +3383,7 @@ const spNums = (res, pays, prop, est) => { const { p, fair, dec } = res; return 
    its rule under them */
 const spHead = (id, label, n, tag, rule) => `<div class="pb-th">${tag || ''}<span class="pb-tn">${label}</span>${n ? `<span class="pb-tc">${n} legs</span>` : ''}${rule || ''}</div>`;
 /* a leg's two lines: the club or player on the first (a total's two clubs and its bet), the bet, the game and its puck drop under it */
-const spWho = (pills, who) => `<span class="pb-who">${pills}<b>${esc(who)}</b></span>`;
+const spWho = (pills, who, mm) => `<span class="pb-who">${pills}<b>${esc(who)}</b>${mm || ''}</span>`;
 const spFairEm = (fair, est) => fair === null || fair === undefined ? '—' : `${whole(fair)}${est ? ' est.' : ''}`;
 const spUnder = (bet, mu, when) => `<small>${bet ? `${esc(bet)} · ` : ''}<span class="m"><span class="nw">${esc(mu)}</span>${when ? ` · <span class="nw">${esc(when)}</span>` : ''}</span></small>`;
 /* an open level's card: each leg a row with its own Add, then Finish and Add to builder */
@@ -3132,7 +3395,7 @@ function spCard(t, res, D, inB, drawnIds) {
      chances, named, on the row's title and in the Add's name */
   const rows = res.legs.map(L => { const on = inB.has(L.id), ch = legChances(L, true) + (L.prop ? ' (on trial)' : ''), tot = L.kind === 'ou' && !L.prop;
     return `<li class="pb-tl" data-id="${esc(L.id)}" title="${esc(ch)}">
-      <span class="nm">${spWho(legWho(L), tot ? L.bet : L.who)}${spUnder(tot ? '' : L.bet, L.mu, timeOf(L.g))}</span>
+      <span class="nm">${spWho(legWho(L), tot ? L.bet : L.who, mmLegTag(L))}${spUnder(tot ? '' : L.bet, L.mu, timeOf(L.g))}</span>
       <span class="pr">${fmtOdds(L.price)}<em>${spFairEm(L.fair, L.fairEst)}</em></span>
       <button type="button" class="sp-add" data-leg="${esc(L.id)}" aria-pressed="${on}" aria-label="${esc(`${on ? 'In your parlay: take out' : 'Add'} ${legName(L)}, ${fmtOdds(L.price)}, ${ch.replace(/ · /g, ', ')}`)}" title="${on ? 'In your parlay: tap to take it out' : 'Add this leg to your parlay'}">${on ? 'Added' : 'Add'}</button></li>`; }).join('');
   return `<div class="pb-tier" data-tier="${id}">
@@ -3196,7 +3459,7 @@ function spLockedCard(t, e) {
     const what = L.kind === 'prop' ? propBet(L.stat, L.mk, L.side, +L.line, L.k) : L.kind === 'ml' ? 'To win' : L.kind === 'pl' ? `Puck line ${fmtLine(L.line)}` : '';
     const ch = `fair ${L.fair === null ? '—' : whole(L.fair)}${L.kind === 'prop' && L.mk === 'yes' ? ' est.' : ''} · ${L.kind === 'prop' ? 'props model' : 'model'} ${whole(L.p)}${L.kind === 'prop' ? ' (on trial)' : ''}`;
     return `<li class="pb-tl" data-id="${esc(L.id)}" data-grade="${gr || 'pending'}" title="${esc(ch)}">
-      <span class="nm">${spWho(who, name)}${spUnder(what, mu, '')}</span>
+      <span class="nm">${spWho(who, name, mmLegTag(L))}${spUnder(what, mu, '')}</span>
       <span class="pr">${fmtOdds(L.price)}<em>${spFairEm(L.fair, L.kind === 'prop' && L.mk === 'yes')}</em></span>
       <span class="sp-st">${st}</span></li>`;
   }).join('');
@@ -3991,6 +4254,8 @@ function pbWatch() {
   if (pruneLegs() || shownGone || (said && curTab() === 'parlays') || (curTab() === 'games' && !DAYS_KEY.startsWith(today + '|'))) rerender();      // once: a pruned builder holds no leg the watch would see again
   /* a game's page whose puck has dropped since it was drawn (or whose game left the schedule) is drawn again: its boxes go, the strip comes in */
   if (gameOpen()) { const g = gb[GP.gid]; if (!g || hasStarted(g) !== GP.locked) renderGame(); }
+  /* a game's Mismatches window open at its puck drop: its rows go, the puck dropped said */
+  if (WIN && WIN.kind === 'mism' && !$('gsModal').hidden) { const g = gb[WIN.gid], body = g ? mmGameBody(g) : '<p class="gs-msg">The puck has dropped.</p>'; const sec = $('gsView').querySelector('.gs-secbody'); if (sec && sec.innerHTML !== body) sec.innerHTML = body; }
 }
 /* the stored legs read again from the state, on any tab: a leg that can no longer be bet leaves the builder (said in its note, and kept in
    the store as ui.bmsg until the builder is drawn, so a leg gone on another tab or before a reload is still explained) and a moved price is
@@ -4618,8 +4883,11 @@ function gameHeadCard(g) {
   </div></div>`;
 }
 /* the buttons of the game's little windows, one row whatever their number */
-const GP_WINS = [['units', 'Matchup'], ['lineups', 'Lineups'], ['stats', 'Team Stats']];
-const gameWinBtns = g => `<div class="gwin" role="group" aria-label="More on this game">${GP_WINS.map(([k, l]) => `<button type="button" class="btn quiet gwin-btn" data-gp-pop="${k}" data-gp-game="${esc(g.id)}" aria-haspopup="dialog">${l}</button>`).join('')}</div>`;
+/* Mismatches (nhl v35, the NFL's middle window) only on a game with a listed row: a button that opened "No mismatches in this game." would
+   be a dead end on most games (spec decision 9); Lineups keeps its place */
+const GP_WINS = [['units', 'Matchup'], ['mism', 'Mismatches'], ['lineups', 'Lineups'], ['stats', 'Team Stats']];
+const gameWinBtns = g => { const mm = !hasStarted(g) && mmRows(g.date).some(v => v.gid === String(g.id));
+  return `<div class="gwin" role="group" aria-label="More on this game">${GP_WINS.filter(([k]) => k !== 'mism' || mm).map(([k, l]) => `<button type="button" class="btn quiet gwin-btn" data-gp-pop="${k}" data-gp-game="${esc(g.id)}" aria-haspopup="dialog">${l}</button>`).join('')}</div>`; };
 /* a bet's bar, its chance and its band, at the book's fair chance (the NFL's bands for a bet: High 70%+, Med 45%+, Low); a dash and
    an empty track where there is no price to take a fair chance from */
 const betTier = p => p >= 0.70 ? ['high', 'High'] : p >= 0.45 ? ['med', 'Med'] : ['low', 'Low'];
@@ -4791,6 +5059,7 @@ function renderGame() {
     html += `<div class="card gp-live${fin ? ' fin' : ''}"><div class="gp-strip"><b>${say}</b><span class="grow"></span>${GP.sAt ? `<span class="livestamp${GP.sBad ? ' bad' : ''}">${GP.sBad ? 'scores not loading' : `read ${esc(GP.sAt)}`}</span>` : sc.live && !LIVE[g.id] ? `<span class="livestamp" title="the score when the job last read it; Refresh scores reads ESPN now">as of ${esc(hhmm(g.scoreAt || S.published))}</span>` : ''}${sc.fin ? '' : `<button type="button" class="btn quiet" id="gameScoresNow"${GP.sBusy ? ' aria-disabled="true"' : ''} title="Read the scoreboard from ESPN now, in this browser. Free.">Refresh scores</button>`}</div></div>`;
   }
   html += gameHeadCard(g) + gameWinBtns(g) + gameBetsCard(g, locked);
+  const MMT = new Map(locked ? [] : mmRows(g.date).filter(v => v.gid === String(g.id) && v.tag).map(v => [v.pid, v]));      // the tagged skaters of this game
   for (const side of ['away', 'home']) {
     const t = R[side], pm = t.pm;
     html += `<div class="teamhdr" data-team="${esc(t.club)}">${tag(t.club)} ${esc(T(t.club).short)} <span class="pill">${fin ? 'played' : 'playing'} ${esc(T(t.opp).abbr)}</span></div>`;
@@ -4800,7 +5069,7 @@ function renderGame() {
     if (fin && !boxGame(g)) html += `<p class="gp-out" data-gp-nobox="${esc(t.club)}">${boxWord(g)}.</p>`;      // the rows under it are still his projections
     for (const x of t.players) {
       const open = GP.open === x.id, stOpen = GP.stats.has(x.id), nProj = Object.keys(x.proj).length, boxed = sc.fin && !!boxGame(g), hasBody = locked ? (boxed && !!boxOf(g, x.id)) || nProj > 0 : nProj > 0 || x.dk, role = gpRole(x);
-      const who = `${esc(x.name || `ESPN athlete ${x.id}`)}${!locked && x.dtd ? '<span class="inj" title="Day to day: in the lineup the call expects">DTD</span>' : ''}<span${role.title ? ` title="${esc(role.title)}"` : ''}>${esc(role.t)}</span>`;
+      const who = `${esc(x.name || `ESPN athlete ${x.id}`)}${MMT.has(String(x.id)) ? mmTagEl(MMT.get(String(x.id))) : ''}${!locked && x.dtd ? '<span class="inj" title="Day to day: in the lineup the call expects">DTD</span>' : ''}<span${role.title ? ` title="${esc(role.title)}"` : ''}>${esc(role.t)}</span>`;
       if (!hasBody) { html += `<div class="plrbtn" data-nohist="${esc(x.id)}"><div class="who">${who}</div><div class="sum"><span class="muted">${boxed ? 'did not play' : locked ? 'No projection' : 'No lines yet'}</span></div><div></div></div>`; continue; }
       html += `<button type="button" class="plrbtn" data-open="${esc(x.id)}" aria-expanded="${open}"><div class="who">${who}<span class="stbtn${stOpen ? ' on' : ''}" role="button" tabindex="0" data-stats="${esc(x.id)}" aria-pressed="${stOpen}">${stOpen ? 'Hide stats' : 'Show stats'}</span></div><div class="sum">${locked && !sc.off ? `<span class="finchip${fin ? '' : ' live'}">${fin ? 'FINAL' : 'LIVE'}</span>` : ''}${locked && !boxed && nProj ? '<span class="muted">projected</span> ' : ''}${summaryOf(x, g, sc)}</div><div class="arrow" aria-hidden="true">${open ? '⌃' : '⌄'}</div></button>`;
       if (stOpen) html += weekStats(x);
@@ -4817,6 +5086,8 @@ function renderGame() {
   const fk = !ds ? null : a.id ? '#' + a.id : ds.leg ? `[data-leg="${ds.leg}"]` : ds.ppAdd ? `[data-pp-add="${ds.ppAdd}"]` : ds.stats ? `[data-stats="${ds.stats}"]` : ds.open ? `[data-open="${ds.open}"]` : ds.gpPop ? `[data-gp-pop="${ds.gpPop}"]` : null;
   const anchor = renderGame.anchor, pinned = anchor ? view.querySelector(`[data-open="${anchor}"]`) : null, pinTop = pinned ? pinned.getBoundingClientRect().top : null; renderGame.anchor = null;
   view.innerHTML = html;
+  /* the player a Mismatches bubble opened, ringed (his row and his open lines) until another row is tapped */
+  if (GP.hl) { const r = view.querySelector(`.plrbtn[data-open="${GP.hl}"]`); if (r) { r.classList.add('pe-hl'); for (let n = r.nextElementSibling; n && !n.matches('.plrbtn, .teamhdr, .gp-msg'); n = n.nextElementSibling) if (n.classList.contains('plrbody')) n.classList.add('pe-hl'); } }
   $('ppMsg').textContent = GP.msg || '';
   m.scrollTop = keepY;
   if (pinTop !== null) { const nb = view.querySelector(`[data-open="${anchor}"]`); if (nb) m.scrollTop += nb.getBoundingClientRect().top - pinTop; }
@@ -4843,7 +5114,7 @@ function openGame(gid, opener) {
   if (!S || !gameById()[String(gid)]) return;
   const m = $('gameModal');
   closeWindow(false);
-  Object.assign(GP, { gid: String(gid), open: null, stats: new Set(), q: '', msg: '', sig: null, why: null, pin: null, opener: opener || document.activeElement || null, sAt: '', sBad: false, sBusy: false });
+  Object.assign(GP, { gid: String(gid), open: null, hl: null, stats: new Set(), q: '', msg: '', sig: null, why: null, pin: null, opener: opener || document.activeElement || null, sAt: '', sBad: false, sBusy: false });
   m.hidden = false; document.body.classList.add('modal-open'); m.scrollTop = 0;
   renderGame();
   if (!GP.gid) return;
@@ -4858,7 +5129,8 @@ function closeGame(quiet) {
   document.body.classList.remove('modal-open');
   if (quiet) return;
   const vis = el => !!el && el.isConnected && !el.closest('[hidden]');
-  const back = vis(op) ? op : [...document.querySelectorAll('#gamesList [data-game]')].find(b => vis(b) && b.dataset.game === gid) || $('tabs').querySelector('button.on');
+  const mmb = op && op.dataset && op.dataset.mmPid ? [...document.querySelectorAll('#peMism .pe-mm-b')].find(b => vis(b) && b.dataset.mmPid === op.dataset.mmPid && b.dataset.mmGame === op.dataset.mmGame) : op && op.id === 'peMmMore' && vis($('peMmMore')) ? $('peMmMore') : null;
+  const back = vis(op) ? op : mmb || [...document.querySelectorAll('#gamesList [data-game]')].find(b => vis(b) && b.dataset.game === gid) || $('tabs').querySelector('button.on');
   if (back && back.focus) back.focus();
 }
 /* one listener each on the page's own box: nothing is bound again on a draw */
@@ -4868,7 +5140,7 @@ $('gameView').addEventListener('click', e => {
   if (t.closest('#gameScoresNow')) { gameScores(); return; }
   const st = t.closest('[data-stats]'); if (st) { const id = st.dataset.stats; if (GP.stats.has(id)) GP.stats.delete(id); else GP.stats.add(id); renderGame.anchor = id; renderGame(); return; }
   const pop = t.closest('[data-gp-pop]'); if (pop) { gameWindow(pop.dataset.gpPop, GP.gid, pop); return; }
-  const row = t.closest('.plrbtn[data-open]'); if (row) { const id = row.dataset.open; GP.open = GP.open === id ? null : id; renderGame.anchor = id; renderGame(); return; }
+  const row = t.closest('.plrbtn[data-open]'); if (row) { const id = row.dataset.open; GP.open = GP.open === id ? null : id; GP.hl = null; renderGame.anchor = id; renderGame(); return; }
   /* a tap anywhere on a bet's row ticks its box */
   const tr = t.closest('.rungs tr.pickable'); if (tr && t.tagName !== 'INPUT') { const cb = tr.querySelector('input[type=checkbox]'); if (cb) { cb.focus(); cb.click(); } }
 });
@@ -5041,7 +5313,7 @@ function gameWindow(kind, gid, from) {
   md.dataset.gsOnly = kind;
   const day = new Date(g.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   $('gsTitle').innerHTML = `<span class="gs-tm">${tag(g.away, 'mini')}<span>${g.neutral ? 'vs' : 'at'}</span>${tag(g.home, 'mini')}</span><span class="gs-tsub">${esc(GP_WIN[kind])} · ${esc(day)}</span>`;
-  let body; try { body = kind === 'units' ? unitsBody(g) : kind === 'lineups' ? lineupsBody(g) : teamStatsBody(g); } catch (e) { body = '<p class="gs-msg">This could not be drawn.</p>'; }
+  let body; try { body = kind === 'units' ? unitsBody(g) : kind === 'mism' ? mmGameBody(g) : kind === 'lineups' ? lineupsBody(g) : teamStatsBody(g); } catch (e) { body = '<p class="gs-msg">This could not be drawn.</p>'; }
   $('gsView').innerHTML = `<section class="card gs-sec gs-one-card" data-gs-only="${esc(kind)}"><div class="gs-secbody">${body}</div></section>`;
   md.hidden = false; document.body.classList.add('modal-open'); md.scrollTop = 0;
   try { $('gsClose').focus({ preventScroll: true }); } catch (e) { $('gsClose').focus(); }

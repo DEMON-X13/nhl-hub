@@ -52,6 +52,11 @@
                                      -> data/props_model.json (a deliberate refit, committed with it)
     node tools/props.js --backfill   every final since 16 April 2026 that the record lacks, read once
 
+   The Mismatches (the page's card, nhl v35): each projected game carries, a side, its expected goals and the factor its skaters'
+   goals, assists and points were multiplied by (`cx`), and props.json the rule's constants (`mm`, MM below, with the model's
+   average game): the page lists a skater where that factor lifts his chance of a point by MM.list or more and tags him at MM.tag.
+   Neither moves a mean, a distribution or the ledger.
+
    NHL_DATA, NHL_STATE, NHL_NOW and NHL_TODAY move the files and the clock; NHL_FIXTURES reads saved answers
    (simulate.js); NHL_PROPS_ASK caps how many finals one run asks for (40). */
 'use strict';
@@ -71,6 +76,12 @@ const STATS = ['g', 'a', 'pts', 's', 'bs'];
 const SHOT_STATS = new Set(['s', 'bs']);           // need the box files' shots and blocks (kept from 15 October 2026, every season read again)
 const CTX = { g: 'xg', a: 'xg', pts: 'xg', s: 'xs', bs: 'oxs' };
 const TOI = { recent: 8, F: 12, D: 17 };           // expected minutes: the last eight games; a player with none, 12 a forward, 17 a defenceman
+/* THE MISMATCH (the page's card, nhl v35): the lead stat, its line, the shift in the chance of a point a skater is listed at, the tag
+   (null: none anywhere), the rows a club takes in the page's window. Read by the page from props.mm. The floor and the tag stand on the
+   walk-forward of 11 and 12 November 2026 (157,527 skater games, 2023-24 to 2026-27): rows at +3.5 points of chance beat the listed
+   rows under them in each of the four seasons. The tag was read off that table once and is the NFL hub's own number, not chosen by a
+   registered rule (the NFL's rule, the largest smallest gap on the early seasons, picks +4.5, which failed 2025-26) */
+const MM = { v: 1, stat: 'pts', line: 0.5, list: 0.015, tag: 0.035, club: 3 };
 const log = m => console.log(new Date().toISOString().slice(11, 19), m);
 const warn = m => { log(m); if (process.env.GITHUB_ACTIONS) console.log(`::warning title=nhl props::${m}`); };
 const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -533,6 +544,10 @@ function project(C, PJson, S, games, view) {
     for (const side of ['home', 'away']) {
       const team = g[side], T = PJson.teams[team];
       const ctx = { xg: side === 'home' ? u.lh : u.la, xs: side === 'home' ? u.sh : u.sa, oxs: side === 'home' ? u.sa : u.sh };
+      /* the side's expected goals and the factor its skaters' goals, assists and points were multiplied by (the lead stat's: today the three
+         share one average and exponent), for the page's Mismatches: a skater's no-context points are his mean over it */
+      const cP = C.sk[MM.stat];
+      (row.cx = row.cx || {})[side] = { xg: ctx.xg, f: r4(ctx.xg > 0 && cP.ctx ? Math.pow(ctx.xg / cP.ctx, cP.e) : 1) };
       const skaters = [];
       for (const p of (T && T.lineup) || []) {
         const base = stOf('g').P.get(p.id);
@@ -632,6 +647,7 @@ async function main() {
     ledger: { of: L.bar.lines, compared: s.compared, graded_games: s.graded_games, standing: s.standing, decision: L.decision ? L.decision.verdict : null,
       model: sc ? sc.model : null, market: sc ? sc.market : null, bets: sc ? { n: sc.bets.n, won: sc.bets.won, units: sc.bets.units } : null, registered: L.bar_registered },
     record: rec, games: P.games, skipped: P.skipped,
+    mm: Object.assign({}, MM, { ctx: C.sk[MM.stat].ctx }),            // the Mismatches' rule and the model's average game (cx's base)
   };
   const prevOut = fs.existsSync(OUT_F) ? readJSON(OUT_F) : null;
   /* 5. DraftKings' player lines on every game projected (today and tomorrow, Eastern), read every run from ESPN's propBets, as
@@ -790,4 +806,4 @@ function marketTest(records, viewsFor, walkParams, PJson, wfC, Cprod, current) {
 }
 
 if (require.main === module) (process.argv[2] === 'fit' ? fitMain() : main()).catch(e => { console.error(e); process.exit(1); });
-module.exports = { lgam, nbLog, normLog, STATS, BAR, CALL_FIELDS, pmf, dist, pOver, toBasis, Phi, implied, payout, fairOver, gradeCall, compared, scores, decide, passes, summarize, bootCI, betOf, llOf, rng, shaOf, writeLedger, sameCall, walk, skMean, gkMean, starterOf, marketTest, allRecords, gamesWithViews };
+module.exports = { MM, lgam, nbLog, normLog, STATS, BAR, CALL_FIELDS, pmf, dist, pOver, toBasis, Phi, implied, payout, fairOver, gradeCall, compared, scores, decide, passes, summarize, bootCI, betOf, llOf, rng, shaOf, writeLedger, sameCall, walk, skMean, gkMean, starterOf, marketTest, allRecords, gamesWithViews };

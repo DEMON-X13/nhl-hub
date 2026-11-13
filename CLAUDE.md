@@ -180,6 +180,9 @@ steps stand on:
 - **Tokens.** The NFL's names, in both looks: `--bg --bg-2 --panel --panel-2 --panel-3 --ink --ink-2 --muted --line --line-2`,
   `--ice --ice-2 --ice-soft`, `--gold --gold-2 --gold-soft --gold-ink` (gold read as text), `--pick --pick-soft` (lime: a call, a
   win, go), `--miss --miss-soft` (red read as text) and `--rose` (red as a fill), `--away --home`, `--r-lg --r-md --r-sm`, `--ring`,
+  hockey's own **`--field`** (nhl v34: a field's edge, a select's, a text, search or number box's and the amount's box, `#9AA1B3` dark
+  and `#6C7485` light, 3:1 or more on every ground a field sits on, the page's own under its glow among them, where `--line-2` was 1.6
+  to 2.2; the cards' and rules' lines stay `--line` and `--line-2`, and a chip or a tile with its words needs no edge to be seen),
   and hockey's own **`--on-fill`**, the text on an ice, lime, rose or `--ink` fill (`#1E2230` dark, `#FFFFFF` light: on gold and on
   a club's colour the text stays as written). The names from before v25 are aliases on `:root`, so a rule of a tab not yet rebuilt
   resolves in both looks: `--lime`, `--lime-soft`, `--rose-ink` (now `--miss`), `--rose-soft`, `--muted-ink` (now `--muted`, the
@@ -197,16 +200,35 @@ steps stand on:
   tabs that took them in). The owner's two tabs are the NFL's way: no `hidden` attribute, hidden from a visitor's
   first paint by the stylesheet (`html:not([data-admin="on"]) #tabs [data-admin-only]`), and taken out of a visitor's page by
   `boot()`. The chosen tab is brought into the bar again once the page and the web fonts are in (they widen the pills).
-- **The light look is built and hidden.** Both palettes are in the stylesheet (`:root` and `html[data-theme="light"]`, the NFL's
-  light values, its ice a dark step), the head carries the NFL's theme script before the body is parsed (key
-  **`nhlhub_theme_v1`**, `'light'` or `'dark'`; dark is every visitor's default whatever the system says, and nothing in the page
-  follows `prefers-color-scheme`; anything kept but exactly `light`, or storage that throws, is dark), and the switch is in the
-  header (`.hub-theme[data-theme-toggle]`, a 44px round button named "Light mode", `aria-pressed` while light) **with the `hidden`
-  attribute**: visitors get the dark look until every tab is rebuilt on the tokens and a real-browser sweep of every text's
-  contrast in the light look is clean. Turning it on is taking that attribute off. The shell, the cards, the buttons, the tables'
-  base and the club tags are right in both looks today; the tabs' insides are only as far as the aliases take them (the Pick'em
-  chart's lines have been tokens with a value in each look since nhl v30, four of them since nhl v32). The parlay card keeps the dark palette in both looks, as
-  its image does.
+- **The light look, switched on since nhl v34** (13 November 2026; built in nhl v25 with its switch hidden until every tab was
+  rebuilt on the tokens, v26 to v33). Both palettes are in the stylesheet (`:root` and `html[data-theme="light"]`, the NFL's light
+  values, its ice a dark step), and the head carries the NFL's theme script before the body is parsed (key **`nhlhub_theme_v1`**,
+  `'light'` or `'dark'`), so a light visitor's first paint is light. **The visitor's system preference is the NFL hub's rule word for
+  word: dark is every visitor's look whatever the system says, until a press**; nothing in the page asks for `prefers-color-scheme`
+  (the stylesheet names no such query, the script asks nothing of `matchMedia`), and anything kept but exactly `light`, or storage that
+  throws, is dark. **The switch** is the NFL's, shown: `.hub-theme[data-theme-toggle]` at the header's right (laid over its corner, out
+  of the flow, `top:26px; right:22px`, `12px` and `16px` from 900px down; the stamp keeps 56px clear of it from 621px up and drops under
+  the wordmark below, which stays one line clear of it down to 320px), a 44px round button on `--panel` with a `--line` edge, its glyph
+  in `--ink-2` the look a press gives (a sun while dark, a moon while light), named **"Light mode"** with **`aria-pressed`** true while
+  light (the NFL's toggle semantics: the name stays, the pressed state says which look is on), its title "Switch to light mode" or
+  "Switch to dark mode". A press flips `html[data-theme]`, writes `nhlhub_theme_v1` and nothing else, and **redraws nothing**: every
+  colour the page draws is a token the stylesheet resolves, the charts' among them (the Pick'em chart's lines and dots by their `--c`
+  and the `.rv-chart` rules, ELO Ratings' histogram and trend lines and the X Bet Log's line and dots by `var()` in their SVG
+  attributes; the histogram's bars are the tiers' own palette in both looks, as the tier shields are, outlined in `--ink` at half), so a
+  chart follows the look without being drawn again. Another tab's press is followed, nothing written. The parlay card keeps the dark
+  palette in both looks, as its image does. **The sweep** (nhl v34, in Chromium, a script of its own in the session's scratch, not in
+  the repo): every tab in both looks (each loaded with its look stored, then switched by the switch without a reload) at 1280, 768, 390
+  and 320, the Games tab on a day to come, one under way and one over, a game's page with a player open and its Matchup, Lineups and
+  Team Stats windows, a final's and a live game's pages, Suggested Parlays, the Parlay Builder empty and with three legs (a same-game
+  pair and a player leg) and its Top 50 sorted, the parlay card, Team Rankings, ELO Ratings in each of its seven pills and a search with
+  no match, the Pick'em with every pick shown, and X Parlays and the X Bet Log on the owner's devices on planted slips: every visible
+  text 4.5:1 on its real ground (3:1 large), every field's edge, an icon's glyph, a ticked box, a pressed control's state and every
+  chart's data marks 3:1, nothing wider than the screen, no text colour left the same in both looks where its ground moved, and the
+  switch clear of the wordmark, the stamp and the tabs. It found every text, chart and width clean in both looks and one fault, seven
+  fields' edges under 3:1 in both (`--line-2`: the Day select on the page's own ground 1.6 light and 2.2 dark, the search boxes, the
+  Pick'em's Day, the two amount boxes and your book's price 1.6 to 1.8 on a card), fixed with `--field`; and, the switch shown, it is
+  clean. The least text on it: a club's tag (Dallas, white on `#20864C`, 4.59) in the light look and the 50/50 confidence's rose on its
+  tint (4.56) in the dark.
 - **A club is a filled tag** (`tag(id, cls, hide)`, `.ttag`; `muPills()`, `teamCell()`), the NFL's: its abbreviation in Unbounded
   on its own colour, the same in both looks, its three colours inline. `TEAM_COLORS` is a palette a club, the tag's fill first (the
   rest only for a win bar whose two clubs read as one colour: nothing draws them yet, and they are worth a look before a bar
@@ -1094,15 +1116,30 @@ lines and histogram the only drawings beside the shields, the Pick'em chart and 
 broken, and by its own words on a phone, its two tables' columns and held columns (Team; the absences' Player), no lit heading on it, no
 Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), the
 lock's words, the card's
-leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE LOOK: LIGHT AND DARK (nhl v25) holds the two looks and the owner's no-descriptions rule, all of it in jsdom by
+leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE LOOK: LIGHT AND DARK (nhl v25; the switch shown since nhl v34) holds the two looks and the owner's no-descriptions rule, all of it in jsdom by
 rules of its own: the theme script first in the head, after the stylesheet and before the body, `nhlhub_theme_v1` named in it alone;
 both palettes read from the stylesheet's text, every colour token of `:root` with a light value; each text token 4.5:1 on each ground
 and the fill's text 4.5:1 on each fill, in both looks, by its own WCAG sums (in the dark look `--muted` and `--miss` on `--panel-3`
-reported, not held: secondary text there is `--ink-2`); the switch one button in the header before the tabs, named Light mode, **hidden
-for now** by its attribute and the stylesheet; a press (jsdom presses a hidden button) light, pressed, the key written and nothing else,
-`nhl_v1` as it was, a second dark; another tab's switch followed with nothing written, another key's event ignored; and, on a bare page
-of the script and the switch's own markup, light kept is light as the body starts to be parsed, every kept value but exactly `light` is
-dark, storage that throws is dark and a press still switches. Then no descriptions: the classes the cut texts wore are gone from the
+reported, not held: secondary text there is `--ink-2`); the system's preference read nowhere (no `prefers-color-scheme` in the
+stylesheet, no `matchMedia` in the script); the switch one button in the header before the tabs, named Light mode, **shown** (no
+`hidden`, drawn by the stylesheet, no rule of any width hiding it), its sun drawn while dark; a press light, pressed, its title turned,
+its moon drawn, the key written and nothing else, nothing asked for, `nhl_v1` as it was and **the page's markup as it was** (main, the
+game's page, its window, the card, the tabs), a second dark; another tab's switch followed with nothing written, another key's event
+ignored; on a bare page of the script and the switch's own markup, light kept is light as the body starts to be parsed, every kept value
+but exactly `light` is dark, storage that throws is dark and a press still switches, a system that prefers light with nothing kept is
+dark and one that prefers dark with light kept is light, the system never asked. **The sweep's rule in jsdom** (nhl v34, `thPairs`): on
+every view the state offers (17 on 13 November's: the Games tab on a day of each kind, a game's page with a player open and its three windows, Suggested Parlays, the Parlay
+Builder empty and with two legs, its card, Team Rankings, ELO Ratings in three pills, the Pick'em with every pick, and X Parlays and the
+X Bet Log on an owner's page with planted files), every text the page draws, one of each kind, its colour as jsdom's cascade gives it on
+the ground under it (each layer up its ancestors that paints, a gradient's every stop, translucent layers composited, down to the page's
+own), resolved in each look by the palettes and the tokens a rule or an element sets for its own, 4.5:1 or 3:1 large; every field's edge
+3:1 on what it sits on, and `--field` 3:1 on every ground in each look; every rule's own text colour on its own background 4.5:1 in each
+look (its light rule's values over its own); and the charts following the look: every colour a drawn chart carries (the Pick'em's, ELO
+Ratings' histogram and trend lines, the X Bet Log's) a token with a value in each look (the histogram's bars the tiers' own), the four
+drawing functions writing no colour out, and a press on the Pick'em tab leaving the chart's markup as it was. Twelve planted faults
+were each caught: a light text token under 4.5:1, the switch hidden by its attribute and by a phone rule, a press not stored, a press
+that redraws, the system's preference followed, the X Bet Log's line, the Pick'em's Alpha and the trend line each fixed in a dark-look
+colour, a label fixed in the dark look's grey, a rule's own colour on its fill under 4.5:1, and the fields' edge back to `--line-2`. Then no descriptions: the classes the cut texts wore are gone from the
 page and its stylesheet, and on every tab (every day's cards, every pick shown) no paragraph or small print of
 `main` that shows is over 90 characters but the kept few (the source warnings, the builder's and the panel's money warnings and
 notices, another book's prices, an error line, a level with no parlay saying why); a game's page and its windows, which are outside
@@ -1111,8 +1148,8 @@ notices, another book's prices, an error line, a level with no parlay saying why
 build tag and the tabs' words, nothing else; X PARLAYS that the owner's two tabs are not in a visitor's page at all; THE LOOK every
 button, select, box, segmented choice and checkbox chip at 44px and the switch 44px by 44px, and every table in its wrapper let out of
 the page's clip (`overflow: visible`), so its held column can stick. What jsdom cannot hold is looked at in a real browser at 1280,
-390, 360 and 320: the wordmark on one line, no sideways scroll, the chosen tab in view, and (before the switch is shown) every
-visible text's contrast in the light look. Its section TEAM RANKINGS (nhl v26) works the Team Rankings tab out from the state by rules of its own, each an invariant of
+768, 390, 360 and 320: the wordmark on one line clear of the switch, no sideways scroll, the chosen tab in view, and, since nhl v34, the
+sweep (under The look): every visible text's contrast as laid out, every control's edge and state, every chart mark, in both looks. Its section TEAM RANKINGS (nhl v26) works the Team Rankings tab out from the state by rules of its own, each an invariant of
 any state the job can publish: the tab's two cards and nothing else (no intro, small print, select, button or link), the heading and its pills; the
 order and the shared ranks; every row word for word (the tag and the name, W-L-OTL, the points, the Elo a whole number and the shield before it
 the tier of that number by the smoke's own nine numbers, its fill a gradient the page defines once; the Elo change and the rank chip over seven
@@ -1905,7 +1942,9 @@ and player legs), at DraftKings' price as read.
   reload, a press that fails keeping it and one that answers replacing it, a reload the job's read again, and (nhl v18) the Top
   30 (the Top 50 since nhl v33) and the suggested levels on it by the smoke's own sums with a player line's Add and a level's Add to
   builder; on the planted copy (since nhl v33's review, none qualifying on 12 November's state) an anytime goal made to qualify (a
-  skater's goals a coin flip, his anytime goal +110), held in the Top 50 with its "fair, est."; the other props
+  skater's goals a coin flip, his anytime goal +110) on a game whose line is fresh (since nhl v34: the simulation's first evening, at
+  some hours, has no game to come with a fresh line, so no Top 50 to hold it in, and the check failed on any page), held in the Top 50
+  with its "fair, est."; the other props
   sections boot on the state without it (`noDk`), so they hold the press as before. The simulation plants an answer, a 404 and
   failures on the games to come and holds props.js's read, the state's copy and sources.js on both kinds of failure.
 - **The props view** (nhl v10; since nhl v27 the game's page, under The look, where it was a window of its own with six stat
@@ -1990,7 +2029,7 @@ outrank what the job published:
 
 - **Published data wins over anything a browser kept.** Local storage holds only what the visitor
   made (and, read and never written, the NFL hub's sign-in record that marks the owner's devices: under X Parlays): the parlay builder's legs (a player leg with DraftKings' price and the time it was read), the price their own book offered for those legs (nhl v33), the parlays an older page saved (kept, never drawn), their stake, their picks on the Parlay
-  Builder, the tab they were on, the pill they chose on ELO Ratings and the X Parlays they cleared on this device (the owner's), under one key, `nhl_v1`; and, under a key of its own, `nhlhub_theme_v1`, the light or dark look (nhl v25: written only by a press of the header's switch, which is hidden for now, so no visitor's browser holds it yet; never in `nhl_v1`, never sent). Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
+  Builder, the tab they were on, the pill they chose on ELO Ratings and the X Parlays they cleared on this device (the owner's), under one key, `nhl_v1`; and, under a key of its own, `nhlhub_theme_v1`, the light or dark look (nhl v25; written only by a press of the header's switch, shown since nhl v34; never in `nhl_v1`, never sent). Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
   the props model's projections and its ledger's numbers, DraftKings' player lines as the job read them, and the record are read
   from `state.json` on every load. A leg whose game has started leaves the
   builder: its price is gone. The lines and player props Refresh odds reads from ESPN live in the page's memory alone,

@@ -212,7 +212,8 @@ ice where its accent is gold, `--on-fill` for the text on a fill), its header (`
 stamp "Updated …" and the build tag, the Admin mark in `#hubAdmin`; no tagline, no record line), its tab bar (words alone, no counts;
 the owner's two tabs hidden by the stylesheet and taken out of a visitor's page), its card with the ice edge, its buttons (`.btn`
 primary, `.quiet`, `.go`, `.danger`), controls box, tables' base, `.pill`, `.finchip`, stat tiles and window; the head's theme
-script (`nhlhub_theme_v1`) and the header's light/dark switch are in, the switch hidden until every tab is rebuilt; a club is the NFL's
+script (`nhlhub_theme_v1`) and the header's light/dark switch are in, the switch shown since nhl v34 (every tab rebuilt on the tokens
+by v33, then swept for contrast in Chromium in both looks; the one fault found, the fields' edges, fixed with `--field`); a club is the NFL's
 filled tag (`tag()`, `.ttag`: `TEAM_COLORS` a palette a club, the text white or `#1E2230` whichever reads better, the border the fill
 at 72%; the smoke works each tag out again and keeps every two clubs outside one brand colour 5 apart in CIEDE2000); and the page
 carries no descriptions (the tagline, the keys, the "how" folds and the intro paragraphs cut; state lines, tooltips and money warnings
@@ -244,8 +245,9 @@ keeping every column at every width, scrolling sideways in its wrapper with its 
 table fixed on a width a column, laid out by its own words on a phone; ELO Ratings' players in a box that scrolls both ways under a
 held head); the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
-builder first, then the Top 50 lines (nhl v33, the NFL hub's v147 builder card and Top lines: below). The smoke's THE GAME'S PAGE section holds the page and its windows by a model of its own, THE LOOK the rest with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (hidden for now)
-and the no-descriptions rule, and TEAM RANKINGS and ELO RATINGS those two tabs, each worked out from the state by rules of its own
+builder first, then the Top 50 lines (nhl v33, the NFL hub's v147 builder card and Top lines: below). The smoke's THE GAME'S PAGE section holds the page and its windows by a model of its own, THE LOOK the rest with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (shown since nhl v34: a press flips the
+look, stores it and redraws nothing), the system's preference read nowhere, the sweep's contrast rule in jsdom (every drawn text pair, every
+field's edge and every rule's own pair in each look, the charts' colours tokens) and the no-descriptions rule, and TEAM RANKINGS and ELO RATINGS those two tabs, each worked out from the state by rules of its own
 (ELO RATINGS: who is ranked, each group's mean and spread, every row, the histogram's counts, the clubs' tables, the pills, the search
 and what is stored) on the state and on made-up copies.
 

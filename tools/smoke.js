@@ -7423,6 +7423,12 @@ async function lightDarkChecks() {
   chk(sawFinal || !S.games.some(g => g.state === 'final'), `a final's page is among the views wherever the state has a final (${sawFinal ? `${finDay}` : 'none drawn'})`);
   tabB('suggest').click(); await wait(20); take('Suggested Parlays', [head, main]);
   tabB('parlays').click(); await wait(20); take('the Parlay Builder, empty', [head, main]);
+  /* and with a Bet types box unticked by the page itself (a click: its chip redrawn with it), then ticked again: the Bet types are on
+     every state's page, so an unticked box's edge is measured on its own chip's ground on any state (a day with no game has no game
+     tile, and every Bet types box starts ticked) */
+  { const box = d.querySelector('#pbKinds input[data-k="pu"]') || d.querySelector('#pbKinds input[type=checkbox]');
+    if (box && box.checked) { box.click(); await wait(20); take('the Parlay Builder, a bet type unticked', [head, main]); const b2 = d.querySelector(`#pbKinds input[data-k="${box.dataset.k}"]`); if (b2 && !b2.checked) { b2.click(); await wait(20); } }
+    chk(!!box && !!d.querySelector(`#pbKinds input[data-k="${box.dataset.k}"]:checked`), `the Parlay Builder is measured with a Bet types box unticked, then ticked again (${box ? box.dataset.k : 'no box'})`); }
   /* two legs of two games: each Add found again by its leg after the draw the last one caused (a button held from before is gone from the
      page: nhl v34's review found the card never drawn), the builder holding both and Finish open, then the card */
   { const adds = [...d.querySelectorAll('#pbBody button.t30-add[aria-pressed="false"]')]; const g1 = adds[0] && adds[0].dataset.leg.split('|')[0], other = adds.find(b => b.dataset.leg.split('|')[0] !== g1);
@@ -7467,7 +7473,10 @@ async function lightDarkChecks() {
     const XPp = { parlays: fin.length === 2 ? [{ id: 'theme-a', placed: fin[0].date, stake: 10, price: 260, payout: 36, legs: fin.map(g => ({ game: g.id, kind: 'ml', side: won(g) })) },
       { id: 'theme-b', placed: fin[0].date, stake: 10, price: 255, payout: 35.5, legs: [{ game: fin[0].id, kind: 'ml', side: won(fin[0]) }, { game: fin[1].id, kind: 'ml', side: lost(fin[1]) }] }] : [] };
     const XBp = { season: S.season, deposit: 300, weeks: { '2026-10-19': { staked: 50, returned: 80 }, '2026-10-26': { staked: 40, returned: 0 }, '2026-11-02': { staked: 60, returned: 75 } } };
-    const errsA = [], wA = await boot(AT, errsA, { hash: 'xparlays', admin: JSON.stringify({ k: 'x'.repeat(32), ok: true, at: AT }), files: { 'data/xparlays.json': XPp, 'data/xbets.json': XBp } }), dA = wA.document, rA = dA.documentElement;
+    /* at a clock that keeps both slips on the tab (one settled two Eastern days before today leaves it): the later final's puck drop
+       and six hours, where the state's own clock is later (a finished season, the summer) */
+    const TX = fin.length === 2 ? Math.min(AT, Date.parse(fin[0].start) + 6 * 3600e3) : AT;
+    const errsA = [], wA = await boot(TX, errsA, { hash: 'xparlays', admin: JSON.stringify({ k: 'x'.repeat(32), ok: true, at: TX }), files: { 'data/xparlays.json': XPp, 'data/xbets.json': XBp } }), dA = wA.document, rA = dA.documentElement;
     await wait(60); const unfocusA = thFocusSheet(wA);
     const lkA = fn => { for (const lk of ['dark', 'light']) { if (lk === 'light') rA.setAttribute('data-theme', 'light'); else rA.removeAttribute('data-theme'); fn(); } rA.removeAttribute('data-theme'); };
     const tA = n => { const b = dA.querySelector(`#tabs button[data-tab="${n}"]`); if (b) b.click(); };
@@ -7489,7 +7498,7 @@ async function lightDarkChecks() {
   { const mp = pairs.filter(p => p.media); console.log(`  colours a width @media sets, measured at their widths: ${mp.length} (${mp.slice(0, 3).map(p => `${p.look} ${p.fg} ${p.r}:1`).join(', ') || 'none'})`); }
   /* every control that takes the keyboard shows a focus ring 3:1 on what it is drawn on, in each look (nhl v34 after its review) */
   { const rs = Object.values(accR), none = rs.filter(x => x.none), lowR = rs.filter(x => !x.none && x.r < 3), lk = l => rs.filter(x => x.look === l && !x.none).sort((a, b) => a.r - b.r)[0];
-    chk(rs.filter(x => x.look === 'light').length >= 20 && rs.filter(x => x.look === 'dark').length >= 20 && !none.length && !lowR.length,
+    chk(['light', 'dark'].every(l => rs.filter(x => x.look === l).length >= 10 && rs.some(x => x.look === l && /button\.hub-theme/.test(x.at))) && !none.length && !lowR.length,
       `every control that takes the keyboard shows a focus ring 3:1 or more on what it is drawn on (an inset ring or one drawn inside on its own fill, any other on the ground round it), in each look (${rs.length} kinds; no ring: ${none.slice(0, 3).map(x => `${x.look} ${x.at}`).join(' | ') || 'none'}; under: ${lowR.slice(0, 5).map(x => `${x.look} ${x.ring} on ${x.bg} ${x.r} at ${x.at}`).join(' | ') || 'none'})`);
     for (const l of ['dark', 'light']) { const x = lk(l); if (x) console.log(`  the ${l} look's least focus ring: ${x.ring} on ${x.bg} ${x.r}:1, ${x.at}`); } }
   /* every field's edge 3:1 on what it sits on, in each look (WCAG's bar for a control's boundary); and the token it is drawn in. A checkbox

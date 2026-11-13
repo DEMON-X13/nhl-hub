@@ -169,7 +169,7 @@ steps stand on:
   is `nav button.on` with `aria-current="page"`; a wide table never hides a column; the focus ring at .6 alpha (3:1 on a panel);
   no `scroll-behavior:smooth` (the page's own `window.scrollBy`, which keeps a tapped Add under the finger, must not animate).
 - **Two names changed their meaning to the NFL's.** `.btn` is the **primary** button (ice); the grey one nearly every button is
-  is `.btn.quiet`, `.btn.go` is lime (Finish, Save on this device, Download image), `.btn.danger` rose, `.btn.small` the small one.
+  is `.btn.quiet`, `.btn.go` is lime (Finish, Finish parlay, Download image), `.btn.danger` rose, `.btn.small` the small one.
   `.pill` is the **small grey label** beside a heading or on a line (`.ok` lime, `.bad` rose, `.warn` gold, `.ice` hockey's own),
   never a club: every `.tag` of before is a `.pill` (its own word kept as a class beside the variant: `pill ok win`, `pill warn
   thin`, `pill ice sg`), Final and live are `.finchip` and `.finchip.live`, Value is `.pb-valmark`. Also renamed: `.strip` to
@@ -191,8 +191,8 @@ steps stand on:
   every time on the page is), then `#buildTag`. **No tagline, no season or record line, no description in the head** (the record
   is the Pick'em Record's; the champion, once the season has one, is a pill on Team Rankings' heading, `#ratChamp`). A load that fails
   says so in the stamp (`.bad`) and in an `.empty` first in `main`.
-- **The tab bar** is words alone: **no count on a tab** (Games and the Parlay Builder carried one until v25; the slip bar still
-  shows the builder off its tab). Since nhl v30 the bar is the NFL's: Games, Suggested Parlays, Parlay Builder, [X Parlays], Team
+- **The tab bar** is words alone: **no count on a tab** (Games and the Parlay Builder carried one until v25; the slip bar that
+  showed the builder off its tab went in nhl v33). Since nhl v30 the bar is the NFL's: Games, Suggested Parlays, Parlay Builder, [X Parlays], Team
   Rankings, ELO Ratings, Pick'em Record, [X Bet Log] (the Standings went in v26, the Record tab in v30; their old addresses open the
   tabs that took them in). The owner's two tabs are the NFL's way: no `hidden` attribute, hidden from a visitor's
   first paint by the stylesheet (`html:not([data-admin="on"]) #tabs [data-admin-only]`), and taken out of a visitor's page by
@@ -285,7 +285,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   to their own brand colours) and pairs already one colour (under 1). The smoke holds every bar, the families' distance, and every club but the Kings
   in a hue (CIELAB chroma 15 or more: none grey or white). `state.json`'s `logo` and `color` stay in the data and are never read. The only
   icons left are the drawn ones (the puck, the folds' chevrons, the tier shields, ELO Ratings' trend lines and histogram, and since nhl v19 the Pick'em chart); a leg's Add (a suggested level's, a
-  Top 30 line's) is a word, Add or Added.
+  Top 50 line's) is a word, Add or Added.
 - **The Games list** (`renderGames`, `gameRow`; nhl v28, 12 November 2026: the Games tab as the NFL hub's game list, the rest of
   the second step of the owner's ask above; the NBA's Tonight cards and the day strip are gone). **The bar** over it: **Day** (`#daySel`, a
   select of every Eastern day with a game from the season's first to ten days out, grouped by month, and today itself where it
@@ -316,8 +316,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   one rounding of the call wherever it is written, the game's page and its Matchup window too: the pick's own chance
   rounded, the other side the rest, so a half-point, 0.695, is 70% on the row, on the page's Model pick and on its To win
   rows, where the row once said 69%; the chance taken to four places first, so an away pick at 0.455 is 55% as a home pick at
-  0.545 is, where 1 - 0.455 in floating point once rounded down; Pick your own legs' Model chip is it too, and every other chance
-  a bet shows, `whole` in the page (a bet button, the Top 30's and the suggested legs' "model 55%"), is taken to four places the
+  0.545 is, where 1 - 0.455 in floating point once rounded down; Pick your own legs' Model chip was it too (until nhl v33), and every other chance
+  a bet shows, `whole` in the page (a bet's row, the Top 50's and the suggested legs' "model 55%"), is taken to four places the
   same way since the second review of nhl v30, so the chip and the moneyline button beside it agree) on a bar in the two clubs' fills, each half as wide as its chance, its number
   printed from 14% up and the pick's bold, and a number its half has no room for left out, never cut (it wraps under a strut,
   out of sight; the row's label for a screen reader says both) (`slateCols`: two clubs of one brand colour, `BAR_FAMILIES`, the smoke's own list, or
@@ -359,7 +359,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
 - **The game's page** (`#gameModal`, `openGame`, `renderGame`; nhl v27, 12 November 2026: the second step of the owner's ask
   above, the NFL hub's game page, the page a row of its Props list opens, in hockey's numbers). It took the place of the Player
   props window (`#ppWin`, the NBA's sheet with six stat tabs), the card's bet chips, who is out and the Lineups drawer: one page
-  a game, every game's (a final's too), opened from its row in the Games list and from a Player props button in Pick your own legs. **What kind
+  a game, every game's (a final's too), opened from its row in the Games list. **What kind
   of thing**: the NFL's `.modal` and `.modal-panel`, a child of `<body>`, 1,100px at the most and 28px from the top, the backdrop
   scrolling and the page under it locked (`body.modal-open`); at 760px and under the whole screen. The address does not change
   and nothing of it is stored (`GP`: the game, the open player, whose stats show, All skaters, the search, the status line): a
@@ -367,8 +367,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   back to what opened it (the card, found again where the list was redrawn). The focus moves into it on opening, Tab stays
   inside, and a redraw (a tick, the watch, a storage event, a Refresh odds read: `rerender` draws it wherever it is open) keeps
   the scroll, the open player and the keyboard on the same control, found again by what it names; listeners are bound once, on
-  `#gameView`. Layers: the slip bar (40) under the page (50), its windows (55) over it, the parlay card (80) over both; what
-  the slip bar would say while the page is open is said in the page's own status line. **Top to bottom**:
+  `#gameView`. Layers: the page (50), its windows (55) over it, the parlay card (80) over both; what
+  the builder's note would say while the page is open is said in the page's own status line too. **Top to bottom**:
   - **The bar**: `✕ Close`; the props model's trial as one pill (`trialPill`, `#ppTrial`, only on a page that shows a projection:
     "props model on trial", gold, until the ledger's bar is decided, then "props model: failed its trial" rose or "passed its
     trial" lime; the ledger's running numbers on its title, never a verdict or a word of passing before the bar); **All
@@ -535,7 +535,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   game and its puck drop, the game and its puck drop each kept whole and moving to the next line together; at the right DraftKings'
   price with DraftKings' fair chance under it, the NFL's (est. on a Yes price), so the legs' figures multiply to the card's fair
   chance; then the leg's own Add, one width with Added, which
-  is lit ice once in the parlay (as the Top 30's, and the smoke holds both by the page's own rules); DraftKings' fair chance and the
+  is lit ice once in the parlay (as the Top 50's, and the smoke holds both by the page's own rules); DraftKings' fair chance and the
   model's, named, a player's "props model ... (on trial)", on the row's title and in its Add's name, where the model's chance of
   each leg shows); Add to builder, then Finish
   filled lime, both at the NFL's 14.5px; an empty level only as tall as its words, no size pill, saying why ("No parlay of Thu, Nov
@@ -544,16 +544,49 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   in the same rows and with the same rule line: each leg its grade in a tag (won, lost, push, void), its puck drop, or "live" while
   its game is on, where the Add was, each level its result at the left of its head and what it paid in its third box. Lock and New legs went with
   nhl v17, as the NFL hub's went in its v116.
-- **The Parlay Builder tab**: Refresh odds in the tab's own odds bar, as the NBA's; then the builder (nhl v17: first, as the
-  NFL hub's); then the Top 30 lines with the controls box (its groups' labels on one line, the bet amount's note under the
-  box; game tiles whose two pills wrap, "CAR @" over "WPG", where a phone's tile is too narrow) and the list: Value picks and
-  Other lines, each a heading with its count, a line a row (its rank; its club's pill or a total's two, the bet and a gold
-  Value tag on a call, DraftKings' price at the right; under them the game and its puck drop, "model 51% · fair 43% · $1 wins
-  $1.24 · expected +$0.14"), its Add at the row's end (44px, Added and lit ice once in the parlay); a tap keeps the button
-  under the finger though the builder above grows (the NFL hub's pbLegClick: the page scrolled back by as much); then Pick
-  your own legs and the saved parlays. An empty builder or saved list is a plain paragraph, as the NBA's. The builder's tiles
-  are fitted to the fraction of a pixel (`tooWide`: a figure 0.3px over its tile once wrapped "$158.4" over "1"). The parlay
-  card's leg-by-leg DraftKings links are 44px chips, "Leg 1", "Leg 2", on a line of their own.
+- **The Parlay Builder tab** (nhl v33, 12 November 2026, the owner's "match what the NFL hub has ... a lot of clutter in the nhl one";
+  the NFL hub's app v147 in hockey's terms, its anatomy and computed values copied, ice where it has gold as an accent, every control 44px
+  where the NFL's are 40): the builder's note, the builder's card, the pairs that move together, then the Top 50 lines. **The builder's
+  note** (`#bMsg`, above the card, gold on gold-soft): what the builder refused, replaced or let go (a leg out at its puck drop or after a
+  read), the words they always had, drawn with every redraw on any tab. **The builder's card** (`#builder`): empty, its title "Parlay
+  Builder", Refresh odds with its status line (`#pbRefreshOdds`, `#pbOddsNote`) and "No legs yet." alone (`#bNone`; the rest, `#bFull`, is
+  drawn once a leg is in); with legs, "3-leg parlay" with a "building" pill (`#bTitle`, `tabindex="-1"`), Refresh odds, then the legs as
+  the NFL's table (`#bLegs`: Player | The bet | Projected | Fair | Price | Remove): a player's tag, name and his mark on the injury report
+  (a chip, Out or IR in rose, Day to day in gold), his position and club v club under ("RW · TOR v BUF"); a club's bet by the club ("Maple
+  Leafs", "Game · TOR v MIN"); a total by both clubs ("Wild at Maple Leafs", "Game · MIN @ TOR"); the bet ("+1.5 puck line", "Over 6.5
+  goals", "Under 0.5 assists"), "same game" where its game has more than one leg, and under it what DraftKings' slip will not take, from
+  the card's own plan (`dkPlan`): a player's line "Not on DraftKings' slip: no betslip id in ESPN's feed: add it by hand", a team leg with
+  no DraftKings id read, its id gone or on another number, or priced at another book, said so; the projection ("0.55 pts", – on a team
+  bet), DraftKings' fair chance (est. on a Yes price) and the price, plain; Remove, a word, 44px. On a phone the Player column is held at
+  the left (`.sk`) and Remove at the right (`.pb-rmc`, sticky at right 0, opaque), so neither leaves the screen at 390 or 320 while the
+  bet and the figures scroll between them. Under the table: who is not expected to play ("Auston Matthews and Casey Mittelstadt are not
+  expected to play (injured reserve; out).", rose), the read line ("DraftKings' prices via ESPN, read Thu, 10:58 AM EST (the oldest);
+  check the slip.", the oldest read of the legs, "(the oldest)" only where they were read at more than one time) and, where a same-game
+  group sits beside another game's leg, "Mixed same-game parlay: DraftKings may not open it as one slip." Then **What it pays** (an h3):
+  "Your stake $ [20]" (the panel's Bet amount too), the six amounts as one segmented group (`#chips`, the NFL's stake chips) and **your
+  book's parlay price** (`#bookPrice`, "e.g. +250", 16px); three boxes (`#parlayTotals`, the NFL's `.bigp`; the Confidence tile went):
+  DraftKings' fair chance ("fair chance all 3 land, est." where a same-game correction or a Yes price's margin is in it) with what the
+  stake is expected to return at it on the price it pays ("expected −$4.61 on $20 (−23.0%)", gold) and the model's chance under that
+  ("model 25.8%, props model on trial"); the price ("+364 est." on a same-game parlay, "the legs multiplied +496" under it; the book's
+  name where it is not DraftKings) and the fair price; "$76.55" in lime, "returned if it lands, $56.55 profit". A price typed in your
+  book's box takes DraftKings' place in what it pays and in the expected return, the boxes saying "your price" (DraftKings' price and the
+  fair price under it). Finish parlay (lime) and Clear all (quiet), at the right under a rule. **Legs that move together** (`#pbPairs`,
+  the NFL's card, only while the builder holds a same-game pair): Pair | Strength, every two legs of one game, the correlation the
+  same-game table prices them by (tools/sgp.js's `rho` on `S.sgp`, read from the end each leg lands at), strongest first; legs of two
+  games never. **The Top 50** under them (The Parlay Builder, below), its controls box the NFL's (Bet amount, Odds with the second Refresh
+  odds and its own status line, `#pbCtlRefreshOdds` and `#pbCtlOddsNote`, one read with the first, Build from, Bet types, Day, Games) and
+  its game tiles plain bold abbreviations with the puck drop ("WAS @ NYG", the day too on Both days: the owner's call of 11 November 2026,
+  the tiles alone, where v12 and v13 put a club's pill everywhere). A line a row, the NFL's grid: the rank; the club's tag and the name
+  (the player, the club, or the total's "Under 6.5 goals"), the bet under it and the game and its puck drop under that; five figures over
+  their small-caps labels (Price, Projected, Fair, Model, Wins), three a row under the name from 1100px down; Add, 44px, Added and lit ice
+  once in the parlay; a tap keeps the button under the finger though the builder above grows (the NFL hub's pbLegClick). Each part's head
+  is a row of 44px buttons, # and the five columns (the Game bets' with an empty slot for Projected), each with its arrow (▼ highest first,
+  ▲ lowest first, ⇅ on the others), aria-pressed on the one sorting. The parlay card's leg-by-leg DraftKings links are 44px chips, "Leg
+  1", "Leg 2", on a line of their own; Start over, smaller, on a line of its own under the actions. **Gone in nhl v33**: Pick your own
+  legs (`#plLines`; a game's page, nhl v27, offers every bet it did, each side of the moneyline, the puck line and the total of every
+  game with a fresh line, whole-number totals and sides far off the market among them, and DraftKings' player lines besides), its bets
+  board (`betBlock`, `betBtn`, `syncBetRows`) and its Player props button, Save on this device and Your saved parlays (the list stays in
+  `nhl_v1` untouched, never drawn or graded, so it can come back), and the slip bar (`#slip`).
 - **No Playoff tab** (nhl v14, the owner's call of 25 October 2026: "can you get rid of the playoff tab, i dont see the
   need for it"): its bracket and its odds table (expected points, division and conference chances) went with it. The job's
   simulation stays, read by Team Rankings' Playoff and Cup columns, and an old `#playoff` link (or a stored tab) opens Team
@@ -871,36 +904,53 @@ as bring it back to 21, the last stored (three of 21 out and one added leave two
 moneyline added leave 20), and staying stored, nothing said, below 21, a reload opening on what the parlay showed; a read
 alone naming another book for the game, or none, a leg added drawn alone in place of the one drawn and every leg kept stored,
 a tap on a stored leg left out putting it in (a player's on the game's page; the Over beside the moneyline in the game's Game bets,
-not pressed there or in Pick your own legs while left out), the leg drawn taken out bringing the next one in, said in the
-window, the builder and on the slip bar, the read's slip line dropping what it said of a leg now drawn, and a reload on the
-published line opening on them all; the same total at a number a read moved replacing the stored one, said; a level's Add to
+not ticked there while left out), the leg drawn taken out bringing the next one in, said in the window and in the builder's note,
+the read's words not said again, and a reload on the published line opening on them all; the same total at a number a read moved replacing the stored one, said; a level's Add to
 builder and Clear all asking first with only legs left out stored and beside one drawn, No keeping them, and Add to builder asking
 where a level holds that total only at the number the read moved it to, with the moneyline drawn beside it and alone; a refusal or a
-replacement on the slip bar gone at the next leg taken out or added, a player's price on a game's page and a level's Add to builder among them, and what it
-says of a read standing through an add with no word of its own and back when a replacement said over it goes), the price worked out again from the table and
+replacement in the builder's note (nhl v33, where the slip bar said it) gone at the next leg taken out or added, a player's price on a game's page and a
+level's Add to builder among them, and what it says of a read said once, gone at the next change too), the price worked out again from the table and
 the hold (an exact integral for two legs, two million draws beyond), never above the product, est. everywhere, the fair
-chance (an Under main line's its own implied chance among the legs), no thin edge on a team leg beside a player leg (a
-thin one planted on a copy, marked on its own and not beside a player leg), the card, nothing stored but the legs added,
+chance (an Under main line's its own implied chance among the legs), no edge said of a thin team leg, alone or beside a player leg (a
+thin one planted on a copy), the builder's rows (the price, the fair chance, the projection, the slip note), its read line and the mixed
+same-game line, the card (its "Open N of M legs in DraftKings"), nothing stored but the legs added (and your book's price, the one field
+the store gains),
 a reload, a later read, the puck drop, the suggested levels as they were (by the smoke's own search before any player leg, with them in
 the builder, and on a reload that opens with them there; the section's game is one starting more than four minutes after the
-clock, since its reload and its later read run one and two minutes on and a puck drop under them failed a correct page), and saved player legs graded on planted box scores (a goalie who came on in relief void, "did
-not start"; one of a side whose starter the box cannot tell "who started is not certain", the parlay not graded here). THE PARLAY BUILDER's game priced at another book is held with the same-game table there: a second leg of
+clock, since its reload and its later read run one and two minutes on and a puck drop under them failed a correct page), and player legs
+graded by the page's own `gradeLeg` on copies (X Parlays and the record grade with it; the saved list it graded until nhl v33 is drawn
+nowhere) on planted box scores (won, lost, a push, a goalie who came on in relief void, "did not start"; one of a side whose starter the
+box cannot tell "who started is not certain"; waiting; past the window), each grade written into the leg and holding on a publish no
+longer carrying the box. THE PARLAY BUILDER's game priced at another book is held with the same-game table there: a second leg of
 it, of a kind the rule would otherwise take beside the first, takes the first's place, one leg a game, said. Its section THE PARLAY BUILDER holds the
 builder with rules of its own, sharing nothing with the page but the state: every line's DraftKings ids in
 their shape and on their number, and the ids against the run's saved answers (`NHL_OUT`, or `tools/out`
-for the real state); the tabs' order and the Parlay Builder's (the builder first); the Top 30 by its own ranking on the default
-slate and Both days (every row: its rank, the bet, Value, the price, the game and its puck drop, the model's and fair chance,
-what $1 wins and its expected return, Add or Added; the two parts and their counts, the lines past 30, the reason for none), the
-controls, a line's Add and a second tap; Pick your own legs' Model chip on every game (the call as the Games list writes it, its
-club and chance, and the moneyline on that club reading the same chance) on the default slate, Both days and a copy planting an
-away pick at pHome 0.455 and a home pick at 0.545 (both 55%); every open day's suggested levels by the smoke's own search
+for the real state); the tabs' order and the Parlay Builder's (the builder's note, the builder, the pairs, the Top 50; no Pick your own
+legs, Save, saved list or slip bar: nhl v33); the two Refresh odds (the builder's and the controls' Odds row, between Bet amount and
+Build from) and their status lines; the Top 50 by its own rounds (`sTop`: the player lines in rounds across their stats, likeliest first
+by the model, up to 40, the game bets by the expected return filling to 50, 10 or more once 40 qualify) on the default slate, Both days,
+every mix and box and THE JOB'S PLAYER LINES' state (every row: its rank, kept when sorted, its tag and name, the bet, the game and its
+puck drop, its price, Projected worked out again from `S.props` in hockey's units, the fair chance, est. on a Yes price, the model's or
+the props model's chance, what $1 wins, Add or Added; no Value tag, no far-off note, no count of the lines past the list; each part its
+h3 and count; each head's buttons, their order, aria-pressed and arrows), the heads pressed (each column highest first, again lowest
+first, # back to the rounds; the order by its own sort, the ranks kept, the keyboard on the head, nothing written; 44px), the game tiles
+plain bold abbreviations with the puck drop (the day too on Both days), the reason for none, the controls, a line's Add and a second
+tap; the builder's card (nhl v33): empty, its title, Refresh odds and "No legs yet." alone; with legs on a copy planting an Out, an IR and
+a day-to-day player, a same-game group of three beside two other games, the moneyline's DraftKings id gone and the total's on another
+number: its title and pill, every row cell by cell (the chip word for word, each slip note the smoke's own reading of the ids and equal
+to `dkPlan`'s verdict), who is not expected to play, the read line and the mixed line word for word, the pairs that move together with
+each strength worked out from data/corr.json's keys, and your book's price (what +250 and -120 pay and the expected return at them,
+"your price", its legs' key in the store and the store's one new field, kept through a reload, a price that does not read changing
+nothing, an empty box clearing it, and cleared by a leg added, a leg removed, Start over and Clear all); every open day's suggested levels by the smoke's own search
 (`sLevel`, nhl v31) on every game of the day and every bet type (the legs and their order, the size pill, the rule line and its
 title, the chance, its expected return and the model's line, the price and pays, each leg's Add, the lock words with the weekday,
 the rule each level hands the record, an empty level's words) and a locked day as the record's set, graded, by its own rule's words; the Bet amount, a level's Add to builder (asked first, then the Parlay Builder opened on
 the builder), a suggested leg's own Add, the builder's repricing, the card (its link, note, Share text, image, Escape, Tab
-order), the store an older page wrote and a junk one, a puck drop and the watch (a × pressed after a puck drop, before the watch
-looks, taking out the leg its row names; a level of a day still open finishing at once when another day's game has started,
-one of the day that puck drop locked redrawing its day locked; the Top 30 saying a listed game's lines left; the Games tab
+order; "Open N of M legs in DraftKings", the NFL's chance line with the model's after it, Start over smaller on its own line), the store
+an older page wrote (its saved list kept in `nhl_v1` untouched through a boot on a state calling one of its games off, a leg added and
+taken out, a reload and Clear all, drawn nowhere) and a junk one, a puck drop and the watch (a Remove pressed after a puck drop, before the
+watch looks, taking out the leg its row names; a level of a day still open finishing at once when another day's game has started,
+one of the day that puck drop locked redrawing its day locked; the Top 50 saying a listed game's lines left; the Games tab
 redrawn once and not again when a builder leg leaves, a leg at a moved number never shown as in the parlay), a stale line, a
 whole-number total, a game priced at another book and one with no book named, and both tabs' empty states on made-up copies
 (no games, every game started, no line, a two-game night, every game alike); only `state.json` and ESPN are read and only
@@ -1007,13 +1057,10 @@ source names none, no CSS `url()`, no club logo or colour read from the state; a
 darkened until white or `#1E2230` reads on it at 4.5:1, the text whichever reads better, the border the fill at 72%: the text 4.5:1 on
 the fill and no fill needing darkening, by its own WCAG sums; the surfaces the outlined pill and badge were held on went with them; every club but the Kings in a hue of its own by its own CIELAB sums; any two clubs outside one
 brand colour, the reds, the navies, the golds, the two oranges, 5 or more apart by its own CIEDE2000), no confidence key, bets board, chip, out row, drawer or foot on the Games tab,
-a row's pick its club's tag raised by weight and a shadow alone (the rows themselves are THE GAMES LIST's); the bets board, which is Pick your own legs' alone since nhl v27 (every bet button
-part by part (its side, a check in the parlay, its price, its chance, the call's tag with its edge, far off the market's tag and both
-numbers, nothing else) and its name for a screen reader, the rules that keep it one line where it fits (the side and the price and
-chance each whole, the call's tag on its edge taking no line, 44px), every piece of it that cannot wrap within the narrowest
-button's room (counted, since jsdom lays nothing out: a tag 15 characters at most, a word or number under the line 11, with any
-rule that keeps the far line or the button whole read too), a row's two buttons laid out alike (the wrap planted in a row's first
-button, its second or neither: a row marked exactly where either wraps, and no mark kept once drawn again unwrapped)); a made-up
+a row's pick its club's tag raised by weight and a shadow alone (the rows themselves are THE GAMES LIST's); the builder's Remove held at
+the right of its row as its Player column is at the left (sticky at right 0, opaque, under every media query: on screen at 390 and
+320) and 44px, its six amounts and your book's price 44px, the price set in 16px, no rule drawing or wrapping a tag in a game tile
+(nhl v33; the bets board of Pick your own legs and its checks went with it); a made-up
 game that takes every branch, on its card, its page and its windows (a call on the moneyline and on the total marked Value, a
 puck-line side far off the market that is no call and says nothing, "Out:" with players of every status and no figure, the day
 to day in the projected lineup wearing the DTD chip and nobody else, a first NHL start on the goalie's row and in Lineups, seven
@@ -1022,14 +1069,14 @@ and a grade to come in each box's place), the tab bar words alone on every tab a
 in nhl v25), every tag (`.ttag`) its club's abbreviation filled in its club's colour by the smoke's own sums (its text and its edge with it), its club's name beside it, and no club in a `.pill`, every table keeping every column at every width (no
 rule in the page's CSS, in any media query, hides a table, row or cell; each scrolls sideways in its wrapper with its club or player
 column the one held; each has its columns, heading by heading; every name a table hides for a screen reader held by a
-positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), ELO Ratings' three tables
+positioned box inside its table, read from the rules in each media query since jsdom lays nothing out), the builder's two tables with a
+same-game group in it (its legs, Player held; the pairs, Pair held: nhl v33), ELO Ratings' three tables
 (the players', the goalies', the clubs') among them with their held columns (Player, Player, Team), no lit heading on that tab and
 nothing left of the Players tab's tables, switch, club select and sources line, its seven pills and its search 44px, its trend
 lines and histogram the only drawings beside the shields, the Pick'em chart and the switch's two glyphs, Team Rankings' table laid out fixed on its eleven columns' widths, never squeezed under them and no cell
 broken, and by its own words on a phone, its two tables' columns and held columns (Team; the absences' Player), no lit heading on it, no
-Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), a
-side far off the market said on its own button with both numbers exactly and every other part of the button (in Pick your own
-legs, Both days included), the lock's words, the card's
+Playoff tab and no Standings tab (no button, section, division table or conference select; the old addresses are TEAM RANKINGS'), the
+lock's words, the card's
 leg-by-leg links (Leg N, 44px) and 44px controls. Its section THE LOOK: LIGHT AND DARK (nhl v25) holds the two looks and the owner's no-descriptions rule, all of it in jsdom by
 rules of its own: the theme script first in the head, after the stylesheet and before the body, `nhlhub_theme_v1` named in it alone;
 both palettes read from the stylesheet's text, every colour token of `:root` with a light value; each text token 4.5:1 on each ground
@@ -1189,7 +1236,7 @@ on how to know them, "Reuse my NFL sign-in". Built in nhl v21.
   Under at a line, or a milestone).
 - **X Parlays.** A card a slip: "N-leg parlay", placed, its note, and lost, landed, void or how many legs are void; staked, the price
   and what it pays; each leg with a mark, the club or player, the bet, the game (the score once under way or final, else the puck
-  drop) and its state. A leg is graded as a saved parlay's is (gradeLeg on a copy: the final's score, the box score the state
+  drop) and its state. A leg is graded by the page's `gradeLeg` on a copy (the final's score, the box score the state
   carries, void where a player did not play or a goalie did not start), nothing stored. Live slips first under the Eastern day of
   their first puck drop, settled ones under Finished; a slip settled two Eastern days before today leaves the tab (as the NFL's
   autoclear), one marked `cleared: true` in the file never shows. The × on a card asks, then takes it off this device's tab
@@ -1205,17 +1252,19 @@ on how to know them, "Reuse my NFL sign-in". Built in nhl v21.
 ### The Parlay Builder
 
 The third tab (`#parlays`; `#parlay`, the NFL site's name, opens it too) is nfl-hub's Parlay Builder in
-hockey's terms, built in nhl v7 (13 October 2026) from a spec and its critic's changes, with the gates below, and laid out as
+hockey's terms, built in nhl v7 (13 October 2026) from a spec and its critic's changes, with the gates below, laid out as
 the NFL hub's in nhl v17 (25 October 2026, the owner's "i want to build out a similar system that nfl-hub has for parlay
-building ... i want to add the suggested parlays tab to show suggested parlays and keep track of records"): the builder first,
-then the Top 30 lines on the visitor's picks, then Pick your own legs and the saved parlays; the suggested levels are the
-Suggested Parlays tab's, the site's own pick each day on every game and bet type, locked and graded in the record.
+building ... i want to add the suggested parlays tab to show suggested parlays and keep track of records"), and since nhl v33 (12
+November 2026, the owner's "match what the NFL hub has, the look, the layout and all the betting stuff ... there is a lot of clutter in
+the nhl one") the NFL hub's app v147 card for card: the builder's note, the builder, the pairs that move together, then the Top 50
+lines on the visitor's picks (under The look: The Parlay Builder tab); the suggested levels are the Suggested Parlays tab's, the site's
+own pick each day on every game and bet type, locked and graded in the record.
 Three bet kinds (moneyline, puck line, total) and, since nhl v11 (15 October 2026, the owner's "go for it"),
-DraftKings' player lines from a game's page; one Eastern day as the slate. **The suggested levels keep one leg a
+DraftKings' player lines; one Eastern day as the slate. **The suggested levels keep one leg a
 game**, and since nhl v18 (below) a leg can be a player's line. **The builder takes more than one leg of a game**: one side bet a game (the
 moneyline or the puck line, either club), its total, and player legs, one a player a stat (two stats of one player
 allowed). A second side bet on a game replaces the first, as the other side of the total does and a player's second
-line in the same stat does, each said in the builder and on the slip bar (on a game's page too, in its status line); a player's
+line in the same stat does, each said in the builder's note (on a game's page too, in its status line); a player's
 points beside his own goals or assists are refused, said ("nearly one bet": every goal or assist is a point; DraftKings
 may not take both on one ticket, and where this page is unsure what DraftKings allows it refuses); and a game takes at
 most 21 legs (`GAME_LEGS_MAX`, tools/sgp.js's `MAX_GAME_LEGS`: the most its lattice prices; a 22nd is refused, said, and
@@ -1224,19 +1273,20 @@ read has taken out (its line moved or pulled, stored as it was so a reload bring
 to remove it, so it never refuses a leg, and it stays stored unless a reload would put it beside the new leg against the
 published line's rule: in the new leg's slot (replaced, said), nested with it, or past 21 of the game stored, and past 21 only
 as many leave as bring the store back to 21, the last stored first (taken out for good, said by name and game); the same bet
-stored at a number a read has moved since is in the new leg's slot (replaced, said). A refusal or a replacement said on the
-slip bar goes at the visitor's next change to the builder (a leg added or taken out anywhere, a level's Add to builder, Clear
-all); what the slip bar says of legs a read or the clock took out is said once and runs its own nine seconds, a refusal or a
-replacement said over it hiding it only while that stands, and a leg it says is left out of the parlay drops out of it once the
-builder draws that leg. A game priced at another book, or a publish with no same-game table, takes one leg a game, as before;
+stored at a number a read has moved since is in the new leg's slot (replaced, said). **The builder's note** (`#bMsg`, nhl v33, where
+the slip bar said it): a refusal or a replacement stands until the visitor's next change to the builder (a leg added or taken out
+anywhere, a level's Add to builder, Clear all, Start over), and what it says of legs a read or the clock took out is said once and goes
+at that next change too (the slip bar ran it nine seconds); it is drawn with every redraw on any tab, and a reason the clock gave on
+another tab, or before a reload, is kept in the store (`ui.bmsg`) until the builder is drawn. A game priced at another book, or a
+publish with no same-game table, takes one leg a game, as before;
 where only a Refresh odds read puts a game's lines at another book (or names none), the builder draws one of its legs (its
 first, or the one the visitor last put in) and keeps the rest stored: a leg added is drawn alone in place of the one drawn,
 which stays stored like the rest (said), every leg held to the published line's rule as above, and the leg drawn taken out
-puts the next stored one in its place (said). A bet or a price is shown as in the parlay (a box ticked on a game's page, a button pressed in Pick
-your own legs) only where the builder draws it; a tap on one stored and left out puts it in, never takes
+puts the next stored one in its place (said). A bet or a price is shown as in the parlay (a box ticked on a game's page, a line's
+Added) only where the builder draws it; a tap on one stored and left out puts it in, never takes
 it out. A level's Add to builder asks first wherever a leg kept on this device would go (a stored leg the level holds only at a
 number a read has moved it to among them: that is another bet), and Clear all wherever two or more would or any the builder
-leaves out of the parlay; each says how many, those left out apart. A row's × in the builder takes out the leg the row names, never
+leaves out of the parlay; each says how many, those left out apart. A row's Remove in the builder takes out the leg the row names, never
 the one now at its place (a puck drop since the builder was drawn takes a row out above it). Legs of different games multiply (their chances, and
 DraftKings' prices, as it pays a parlay of different games); legs of one game are a same-game parlay, priced by the
 rule under Same-game parlays and player legs below, an estimate, and said so wherever its price shows.
@@ -1245,22 +1295,36 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   whose line is fresh: `line.at` is the job's last run (`S.published`, to the minute), so a number DraftKings
   has dropped is never put on a slip. Its numbers are the state's, nothing recomputed: the chance (`pHome`,
   `cover`, `ou`), the edge (`mlEdge`, `plEdge`, `ouEdge`), the price and the other side's price, whose
-  margin-free share is DraftKings' **fair chance** (`legFair`; none without the other price).
-- **The Top 30 lines** (`#pbPanel`, nhl v17, the NFL hub's pbTopBuild in hockey's terms): Bet amount (`#pbStake`, `P.stake`,
-  the builder's stake too and what the suggested levels pay on, $20 to start, `stakeRead` as the NFL's), Build from (All, Teams
-  only, Players only, the NFL hub's; Totals only went in nhl v18) over five Bet types boxes (Moneyline, Puck line, Total, and
-  since nhl v18 Player overs, the anytime goal among them, and Player unders: `PB_KINDS`, `PB_MIX`), Day (today and tomorrow, Eastern, each offered while it has a game to come;
-  Both days when both have a fresh line; else the next day with a game), and a Games fold (a game with no fresh line shown but
-  not tickable). The list: every line on the picks that qualifies as a level's leg does (below), Value picks (5 points or more
-  above the price, `S.edge`: the calls a game's page marks Value) then Other lines (0 to 5 points), each part ranked by the expected return
-  on $1 (the model's chance times the decimal price, less the stake: `legEv`), ties to the lower leg id, cut at 30 in all
-  (`TOP_N`), the lines past it counted ("4 more lines qualify beyond the top 30."), "No line on your picks is a value pick right
-  now" where none is, and the reason where no line qualifies (`pbWhy`: nothing ticked, or what would help: more games, more bet
-  types, Both days). Notes say how many lines are far off the market and how many games have no line yet; a one-line notice
-  says when the watch moved the slate on because every game of the day shown had started, and another when a game the list
-  showed dropped the puck ("FLA @ CBJ dropped the puck: its lines left the list."). Each holds while the panel is on the slate it
-  was said on and its day is not over (Eastern), and goes at the visitor's next pick. A control the panel redraws (a game's box,
-  a Day, a line's Add) keeps the keyboard's focus.
+  margin-free share is DraftKings' **fair chance** (`legFair`; none without the other price). A player's line is offered on a fresh
+  read of the game's props (`propRead`) and on the game's page.
+- **The Top 50 lines** (`#pbPanel`, nhl v33, the NFL hub's v147 pbTopBuild and pbTypeRounds in hockey's terms; the Top 30 of nhl v17 to
+  v32 before it): the controls box, Bet amount (`#pbStake`, `P.stake`, the builder's stake too and what the suggested levels pay on, $20
+  to start, `stakeRead` as the NFL's), Odds (the second Refresh odds), Build from (All, Teams only, Players only) over five Bet types boxes
+  (Moneyline, Puck line, Total, Player overs, the anytime goal among them, and Player unders: `PB_KINDS`, `PB_MIX`), Day (today and
+  tomorrow, Eastern, each offered while it has a game to come; Both days when both have a fresh line; else the next day with a game), and
+  a Games fold (a game with no fresh line shown but not tickable). The list: every line on the picks that qualifies as a level's leg does
+  (below), in two parts. **Player lines**, up to 40 (`TOP_PL`), in rounds across hockey's bet types, a type the line's stat (points,
+  goals with the anytime goal among them, assists, shots on goal, blocked shots, saves), over and under alike: each round the next
+  likeliest line of each type by `PB_CHANCE` (the levels' ranking chance, the model's), the lines of a round likeliest first, the rounds
+  one after another; ties to the other chance, then the lower id (`typeRounds`). Ranked by the expected return as one list the Top 30
+  was some thirty "Under 1.5 shots on goal" rows on 12 November, as the NFL's was twenty anytime touchdowns before its rounds. **Game
+  bets** then fill the list to 50 (`TOP_N`), at least 10 once 40 player lines qualify (more player lines where fewer game bets do), ranked
+  by the model's expected return on $1 (`legEv`, the chance times the decimal price, less the stake), ties to the lower id. Each part an h3
+  in the display font with its count, and its own head (under The look); a row its rank, the name, the bet, the game and its puck drop
+  (the day too on Both days), its price, **Projected** (the state's props mean in hockey's units, "1.7 shots", "0.55 pts", "0.23 goals",
+  "26.1 saves", "0.6 blocks": shots, blocks and saves to a tenth, the rest to a hundredth; – on a team bet), **Fair** (`legFair`, est. on
+  a Yes price), **Model** (the props model's on a player's line, its head titled "props model, on trial"; the team model's on a game bet),
+  **Wins** (what $1 wins) and Add. The NFL's Expected column (at the fair chance) is Model here: on hockey's devig every Under's fair
+  chance is its own implied chance, so it would read $0.00 on every Under. No Value tag, no Value part (no model has earned a hook). A
+  head pressed sorts its part by that column, highest first, again lowest first, # back to the list's own order; the rows keep their
+  ranks; the sort is this page load's alone (`PB_SORT`), never stored, and the keyboard stays on the head pressed. The reason where no
+  line qualifies (`pbWhy`: nothing ticked, or what would help: more games, more bet types, Both days) or the panel's wide line
+  (`pbWide`); notes say how many games have no line yet or a line DraftKings did not list at the last run; a one-line notice says when
+  the watch moved the slate on because every game of the day shown had started (`PB_NOTICE`), and another when a game the list showed
+  dropped the puck (`PB_DROP`, "FLA @ CBJ dropped the puck: its lines left the list."). Each holds while the panel is on the slate it was
+  said on and its day is not over (Eastern), and goes at the visitor's next pick. A control the panel redraws (a game's box, a Day, a
+  line's Add, a head) keeps the keyboard's focus. The "N more lines qualify" line, the far-off note and the "no value pick" line went in
+  nhl v33.
 - **The levels** (`PB_TIERS`, the Suggested Parlays tab's; `spDay(date)` works a day's on every game of the day still to come
   and every bet type, and `pbDayLevels` hands the same to the record). Since nhl v31 (12 November 2026, the owner's "match what
   the NFL hub has ... all the betting stuff", with his calls on the ranking chance and the record): the NFL hub's prices and its
@@ -1284,8 +1348,8 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   the 3- and 4-leg parlay with the best chance times decimal landing 25% and 12% by the model, else the likeliest of that size, calls
   preferred and thin legs the fewest; Extreme, the 5-leg parlay at 5%, went in nhl v14 (the owner's call, as the NFL hub's had). A
   leg qualifies with both prices, the model at 45% to 97%, its edge 0 or more (the margin left in), no push (a whole-number line
-  never goes in a level), and under 15 points over the fair chance (`FAR_OFF`; those are counted in the far-off note and flagged on
-  their buttons in Pick your own legs; a game's page marks the call Value and says nothing of far off). A level's card leads with the
+  never goes in a level), and under 15 points over the fair chance (`FAR_OFF`; a game's page marks the call Value and says nothing of
+  far off; the far-off note and Pick your own legs' flags went in nhl v33). A level's card leads with the
   fair chance and its expected return, the model's under them; each leg's own Add; Add to builder (asks before replacing other legs, those kept on
   this device that the builder leaves out among them; then opens the Parlay Builder, the keyboard on the builder's heading) and
   Finish. Empty levels say why ("No parlay of Mon, Oct 26's legs pays +700 or more (one leg a game)."), and a day with no line, or
@@ -1299,27 +1363,31 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   keyboard on its own level's button (the levels of a day share legs). A level's Add to builder and Finish
   on a day the clock has locked since the tab was drawn, or a level a Refresh odds read has changed since, only redraw the tab
   (`spStale`), the keyboard on the tab's heading where the button went.
-- **The builder** (`#builder`): rows, never a table; every stored leg read again from the state on every
-  draw, a game started, called off or gone, a stale line or a moved number taken out and a moved price
-  updated, each said in its live line. The same pruning runs when the page loads and when the watch looks
-  (every half minute, and on coming back into view) on any tab, said on the slip bar, so a game's Game bets never
-  show a bet as ticked that the builder would drop, and the Games tab is redrawn once when a leg
-  leaves, not at every look. The summary's figures step down to fit their tiles (two by two up to 1100px; 13px the
-  least, and a figure that still will not fit takes the whole row), so none is ever cut. Four tiles: the fair chance (or the model's), DraftKings' price, what
-  the stake pays, the confidence on the fair chance. Finish parlay and Save on this device (two legs or more
-  each; Save keeps the builder, and reads Saved, off, whenever the builder is a parlay already in this
-  device's list, so a reload never lets it be saved twice), Clear all. Pick your own legs (`#plLines`) lists the slate's
-  games with a fresh line, each with its bet block (the board: `betBlock`) and a Player props button that opens the game's page. The slip bar (`#slip`) shows
-  the builder on every other tab, and on this one while the builder is out of view; with no leg left it
-  shows only for a few seconds after the clock took the last ones out, saying why, and that reason is kept
-  in the store (`ui.bmsg`) until the builder has been drawn, so a builder emptied on another tab or before
-  a reload is still explained.
+- **The builder** (`#builder`, nhl v33, the NFL's card: its parts under The look): every stored leg read again from the state on every
+  draw, a game started, called off or gone, a stale line or a moved number taken out and a moved price updated, each said in the
+  builder's note. The same pruning runs when the page loads and when the watch looks (every half minute, and on coming back into view)
+  on any tab, so a game's page never shows a bet as ticked that the builder would drop, and the Games tab is redrawn once when a leg
+  leaves, not at every look. The boxes' figures step down to fit (`fitTiles`, 13px the least, and a figure that still will not fit
+  takes the whole row), so none is ever cut. Who is not expected to play is read by ESPN id from the injury report the lineups stand on
+  (`S.players.teams[club].out` and `.dtd`, as `peWho` reads it: `injOf`), and what DraftKings' slip will not take from the card's own
+  plan (`dkPlan`), so the builder says before Finish what the card will. Finish parlay (two legs or more), Clear all.
+- **Your book's parlay price** (nhl v33, the NFL's `#pBook`): American odds typed in `#bookPrice` ("+250", "-120", "250" read as +250;
+  +100 or more, -100 or less; `bookRead`) take DraftKings' place in what the parlay pays and in its expected return, the boxes saying
+  "your price"; it fixes the builder's weakest number, a same-game price being an estimate on an untested hold. It is stored in `nhl_v1`
+  with its legs' key (`book: { am, legs }`, the stored legs' ids sorted) and any change to the stored legs clears it as the store is
+  written (a leg added, taken out, replaced or gone at its puck drop, a level's Add to builder, Clear all, Start over), so it can never
+  price another parlay; while a Refresh odds read leaves one of its legs out of the parlay the builder shows DraftKings' price, and a
+  reload brings the legs and the price back together. An empty box clears it; a box left with what does not read shows the price kept.
 - **The card** (`#pcWin`): the parlay drawn as a card, Download image (a canvas, context calls only, never a
   remote image), Share link (`{title, text}`, the DraftKings link inside the text, never a `url`), Open in
-  DraftKings, and Start over from the builder. Nothing is saved by finishing. Close, Escape and a click
-  outside give the focus back to the button that opened it (or Finish parlay, if the watch redrew it away).
+  DraftKings ("Open 1 of 3 legs in DraftKings" where some legs cannot go on the slip, "Open DraftKings" where none can: nhl v33, the
+  NFL's), and, smaller and on a line of its own, Start over from the builder. Its chance line is the NFL's, "Fair chance all 3 land 20.1%
+  (est.) · expected −23% · the price says 26.1%", and the model's after it, "· model 25.8% (props model on trial)" (the levels and the
+  Top 50 rank on it), on the card, its image and its Share text alike; it is drawn at DraftKings' price (your book's price is the
+  builder's). Nothing is saved by finishing. Close, Escape and a click outside give the focus back to the button that opened it (or Finish
+  parlay, if the watch redrew it away).
 - **Clocks.** Every time on the page is the visitor's own and names its zone ("3:30 PM PDT": the game
-  tiles, the level and builder rows, Pick your own legs, the Games list's rows, "as read at" and the header's
+  tiles, the level and builder rows, the Top 50's rows, the Games list's rows, the builder's read line, "as read at" and the header's
   published stamp). The card, its image and its Share text go to other people, so they are in Eastern time
   and say ET.
 - **DraftKings' ids** (`line.dk`): `tools/espn.js` reads them from the links ESPN carries on every price
@@ -1342,20 +1410,17 @@ rule under Same-game parlays and player legs below, an estimate, and said so whe
   market's shape: those legs open no slip), or when no link at all gave an outcome id; it notes, by name,
   games whose DraftKings prices carried no link or links with no outcome id even beside games that carried
   theirs, ids on another number than the line, and another book's games.
-- **Saved parlays** stay the visitor's own record: graded from the scores, a leg on a game called off void,
-  one off the schedule "not on the schedule" (never pending forever), a settled grade kept in the entry.
-  The state lists a game called off (`removed`) for one publish only, so the first time the page sees a
-  saved leg's game there it writes the void into the leg (`void: {why, at}`), which holds from then on; a
-  game called off while this browser never opened the page reads "not on the schedule".
+- **The saved parlays** (Save on this device and Your saved parlays, nhl v7 to v32) went in nhl v33 with the owner's general ask: a
+  visitor no longer sees his saved parlays or their grades on the page (a judgement call, said in the change's PR). The list stays in
+  `nhl_v1` (`saved`) untouched, never drawn, graded or written, so it can come back; `gradeLeg` and `gradeProp` stay, for X Parlays and
+  the record, and the smoke grades legs with them on copies.
 
-`nhl_v1` now also holds `stake`, `ui.pb` (`k` the five boxes, a store from before nhl v18 opening with the two player boxes ticked, `off` the games unticked, `gx` the
-games fold, `day`) and, until the builder is next drawn, `ui.bmsg`; a saved parlay keeps `dec` and `fair`
-and, once settled, `graded`, and a saved leg on a game called off `void`. A player leg in `legs` (and in a saved
-parlay) is `{game, kind: 'prop', pid, name, team, grp, stat, mk, side, line, k, odds, other, at, p, fair, label, text,
-date, start}`: the player's ESPN athlete id, club and group (F, D or G), the stat, a main line's side and number or a
-Yes milestone's k (side over, line k - 0.5), DraftKings' price and the other side's as read, and `at`, when that read
-was; a saved one, once graded, `res: {grade, x, at}` (the stat in the box score, or `why` where void). A saved same-game
-parlay keeps `est` and `product` (its estimated price beside the legs' prices multiplied), and `fairEst` and `props`.
+`nhl_v1` also holds `stake`, `ui.pb` (`k` the five boxes, a store from before nhl v18 opening with the two player boxes ticked, `off` the games unticked, `gx` the
+games fold, `day`), until the builder is next drawn `ui.bmsg`, since nhl v33 `book` (your book's parlay price and its legs' key) while one
+is typed, and a store's `saved` list as an older page left it. A player leg in `legs` is `{game, kind: 'prop', pid, name, team, grp, stat,
+mk, side, line, k, odds, other, at, p, fair, label, text, date, start}`: the player's ESPN athlete id, club and group (F, D or G), the stat,
+a main line's side and number or a Yes milestone's k (side over, line k - 0.5), DraftKings' price and the other side's as read, and `at`,
+when that read was. The sort of the Top 50, the pairs and what a read read are never stored.
 
 ### The suggested parlays' record
 
@@ -1463,8 +1528,8 @@ The owner's call, 15 October 2026: "Player props in the Parlay Builders: player 
   in it), the model's beside it where every leg has one ("model 14.7%, props model on trial" with a player leg), the
   price ("+364 est.", "the legs multiplied +496" under it), what it pays ("profit, est.") and the notes' one line:
   "DraftKings prices same-game parlays its own way: this is an estimate from the legs' prices and how they move
-  together". The legs of a game with more than one wear "same game". The slip bar, the card, its image and Share text
-  and a saved parlay say est. too. On the live feed (15 October 2026, BUF at TOR, read 10:04 AM EDT): the Over 6.5 at
+  together". The legs of a game with more than one wear "same game", and the pairs that move together are listed under the builder
+  (nhl v33), each pair's strength the correlation the table prices it by. The card, its image and Share text say est. too. On the live feed (15 October 2026, BUF at TOR, read 10:04 AM EDT): the Over 6.5 at
   -122, John Tavares Over 2.5 shots on goal +120 and Tage Thompson Over 0.5 points -205, fair 53%, 38% and 60%, whose
   fair chances multiplied are 11.9%, joined 14.1% (the copula: they ride with the goals), priced +364 est. where the legs
   multiplied pay +496 (the hold over the implied chances' joint, 19.3%, makes it 21.5% implied).
@@ -1532,8 +1597,9 @@ for four, and the cap at the product binds on 0-5% of tickets.
 
 The job reads DraftKings' game lines only when it runs, so a line on the page can be hours old by puck drop
 (the owner's ask, 15 October 2026: "a refresh odds button that will pull the live lines on demand ... rather
-than like a constant job"). **Refresh odds** (on the Games tab, over the list on a day from today on with a game still to come; on the Parlay Builder tab's odds bar over its
-panel, since nhl v22 on the Suggested Parlays tab's under its heading, and, since nhl v10, on a game's page (the Player props window's until nhl v27), 44px, with one `aria-live` status line beside each: the tabs' three share one sentence, a game's page says its own game's state) reads
+than like a constant job"). **Refresh odds** (on the Games tab, over the list on a day from today on with a game still to come; on the Parlay Builder tab
+two since nhl v33, the NFL's, in the builder's head and in the Top 50's controls box (its Odds row, between Bet amount and Build from),
+since nhl v22 on the Suggested Parlays tab's under its heading, and, since nhl v10, on a game's page (the Player props window's until nhl v27), 44px, with one `aria-live` status line beside each: the tabs' four share one sentence, a game's page says its own game's state) reads
 ESPN's free scoreboard in the browser (`?dates=YYYYMMDD&limit=100&_=<now>`, no-store, no custom header, so no
 preflight: ESPN answers with `access-control-allow-origin: *`) for every day the Games tab's Day select lists from today on
 with a game still to come, and, at the same time, DraftKings' player props for the games still to come today and
@@ -1553,7 +1619,7 @@ the answer or with no odds keeps its published line, and the status line counts 
 ESPN, read Thu, 9:12 PM EDT: 5 games, 2 moved since the last read. 1 game had no line at ESPN: its published line
 stands. 1 game is postponed at ESPN: its published line stands until the job takes it off."). A line read so
 is fresh (`line.refreshed`, in the page's memory alone; the job never writes it, and the smoke fails a state
-that carries it), and a game's page, the open days' suggested levels and the Top 30 (worked again on the new prices),
+that carries it), and a game's page, the open days' suggested levels and the Top 50 (worked again on the new prices),
 the builder, the card's DraftKings link and the Refresh odds status lines all follow (the panel's own "as read" sentence went in nhl v25; its line shows only where another book prices a game). The builder draws its legs on the new lines (a moved price updated, a moved
 number out, said once with the read's time) but keeps them stored as they were, so nothing a read changed
 reaches `nhl_v1` on a later save. A parlay card open during a read is drawn again on the new prices and ids
@@ -1565,7 +1631,7 @@ runs does nothing; a second press reads again. The smoke's REFRESH ODDS holds it
 page's parse equal to the job's on the recorded answers in `tools/fixtures`, variants of them and the answers
 the run saved; the page's carry rule equal to `tools/espn.js`'s on a table of cases; the page's goals layer
 equal to `tools/elo.js`'s, number for number; games ESPN has under way, postponed and cancelled kept as
-published; the store after a later save and a reload on it; the Top 30 and the suggested levels after a read, by the smoke's own
+published; the store after a later save and a reload on it; the Top 50 and the suggested levels after a read, by the smoke's own
 search on what the read should leave; and a card open through a read.
 
 On a phone (640px or less) the Day and Build from choices share one row equally, the Bet types and the
@@ -1609,17 +1675,17 @@ The owner's go-ahead, 15 October 2026 ("yeah do props model for NHL"). `tools/pr
 goals, assists, points, shots on goal and blocked shots and every expected goalie's saves for each game still to come
 through tomorrow (Eastern), a mean and a whole distribution each, and puts itself on trial against DraftKings' own
 player prices. Until nhl v18 it suggested nothing. **The owner's call of 25 October 2026 ("Use player lines now", asked
-whether player lines should wait for the trial's bar) puts DraftKings' player lines in the Top 30 and the suggested parlays,
+whether player lines should wait for the trial's bar) puts DraftKings' player lines in the Top 30 (the Top 50 since nhl v33) and the suggested parlays,
 ranked on this model's chance**, though its trial has not shown it beats DraftKings' own prices (on the archive it is the
 worse probability on log loss and Brier; its Unders at 5 points or more above the closing price were up, its Overs not):
 - **Player lines as legs** (`propLegsOf` in the page): DraftKings' main lines, the Over and the Under, and the anytime goal
-  (not where it is the goals line's Over; no k+ ladders, as the NFL hub's Top 30 lists none), on a read of the game's props
+  (not where it is the goals line's Over; no k+ ladders, as the NFL hub's Top lines list none), on a read of the game's props
   that is fresh (`propRead`: the job's within 15 minutes of the publish, `PROP_FRESH`, or a Refresh odds press's; a read an
   earlier run kept is shown on the game's page and never ranked), each on a player the model projects for one of the game's clubs,
   in a stat of his group. A line qualifies as a team leg does (`propQual`: the model's chance 45% to 97%, at or above the
   price's implied chance, a main line with both prices, no whole-number line, under 15 points over DraftKings' fair chance,
   the anytime goal's fair chance its price over DraftKings' measured margin, est.); a value pick at 5 points or more. The
-  Top 30 shows it by the player's club and name, and its chance as "props model 65%", never just "model"; a level (nhl v22, the
+  Top 50 shows it by the player's club and name in its rounds across the stats (nhl v33), and its chance as "props model" over the figure, never just "model"; a level (nhl v22, the
   NFL's rows) shows DraftKings' fair chance under the price, the props model's chance on the row's title and in its Add's name,
   "props model 65% (on trial)", and the card's chance box "model 49%, props on trial".
 - **The levels** still take one leg a game, chosen on every qualifying leg of the game, team bet or player line, by the same
@@ -1627,7 +1693,7 @@ worse probability on log loss and Brier; its Unders at 5 points or more above th
   leg on the box score the state carries (under The suggested parlays' record).
 - **What stays**: the numbers beside each DraftKings line and the ledger's bar are as they were; nothing says "edge" on a prop, and
   a game's page says the model is on trial in one pill, on whose title it has not been shown to beat DraftKings (the sentence that
-  said the Top 30 and the suggested parlays rank player lines on it went with the note in nhl v25: no descriptions; those tabs
+  said the Top 30 (now the Top 50) and the suggested parlays rank player lines on it went with the note in nhl v25: no descriptions; those tabs
   say "props model" and "on trial" on every line they rank).
 Since nhl v11 a visitor can put DraftKings' own player lines in the Parlay Builder (under The Parlay Builder, Same-game parlays
 and player legs), at DraftKings' price as read.
@@ -1792,7 +1858,7 @@ and player legs), at DraftKings' price as read.
   P(1+ points) is 71.8%; Sergei Bobrovsky in goal for TOR, `sv: { mu: 25.902, sd: 7.223284, lo: 0, d: [...] }`.
   The page shows them in the props view (below) as "projection 1.04 · model 65% · DraftKings 60%" beside each DraftKings
   line, the model labelled on trial.
-- **The job's read** (nhl v16, 25 October 2026, toward the owner's "use player lines now": the Top 30 and the suggested parlays
+- **The job's read** (nhl v16, 25 October 2026, toward the owner's "use player lines now": the Top 30 (the Top 50 since nhl v33) and the suggested parlays
   will rank DraftKings' player lines, so they must be in the state, not only in a visitor's press). `props.js` reads ESPN's
   DraftKings propBets for every game it projects (today and tomorrow, Eastern), four at a time, on every run, parsed by
   `tools/espn.js`'s `propsOf`, and writes each game's read beside its projection, `games[id].dk`: `{ status: 200, at, main, yes }`
@@ -1800,7 +1866,7 @@ and player legs), at DraftKings' price as read.
   parse reads: none posted yet) or `{ status: 'failed', at, why }`, where a failed read keeps the last run's read of the game if that
   was one (with its own `at`); `dk` beside `games` counts the run's reads (`asked`, `read`, `none`, `failed`, `kept`, `lines`).
   `at` is the run's clock in full ISO. `update.js` copies them into the state with the projections. The page starts from it on
-  every load (`ppSeed`, `src: 'job'`): a game's page draws the job's read as it draws a press's (its status line the read's state, the Player props buttons of Pick your own legs saying on their titles what was read and when), and its prices can go in the parlay at once, at the job's
+  every load (`ppSeed`, `src: 'job'`): a game's page draws the job's read as it draws a press's (its status line the read's state and when it was read), and its prices can go in the parlay at once, at the job's
   price, dated by its read. A press reads them again: an answer or a 404 replaces the job's read ("A reload brings back the job's
   read"), a failed request keeps it, counted as kept. `sources.js` fails the run (after the commit) when every game projected
   failed to read, and notes some failing. The smoke's THE JOB'S PLAYER LINES holds the read's shape on the state as published and
@@ -1812,14 +1878,14 @@ and player legs), at DraftKings' price as read.
   failures on the games to come and holds props.js's read, the state's copy and sources.js on both kinds of failure.
 - **The props view** (nhl v10; since nhl v27 the game's page, under The look, where it was a window of its own with six stat
   tabs; the owner's ask, 15 October 2026: DraftKings' props on the Refresh odds press, the model on trial beside them). A
-  game's card opens its page (every game's), and so does the **Player props** button of each game in Pick your own legs (its
-  word alone, outlined ice once DraftKings' lines are in, the read and the game's bets said on its title). On the page a
+  game's row opens its page (every game's; the **Player props** button of each game in Pick your own legs went with it in nhl v33).
+  On the page a
   player is a row and his stats are blocks under it, every market of one player in one place. **Before any read** (a state
   with no job read of the game) each expected player's row shows the props model's projection (the published mean), his
   blocks say "No DraftKings line yet." and the status line "… · player lines not read yet." (a game past tomorrow: "player
   lines on game day", and its rows are the player model's lineup by name); with the job's read it shows that read as a
-  press's (below). **The press** (any of the four Refresh odds buttons: the Suggested Parlays tab's, the Games tab's odds bar,
-  the Parlay Builder tab's, the game's page's own) reads, at the same time as the scoreboards, ESPN's DraftKings propBets for
+  press's (below). **The press** (any of the Refresh odds buttons: the Suggested Parlays tab's, the Games tab's odds bar,
+  the Parlay Builder tab's two, the game's page's own) reads, at the same time as the scoreboards, ESPN's DraftKings propBets for
   every game still to come today and tomorrow (Eastern: DraftKings posts player props on game day, and a game further off
   answers 404): `limit=1000`, one request a game (a second page only where ESPN pages the answer, at most three), GET,
   no-store, a cache-buster, no custom header (ESPN answers `access-control-allow-origin: *`, its 404s too). `PROPS_FEED` in
@@ -1854,8 +1920,7 @@ and player legs), at DraftKings' price as read.
   to `tools/espn.js`'s `propsOf` on the recorded answer and ten variants (every pair swapped, swapped with no ladder,
   junk inside, a pair split, a pair of three, reversed, empty and not a list), the first item of a pair the Over by its
   ladder on the recorded answer and every pair the ladder contradicts left out when swapped; before a press no Player
-  props button on a card, each one in Pick your own legs saying so on its title and opening its game's page (the focus in
-  it, and back on the button when it closes), the page's projection for every expected player in every stat by its own
+  props button anywhere (nhl v33: the last ones went with Pick your own legs), the page's projection for every expected player in every stat by its own
   sums with no line and no box, and not one props request on load, on opening, on the watch or on the tabs; then a press
   on a made-up answer built from the state's own projections (every projected skater and goalie priced, a pair its ladder
   says was read backwards, an athlete nobody rates, a club's player the model leaves out, junk) read in two pages, beside
@@ -1864,8 +1929,8 @@ and player legs), at DraftKings' price as read.
   read: one request a game today and tomorrow, GET, no-store, a cache-buster each, a second page only where paged, each game
   keeping what its answer gave, the tabs' status line, every row of the game's page number for number by its own sums (All
   skaters ticked, every player opened), each Player props button's words, the pages of a failed read and of none posted, a
-  press that moves no line and re-ranks the Top 30 and the levels with the read game's player lines (by its own sums, the
-  pool exactly that game's qualifying lines), no player in the builder or Pick your own legs, the postponed and cancelled
+  press that moves no line and re-ranks the Top 50 and the levels with the read game's player lines (by its own sums, the
+  pool exactly that game's qualifying lines), no player in the builder, the postponed and cancelled
   games not kept, counted as called off in the status line and their pages the projections alone, a second press from the
   page's own button (busy and "reading…" while it runs, the keyboard back on it after) where the game's read fails keeping
   the earlier read and a game ESPN postponed since the first press losing its earlier read, the watch at the puck drop,
@@ -1892,7 +1957,7 @@ The owner publishes a change and expects it on every device on the next load. No
 outrank what the job published:
 
 - **Published data wins over anything a browser kept.** Local storage holds only what the visitor
-  made (and, read and never written, the NFL hub's sign-in record that marks the owner's devices: under X Parlays): the parlay builder's legs (a player leg with DraftKings' price and the time it was read), the parlays they saved, their stake, their picks on the Parlay
+  made (and, read and never written, the NFL hub's sign-in record that marks the owner's devices: under X Parlays): the parlay builder's legs (a player leg with DraftKings' price and the time it was read), the price their own book offered for those legs (nhl v33), the parlays an older page saved (kept, never drawn), their stake, their picks on the Parlay
   Builder, the tab they were on, the pill they chose on ELO Ratings and the X Parlays they cleared on this device (the owner's), under one key, `nhl_v1`; and, under a key of its own, `nhlhub_theme_v1`, the light or dark look (nhl v25: written only by a press of the header's switch, which is hidden for now, so no visitor's browser holds it yet; never in `nhl_v1`, never sent). Schedule, scores, ratings, calls, lines, lineups, the standings, the playoff picture,
   the props model's projections and its ledger's numbers, DraftKings' player lines as the job read them, and the record are read
   from `state.json` on every load. A leg whose game has started leaves the
@@ -1919,7 +1984,7 @@ outrank what the job published:
   test reported. Look at recent commits before writing one. End with the `Co-Authored-By` and
   `Claude-Session` lines the session provides.
 - **Version bump.** Any page change bumps `APP_BUILD` in `index.html` (`nhl vN · YYYY-MM-DD`).
-- **Visitor data is the visitor's.** A visitor's builder and saved parlays live in their browser's
+- **Visitor data is the visitor's.** A visitor's builder, the price their book offered and the parlays an older page saved live in their browser's
   local storage only (`nhl_v1`) and are never written to the repo or anywhere else. The page's
   origin, `demon-x13.github.io`, is shared with the owner's other Pages sites, so the key's name
   stays this site's own; it is the key the page used at `nfl-hub/nhl/`, so a visitor's builder

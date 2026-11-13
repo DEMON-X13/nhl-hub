@@ -1652,9 +1652,24 @@ async function builderCardChecks() {
     type(''); chk(store().book === undefined && bp.value === '' && box()[1].startsWith(`${PBS.toAm(q.dec)} est.`), `an empty box clears it: DraftKings' price again (${box()[1]})`);
     /* any change to the legs clears it: a leg added, a leg taken out, Clear all, Start over */
     const again = () => { type('+400'); return store().book && store().book.am === 400; };
-    const addB = [...d.querySelectorAll('#pbBody button.t30-add[aria-pressed="false"]')].find(b => ![G1.id, G2.id, G3.id].includes(b.dataset.leg.split('|')[0]));
-    chk(again() && !!addB, 'typed again');
-    if (addB) { const k = addB.dataset.leg; addB.click(); chk(store().book === undefined && bp.value === '' && !txt($('parlayTotals')).includes('your price'), `a leg added clears it (${canon(store().book)})`); d.querySelector(`#pbBody button.t30-add[data-leg="${k}"]`).click(); }
+    /* a leg of a fourth game added: a Top 50 line's Add where the slate shown lists one, else the handler every leg button calls (legTap) on
+       another game's fresh moneyline, as a tick on its page does. The evening of 13 November 2026 the job had read DraftKings' player lines
+       on today's two games and tomorrow's first alone, the three this copy plants on, and the Top 50's slate was today's two, so no line of
+       another game was listed and the check failed a right page, holding the run's publish back */
+    const three = new Set([G1.id, G2.id, G3.id]);
+    const addB = [...d.querySelectorAll('#pbBody button.t30-add[aria-pressed="false"]')].find(b => !three.has(b.dataset.leg.split('|')[0]));
+    const G4 = addB ? null : M.games.find(g => !three.has(g.id) && !sStarted(g, AT + 600000) && sFresh(g) && (sLeg(g, 'home', 'ml') || sLeg(g, 'away', 'ml')));
+    const L4 = G4 ? sLeg(G4, 'home', 'ml') || sLeg(G4, 'away', 'ml') : null;
+    chk(again(), 'typed again');
+    if (addB || L4) {
+      const k = addB ? addB.dataset.leg : L4.id, n0 = (store().legs || []).length;
+      const tap = () => addB ? d.querySelector(`#pbBody button.t30-add[data-leg="${k}"]`).click() : w.eval(`legTap(${JSON.stringify(k)}, document.createElement('button'))`);
+      tap();
+      chk((store().legs || []).length === n0 + 1 && store().book === undefined && bp.value === '' && !txt($('parlayTotals')).includes('your price'),
+        `a leg added clears it (${addB ? 'a Top 50 line' : `${G4.id}'s moneyline, by legTap: no other game's line on the Top 50's slate`}, ${k}; ${canon(store().book)})`);
+      tap();
+      chk((store().legs || []).length === n0, `the leg added taken out again (${k})`);
+    } else console.log('  no fourth game with a fresh line to come: a leg added is not held clearing the price on this state');
     chk(again(), 'typed again');
     d.querySelector(`#legs tr.leg[data-id="${legs[0].id}"] button.pb-rm`).click();
     chk(store().book === undefined && bp.value === '', `a leg taken out with Remove clears it (${canon(store().book)})`);

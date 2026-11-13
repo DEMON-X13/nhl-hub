@@ -208,6 +208,35 @@ function partC() {
     if (L1.calls[id] && J(L1.calls[id].sk) !== J(Object.fromEntries(row.homeP.skaters.concat(row.awayP.skaters).map(p => [p.id, P.STATS.map(k => p[k].mu)])))) shapeBad.push(`${id}: the call is not props.json's`);
   }
   chk(!shapeBad.length, `props.json: every game two sides of skaters, each stat a whole distribution with a ladder that never rises, each call its numbers (${shapeBad.slice(0, 3).join('; ')})`);
+  /* the Mismatches' block (nhl v35), on this file's own sums: props.mm the rule's constants beside the model's average game for points;
+     each game projected a cx on both sides, its expected goals players.json's lh or la and its factor (xg / ctx)^e to four places; and
+     every skater's published points his no-context mean (his rate an hour, shrunk to his position's, times his expected minutes) times
+     that factor, within a thousandth: the factor is what the page takes out to see what the matchup adds */
+  {
+    const C = readJSON(path.join(D, 'props_model.json')).params, cP = C.sk.pts, MMo = O1.mm, r4 = x => Math.round(x * 10000) / 10000;
+    chk(J(P.MM) === J({ v: 1, stat: 'pts', line: 0.5, list: 0.015, tag: 0.035, club: 3 }) && J(MMo) === J(Object.assign({}, P.MM, { ctx: cP.ctx })), `props.json carries the Mismatches' rule (points at 0.5, listed at 0.015, tagged at 0.035, three a club) and the model's average game (${J(MMo)})`);
+    const PJm = require('./players'), games = PJm.loadGames().games, walkOf = k => P.walk(games, new Map(), { H: C.sk[k].H, carry: C.sk[k].carry }, null, null);
+    const Wp = walkOf('pts'), Wg = C.sk.g.H === cP.H && C.sk.g.carry === cP.carry ? Wp : walkOf('g');
+    const offCx = [], offMu = []; let nSk = 0, maxOff = 0;
+    for (const [id, row] of Object.entries(O1.games)) {
+      const u = PJ.upcoming[id];
+      for (const side of ['home', 'away']) {
+        const c = row.cx && row.cx[side], xg = u ? (side === 'home' ? u.lh : u.la) : undefined;
+        if (!c || c.xg !== xg || c.f !== r4(Math.pow(xg / cP.ctx, cP.e))) { offCx.push(`${id} ${side}: ${J(c)} where players.json has ${xg}`); continue; }
+        for (const p of row[side + 'P'].skaters) {
+          const x = Wp.P.get(p.id), b = Wg.P.get(p.id); if (!b) { offMu.push(`${p.name}: no history`); continue; }
+          const L = Wp.lg[b.pos === 'D' ? 'D' : 'F'], etoi = b.toi.length ? b.toi.reduce((a, t) => a + t, 0) / b.toi.length / 60 : (b.pos === 'D' ? 17 : 12);
+          /* the published mean is rounded to a thousandth and the factor to four places: half a thousandth and a hair */
+          const mu0 = P.skMean('pts', x, { pts: L.h ? L.pts / L.h : 0 }, etoi, null, cP), off = Math.abs(p.pts.mu - mu0 * c.f);
+          nSk++; maxOff = Math.max(maxOff, off); if (off > 0.0006) offMu.push(`${p.name}: ${p.pts.mu} where ${mu0.toFixed(4)} x ${c.f} is ${(mu0 * c.f).toFixed(4)}`);
+        }
+      }
+    }
+    chk(games1.length > 0 && !offCx.length, `every game projected carries both sides' expected goals, players.json's own, and the factor (xg / ${cP.ctx})^${cP.e} to four places (${games1.length} games; ${offCx.slice(0, 2).join(' | ')})`);
+    chk(nSk > 0 && !offMu.length, `every skater's published points are his no-context mean times his side's factor, within the published rounding (${nSk} skaters, the largest gap ${maxOff.toFixed(4)}; ${offMu.slice(0, 2).join(' | ')})`);
+    /* and none of it in the ledger: a call is the means alone, as before */
+    chk(Object.values(L1.calls).every(c => J(Object.keys(c).sort()) === J(['away', 'called_at', 'final', 'frozen', 'frozen_at', 'gk', 'home', 'sk', 'start', 'v'])), 'the ledger\'s calls carry the means alone: nothing of the Mismatches reaches the registered record');
+  }
   const check = (prev, now) => PC.run(D, ST, now, prev).bad;
   chk(!check(null, T0).length, 'props_check.js passes the first ledger: ' + check(null, T0).join(' | '));
   /* run 2: the puck drop passed, the game frozen as called */

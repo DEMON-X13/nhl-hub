@@ -550,6 +550,14 @@ function partB() {
     chk(nG > 0 ? !badDk.length && q.asked === nG && q.read + q.none + q.failed === q.asked : true, `props.js reads DraftKings' player lines on every game it projects: the answer as the job parses it, a 404 none posted yet, a failed read the last run's read or failed (${nG} games, ${q.read} read, ${q.none} none, ${q.failed} failed, ${q.kept || 0} kept; ${badDk.length} wrong${badDk[0] ? `, e.g. ${badDk[0]}: ${JSON.stringify(gs[badDk[0]].dk).slice(0, 160)}` : ''})`);
     const sgs = (SB.props && SB.props.games) || {}, notCopied = Object.keys(sgs).filter(id => JSON.stringify(sgs[id].dk) !== JSON.stringify(gs[id] && gs[id].dk));
     chk(!notCopied.length && JSON.stringify(SB.props && SB.props.dk) === JSON.stringify(PJB.dk), `the state carries each game's read as props.js wrote it (${Object.keys(sgs).length} games, ${notCopied.length} not)`);
+    /* the Mismatches' block (nhl v35): props.js writes the rule's constants (mm) and each projected game's cx, a side's expected goals and
+       the factor on its skaters' points; the state carries both as written, mm beside params */
+    if (PJB.v === 1) {
+      const cxOff = Object.keys(gs).filter(id => { const c = gs[id].cx; return !c || !c.home || !c.away || !(c.home.f > 0) || !(c.away.f > 0) || !(c.home.xg > 0) || !(c.away.xg > 0) || (sgs[id] && JSON.stringify(sgs[id].cx) !== JSON.stringify(c)); });
+      const mm = PJB.mm, smm = SB.props && SB.props.mm;
+      chk(!cxOff.length && !!mm && mm.stat === 'pts' && mm.line === 0.5 && +mm.ctx > 0 && JSON.stringify(smm) === JSON.stringify(mm) && (!SB.props || !!SB.props.params),
+        `props.js writes the Mismatches' rule (props.mm) and every projected game's cx, and the state carries both beside params (${nG} games, ${cxOff.length} without: ${cxOff.slice(0, 3).join(', ')}; mm ${JSON.stringify(mm)})`);
+    }
   }
   smokeLater({ NHL_STATE: STB, NHL_DATA: B, NHL_PREV_STATE: PREVB, NHL_OUT: OUTB, NHL_PREV_LEDGER: path.join(REAL_DATA, 'props_ledger.json'), NHL_PREV_SUGGEST: fs.existsSync(path.join(REAL_DATA, 'suggest_ledger.json')) ? path.join(REAL_DATA, 'suggest_ledger.json') : 'none' }, 'smoke.js over B', sm => chk(sm.status === 0 && / 0 failures/.test(sm.out), 'smoke over the real data through the new job: ' + sm.out.trim().split('\n').filter(l => /checks|FAIL/.test(l)).slice(0, 6).join(' | ')));
   chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B }).status === 0, 'sources.js: every source read');

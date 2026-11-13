@@ -81,7 +81,7 @@ node tools/update.js --scores # the first pass: the season read, scores and sche
 node tools/fetch_box.js       # ESPN box scores (one a game, five seasons back) + the injury report (the id read from the player's link)
 node tools/starters.js        # the goalies DailyFaceoff announces, game by game with their dates (answers GitHub's runners only)
 node tools/players.js         # the player and goalie model: replay, report, every game to come lined up -> data/players.json ("fit" to refit)
-node tools/props.js           # the props model (on trial): new finals' closing props recorded, the shadow ledger graded, frozen and called, every game through tomorrow projected and DraftKings' player lines read on it -> data/props.json
+node tools/props.js           # the props model (on trial): new finals' closing props recorded, the shadow ledger graded, frozen and called, every game through tomorrow projected (each side's context factor too, the Mismatches') and DraftKings' player lines read on it -> data/props.json
 node tools/update.js          # ESPN -> rate, call, freeze at puck drop, grade, simulate -> state.json; exit 1, nothing written, if a day with games to finish or call does not answer
 node tools/smoke.js           # the page and the state against the injury report, the box scores, DailyFaceoff, the clock and the last published state; must end "0 failures"
 node tools/sources.js         # the job's last step, after the commit: exit 1 if a source the state stands on broke
@@ -336,7 +336,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   tomorrow has none, else the next day with games, else the last. Under the bar the source note (`#sourceNote`, a few words
   only when a source the calls stand on is not the latest: "Injury report from Nov 11, 6:57 AM EST.", "No injury report.", "No
   announced goalies this run."; in the page's warning ink, `--gold-ink`, with what it means for the calls on its title: "…
-  the lineups the calls stand on leave out who that report had out."), then **Refresh odds** (`#slateOdds`, shown only on a
+  the lineups the calls stand on leave out who that report had out."), then **the Mismatches** (`#peMism`, nhl v35: a card of up to
+  five bubbles and "Show the top N", only on a day shown, today or tomorrow, with a listed row; under The Mismatches), then **Refresh odds** (`#slateOdds`, shown only on a
   day from today on with a game still to come; before a press its line says whose lines the page holds for the games to
   come and when the job read them, `oddsIdleText`: "DraftKings via ESPN, 7:59 PM EST." where every line is DraftKings',
   each book named where another prices a game, "DraftKings, ESPN BET via ESPN, …", since another book's price is never
@@ -441,7 +442,8 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     games in three; the actual score beside it once known); **Total** (`xt`, goals); **Model pick** (the state's call and its
     chance; "✓ TB by 1" or "✗ BUF by 2" once final). The pick can be the club the expected score has behind on a close game:
     the call blends the goals layer with the team Elo.
-  - **Three buttons**, one row (`gameWinBtns`; the row takes a fourth): Matchup, Lineups, Team Stats, each a little window (below).
+  - **The windows' buttons**, one row (`gameWinBtns`): Matchup, Mismatches (nhl v35, only on a game with a listed row: under The
+    Mismatches), Lineups, Team Stats, each a little window (below).
   - **Game bets** (`gameBetsCard`, `rungRow`): where its lines were read ("Lines: DraftKings', read from ESPN 2:40 PM UTC.",
     "… by Refresh odds 9:12 PM EST."), then a block a club ("our margin +0.5", the goals layer's; "book line -1.5") with **To
     win** and **To cover**, and **Game total** ("model's goals 5.8", "book line 6.5") with Over and Under. A row is seven cells,
@@ -505,7 +507,7 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   percentage beside it); no figure is hidden. Measured on 12 November's state, a game to come with DraftKings' player lines is
   2,370px at 1280 and 3,259px at 390 with every row shut (the NFL's page 2,306 and 3,423), where the Player props window ran
   3,412px for one of its six stat tabs.
-- **The game's three windows** (`#gsModal`, `gameWindow`: the NFL's window, one card over the game's page, 720px at the most,
+- **The game's windows** (`#gsModal`, `gameWindow`: the NFL's window, one card over the game's page, 720px at the most,
   "a little window with 10px of the page round it" on a phone; its Close takes the focus, Escape closes it alone before the
   page, Tab stays inside, the focus goes back to its button; drawn from the state, nothing fetched):
   - **Matchup** (`unitsBody`): each club's attack against the defence and goalie it meets, by the player model's own parts
@@ -519,8 +521,12 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
     the game's own, else, for a final from before they existed, its backtest, the row saying "backtest"), where the card showed
     the other model only when it parted from the call by 10 points. The Team Elo's own pick was a row of it until nhl v32 (under
     The Pick'em Record tab, No Team Elo).
-  - **Lineups** (`lineupsBody`, where the NFL's middle window is Mismatches: hockey has no player-against-unit figure to rank;
-    should one be built its window takes the middle and these lists move into Matchup): the drawer's lists, a club a column
+  - **Mismatches** (`mmGameBody`, nhl v35, the NFL's middle window, after Matchup with Lineups kept where it was): every listed
+    skater of the game, a row each (his rank among the day's rows, "#3"; his name and position, the two clubs; "CAR 3.52 goals
+    expected. 1.09 points projected (+0.10 from the matchup)."; "+3%" and the tag at the tag), the whole reading on the row's
+    title; "The puck has dropped." once it has (the watch says it in a window left open); "No mismatches in this game." is never
+    reached, since the button is drawn only where the game has a row.
+  - **Lineups** (`lineupsBody`): the drawer's lists, a club a column
     (one over the other on a phone): the goalie and the nine skaters with the most ice time, minutes and goals a game; "In
     goal Jake Allen, confirmed by DailyFaceoff · Strength +0.48: attack -0.04 · defence +0.26 · goalie +0.26" (the strength is
     the state's own, `g.pm[side].strength`, to the hundredth, half away from zero; attack, defence and goalie are shown so they
@@ -1012,7 +1018,7 @@ so a state published a minute before the evening's puck drops (the 7 PM slot is 
 edges' checks had failed one so, the boots at the publish's next minute finding the games they planted on under way. Its section REFRESH ODDS holds the page's own read of ESPN (below)
 on a scoreboard it answers from the state, never the real feed, and its section PLAYER PROPS the page's read of
 DraftKings' player props and the game's page on them (under The props model) on answers it makes from the state's own
-projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19, rewritten for nhl v30) works the Pick'em tab out from the state by rules of its own: the address (and the old ones, `#record` and a stored `record` tab), a visitor's six tabs with no Record tab, the anatomy (the tiles, the three cards by their headings, the one state line), the six tiles (DraftKings' record, the call in each confidence band on its rounded chance, the total's average miss) with their titles, the legend word for word with its swatches, the chart (its label for a screen reader, each line's weekly sums from zero and its side of the zero line, every line solid, exactly the four models' lines and their end labels and DraftKings', the end labels, every word in the page's ink, every week pointed at and pointed away from, a touch's and a pen's tap's numbers kept through its own out until the next tap, on that week, another or off the chart, the page's CSS stroking every line and its end marker and filling every dot with the line's own `--c`, none hidden), the chart's geometry in its drawing's own coordinates by `sPkGeom` (since the review of nhl v30, which found halved heights, negated figures, shifted week names, dots off their lines and upside-down end labels all passing: the axis's figures every step by its own rule, the units a game from the top and bottom figures over the plot's height, each figure and grid line at its height, every point and dot at the zero line less its weekly sum in units within 0.1 and at its week's x, a dot a week where the weeks stand 8 or more apart and the last alone under that, the weeks named by their Mondays at their x, "Start" at the origin, the last week and every so many back, the end labels in their values' order down the chart, a tie DraftKings then the legend's, each at its place by the nudging rule within 0.1 (14 apart where closer, all lifted by as much as the lowest passes the plot's foot), beside their lines' ends, every word inside the drawing at a generous 6.5 a character, and every mark carrying only what its kind draws with; the second review of nhl v30 found a line's last dot alone with the weeks 120 apart, end labels 24 apart, an invisible line, every line in one colour, a tip and a crosshair a week late on the middle weeks and days named on the visitor's clock all passing until then), drawn 900 wide and again in boxes stubbed 242, 320, 200 and 1400 wide (242, 320, 240 and 900 drawn), a week's numbers inside a stubbed 242 by 230 box and short where taller than it, short or full by its own rows whatever week was shown before (a layout stubbed as a browser's: a row as wide as the room right of the tip's place), each day of the Day select by its weekday and date, every cell of the week grid (its record, rate, shade and title), the bets record row for row from the state's `record`, the injury-report line, every pick of the day it opens on, of a past day and of the latest day with a backtest's pick, nothing stored or fetched, no inline colour but by a token, the four line colours 3:1 on a card in both looks, and (nhl v32) no Team Elo anywhere on the tab: no word of it, on a title or for a screen reader either, no row, column, line, end label or legend entry keyed `elo`, nothing dashed or called the baseline, no `--m-base` or dashed swatch in the page's CSS and no Team Elo among its Pick'em models; on the state as given it also grades every final again from its score and its call and holds the state's `record` to that, the season and month by month, and the call's season and the four bands to its straight-up record. It runs on the state, on a copy with no final yet, and on a copy of one month (finals made up where the month has under nine) planting an unlined final, a game whose club ratings part from the call (the call's column its own pick, no column the ratings'), a level price, a model's own call beside a backtest of the same game, a final with neither, one called by its backtest alone, a total and a puck line that push, no HIGH pick at all, a 54.51% pick and an away pick at pHome 0.455 (both LOW 55%), that copy run on a visitor's clock in Los Angeles (`process.env.TZ` set for it alone and put back, held both ways: the smoke runs on UTC, as GitHub's runners do, where a date read at midnight UTC and written on the visitor's clock reads right), and on a copy of one week of finals, at most four, so the axis is a figure a game; every rule is an invariant of the state it is given (tried on a state with no final, with one, with every game final, with one month, with no line, with no model and with no schedule). Its section THE GAME'S PAGE (nhl v27) holds the page a game opens and its three windows by a model of its own, on any
+projections, THE JOB'S PLAYER LINES the job's read of them (under The props model) and the page starting from it. Its section THE PICK'EM MODELS (nhl v20) holds the state's `models` to data/models.json and data/models_backtest.json, every game called this run carrying the three with the registered sha (the ELO Model the Joker moved by the player model's gap by the registered beta, Alpha's chance the logistic of its margin), and, where players.json is the state's own, every call made again by tools/models.js the same; the frozen-call check holds `models` with the rest of the call. Its section THE PICK'EM RECORD (nhl v19, rewritten for nhl v30) works the Pick'em tab out from the state by rules of its own: the address (and the old ones, `#record` and a stored `record` tab), a visitor's six tabs with no Record tab, the anatomy (the tiles, the three cards by their headings, the one state line), the six tiles (DraftKings' record, the call in each confidence band on its rounded chance, the total's average miss) with their titles, the legend word for word with its swatches, the chart (its label for a screen reader, each line's weekly sums from zero and its side of the zero line, every line solid, exactly the four models' lines and their end labels and DraftKings', the end labels, every word in the page's ink, every week pointed at and pointed away from, a touch's and a pen's tap's numbers kept through its own out until the next tap, on that week, another or off the chart, the page's CSS stroking every line and its end marker and filling every dot with the line's own `--c`, none hidden), the chart's geometry in its drawing's own coordinates by `sPkGeom` (since the review of nhl v30, which found halved heights, negated figures, shifted week names, dots off their lines and upside-down end labels all passing: the axis's figures every step by its own rule, the units a game from the top and bottom figures over the plot's height, each figure and grid line at its height, every point and dot at the zero line less its weekly sum in units within 0.1 and at its week's x, a dot a week where the weeks stand 8 or more apart and the last alone under that, the weeks named by their Mondays at their x, "Start" at the origin, the last week and every so many back, the end labels in their values' order down the chart, a tie DraftKings then the legend's, each at its place by the nudging rule within 0.1 (14 apart where closer, all lifted by as much as the lowest passes the plot's foot), beside their lines' ends, every word inside the drawing at a generous 6.5 a character, and every mark carrying only what its kind draws with; the second review of nhl v30 found a line's last dot alone with the weeks 120 apart, end labels 24 apart, an invisible line, every line in one colour, a tip and a crosshair a week late on the middle weeks and days named on the visitor's clock all passing until then), drawn 900 wide and again in boxes stubbed 242, 320, 200 and 1400 wide (242, 320, 240 and 900 drawn), a week's numbers inside a stubbed 242 by 230 box and short where taller than it, short or full by its own rows whatever week was shown before (a layout stubbed as a browser's: a row as wide as the room right of the tip's place), each day of the Day select by its weekday and date, every cell of the week grid (its record, rate, shade and title), the bets record row for row from the state's `record`, the injury-report line, every pick of the day it opens on, of a past day and of the latest day with a backtest's pick, nothing stored or fetched, no inline colour but by a token, the four line colours 3:1 on a card in both looks, and (nhl v32) no Team Elo anywhere on the tab: no word of it, on a title or for a screen reader either, no row, column, line, end label or legend entry keyed `elo`, nothing dashed or called the baseline, no `--m-base` or dashed swatch in the page's CSS and no Team Elo among its Pick'em models; on the state as given it also grades every final again from its score and its call and holds the state's `record` to that, the season and month by month, and the call's season and the four bands to its straight-up record. It runs on the state, on a copy with no final yet, and on a copy of one month (finals made up where the month has under nine) planting an unlined final, a game whose club ratings part from the call (the call's column its own pick, no column the ratings'), a level price, a model's own call beside a backtest of the same game, a final with neither, one called by its backtest alone, a total and a puck line that push, no HIGH pick at all, a 54.51% pick and an away pick at pHome 0.455 (both LOW 55%), that copy run on a visitor's clock in Los Angeles (`process.env.TZ` set for it alone and put back, held both ways: the smoke runs on UTC, as GitHub's runners do, where a date read at midnight UTC and written on the visitor's clock reads right), and on a copy of one week of finals, at most four, so the axis is a figure a game; every rule is an invariant of the state it is given (tried on a state with no final, with one, with every game final, with one month, with no line, with no model and with no schedule). Its section THE GAME'S PAGE (nhl v27) holds the page a game opens and its windows (since nhl v35 the Mismatches' among them, where a game has a listed row) by a model of its own, on any
 state the job can publish (what a rule needs and the state lacks is said and skipped): for every game of the days it holds (yesterday to ten days
 out, the season's first day and a past day mid-way), opened from its row, the bar (Close, the trial's pill by the ledger's decision, All skaters, no Book's cut), the search, Refresh
 odds and this game's own status line or, once the puck has dropped, the strip; the head's six cells (the day and time or where the
@@ -1238,7 +1244,32 @@ column level) and starting goalies (at most one mark a side, on a goalie of that
 used two goalies marked), the record of closing props in its shape, one line a final, the ledger by `props_check.js` against
 the last commit's, and the state's projections: only games still to come, every distribution whole with its tail at
 one its dispersion's own, every projected player in his club's lineup and not out, the goalie the game's own, and
-each game the ledger's open call number for number. `NHL_HTML`
+each game the ledger's open call number for number; and (nhl v35) the Mismatches' block, written together or not at all: `props.mm`
+the rule's constants (points at 0.5, 0 < list < tag or the tag null, a club's rows, the model's average game), each game's `cx` on
+both sides with its factor `(xg / mm.ctx)^0.5` to four places and, where the game's call is this publish's, its `xg` within 0.006 of the
+call's own `(xt ± mu) / 2`. Its section THE MISMATCHES (nhl v35, key `mismatches`) works the card out from the state by a rule of its
+own (a skater's chance of a point at the published distribution less his chance at the mean with the factor taken out, Poisson or the
+published dispersion's; listed at `mm.list`, tagged at `mm.tag`, ranked by the shift, the gain in points and the id; a bubble a club,
+five at most; the window `mm.club` a club, thirty at most; "Goalies confirmed: n of m."; every word, title, bar and tag): (a) on the
+state as published, every day of the select, the card or none and every "Show the top N" row for row; (b) on made-up copies two days
+out by the page's clock, three made-up games planting a skater at the tag, two under it, a tie on the shift ordered by the part and
+another by the id, one just under the floor, a side below 1 and a club with five listed (one bubble, three window rows), then the tag
+null, a side's factor junk with a game's `cx` half gone, a factor of 0 with a game's `cx` gone and the block gone; (c) the behaviour: the
+card's place (after the bar's source line, over Refresh odds), a bubble opening its game's page at its player (All skaters ticked where
+the cut leaves him out, his lines open, his row and lines ringed, the keyboard on his row, the focus back on the bubble), the tag on
+his row alone with the row's title and on a suggested level's leg exactly by the rule (open and locked: his Over in points, goals or
+assists and his anytime goal; never shots, blocks, an Under, 2+ goals, a listed skater under the tag or a team bet), the Mismatches
+button exactly on a game with a listed row and its window row for row, the window's focus, Tab, Escape, an outside click, a row's name,
+another tab, its table held as every table is (`tableHeldWrongs`), a Refresh odds press leaving the card as it was; (d) the clock: each
+puck drop taking its game's rows (the window open follows; a game's window open says the puck dropped; the card goes with the last),
+two days out no card, button or tag and a day on the card; (e) nothing asked or stored; and both looks' contrast and focus rings on
+the card, the window, the game's page from a bubble and its Mismatches window. THE GAME'S PAGE holds the tag and the Mismatches window on
+every game it walks, so a published state with the block is held game by game. Its checks were proved on 20 faults planted in a copy of
+the page, each caught (a row under the floor drawn, two bubbles of one club, the tag at the floor, on an Under and on a shots leg, a card
+on a state without the block, a bubble's words off, the window's focus not given back, Tab let out of it, the card left after the last
+listed puck drop, the button on every game, a tie ordered the wrong way, a likely goalie counted confirmed, a card past tomorrow, Show the
+top N with no more to show, no ring, the window left open on another tab, a game's window not told the puck dropped, the tag's title not
+the row's, four a club in the window). `NHL_HTML`
 tries another page in place of `index.html`. The season is the Eastern date's
 (`E.seasonOf`), nowhere else. Between seasons the first run from August closes the old one into
 `data/season_<year>.json` (read beside `history.json` by `tools/hist.js`), so its results stay in
@@ -1946,7 +1977,9 @@ and player legs), at DraftKings' price as read.
     ledger: { of: 12000, compared, graded_games, standing, decision, model: { logloss, brier, mean } | null, market: {...} | null,
               bets: { n, won, units } | null, registered },
     record: { asked, read, none, failed, waiting, why },             // this run's closing-props reads
+    mm: { v: 1, stat: 'pts', line: 0.5, list: 0.015, tag: 0.035, club: 3, ctx },   // the Mismatches' rule (nhl v35) and the model's average game
     games: { <game id>: { start, date, home, away, inj,
+      cx: { home: { xg, f }, away: { xg, f } },                        // each side's expected goals and the factor its skaters' goals, assists and points were multiplied by
       homeP: { goalie: { id, name, how, debut?, sv: { mu, sd, lo, d } } | null,
                skaters: [ { id, name, pos, toi, g: { mu, d }, a: { mu, d }, pts: { mu, d }, s: { mu, d }, bs: { mu, d } } ] },
       awayP: { ... } } },
@@ -2059,6 +2092,82 @@ and player legs), at DraftKings' price as read.
   smoke's THE PROPS MODEL (the box files' starter marks among it) and the simulation (the props step in the job's order,
   last night's final recorded once, the starter read from ESPN's plays by their sequence, `sources.js` on failed reads)
   hold the rest.
+
+### The Mismatches
+
+The owner's ask of 11 November 2026 to match the NFL hub's look and its betting parts; the NFL's Mismatches card (over its Props list),
+its "Show the top N" window, its MISMATCH tag and a game's Mismatches window, built in nhl v35 (13 November 2026) in hockey's honest
+terms and gated, on the spec of 12 November 2026 (its section 7's recommendations taken as they were).
+
+- **What hockey's models know.** No player-against-unit matchup: players.js knows each club's expected goals tonight (its lineup's
+  attack, the other lineup's defence, the other goalie, home ice), and props.js multiplies every skater's goals, assists and points by
+  `(expected goals / 2.935)^0.5`, one factor a club-side shared by all its skaters (×0.843 to ×1.096 on 11 and 12 November's 34
+  sides). A mismatch is what that factor adds to a skater's **chance of a point** (his points Over 0.5, DraftKings' main points line on
+  95% of skaters): his chance at the published distribution less his chance at his mean with the factor taken out, `mu / f`, by the
+  same family (Poisson; the published dispersion's negative binomial if a refit gives one). Shown "+3%", never "pts" (in hockey that is
+  the stat), the window's column "Chance".
+- **The rule.** Listed at a shift of 0.015 or more (`props.mm.list`, shown "+2%" at the least: no "+1%" or "0%" is ever drawn); ranked by
+  the shift, then the gain in points, then the athlete id; tagged MISMATCH at 0.035 (`props.mm.tag`; null draws no tag anywhere). The
+  card on the day shown, today or tomorrow (Eastern, the visitor's clock), on games still to come: **one bubble a club** (its largest
+  shift, which is the scorer nearest a point a game, not its star), five at most, numbered in that order; "Show the top N" opens the
+  window, **three a club** (`props.mm.club`), thirty at most, and shows only where the window holds more than the bubbles; a game's
+  Mismatches window every listed skater of the game. No card on a day with no listed row, a day past tomorrow or a state without the
+  job's block. "Goalies confirmed: n of m." (the NFL's "Statuses filed") while a side still to play that the props model projects has no
+  goalie DailyFaceoff confirms: a change of goalie moves a side's expected goals by tenths. No player shield (none is carried) and no
+  scorecard (below).
+- **The words.** A bubble: its rank, the tag at the tag (on its top edge), "Sebastian Aho (C)", the two clubs' tags with "at" or "vs",
+  "+3%" and a bar at the shift over the day's largest, "CAR 3.52 goals expected." and "1.09 points projected (+0.10 from the matchup).";
+  every title the whole reading: "The matchup moves his points from 1.00 to 1.09 (+0.10 points): CAR are expected 3.52 goals where the
+  props model's average game is 2.94 (×1.10 on a skater's points). In goals a game: the CAR attack +0.27, the SEA defence +0.16, Philipp
+  Grubauer in goal +0.08. His chance of a point goes from 63.1% to 66.4%: +3%." (a club's own attack is often as much of its lift as the
+  other side's weakness, and the two can cancel: the card says the sum, the title the parts; goals a game to the hundredth with a true
+  minus, 0.00 unsigned). The window's Facing cell: "3.52 goals" over "SEA Defence 25th of 32 · Grubauer" (the defence's place among the
+  state's clubs, 1 the best).
+- **Where it shows.** The card on the Games tab after the bar and its source line, over Refresh odds and the list (the NFL's place, never
+  two); its window the Games tab's own (`#peMmModal`: its Close takes the focus, Tab stays inside, Escape and a click outside close it and
+  the focus goes back to Show the top N; a row's name is a 44px button, and it or a click on the row opens the player as a bubble does;
+  another tab closes it; its table in `.wrap` with the Player held). A bubble opens **the game's page at his row** (since nhl v27 the
+  page took the Player props window's place): his lines open, All skaters ticked where the page's cut of six forwards and four defencemen
+  leaves him out (the NFL's fold opened), scrolled to 72px from the top, his row and its lines ringed in `--pick` until another row is
+  tapped (no `--pick-soft` wash: the role and the arrow fell under 4.5:1 on it in the dark look), the keyboard on his row and back on the
+  bubble when the page shuts. **The tag** beside a tagged skater's name on his row of the game's page, and on a suggested level's leg
+  (open or locked) on his Over in points, goals or assists or his anytime goal in that game: never his shots, blocks or saves, an Under,
+  2+ goals or a team bet. A game's page draws the Mismatches button only on a game with a listed row (about 85% of games have none: a
+  button opening "No mismatches in this game." would be a dead end). The watch (a game the card lists is in its set) draws the card
+  again at each puck drop, its rows gone, and a window open follows; a Refresh odds press changes no row (the projections are the job's).
+  Nothing is fetched or stored.
+- **The job's part** (`tools/props.js`, `MM` and `project()`): `props.mm = { v, stat, line, list, tag, club, ctx }` and each projected
+  game's `cx = { home: { xg, f }, away: { xg, f } }`, `f` the factor its skaters' goals, assists and points were multiplied by
+  (`r4((xg / ctx)^e)`, the lead stat's constants). `update.js` copies both into the state unchanged (it copies props.json whole and
+  filters only `games`); the ledger and `props_check.js` are untouched (a call is the means alone). `test_props.js` holds `mm` to the
+  constants, `cx.xg` to players.json's `lh`/`la`, `f` to its sum and every skater's published points to his no-context mean times `f`;
+  the smoke's THE PROPS MODEL holds both in the state; `simulate.js` that props.js writes them and the state carries them.
+- **What it stands on** (the spec's backtests on 157,527 skater games, walk-forward: each finished season on the constants searched on
+  the seasons before it, 2026-27 on the job's): **the context is real and about the size it says.** Skaters in the top tenth of
+  contexts (×1.06 and up) scored ×1.117 of their no-context projection where the model said ×1.091 (and above the middle bin in each of
+  2023-24 to 2026-27: ×1.099, ×1.070, ×1.132, ×1.267 against ×1.007, ×1.011, ×0.985, ×1.003); the nightly top five, one a club, scored a
+  point 64.6% of the time where their no-context chance said 60.8% and the context 62.7%. The tag: rows at +3.5 beat the listed rows
+  under them in each of the four seasons (+0.122, +0.086, +0.017, +0.315 standard deviations of the points less the no-context mean).
+  **It was read off that table once, and is the NFL's number, not chosen by a registered rule**: the NFL's own rule (the largest smallest
+  gap on the early seasons) picks +4.5, which failed 2025-26 (−0.167). **It is not an edge**: against DraftKings' recorded closing
+  points lines (7,942 lines in 372 games) the factor tells nothing about landing over DraftKings' fair chance, Spearman 0.004 (90%
+  interval −0.021 to 0.033); the 169 lines on rows at +3.5 landed 60.9% against a fair 47.1%, in about twenty club-games, which by the
+  NFL scorecard's bar (the gap and the rank correlation both wholly above 0) is no edge shown. DraftKings prices the matchup: this is
+  information, which clubs' scorers are in the best spot tonight, not a bet. Its size: the night's best shift is +2.7 points of chance
+  at the median over 708 nights, under +1.4 on a quarter of them, the third club's +0.9 and the fifth's 0.0 (the NFL's this week +6, +5,
+  +5, +4, +3), hence the floor and one a club; on this season's 41 nights the card would have shown on 38 (one bubble on 12, two or three
+  on 15, four or five on 11) and a tagged row on 19.
+- **Why no goalies and no shots**, as the NFL left its quarterbacks out: on shots the positive side does not land (×1.06 and up said
+  ×1.085 and came in ×1.020; this season's top bin ×0.985), a club's expected shots being mostly its own attack, which a shooter's own
+  rate already carries. Goalies' saves carry the strongest context signal on the page, but the saves model runs high (this season 24.5
+  said against 23.7 made), is where the props model loses to DraftKings by most (log loss 0.6971 against 0.6870), and on 753 recorded
+  saves lines the factor's direction is if anything the wrong way (×1.03 and up: the Over landed 43.6% against a fair 46.6%): a "+10%
+  on his saves Over" would mislead. Revisit only after a refit of the saves level. Goals are calibrated but smaller, no threshold held in
+  every season, and the points tag covers a scorer's goal and assist Overs.
+- **No scorecard yet.** The NFL's (graded against DraftKings' closing lines, a registered bar) is research no page reads. Hockey can
+  make one later with no new record: every publish carries `cx` and the means, so a `tools/` script can take, as `suggest.js --replay`
+  does, the last state published before each puck drop and grade its listed rows against the closing points lines props.js already
+  records (`data/props_<season>.jsonl`) and the box scores, with a bar registered before its first grade.
 
 ## The site behaves like a website
 

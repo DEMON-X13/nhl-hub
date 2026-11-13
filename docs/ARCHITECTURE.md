@@ -202,7 +202,8 @@ too. Career, Trend and Peak are worked from each player's season-end figures on 
 there is no Move column, the state carrying no rating of a week ago. The clubs' tables (`peClubs()`) rank
 `S.players.teams[club]`'s strength, offence, defence or goalie on the same scale among the clubs, every club's four figures with
 their places beside them and the goalie in net. The histogram (`peCurve()`, `peDrawCurve()`, `peFit()`) is an inline SVG drawn at
-its box's width, 520 to 680px: twelve 50-point bins in the tiers' colours, the bell curve of as many, a bin's words under the
+its box's width, 520 to 680px: twelve 50-point bins in the tiers' colours, the bell curve of as many, the counts drawn after it
+haloed in the panel's colour (`g.pe-cv-nums`, so its dashes never cross a digit), a bin's words under the
 pointer, held inside what shows of the chart. The search takes a name or a club's abbreviation, and says where a name with no row
 is (`peWhere()`). It reads only the state as published and stores one thing, the pill chosen (`nhl_v1` `ui.plKind`).
 
@@ -246,8 +247,10 @@ table fixed on a width a column, laid out by its own words on a phone; ELO Ratin
 held head); the suggested levels as the NBA's
 tier cards, three a row as the NFL hub's (nhl v14), on their own tab since nhl v17 with each leg's Add; the Parlay Builder the
 builder first, then the Top 50 lines (nhl v33, the NFL hub's v147 builder card and Top lines: below). The smoke's THE GAME'S PAGE section holds the page and its windows by a model of its own, THE LOOK the rest with its own code, THE LOOK: LIGHT AND DARK the two palettes, the switch (shown since nhl v34: a press flips the
-look, stores it and redraws nothing), the system's preference read nowhere, the sweep's contrast rule in jsdom (every drawn text pair, every
-field's edge and every rule's own pair in each look, the charts' colours tokens) and the no-descriptions rule, and TEAM RANKINGS and ELO RATINGS those two tabs, each worked out from the state by rules of its own
+look, stores it and redraws nothing), the system's preference read nowhere, the sweep's contrast rule in jsdom (every drawn text pair, a
+colour a width `@media` sets weighed in at its width, every focus ring on what it is drawn on (`thFocusSheet`), every field's edge and
+checkbox, every rule's own pair in each look, the parlay card in its dark palette in both, the charts' colours and every `fill` and
+`stroke` the stylesheet sets tokens) and the no-descriptions rule, and TEAM RANKINGS and ELO RATINGS those two tabs, each worked out from the state by rules of its own
 (ELO RATINGS: who is ranked, each group's mean and spread, every row, the histogram's counts, the clubs' tables, the pills, the search
 and what is stored) on the state and on made-up copies.
 

@@ -6504,7 +6504,8 @@ function sPeCurveBad(w, root, elos, label, one) {
   const bins = [...svg.querySelectorAll('g.pe-cv-bin')], tops = [];
   if (bins.length !== 12) return bad.concat(`${bins.length} bins, want 12`);
   bins.forEach((g, i) => {
-    const lo = 1200 + i * 50, tier = sPeTier(lo).name, bar = g.querySelectorAll('path.pe-cv-bar'), num = g.querySelectorAll('text');
+    const lo = 1200 + i * 50, tier = sPeTier(lo).name, bar = g.querySelectorAll('path.pe-cv-bar'), num = svg.querySelectorAll(`g.pe-cv-nums > text[data-lo="${lo}"]`);
+    if (g.querySelector('text')) bad.push(`bin ${lo} draws its count inside its bar's group, under the bell`);
     const range = i === 0 ? `under ${lo + 50}` : i === 11 ? `${lo} and up` : `${lo}–${lo + 49}`, tip = `<b>${tier}</b> · ${range}<br>${cnt[i]} ${cnt[i] === 1 ? one : label} (${Math.round(cnt[i] / n * 100)}%)`;
     if (g.dataset.lo !== String(lo) || g.dataset.n !== String(cnt[i])) bad.push(`bin ${lo} counts ${g.dataset.n}, want ${cnt[i]}`);
     if (g.dataset.tip !== tip) bad.push(`bin ${lo} says "${g.dataset.tip}", want "${tip}"`);
@@ -6512,6 +6513,7 @@ function sPeCurveBad(w, root, elos, label, one) {
     const fill = tier === 'HOF' ? 'url(#tg-hof-gem)' : PE_HEX[tier], m = bar[0] && /^M[\d.]+ ([\d.]+)V[\d.]+Q[\d.]+ ([\d.]+) /.exec(bar[0].getAttribute('d'));
     if (bar.length !== 1 || !m || !(tier === 'HOF' ? bar[0].getAttribute('fill') === fill : sameHex(bar[0].getAttribute('fill'), fill))) { bad.push(`bin ${lo}: a bar filled ${bar[0] && bar[0].getAttribute('fill')}, want one in ${fill}`); tops.push(null); return; }
     if (num.length !== 1 || txt(num[0]) !== String(cnt[i]) || num[0].getAttribute('fill') !== 'var(--ink)') bad.push(`bin ${lo}: its count reads "${num.length ? txt(num[0]) : ''}", want ${cnt[i]} in --ink`);
+    else if (num[0].getAttribute('stroke') !== 'var(--panel)' || num[0].getAttribute('paint-order') !== 'stroke' || !(parseFloat(num[0].getAttribute('stroke-width')) >= 2)) bad.push(`bin ${lo}: its count has no halo in the panel's colour under its glyphs (stroke ${num[0].getAttribute('stroke')}, paint-order ${num[0].getAttribute('paint-order')})`);
     tops.push({ base: +m[1], y: +m[2], n: cnt[i] });
   });
   const drawn = tops.filter(Boolean);
@@ -6525,6 +6527,9 @@ function sPeCurveBad(w, root, elos, label, one) {
      on the bars' own scale (a bar of k stands (base - y) high) */
   const bell = svg.querySelectorAll('path.pe-cv-bell'), W = parseFloat(svg.getAttribute('width')), pts = bell[0] ? [...bell[0].getAttribute('d').matchAll(/[ML]([\d.]+) ([\d.]+)/g)].map(m => [+m[1], +m[2]]) : [];
   if (bell.length !== 1 || bell[0].getAttribute('stroke') !== 'var(--ink-2)' || bell[0].getAttribute('fill') !== 'none' || !bell[0].getAttribute('stroke-dasharray') || pts.length !== 97) bad.push('no dashed bell curve in --ink-2');
+  /* the counts drawn last, over the bell (its dashes never across a digit) and taking no pointer from the bins under them */
+  const numsG = svg.querySelectorAll('g.pe-cv-nums');
+  if (numsG.length !== 1 || numsG[0] !== svg.lastElementChild || numsG[0].getAttribute('pointer-events') !== 'none' || (bell[0] && !(bell[0].compareDocumentPosition(numsG[0]) & 4))) bad.push('the counts are not drawn last, after the bell, out of the pointer\'s way');
   else {
     /* its top, read to the tenth of a pixel the path is written in: the middle of the points that share its least y */
     const topY = Math.min(...pts.map(q => q[1])), flat = pts.filter(q => q[1] === topY), peak = [(flat[0][0] + flat[flat.length - 1][0]) / 2, topY];
@@ -6930,10 +6935,33 @@ function thRgb(s) {
   if (m) return [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : /%$/.test(m[4]) ? parseFloat(m[4]) / 100 : +m[4]];
   return null;
 }
+/* a value with its var()s put in by a look (a token the look lacks: its fallback, else `none`) */
+function thSubst(v, look, none = 'transparent') {
+  let s = String(v || '').trim();
+  for (let i = 0; i < 12 && /var\(--/.test(s); i++) s = s.replace(/var\((--[a-z0-9-]+)\s*(?:,\s*([^()]*(?:\([^()]*\))?[^()]*))?\)/gi, (all, k, fb) => look(k) || (fb ? fb.trim() : none));
+  return s;
+}
+/* a value's parts at its top level, split on its commas (a shadow list, a selector list) */
+const thSplit = s => { const out = []; let depth = 0, from = 0; for (let i = 0; i < s.length; i++) { const c = s[i]; if (c === '(' || c === '[') depth++; else if (c === ')' || c === ']') depth--; else if (c === ',' && !depth) { out.push(s.slice(from, i).trim()); from = i + 1; } } out.push(s.slice(from).trim()); return out.filter(Boolean); };
+/* a selector's specificity, by CSS's own count: ids, then classes, attributes and pseudo-classes (:not, :is and :has their argument's most,
+   :where none), then types; a pseudo-element counts as a type */
+function thSpec(sel) {
+  let s = String(sel).trim(), a = 0, b = 0, c = 0;
+  s = s.replace(/:(not|is|has|where)\(((?:[^()]|\([^()]*\))*)\)/g, (m, f, inner) => { if (f !== 'where') { const t = thSplit(inner).map(thSpec).sort((x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2]).pop() || [0, 0, 0]; a += t[0]; b += t[1]; c += t[2]; } return ' '; });
+  s = s.replace(/\[[^\]]*\]/g, () => { b++; return ' '; });
+  s = s.replace(/::[\w-]+(\([^)]*\))?/g, () => { c++; return ' '; });
+  s = s.replace(/#[\w-]+/g, () => { a++; return ' '; });
+  s = s.replace(/\.[\w-]+|:[\w-]+(\([^)]*\))?/g, () => { b++; return ' '; });
+  c += (s.match(/(?:^|[\s>+~])[a-zA-Z][\w-]*/g) || []).length;
+  return [a, b, c];
+}
+const thSpecCmp = (x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+/* a width @media's range in px ([least, most]); null for a query of anything else (motion, a preference) */
+const thRange = media => { if (!media) return [0, Infinity]; const q = media.replace(/^@media\s*/, ''); if (/prefers|orientation|hover|pointer|print|resolution/.test(q)) return null;
+  const lo = /min-width:\s*([\d.]+)px/.exec(q), hi = /max-width:\s*([\d.]+)px/.exec(q); if (!lo && !hi) return null; return [lo ? +lo[1] : 0, hi ? +hi[1] : Infinity]; };
 /* a colour value in a look: var(--x) by the element's own tokens, then the look's palette; color-mix(in srgb, A p%, B) mixed as CSS mixes it */
 function thColour(v, look) {
-  let s = String(v || '').trim();
-  for (let i = 0; i < 12 && /var\(--/.test(s); i++) s = s.replace(/var\((--[a-z0-9-]+)\s*(?:,\s*([^()]*(?:\([^()]*\))?[^()]*))?\)/gi, (all, k, fb) => look(k) || (fb ? fb.trim() : 'transparent'));
+  let s = thSubst(v, look);
   const mx = /^color-mix\(\s*in srgb\s*,\s*(.+?)(?:\s+([\d.]+)%)?\s*,\s*(.+?)(?:\s+([\d.]+)%)?\s*\)$/i.exec(s);
   if (mx) { const a = thRgb(mx[1]) || thColour(mx[1], look), b = thRgb(mx[3]) || thColour(mx[3], look); if (!a || !b) return null;
     let p = mx[2] !== undefined ? +mx[2] / 100 : mx[4] !== undefined ? 1 - +mx[4] / 100 : 0.5;
@@ -6976,10 +7004,25 @@ function thSheet(css) {
     const t = {}; for (const m of body.matchAll(/(?:^|;)\s*(--[a-z0-9-]+)\s*:\s*([^;]+)/g)) t[m[1]] = m[2].trim();
     if (Object.keys(t).length) toks.push([sel, t, media]);
   }
-  return { bgs, toks, rules };
+  /* every text colour a rule sets, with what the cascade weighs it by (!important, specificity, order) and the widths its @media holds:
+     jsdom's cascade drops a width @media, so a colour set in one is put back by these (nhl v34 after its review) */
+  const cols = [];
+  rules.forEach(([sel, body, media], order) => { const m = /(?:^|;)\s*color\s*:\s*([^;]+)/.exec(body); if (!sel || !m || /^@/.test(sel)) return;
+    const range = thRange(media); if (!range) return;
+    cols.push({ parts: thSplit(sel).map(s => [s, thSpec(s)]), val: m[1].replace(/!\s*important/, '').trim(), imp: /!\s*important/.test(m[1]), media, range, order }); });
+  return { bgs, toks, rules, cols };
 }
-/* the drawn pairs of one page in one look (the look already set on its root): { key: { fg, bg, r, need, n, at } } */
-function thPairs(w, d, P, sheet, roots, tag, acc, accF) {
+/* the stylesheet with its focus states turned into marks this file sets (:focus and :focus-visible on [data-thf], :focus-within on
+   [data-thfw]), put in place of the page's own while the rings are measured: jsdom's :focus-visible matches the first element focused alone */
+function thFocusSheet(w) {
+  const st = w.document.querySelector('style'); if (!st) return () => {};
+  const was = st.textContent;
+  st.textContent = was.replace(/:focus-within\b/g, '[data-thfw]').replace(/:focus-visible\b/g, '[data-thf]').replace(/:focus\b/g, '[data-thf]');
+  return () => { st.textContent = was; };
+}
+/* the drawn pairs of one page in one look (the look already set on its root): { key: { fg, bg, r, need, n, at } }; with accF every field's
+   edge, and with accR every control's focus ring (thFocusSheet in place) */
+function thPairs(w, d, P, sheet, roots, tag, acc, accF, accR) {
   const look0 = d.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark', PAL = P[look0];
   const CS = new Map(), cs = el => { if (!CS.has(el)) CS.set(el, w.getComputedStyle(el)); return CS.get(el); };
   const plain = sel => !/:hover|:focus|:active|::|:checked|:disabled|:has\(/.test(sel);
@@ -6988,8 +7031,13 @@ function thPairs(w, d, P, sheet, roots, tag, acc, accF) {
     const st = el.getAttribute && el.getAttribute('style'); if (st) for (const m of st.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+)/g)) o[m[1]] = m[2].trim(); return o; };
   const TK = new Map(), toksOf = el => { if (!el || el.nodeType !== 1) return {}; if (!TK.has(el)) TK.set(el, Object.assign({}, toksOf(el.parentElement), own(el))); return TK.get(el); };
   const lookAt = el => { const t = toksOf(el); return k => t[k] !== undefined ? t[k] : PAL[k]; };
+  /* shown: not hidden, and drawn by the cascade or by a width @media's rule (nhl v34 after its review: a text drawn on a phone alone, the
+     Games list's "Predicted", was never measured) */
+  const hit1 = (x, s) => { try { return x.matches(s); } catch (e) { return false; } };
+  const dispM = sheet.rules.filter(([, body, media]) => media && thRange(media) && /(?:^|;)\s*display\s*:\s*(?!none)[a-z-]+/.test(body)).map(([sel]) => thSplit(sel).filter(s => !/:hover|:focus|:active|::/.test(s)));
+  const drawn = el => cs(el).display !== 'none' || dispM.some(ps => ps.some(s => hit1(el, s)));
   const visible = new Map(), shown = el => { if (!el || el.nodeType !== 1 || el === d.documentElement) return true; if (visible.has(el)) return visible.get(el);
-    const v = !el.hidden && cs(el).display !== 'none' && cs(el).visibility !== 'hidden' && !(el.classList && el.classList.contains('sr')) && shown(el.parentElement); visible.set(el, v); return v; };
+    const v = !el.hidden && !(el.classList && el.classList.contains('sr')) && shown(el.parentElement) && drawn(el) && cs(el).visibility !== 'hidden'; visible.set(el, v); return v; };
   /* the layer an element paints: its computed background (or background-color), else the last gradient rule that matches it */
   const layer = el => {
     const s = cs(el); let v = s.getPropertyValue('background').trim() || s.getPropertyValue('background-color').trim();
@@ -7012,14 +7060,36 @@ function thPairs(w, d, P, sheet, roots, tag, acc, accF) {
       let v = svg ? (fillRules.some(sel => hitsSel(x, sel)) ? s.getPropertyValue('fill').trim() : x.getAttribute('fill') || '') : s.getPropertyValue('color').trim();
       if (v && !/^(inherit|currentcolor|initial|unset)$/i.test(v)) return [v, x]; } return ['var(--ink)', d.documentElement]; };
   const sig = el => { const p = []; for (let x = el, i = 0; x && x.nodeType === 1 && i < 4; x = x.parentElement, i++) p.push(x.tagName + '.' + (x.getAttribute('class') || '') + (x.id ? '#' + x.id : '') + (x.getAttribute('style') ? '~' + x.getAttribute('style').slice(0, 60) : '')); return p.join('<'); };
+  /* a width @media's colours: each rule of one (its light rule's among them, in the light look) matched up front, then, for a text under
+     an element one matches, the cascade weighed at each width its rules start or stop at: the first of the text and its ancestors that a
+     colour rule wins on (inline colour is jsdom's own and ends the walk), where the winner is a width rule's */
+  const mediaCols = (sheet.cols || []).filter(c => c.media), MSET = new Map();
+  for (const c of mediaCols) { const set = new Set(); for (const [s] of c.parts) { try { for (const x of d.querySelectorAll(s)) set.add(x); } catch (e) {} } MSET.set(c, set); }
+  const WIN = new Map(), winAt = (x, W) => { const k = W; if (!WIN.has(x)) WIN.set(x, new Map()); const m = WIN.get(x); if (m.has(k)) return m.get(k);
+    const st = x.getAttribute && x.getAttribute('style'); let best = null, bk = null;
+    if (st && /(?:^|;)\s*color\s*:/.test(st)) best = 'inline';
+    else for (const c of sheet.cols) { if (W < c.range[0] || W > c.range[1]) continue; let sp = null; for (const [s, spc] of c.parts) if ((!sp || thSpecCmp(spc, sp) > 0) && hit1(x, s)) sp = spc; if (!sp) continue;
+      if (!bk || (c.imp ? 1 : 0) > bk[0] || ((c.imp ? 1 : 0) === bk[0] && (thSpecCmp(sp, bk[1]) > 0 || (thSpecCmp(sp, bk[1]) === 0 && c.order > bk[2])))) { best = c; bk = [c.imp ? 1 : 0, sp, c.order]; } }
+    m.set(k, best); return best; };
+  const mediaFg = el => { if (!mediaCols.length || el.namespaceURI === 'http://www.w3.org/2000/svg') return [];
+    const chain = []; for (let x = el; x && x.nodeType === 1; x = x.parentElement) chain.push(x);
+    const hit = mediaCols.filter(c => chain.some(x => MSET.get(c).has(x))); if (!hit.length) return [];
+    const out = [];
+    for (const W of [...new Set(hit.flatMap(c => c.range).filter(v => isFinite(v) && v > 0))]) for (const x of chain) { const win = winAt(x, W); if (win === 'inline') break; if (win) { if (win.media) out.push([win.val, x, W]); break; } }
+    return out; };
   const seen = new Set();
   for (const root of roots) {
     if (!root || !shown(root)) continue;
-    const tw = d.createTreeWalker(root, w.NodeFilter.SHOW_TEXT);
+    /* every text's element, and (nhl v34 after its review) every element that sets a colour of its own over words in it though they are
+       drawn in a child's colour (the builder's sentence, its words in a <b>): that colour reads on its ground too, so a child losing its own
+       never turns the words unreadable. A hidden subtree (another tab) is not walked */
+    const NF = w.NodeFilter, tw = d.createTreeWalker(root, NF.SHOW_TEXT | NF.SHOW_ELEMENT, { acceptNode: n => n.nodeType === 1 ? (n.hidden ? NF.FILTER_REJECT : NF.FILTER_ACCEPT) : NF.FILTER_ACCEPT });
     while (tw.nextNode()) {
-      const tn = tw.currentNode; if (!tn.textContent.trim()) continue;
-      const el = tn.parentElement; if (!el || ['SCRIPT', 'STYLE', 'OPTION', 'OPTGROUP', 'TITLE', 'DESC'].includes(el.tagName)) continue;
-      const key0 = sig(el); if (seen.has(key0)) continue; seen.add(key0);
+      const tn = tw.currentNode, isEl = tn.nodeType === 1; if (!isEl && !tn.textContent.trim()) continue;
+      const el = isEl ? tn : tn.parentElement; if (!el || ['SCRIPT', 'STYLE', 'OPTION', 'OPTGROUP', 'TITLE', 'DESC'].includes(el.tagName) || (isEl && el.namespaceURI === 'http://www.w3.org/2000/svg')) continue;
+      const key0 = sig(el); if (seen.has(key0)) continue;
+      if (isEl) { if (!shown(el) || !cs(el).getPropertyValue('color').trim() || !el.textContent.trim()) continue; }      // an element: only one that sets its own colour, with words in it
+      seen.add(key0);
       if (!shown(el)) continue;
       const [fv, from] = fgOf(el), fg = thColour(fv, lookAt(from)); if (!fg || fg[3] === 0) continue;
       const s = cs(el), px = (/([\d.]+)px/.exec(s.getPropertyValue('font-size')) || [])[1], size = px ? +px : 14.5, bold = +(s.getPropertyValue('font-weight') || 400) >= 700 || /bold/.test(s.getPropertyValue('font-weight'));
@@ -7028,9 +7098,18 @@ function thPairs(w, d, P, sheet, roots, tag, acc, accF) {
       const gs = grounds(el), f = [fg[0], fg[1], fg[2], fg[3] * op];
       let r = Infinity, at = null; for (const g of gs) { const q = thCr(thOver(f, g), g); if (q < r) { r = q; at = g; } }
       const disabled = !!el.closest('button:disabled, [aria-disabled="true"]');
-      const key = `${look0} ${fv} on ${thHex(at)}`;
-      const e = acc[key] || (acc[key] = { look: look0, fg: fv, bg: thHex(at), r: +r.toFixed(2), need, n: 0, at: `${tag}: ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.getAttribute('class') ? '.' + el.getAttribute('class').split(/\s+/).slice(0, 2).join('.') : ''} "${txt(el).slice(0, 24)}"`, disabled });
-      e.n++; if (need < e.need) e.need = need;
+      /* one entry a drawn pair: the value, the colour it draws as on that ground, and the ground (a token resolved by a card's own palette,
+         the parlay card's, is another pair from the same token on the same ground in the page's) */
+      const key = `${look0} ${fv} ${thHex(thOver(f, at))} on ${thHex(at)}${disabled ? ' disabled' : ''}`;
+      const where = () => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.getAttribute('class') ? '.' + el.getAttribute('class').split(/\s+/).slice(0, 2).join('.') : ''} "${txt(el).slice(0, 24)}"`;
+      const e = acc[key] || (acc[key] = { look: look0, fg: fv, hex: thHex(thOver(f, at)), bg: thHex(at), r: +r.toFixed(2), need, n: 0, at: `${tag}: ${where()}`, disabled });
+      e.n++; if (need > e.need) { e.need = need; e.at = `${tag}: ${where()}`; }      // the strictest use of the pair is the one held
+      /* the colour a width @media gives it, where one wins at some width (its light rule's in the light look: the cascade at that width, by
+         this file's own weighing), on the same ground */
+      for (const [mv, mfrom, W] of mediaFg(el)) { const mc = thColour(mv, lookAt(mfrom)); if (!mc || mc[3] === 0) continue;
+        const f2 = [mc[0], mc[1], mc[2], mc[3] * op]; let r2 = Infinity, at2 = null; for (const g of gs) { const q = thCr(thOver(f2, g), g); if (q < r2) { r2 = q; at2 = g; } }
+        const k2 = `${look0} ${mv} ${thHex(thOver(f2, at2))} on ${thHex(at2)} at ${W}px${disabled ? ' disabled' : ''}`, e2 = acc[k2] || (acc[k2] = { look: look0, fg: mv, hex: thHex(thOver(f2, at2)), bg: thHex(at2), r: +r2.toFixed(2), need, n: 0, at: `${tag}, ${W}px wide: ${where()}`, disabled, media: true });
+        e2.n++; if (need > e2.need) { e2.need = need; e2.at = `${tag}, ${W}px wide: ${where()}`; } }
     }
     /* a field's edge (a select, a text, search or number box, the amount's box): its border, the last rule's that matches it, 3:1 on the
        ground it sits on; a box drawn borderless (border:0) inside its amount's box is that box's to carry */
@@ -7042,6 +7121,63 @@ function thPairs(w, d, P, sheet, roots, tag, acc, accF) {
       let r = Infinity, at = null; for (const g of grounds(el.parentElement)) { const q = thCr(thOver(c, g), g); if (q < r) { r = q; at = g; } }
       const key = `${look0} ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : el.getAttribute('class') ? '.' + el.getAttribute('class').split(' ')[0] : ''} ${edge}`;
       if (!accF[key] || r < accF[key].r) accF[key] = { look: look0, edge, bg: thHex(at), r: +r.toFixed(2), at: tag };
+    }
+    /* a checkbox (nhl v34 after its review: the browser's own unticked box was 1.5 to 2.9:1 on its ground in the dark look): drawn by the
+       page (appearance none), its edge 3:1 on the ground it sits on, ticked its fill 3:1 there too and its tick 3:1 on the fill; each
+       value the last rule's that matches it as it stands, ticked or not */
+    if (accF) for (const el of root.querySelectorAll('input[type=checkbox]')) {
+      if (!shown(el)) continue;
+      const mine = sheet.rules.filter(([sel, , media]) => !media && thSplit(sel).some(s => !/:hover|:focus|:active|::/.test(s) && hit1(el, s)));
+      const last = re => { let v = null; for (const [, body] of mine) { const m = re.exec(body); if (m) v = m[1].trim(); } return v; };
+      const appear = last(/(?:^|;)\s*appearance\s*:\s*([^;]+)/), edge = last(/(?:^|;)\s*border(?:-color)?\s*:\s*([^;]+)/), fill = el.checked ? last(/(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/) : null;
+      const tickR = sheet.rules.filter(([sel, , media]) => !media && thSplit(sel).some(s => /::before$/.test(s) && !/:hover|:focus|:active/.test(s) && hit1(el, s.replace(/::before$/, ''))));
+      let tick = null; for (const [, body] of tickR) { const m = /(?:^|;)\s*border(?:-color)?\s*:\s*([^;]+)/.exec(body); if (m) tick = m[1].trim(); }
+      const G = grounds(el.parentElement), col = v => v && thStops(v).map(x => thColour(x, lookAt(el))).filter(Boolean)[0], least = (c, gs) => { let r = Infinity, at = null; for (const g of gs) { const q = thCr(thOver(c, g), g); if (q < r) { r = q; at = g; } } return [r, at]; };
+      const name = `input[checkbox]${el.id ? '#' + el.id : el.closest('label') && el.closest('label').getAttribute('class') ? ' in .' + el.closest('label').getAttribute('class').split(' ')[0] : el.closest('table') ? ' in .' + (el.closest('table').getAttribute('class') || 'table').split(' ')[0] : ''}`;
+      const put = (what, v, r, at) => { const key = `${look0} ${name} ${el.checked ? 'ticked' : 'unticked'} ${what}`; if (!accF[key] || r < accF[key].r) accF[key] = { look: look0, edge: `${what} ${v}`, bg: at ? thHex(at) : '', r: +r.toFixed(2), at: tag }; };
+      if (appear !== 'none') put('drawn by the browser (appearance ' + (appear || 'auto') + ')', '', 0, null);
+      const ec = col(edge); if (!ec) put('edge', 'none', 0, null); else { const [r, at] = least(ec, G); put('edge', edge, r, at); }
+      if (el.checked) { const fc = col(fill); if (!fc) put('fill', 'none', 0, null); else { const [r, at] = least(fc, G); put('fill', fill, r, at);
+        const tc = col(tick); if (!tc) put('tick', 'none', 0, null); else { const [r2, at2] = least(tc, [thOver(fc, G[0])]); put('tick', tick, r2, at2); } } }
+    }
+    /* the focus rings (nhl v34 after its review: a chosen segmented button's ring was 1.3 to 2.3:1 on its fill, a ticked box's 2.4 on its
+       chip): every control of the view that takes the keyboard, one of each kind, focused by this file's own marks (thFocusSheet in place);
+       what the focus changes on it, or on an ancestor a :focus-within rule names, is its ring: a shadow with a spread, an outline. Its
+       colour laid over what it is drawn on (an inset ring, or an outline drawn inside by a negative offset, on the control's own fill as
+       focused; any other on the ground round the control), the best of its rings 3:1 or more; a control with none fails */
+    if (accR) {
+      const fw = sheet.rules.flatMap(([sel]) => thSplit(sel).filter(s => /:focus-within/.test(s)).map(s => s.replace(/:focus-within\b/g, '')));
+      const vals = x => { const s = w.getComputedStyle(x); return { bs: s.getPropertyValue('box-shadow').trim(), ol: s.getPropertyValue('outline').trim(), off: s.getPropertyValue('outline-offset').trim(), bg: s.getPropertyValue('background').trim() || s.getPropertyValue('background-color').trim() }; };
+      const ringsOf = (v, x) => { const lk = lookAt(x), out = [], bs = thSubst(v.bs, lk, '');
+        if (bs && bs !== 'none') for (const part of thSplit(bs)) { const cs0 = thStops(part); const rest = cs0.reduce((a, c) => a.replace(c, ' '), part).replace(/\binset\b/, ' ');
+          const n = (rest.match(/-?[\d.]+/g) || []).map(Number); if ((n[3] || 0) > 0 && cs0[0]) out.push({ kind: 'shadow', inset: /\binset\b/.test(part), col: cs0[0] }); }
+        const ol = thSubst(v.ol, lk, '');
+        if (ol && !/\bnone\b/.test(ol)) { if (/\bauto\b/.test(ol)) out.push({ kind: 'auto' });
+          else { const wd = parseFloat((/([\d.]+)px/.exec(ol) || [])[1] || (/\bthin\b/.test(ol) ? 1 : /\bthick\b/.test(ol) ? 5 : 3)), off = parseFloat(v.off) || 0, cs1 = thStops(ol);
+            if (/\b(solid|dashed|dotted|double|groove|ridge)\b/.test(ol) && wd > 0) out.push({ kind: 'outline', inset: off < 0, col: cs1[0] || 'currentColor' }); } }
+        return out; };
+      const sigR = el => [el.tagName, el.getAttribute('class') || '', el.type || '', el.parentElement ? el.parentElement.tagName + '.' + (el.parentElement.getAttribute('class') || '') : '', el.getAttribute('aria-pressed') || '', el.getAttribute('aria-expanded') || '', el.checked ? 'ticked' : '', el.closest('.on') ? 'in .on' : ''].join('|');
+      const SEEN_R = accR.__seen || (Object.defineProperty(accR, '__seen', { value: new Set() }), accR.__seen);
+      for (const el of root.querySelectorAll('button, a[href], input, select, summary, textarea, [tabindex]')) {
+        if ((el.hasAttribute('tabindex') && !(+el.getAttribute('tabindex') >= 0)) || el.disabled || el.type === 'hidden' || !shown(el) || el.closest('[inert]')) continue;
+        const k = `${look0} ${sigR(el)}`; if (SEEN_R.has(k)) continue; SEEN_R.add(k);
+        const chain = [el]; for (let x = el.parentElement; x && x.nodeType === 1; x = x.parentElement) if (fw.some(s => hit1(x, s))) chain.push(x);
+        const base = chain.map(vals);
+        el.setAttribute('data-thf', ''); for (let x = el; x && x.nodeType === 1; x = x.parentElement) x.setAttribute('data-thfw', '');
+        const foc = chain.map(vals);
+        el.removeAttribute('data-thf'); for (let x = el; x && x.nodeType === 1; x = x.parentElement) x.removeAttribute('data-thfw');
+        let best = null;
+        chain.forEach((x, i) => { const f1 = foc[i], b1 = base[i]; if (f1.bs === b1.bs && f1.ol === b1.ol && f1.off === b1.off) return;
+          for (const rg of ringsOf(f1, x)) {
+            if (rg.kind === 'auto') { if (!best) best = { r: 0, ring: "the browser's own (outline auto)", bg: '' }; continue; }
+            const cv = /^currentcolor$/i.test(rg.col) ? fgOf(x)[0] : rg.col, c = thColour(cv, lookAt(x)); if (!c) continue;
+            const G = grounds(x.parentElement); let sur = G;
+            if (rg.inset) { const L = f1.bg !== b1.bg ? thStops(f1.bg).map(q => thColour(q, lookAt(x))).filter(q => q && q[3] > 0) : layer(x); if (L && L.length) sur = G.flatMap(g => L.map(l => thOver(l, g))); }
+            let r = Infinity, at = null; for (const g of sur) { const q = thCr(thOver(c, g), g); if (q < r) { r = q; at = g; } }
+            if (!best || r > best.r) best = { r, ring: `${rg.kind}${rg.inset ? ' inside' : ''} in ${cv}${x !== el ? ' on its ' + x.tagName.toLowerCase() + '.' + (x.getAttribute('class') || '').split(' ')[0] : ''}`, bg: thHex(at) }; } });
+        accR[k] = { look: look0, r: best ? +best.r.toFixed(2) : 0, ring: best ? best.ring : 'none', bg: best ? best.bg : '', none: !best,
+          at: `${tag}: ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.getAttribute('class') ? '.' + el.getAttribute('class').split(/\s+/).slice(0, 2).join('.') : ''}${el.tagName === 'INPUT' ? '[' + el.type + ']' : ''}${el.getAttribute('aria-pressed') === 'true' || el.classList.contains('on') || el.checked ? ' (chosen)' : ''} "${(txt(el) || el.getAttribute('aria-label') || '').slice(0, 20)}"` };
+      }
     }
   }
   return acc;
@@ -7061,6 +7197,22 @@ function thChartColours(d, P, tierHex) {
   }
   return { bad, n: seen.n };
 }
+/* the charts' colours in the stylesheet (nhl v34 after its review: a rule could fix a chart's line in one look's colour, out of sight of the
+   drawn chart's attributes): every fill, stroke and stop-color any rule sets, each rule naming .pk-chart, .xb-chart, .pe-cv, .pe-spark or
+   .rv-chart among them, in any @media and its light rules too, is a token with a value in each look (or a chart line's own --c, held on
+   the line), a color-mix of such tokens, none, transparent or currentColor */
+function thChartRules(sheet, P) {
+  const named = [], bad = [], CH = /\.(pk-chart|xb-chart|pe-cv|pe-spark|rv-chart)(?![\w-])/;
+  const tok = v => { const m = /^var\((--[a-z0-9-]+)\)$/.exec(v.trim()); return !!m && (m[1] === '--c' || (!!P.dark[m[1]] && !!P.light[m[1]])); };
+  const ok = v0 => { const v = v0.replace(/!\s*important/, '').trim(); if (/^(none|transparent|currentcolor)$/i.test(v) || tok(v)) return true;
+    const mx = /^color-mix\(\s*in srgb\s*,(.*)\)$/i.exec(v); if (!mx) return false;
+    const parts = thSplit(mx[1]).map(p => p.replace(/\s+[\d.]+%$/, '').trim()); return parts.length === 2 && parts.every(p => /^transparent$/i.test(p) || tok(p)); };
+  for (const [sel, body, media] of sheet.rules) {
+    if (CH.test(sel)) named.push(sel);
+    for (const m of body.matchAll(/(?:^|;)\s*(fill|stroke|stop-color)\s*:\s*([^;]+)/g)) if (!ok(m[2])) bad.push(`${media ? media + ' ' : ''}${sel} ${m[1]}:${m[2].trim()}`);
+  }
+  return { named, bad };
+}
 
 /* ---------- THE LOOK: LIGHT AND DARK (nhl v25; the switch shown since nhl v34), and the owner's rule that the page carries no descriptions ----------
    The NFL hub's two looks on hockey's tokens: both palettes in the page, the head's script (the NFL's theme.js, its key nhlhub_theme_v1)
@@ -7069,11 +7221,13 @@ function thChartColours(d, P, tierHex) {
    rebuilt on the tokens, and swept in Chromium in both looks): a press flips the look and stores it, nothing else, and redraws nothing,
    the charts following the look by their tokens; the system's preference is never read (the NFL's rule: dark for every visitor until a
    press); and the sweep's rule is held here in jsdom terms (thPairs): every text the page draws, its colour on its ground, 4.5:1 in each
-   look, and every rule's own colour on its own background. What jsdom cannot hold (the wordmark on one line clear of the switch, no
-   sideways scroll, a contrast laid out at a width, a control's boundary) is the Chromium sweep's. */
+   look, and every rule's own colour on its own background; since its review (nhl v34) a width @media's colours weighed in at their
+   widths, every focus ring on what it is drawn on, every checkbox drawn by the page, the parlay card dark in both looks and every fill
+   and stroke the stylesheet sets a token, on more views (a final's page, a refused tap said, a lost slip). What jsdom cannot hold (the
+   wordmark on one line clear of the switch, no sideways scroll, a contrast laid out at a width, pixels) is the Chromium sweep's. */
 async function lightDarkChecks() {
   console.log('THE LOOK: LIGHT AND DARK');
-  const KEYT = 'nhlhub_theme_v1', AT = PUB + 60000;
+  const KEYT = 'nhlhub_theme_v1', AT = PUB + 60000, T0 = Date.now();
   /* the head: the theme script after the stylesheet and before the body; the key named in that script alone */
   const scripts = [...HTML.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => ({ at: m.index, text: m[1] })), keyed = scripts.filter(x => x.text.includes(KEYT));
   const count = (hay, needle) => hay.split(needle).length - 1;
@@ -7082,7 +7236,10 @@ async function lightDarkChecks() {
   chk(scripts.length >= 3 && scripts[0] === keyed[0] && /localStorage\.getItem\(KEY\)==='light'/.test(keyed[0].text) && !/localStorage\.(setItem|removeItem)\((?!KEY,)/.test(keyed[0].text), 'it is the first script of the page, reads the key for exactly "light" and writes that key alone');
   /* both palettes, read from the stylesheet's text: every token of :root that names a colour has a light value */
   const css = HTML.slice(HTML.indexOf('<style>'), HTML.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
-  const block = sel => { const i = css.indexOf(sel + '{'); return i < 0 ? '' : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
+  /* every top-level block of a palette's selector, in order, a later one's tokens over an earlier's as the cascade has them (nhl v34 after
+     its review: a second html[data-theme="light"] block setting --ring was never read) */
+  const sheet0 = thSheet(HTML.slice(HTML.indexOf('<style>') + 7, HTML.indexOf('</style>')));
+  const block = sel => sheet0.rules.filter(([s, , m]) => !m && s === sel).map(([, b]) => b.trim().replace(/;?$/, ';')).join('');
   const toks = b => { const o = {}; for (const m of b.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) o[m[1]] = m[2].trim(); return o; };
   const DARK = toks(block(':root')), LIGHT = toks(block('html[data-theme="light"]'));
   const isCol = v => /#[0-9A-Fa-f]{3,8}\b|rgba?\(/.test(v) && !/^var\(/.test(v), colourToks = Object.keys(DARK).filter(k => isCol(DARK[k])), noLight = colourToks.filter(k => !LIGHT[k] || !isCol(LIGHT[k]));
@@ -7112,7 +7269,13 @@ async function lightDarkChecks() {
     `the system's preference is read nowhere: no prefers-color-scheme in the stylesheet, nothing asked of matchMedia by the theme script (${/prefers-color-scheme/.test(css) ? 'the stylesheet asks' : 'the stylesheet does not'}; ${/prefers-color-scheme|matchMedia/.test(keyed[0].text) ? 'the script asks' : 'the script does not'})`);
   /* the switch, with nothing stored: one, in the header before the tabs, a button named Light mode, its glyphs hidden from a screen reader,
      not pressed, the page dark with no data-theme; and shown (nhl v34) */
-  const errs = [], w = await boot(AT, errs, { bodyProbe: true }), d = w.document, root = d.documentElement;
+  /* on the state as published with a read of DraftKings' player lines planted on every projected game to come (the answer PLAYER PROPS
+     makes from the state's own projections), so a game's page and the Top 50 draw player lines, and a tap the builder refuses can be said */
+  const ST = (() => { const J = JSON.parse(STATE), pg = J.props && J.props.games; if (!pg || typeof pg !== 'object') return STATE; const at0 = new Date(PUB - 7 * 60000).toISOString();
+    for (const id of Object.keys(pg)) { const g = S.games.find(x => x.id === id); if (!g || sStarted(g, AT) || !pg[id] || !pg[id].homeP || !pg[id].awayP) continue;
+      try { const pr = E.propsOf(propsAnswer(g).items); pg[id].dk = { status: 200, at: at0, main: pr.main, yes: pr.yes }; } catch (e) { /* a game the answer cannot be made for keeps the state's own */ } }
+    return JSON.stringify(J); })();
+  const errs = [], w = await boot(AT, errs, { bodyProbe: true, keepDk: true, state: ST }), d = w.document, root = d.documentElement;
   const sws = [...d.querySelectorAll('[data-theme-toggle]')], sw = sws[0];
   chk(sws.length === 1 && sw.tagName === 'BUTTON' && !!sw.closest('header') && !!(sw.compareDocumentPosition(d.getElementById('tabs')) & 4) && sw.getAttribute('aria-label') === 'Light mode' && !txt(sw)
     && sw.querySelectorAll('svg').length === 2 && [...sw.querySelectorAll('svg')].every(x => x.getAttribute('aria-hidden') === 'true'), `one switch, a button in the header before the tabs, named Light mode, its two glyphs hidden from a screen reader (${sws.length})`);
@@ -7221,11 +7384,14 @@ async function lightDarkChecks() {
   /* ---- the sweep's rule in jsdom (nhl v34) ---- */
   const PALS = { dark: DARK, light: Object.assign({}, DARK, LIGHT) }, sheet = thSheet(HTML.slice(HTML.indexOf('<style>') + 7, HTML.indexOf('</style>')));
   const looks = (fn) => { const was = root.getAttribute('data-theme'); for (const lk of ['dark', 'light']) { if (lk === 'light') root.setAttribute('data-theme', 'light'); else root.removeAttribute('data-theme'); fn(lk); } if (was === null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', was); };
-  const acc = {}, accF = {}, views = [];
-  const take = (tag, roots) => { views.push(tag); looks(() => thPairs(w, d, PALS, sheet, roots, tag, acc, accF)); };
+  const acc = {}, accF = {}, accR = {}, views = [];
+  const take = (tag, roots) => { views.push(tag); looks(() => thPairs(w, d, PALS, sheet, roots, tag, acc, accF, accR)); };
   const tabB = n => d.querySelector(`#tabs button[data-tab="${n}"]`), main = d.querySelector('main'), head = d.querySelector('header');
-  /* the Games tab on a day of each kind the state has (games to come, under way, over), a game's page with a player open and its three
-     windows, the two parlay tabs (a leg in the builder, its card), Team Rankings, ELO Ratings in a group and a unit, the Pick'em with every pick */
+  const unfocus = thFocusSheet(w);      // the focus states on this file's marks while the views are measured, the page's own sheet back after
+  /* the Games tab on a day of each kind the state has (games to come, under way, over), a game's page to come with a player open and its
+     three windows, a final's page and one under way with a player open (nhl v34 after its review: a final's page was never measured), the
+     two parlay tabs (two legs in the builder, its card, a tap the builder refused said under its line), Team Rankings, ELO Ratings in a
+     group and a unit, the Pick'em with every pick */
   tabB('games').click();
   const kinds = {}; for (const day of dayList(d)) { const gs = S.games.filter(g => g.date === day); if (!gs.length) continue; const k = gs.every(g => g.state === 'final') ? 'over' : gs.some(g => sStarted(g, w.Date.now())) ? 'under way' : 'to come'; if (!kinds[k]) kinds[k] = day; }
   for (const [k, day] of Object.entries(kinds)) { openDay(d, day); take(`games, a day ${k} (${day})`, [head, main]); }
@@ -7235,62 +7401,124 @@ async function lightDarkChecks() {
   if (row) { row.click(); await wait(30); const o = d.querySelector('#gameView button.plrbtn[data-open]'); if (o) { o.click(); await wait(20); } const st = d.querySelector('#gameView [data-stats]'); if (st) { st.click(); await wait(20); }
     take("a game's page", [d.getElementById('gameModal')]);
     for (const k of ['units', 'lineups', 'stats']) { const b = d.querySelector(`#gameView [data-gp-pop="${k}"]`); if (!b) continue; b.click(); await wait(30); take(`its ${k} window`, [d.getElementById('gsModal')]); const c = d.getElementById('gsClose'); if (c) c.click(); await wait(10); }
+    /* a tick the builder refuses, said in the page's status line: a player's points Over, then his own goals or assists (nested in it) */
+    { const box = k => d.querySelector(`#gameView input[type=checkbox][data-pp-add="${k}"]`), keys = () => [...d.querySelectorAll('#gameView input[type=checkbox][data-pp-add]')].map(b => b.dataset.ppAdd);
+      let pair = null; const opens = [...d.querySelectorAll('#gameView button.plrbtn[data-open]')].map(b => b.dataset.open).slice(0, 10);
+      for (const pid of opens) { if (!keys().some(k => k.startsWith(pid + '|'))) { const b = d.querySelector(`#gameView button.plrbtn[data-open="${pid}"]`); if (b && b.getAttribute('aria-expanded') !== 'true') { b.click(); await wait(20); } }
+        const ks = keys().filter(k => k.startsWith(pid + '|')), p = ks.find(k => /\|pts\|main\|over\|/.test(k)), n = ks.find(k => /\|(g|a)\|(main\|over|yes)\|/.test(k)); if (p && n) { pair = [p, n]; break; } }
+      if (pair) { box(pair[0]).click(); await wait(20); box(pair[1]).click(); await wait(20);
+        const m = d.getElementById('ppMsg'), said = m ? txt(m) : '';
+        chk(/^Not added: /.test(said), `a tick the builder refuses on a game's page is said in its status line, and measured ("${said.slice(0, 90)}")`);
+        take("a game's page, a tick refused", [d.getElementById('gameModal')]);
+        const b0 = box(pair[0]); if (b0 && b0.checked) { b0.click(); await wait(20); } }
+      else console.log("  no player on the game's page with a points line beside his goals or assists: a refused tick is not measured there"); }
     const bk = d.getElementById('backBtn'); if (bk) bk.click(); await wait(20); }
+  /* a final's page and a page under way, each from its own day's list, a player open on it */
+  const pageOf = async (day, q, tag) => { if (!day) return false; openDay(d, day); const r = d.querySelector(q); if (!r) return false; r.click(); await wait(30);
+    const o = d.querySelector('#gameView button.plrbtn[data-open]'); if (o) { o.click(); await wait(20); }
+    take(tag, [d.getElementById('gameModal')]); const bk = d.getElementById('backBtn'); if (bk) bk.click(); await wait(20); return true; };
+  const finDay = kinds['over'] || dayList(d).find(day => S.games.some(g => g.date === day && g.state === 'final'));
+  const sawFinal = await pageOf(finDay, '#gamesList button.game.final', "a final's page");
+  await pageOf(kinds['under way'], '#gamesList button.game.locked:not(.final)', "a page of a game under way");
+  chk(sawFinal || !S.games.some(g => g.state === 'final'), `a final's page is among the views wherever the state has a final (${sawFinal ? `${finDay}` : 'none drawn'})`);
   tabB('suggest').click(); await wait(20); take('Suggested Parlays', [head, main]);
   tabB('parlays').click(); await wait(20); take('the Parlay Builder, empty', [head, main]);
+  /* two legs of two games: each Add found again by its leg after the draw the last one caused (a button held from before is gone from the
+     page: nhl v34's review found the card never drawn), the builder holding both and Finish open, then the card */
   { const adds = [...d.querySelectorAll('#pbBody button.t30-add[aria-pressed="false"]')]; const g1 = adds[0] && adds[0].dataset.leg.split('|')[0], other = adds.find(b => b.dataset.leg.split('|')[0] !== g1);
-    for (const b of [adds[0], other].filter(Boolean)) { b.click(); await wait(20); }
+    const ids = [adds[0], other].filter(Boolean).map(b => b.dataset.leg);
+    for (const id of ids) { const b = [...d.querySelectorAll('#pbBody button.t30-add')].find(x => x.dataset.leg === id); if (b) { b.click(); await wait(20); } }
+    const nLegs = w.eval('P.legs.length'), fin = d.getElementById('pFinish');
+    chk(ids.length < 2 || (nLegs === 2 && !!fin && !fin.disabled), `the sweep's builder holds the two legs it was given and Finish is open, so its card is drawn (${nLegs} legs of ${ids.length}; Finish ${fin && !fin.disabled ? 'open' : 'shut'})`);
     take('the Parlay Builder, two legs', [head, main]);
-    const fin = d.getElementById('pFinish'); if (fin && !fin.disabled) { fin.click(); await wait(30); take('the parlay card', [d.getElementById('pcWin')]); const c = d.getElementById('pcClose'); if (c) c.click(); await wait(10); }
+    if (fin && !fin.disabled) { fin.click(); await wait(30); const pcW = d.getElementById('pcWin'), card = pcW.querySelector('.pc-card');
+      take('the parlay card', [pcW]);
+      /* the card keeps the dark palette in both looks, as its image does: every text of it drawn on the same colours in either */
+      const per = { dark: {}, light: {} }; looks(lk => thPairs(w, d, PALS, sheet, [card], 'the parlay card', per[lk]));
+      const said = lk => new Set(Object.values(per[lk]).map(p => `${p.hex} on ${p.bg}`)), dk = said('dark'), lt = said('light'), off = [...lt].filter(x => !dk.has(x)).concat([...dk].filter(x => !lt.has(x)));
+      chk(!!card && dk.size >= 5 && !off.length, `the parlay card is drawn in its dark palette in both looks: every text of it the same colour on the same ground in either (${dk.size} pairs; apart: ${off.slice(0, 4).join(' | ') || 'none'})`);
+      const c = d.getElementById('pcClose'); if (c) c.click(); await wait(10); }
     const clr = d.getElementById('clearParlay'); if (clr && !d.getElementById('bFull').hidden) { w.__confirm = true; clr.click(); await wait(20); } }
+  /* a tap the builder refused, said under the Top 50 line tapped: a player's points, goals or assists line of the list beside his own
+     nested line put in first (the job's read of his props); where the state lets none be refused, a tap that replaces a leg of its slot,
+     the same sentence's place and look */
+  { const rows = [...d.querySelectorAll('#pbBody li.pb-trow')].map(r => r.dataset.id), legsNow = () => JSON.parse(w.eval('JSON.stringify(P.legs.map(legIdOf))'));
+    const reads = JSON.parse(w.eval('JSON.stringify(typeof PROPS === "object" && PROPS && PROPS.games || {})')), clear = () => { w.__confirm = true; const c = d.getElementById('clearParlay'); if (c) c.click(); };
+    const nestOf = id => { const s = id.split('|'), rd = reads[s[0]]; if (s[1] !== 'p' || !['pts', 'a', 'g'].includes(s[3]) || !rd || rd.status !== 200) return [];
+      const want = s[3] === 'pts' ? ['a', 'g'] : ['pts']; return rd.main.filter(r => String(r[0]) === s[2] && want.includes(r[1])).map(r => `${s[0]}|p|${s[2]}|${r[1]}|over${r[2]}`); };
+    const mateOf = id => { const s = id.split('|'); if (s[1] === 'p') return null; return s[2] === 'ou' ? `${s[0]}|${s[1] === 'over' ? 'under' : 'over'}|ou` : `${s[0]}|${s[1] === 'home' ? 'away' : 'home'}|${s[2]}`; };
+    let how = null;
+    for (const id of rows.filter(x => /\|p\|/.test(x))) { for (const m of nestOf(id)) { w.eval(`legTap(${JSON.stringify(m)}, document.createElement('button'))`); if (eqA(legsNow(), [m])) { how = ['refused', id]; break; } clear(); } if (how) break; }
+    if (!how) for (const id of rows.slice(0, 12)) { const m = mateOf(id); if (!m) continue; w.eval(`legTap(${JSON.stringify(m)}, document.createElement('button'))`); if (eqA(legsNow(), [m])) { how = ['replaced', id]; break; } clear(); }
+    if (how) { const b = d.querySelector(`#pbBody button.t30-add[data-leg="${how[1]}"]`); if (b) { b.click(); await wait(20); }
+      const s = d.querySelector(`#pbBody li.pb-trow[data-id="${how[1]}"] .pb-tapsaid`);
+      chk(!!s, `a tap the builder ${how[0]} is said under its Top 50 line, and measured (${how[1]}: "${s ? txt(s).slice(0, 80) : 'nothing said'}")`);
+      take(`the Parlay Builder, a tap ${how[0]} said under its line`, [head, main]); clear(); await wait(20); }
+    else console.log("  no Top 50 line the builder refuses or replaces on this state: a tap's sentence is not measured"); }
   tabB('ratings').click(); await wait(20); take('Team Rankings', [head, main]);
   tabB('players').click(); await wait(20);
   for (const v of ['F', 'G', 'str']) { const b = d.querySelector(`#pePos button[data-view="${v}"]`); if (b) { b.click(); await wait(60); take(`ELO Ratings, ${v}`, [head, main]); } }
   { const b = d.querySelector('#pePos button[data-view="F"]'); if (b) b.click(); await wait(20); }
   tabB('pickem').click(); await wait(20); if (d.getElementById('pkPicksW').hidden) d.getElementById('pkShow').click(); await wait(20); take("the Pick'em Record, every pick", [head, main]);
-  /* the owner's two tabs, on a page of his with a slip and a bet log planted from the state's own finals */
-  { const fin = S.games.filter(g => g.state === 'final' && g.hs !== null).sort((a, b) => Date.parse(b.start) - Date.parse(a.start)).slice(0, 2);
-    const XPp = { parlays: fin.length === 2 ? [{ id: 'theme-a', placed: fin[0].date, stake: 10, price: 260, payout: 36, legs: fin.map(g => ({ game: g.id, kind: 'ml', side: g.hs > g.as ? 'home' : 'away' })) }] : [] };
+  /* the owner's two tabs, on a page of his with a bet log and two slips planted from the state's own finals, one won and one lost beside it
+     (nhl v34 after its review: a lost slip's marks were never measured) */
+  { const fin = S.games.filter(g => g.state === 'final' && g.hs !== null && g.hs !== g.as).sort((a, b) => Date.parse(b.start) - Date.parse(a.start)).slice(0, 2);
+    const won = g => g.hs > g.as ? 'home' : 'away', lost = g => g.hs > g.as ? 'away' : 'home';
+    const XPp = { parlays: fin.length === 2 ? [{ id: 'theme-a', placed: fin[0].date, stake: 10, price: 260, payout: 36, legs: fin.map(g => ({ game: g.id, kind: 'ml', side: won(g) })) },
+      { id: 'theme-b', placed: fin[0].date, stake: 10, price: 255, payout: 35.5, legs: [{ game: fin[0].id, kind: 'ml', side: won(fin[0]) }, { game: fin[1].id, kind: 'ml', side: lost(fin[1]) }] }] : [] };
     const XBp = { season: S.season, deposit: 300, weeks: { '2026-10-19': { staked: 50, returned: 80 }, '2026-10-26': { staked: 40, returned: 0 }, '2026-11-02': { staked: 60, returned: 75 } } };
     const errsA = [], wA = await boot(AT, errsA, { hash: 'xparlays', admin: JSON.stringify({ k: 'x'.repeat(32), ok: true, at: AT }), files: { 'data/xparlays.json': XPp, 'data/xbets.json': XBp } }), dA = wA.document, rA = dA.documentElement;
-    await wait(60);
+    await wait(60); const unfocusA = thFocusSheet(wA);
     const lkA = fn => { for (const lk of ['dark', 'light']) { if (lk === 'light') rA.setAttribute('data-theme', 'light'); else rA.removeAttribute('data-theme'); fn(); } rA.removeAttribute('data-theme'); };
     const tA = n => { const b = dA.querySelector(`#tabs button[data-tab="${n}"]`); if (b) b.click(); };
-    tA('xparlays'); await wait(30); views.push('X Parlays'); lkA(() => thPairs(wA, dA, PALS, sheet, [dA.querySelector('header'), dA.querySelector('main')], 'X Parlays', acc));
-    tA('xbets'); await wait(30); views.push('the X Bet Log'); lkA(() => thPairs(wA, dA, PALS, sheet, [dA.querySelector('header'), dA.querySelector('main')], 'the X Bet Log', acc));
+    tA('xparlays'); await wait(30); views.push('X Parlays'); lkA(() => thPairs(wA, dA, PALS, sheet, [dA.querySelector('header'), dA.querySelector('main')], 'X Parlays', acc, accF, accR));
+    const slips = [...dA.querySelectorAll('#tab-xparlays .xp-card')].map(c => c.dataset.xpState).sort();
+    chk(fin.length < 2 || (eqA(slips, ['landed', 'lost']) && !!dA.querySelector('#tab-xparlays .xp-m.loss') && !!dA.querySelector('#tab-xparlays .xp-m.win')), `X Parlays is measured with a slip that landed and one that lost beside it, a leg of each mark (${slips.join(', ') || 'none'})`);
+    tA('xbets'); await wait(30); views.push('the X Bet Log'); lkA(() => thPairs(wA, dA, PALS, sheet, [dA.querySelector('header'), dA.querySelector('main')], 'the X Bet Log', acc, accF, accR));
+    unfocusA();
     const xc = thChartColours(dA, PALS, new Set((/const TIERS=\[([^;]+)\];/.exec(HTML) || ['', ''])[1].match(/#[0-9A-Fa-f]{6}/g) || []));
     chk(!!dA.querySelector('svg.xb-chart') && !xc.bad.length, `the X Bet Log's chart draws every colour in a token with a value in each look (${xc.n} colours; fixed: ${xc.bad.slice(0, 4).join('; ') || 'none'})`);
     chk(!errsA.length, "no runtime error on the owner's two tabs in both looks: " + errsA.join(' | '));
     wA.close(); }
+  unfocus();
   const pairs = Object.values(acc), low = pairs.filter(p => p.r < p.need && !p.disabled);
   const least = lk => pairs.filter(p => p.look === lk && !p.disabled).sort((a, b) => a.r / a.need - b.r / b.need)[0];
   chk(views.length >= 10 && pairs.filter(p => p.look === 'light').length >= 20 && !low.length,
     `every text the page draws is 4.5:1 or more on its ground (3:1 large), in each look, by this file's sums on the stylesheet's tokens (${views.length} views, ${pairs.length} pairs; under: ${low.slice(0, 5).map(p => `${p.look} ${p.fg} on ${p.bg} ${p.r} at ${p.at}`).join(' | ') || 'none'})`);
   for (const lk of ['dark', 'light']) { const l = least(lk); if (l) console.log(`  the ${lk} look's least drawn pair: ${l.fg} on ${l.bg} ${l.r}:1 (needs ${l.need}), ${l.at}`); }
-  /* every field's edge 3:1 on what it sits on, in each look (WCAG's bar for a control's boundary); and the token it is drawn in */
-  { const fs = Object.values(accF), lowF = fs.filter(f => f.r < 3), ids = new Set(Object.keys(accF).map(k => k.split(' ')[1]));
-    chk(ids.has('select#daySel') && (!d.querySelector('#gameView') || !row || ids.has('input#gameSearch')) && !lowF.length,
-      `every field's edge is 3:1 or more on what it sits on, in each look (${fs.length} edges of ${ids.size} fields; least ${fs.length ? Math.min(...fs.map(f => f.r)).toFixed(2) : '–'}; under: ${lowF.slice(0, 4).map(f => `${f.look} ${f.edge} on ${f.bg} ${f.r} (${f.at})`).join(' | ') || 'none'})`);
+  { const mp = pairs.filter(p => p.media); console.log(`  colours a width @media sets, measured at their widths: ${mp.length} (${mp.slice(0, 3).map(p => `${p.look} ${p.fg} ${p.r}:1`).join(', ') || 'none'})`); }
+  /* every control that takes the keyboard shows a focus ring 3:1 on what it is drawn on, in each look (nhl v34 after its review) */
+  { const rs = Object.values(accR), none = rs.filter(x => x.none), lowR = rs.filter(x => !x.none && x.r < 3), lk = l => rs.filter(x => x.look === l && !x.none).sort((a, b) => a.r - b.r)[0];
+    chk(rs.filter(x => x.look === 'light').length >= 20 && rs.filter(x => x.look === 'dark').length >= 20 && !none.length && !lowR.length,
+      `every control that takes the keyboard shows a focus ring 3:1 or more on what it is drawn on (an inset ring or one drawn inside on its own fill, any other on the ground round it), in each look (${rs.length} kinds; no ring: ${none.slice(0, 3).map(x => `${x.look} ${x.at}`).join(' | ') || 'none'}; under: ${lowR.slice(0, 5).map(x => `${x.look} ${x.ring} on ${x.bg} ${x.r} at ${x.at}`).join(' | ') || 'none'})`);
+    for (const l of ['dark', 'light']) { const x = lk(l); if (x) console.log(`  the ${l} look's least focus ring: ${x.ring} on ${x.bg} ${x.r}:1, ${x.at}`); } }
+  /* every field's edge 3:1 on what it sits on, in each look (WCAG's bar for a control's boundary); and the token it is drawn in. A checkbox
+     among them since nhl v34's review: drawn by the page, its edge, its ticked fill and its tick */
+  { const fs = Object.values(accF), lowF = fs.filter(f => f.r < 3), ids = new Set(Object.keys(accF).map(k => k.split(' ')[1])), boxes = Object.keys(accF).filter(k => / input\[checkbox\]/.test(k));
+    chk(ids.has('select#daySel') && (!d.querySelector('#gameView') || !row || ids.has('input#gameSearch')) && !lowF.length && boxes.some(k => /ticked fill/.test(k)) && boxes.some(k => /unticked edge/.test(k)),
+      `every field's edge is 3:1 or more on what it sits on, in each look, a checkbox's edge, ticked fill and tick among them (${fs.length} edges of ${ids.size} fields, ${boxes.length} of checkboxes; least ${fs.length ? Math.min(...fs.map(f => f.r)).toFixed(2) : '–'}; under: ${lowF.slice(0, 4).map(f => `${f.look} ${f.edge} on ${f.bg} ${f.r} (${f.at})`).join(' | ') || 'none'})`);
     const lowT = []; for (const lk of ['dark', 'light']) for (const g of GROUNDS) { const r = crH(PALS[lk]['--field'] || '#000000', PALS[lk][g]); if (!(r >= 3)) lowT.push(`${lk} --field on ${g} ${r.toFixed(2)}`); }
     chk(hexT(DARK, '--field') && hexT(LIGHT, '--field') && !lowT.length, `the field's edge, --field, is 3:1 or more on every ground in each look (${lowT.join('; ') || `dark ${DARK['--field']}, light ${LIGHT['--field']}`})`); }
   /* every rule's own pair: a rule that sets a text colour and a background of its own, in each look (its light rule's values over its own
      in the light look), the background laid on --panel and on --panel-2 where it lets the ground through. The parlay card's rules are its
-     dark palette's in both looks, and drawn above */
-  { const own = new Map(), lightOv = new Map();
-    for (const [sel, body, media] of sheet.rules) { if (media) continue;
+     dark palette's in both looks, and drawn above. A rule in a width @media is held at its width too (nhl v34 after its review: it was
+     skipped): its own values over the same selector's outside it, and in the light look the light rules' over both, outside and in */
+  { const own = new Map(), lightOv = new Map(), K = (m, s) => `${m}\u0000${s}`;
+    for (const [sel, body, media] of sheet.rules) { if (media && !thRange(media)) continue;
       const c = (/(?:^|;)\s*color\s*:\s*([^;]+)/.exec(body) || [])[1], b = (/(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/.exec(body) || [])[1];
       if (!c && !b) continue;
-      for (const one of sel.split(',').map(x => x.trim())) { const lm = /^html\[data-theme="light"\]\s+(.+)$/.exec(one);
-        if (lm) lightOv.set(lm[1], Object.assign({}, lightOv.get(lm[1]) || {}, c ? { c: c.trim() } : {}, b ? { b: b.trim() } : {}));
-        else if (!/^\.pc-|#pc|\.pc-card/.test(one) && !/^html\[data-theme/.test(one)) own.set(one, Object.assign({}, own.get(one) || {}, c ? { c: c.trim() } : {}, b ? { b: b.trim() } : {})); } }
-    const lowR = [], held = [];
-    for (const [sel, v] of own) {
+      for (const one of thSplit(sel)) { const lm = /^html\[data-theme="light"\]\s+(.+)$/.exec(one), add = (m, k) => m.set(k, Object.assign({}, m.get(k) || {}, c ? { c: c.trim() } : {}, b ? { b: b.trim() } : {}));
+        if (lm) add(lightOv, K(media, lm[1]));
+        else if (!/^\.pc-|#pc|\.pc-card/.test(one) && !/^html\[data-theme/.test(one)) add(own, K(media, one)); } }
+    const lowR = [], held = [], keys = new Set([...own.keys(), ...[...lightOv.keys()].filter(k => !k.startsWith('\u0000'))]);
+    for (const key of keys) {
+      const [media, sel] = key.split('\u0000'), v = Object.assign({}, media ? own.get(K('', sel)) || {} : {}, own.get(key) || {});
       for (const lk of ['dark', 'light']) {
-        const ov = lk === 'light' ? Object.assign({}, v, lightOv.get(sel) || {}) : v; if (!ov.c || !ov.b || /var\(--(?:tx|tc|tb|c|ac|hc|gs-tc|a)\b/.test(ov.c + ov.b)) continue;
+        const ov = lk === 'light' ? Object.assign({}, v, lightOv.get(K('', sel)) || {}, media ? lightOv.get(key) || {} : {}) : v; if (!ov.c || !ov.b || /var\(--(?:tx|tc|tb|c|ac|hc|gs-tc|a)\b/.test(ov.c + ov.b)) continue;
         const pal = k => PALS[lk][k], fg = thColour(ov.c, pal), st = thStops(ov.b).map(x => thColour(x, pal)).filter(Boolean);
         if (!fg || !st.length || st.every(x => x[3] === 0)) continue;
         let r = Infinity; for (const gr of ['--panel', '--panel-2']) { const g = thColour(`var(${gr})`, pal); for (const c of st) { const bg = thOver(c, g); r = Math.min(r, thCr(thOver(fg, bg), bg)); } }
-        held.push(sel); if (r < 4.5) lowR.push(`${lk} ${sel} ${ov.c} on ${ov.b} ${r.toFixed(2)}`); } }
+        held.push(media ? `${media} ${sel}` : sel); if (r < 4.5) lowR.push(`${lk} ${media ? media + ' ' : ''}${sel} ${ov.c} on ${ov.b} ${r.toFixed(2)}`); } }
     chk(held.length >= 40 && !lowR.length, `every rule's own text colour on its own background is 4.5:1 or more in each look (${new Set(held).size} rules; under: ${lowR.slice(0, 5).join(' | ') || 'none'})`); }
   /* the charts follow the look by their tokens: every colour a drawn chart carries is a token with both values (the histogram's bars
      the tiers' own), the drawing functions write no colour out, and a press on the Pick'em tab redraws nothing */
@@ -7306,11 +7534,14 @@ async function lightDarkChecks() {
     const fnSrc = n => { const i = HTML.indexOf(`function ${n}(`); if (i < 0) return ''; let j = HTML.indexOf('\nfunction ', i + 10); return HTML.slice(i, j < 0 ? i + 4000 : j); };
     const writ = ['pkChart', 'xbChart', 'peCurve', 'peSpark'].map(n => [n, fnSrc(n)]).map(([n, t]) => [n, t, (t.match(/(?:fill|stroke|stop-color)\s*[=:]\s*["']?#[0-9A-Fa-f]{3,8}|(?:fill|stroke)\s*[=:]\s*["']?rgba?\(/g) || [])]);
     chk(writ.every(([, t]) => t.length > 200) && writ.every(([, , m]) => !m.length), `the four drawing functions write no colour out: ${writ.map(([n, , m]) => `${n} ${m.length ? m.join(', ') : 'none'}`).join('; ')}`);
+    const cr = thChartRules(sheet, PALS);
+    chk(cr.named.length >= 8 && !cr.bad.length, `no rule of the stylesheet fixes a chart's colour: every fill, stroke and stop-color it sets is a token with a value in each look, a mix of them, none or transparent (${cr.named.length} rules name a chart; fixed: ${cr.bad.slice(0, 4).join('; ') || 'none'})`);
     const pkM = () => d.getElementById('pkChart').innerHTML + '|' + d.querySelector('main').innerHTML.length, k0 = pkM();
     sw.click(); const k1 = pkM(); sw.click();
     chk(k1 === k0 && pkM() === k0 && root.getAttribute('data-theme') === 'dark', `a press on the Pick'em tab redraws nothing: the chart is the same markup in either look, its tokens the stylesheet's to resolve (${k1 === k0 ? 'kept' : 'redrawn'})`); }
   chk(!errs.length, 'no runtime error on the sweep in jsdom: ' + errs.join(' | '));
   w.close();
+  console.log(`  the section ran in ${((Date.now() - T0) / 1000).toFixed(1)}s`);
 }
 
 /* ---------- X PARLAYS AND THE X BET LOG (nhl v21) ----------

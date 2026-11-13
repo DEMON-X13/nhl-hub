@@ -166,7 +166,12 @@ steps stand on:
   `.modal` and `.modal-panel`. Hockey's differences, each on purpose: **ice where the NFL's accent is gold** (the wordmark's last
   word, a card's edge, the primary button, a checkbox, the selection, the ring, a tile's edge, the Admin mark), gold kept where it is
   a meaning (medium confidence, a warning, Value, Locked, live); every control 44px tall (the NFL's tab is 40.8px); the chosen tab
-  is `nav button.on` with `aria-current="page"`; a wide table never hides a column; the focus ring at .6 alpha (3:1 on a panel);
+  is `nav button.on` with `aria-current="page"`; a wide table never hides a column; the focus ring at .6 alpha (3:1 on a panel),
+  and on a chosen segmented button (`.seg`, `.pb-seg`, the stake chips) an inset ring in `--on-fill`, the fill's own text colour
+  (nhl v34 after its review: ice on the `--ink` fill was 1.6:1 dark, 2.3:1 light); **a checkbox the page draws itself**
+  (`appearance:none`, nhl v34 after its review: the browser's unticked box was 1.5 to 2.9:1 on its ground in the dark look): a 2px
+  edge in `--field`, ticked an `--ice` fill with an `--on-fill` tick, its ring a 2px `--ink` outline 2px out, its 44px target the chip,
+  tile or row it sits in and its label its own;
   no `scroll-behavior:smooth` (the page's own `window.scrollBy`, which keeps a tapped Add under the finger, must not animate).
 - **Two names changed their meaning to the NFL's.** `.btn` is the **primary** button (ice); the grey one nearly every button is
   is `.btn.quiet`, `.btn.go` is lime (Finish, Finish parlay, Download image), `.btn.danger` rose, `.btn.small` the small one.
@@ -228,7 +233,14 @@ steps stand on:
   fields' edges under 3:1 in both (`--line-2`: the Day select on the page's own ground 1.6 light and 2.2 dark, the search boxes, the
   Pick'em's Day, the two amount boxes and your book's price 1.6 to 1.8 on a card), fixed with `--field`; and, the switch shown, it is
   clean. The least text on it: a club's tag (Dallas, white on `#20864C`, 4.59) in the light look and the 50/50 confidence's rose on its
-  tint (4.56) in the dark.
+  tint (4.56) in the dark. **Its review** (13 November, a sweep of its own on pixels) found the focus states the sweep had not
+  measured: a chosen segmented button's ring (Build from, Day, the stake chips) 1.3 to 2.3:1 on its fill in both looks and a ticked Bet
+  types box's 2.4:1 in the dark, the browser's own unticked checkbox 1.5 to 2.9:1 on its ground in the dark, and the histogram's
+  counts crossed by the bell's dashes; all fixed (rings in `--on-fill` on a chosen fill, checkboxes drawn by the page, the counts drawn
+  last with a halo). Then every focus ring met by Tab on each tab, a game's page, its Lineups window and the parlay card, at 1280 and
+  390 in both looks (304 controls, each ring's pixels focused against the same pixels unfocused), was 3:1 or more (least 3.05 dark, a
+  level leg's Add; 3.49 light, the switch), and every checkbox in view `appearance:none`, its edge 3.37:1 or more unticked, its fill
+  3.94 ticked and its tick 7.0 on the fill, each still ticked by its label, by Space and by a tap.
 - **A club is a filled tag** (`tag(id, cls, hide)`, `.ttag`; `muPills()`, `teamCell()`), the NFL's: its abbreviation in Unbounded
   on its own colour, the same in both looks, its three colours inline. `TEAM_COLORS` is a palette a club, the tag's fill first (the
   rest only for a win bar whose two clubs read as one colour: nothing draws them yet, and they are worth a look before a bar
@@ -743,7 +755,9 @@ across a panel's text; on a phone a text box or a select is 16px, so iOS never z
   - **The histogram** (`peCurve`, the NFL's `curveChart()`; an inline SVG, no image): the ranked in twelve 50-point bins from 1200
     to 1800 (the ends clamped in), a bar a bin in its tier's colour (the NFL's; HOF the gem's gradient) with its count over it,
     the ten tiers and where each starts under the axis, the dashed bell curve a normal curve of as many would draw on the same
-    scale, and the legend ("470 ranked forwards", "bell curve"). A bin's tier, range, count and share show over it under the
+    scale, and the legend ("470 ranked forwards", "bell curve"). The counts are drawn last (`g.pe-cv-nums`, after the bell, out of
+    the pointer's way), each haloed in `--panel` (`paint-order: stroke`), so the bell's dashes never cross a digit (nhl v34 after its
+    review: they crossed "18", "45", "63" and "93" at 1.4:1 under them). A bin's tier, range, count and share show over it under the
     pointer (`.pe-cv-tip`: "Wood · under 1250", "1 forward (0%)", one of them never "1 forwards"), held half its own width inside
     each edge of what shows of the chart (unheld, the first bin's tip lost 31px at the card's left and the last's gave the chart a
     sideways scroll of its own), and a screen reader gets the counts on the chart's label. Hockey's differences: it is drawn at its
@@ -1127,19 +1141,42 @@ its moon drawn, the key written and nothing else, nothing asked for, `nhl_v1` as
 game's page, its window, the card, the tabs), a second dark; another tab's switch followed with nothing written, another key's event
 ignored; on a bare page of the script and the switch's own markup, light kept is light as the body starts to be parsed, every kept value
 but exactly `light` is dark, storage that throws is dark and a press still switches, a system that prefers light with nothing kept is
-dark and one that prefers dark with light kept is light, the system never asked. **The sweep's rule in jsdom** (nhl v34, `thPairs`): on
-every view the state offers (17 on 13 November's: the Games tab on a day of each kind, a game's page with a player open and its three windows, Suggested Parlays, the Parlay
-Builder empty and with two legs, its card, Team Rankings, ELO Ratings in three pills, the Pick'em with every pick, and X Parlays and the
-X Bet Log on an owner's page with planted files), every text the page draws, one of each kind, its colour as jsdom's cascade gives it on
-the ground under it (each layer up its ancestors that paints, a gradient's every stop, translucent layers composited, down to the page's
-own), resolved in each look by the palettes and the tokens a rule or an element sets for its own, 4.5:1 or 3:1 large; every field's edge
-3:1 on what it sits on, and `--field` 3:1 on every ground in each look; every rule's own text colour on its own background 4.5:1 in each
-look (its light rule's values over its own); and the charts following the look: every colour a drawn chart carries (the Pick'em's, ELO
-Ratings' histogram and trend lines, the X Bet Log's) a token with a value in each look (the histogram's bars the tiers' own), the four
-drawing functions writing no colour out, and a press on the Pick'em tab leaving the chart's markup as it was. Twelve planted faults
-were each caught: a light text token under 4.5:1, the switch hidden by its attribute and by a phone rule, a press not stored, a press
-that redraws, the system's preference followed, the X Bet Log's line, the Pick'em's Alpha and the trend line each fixed in a dark-look
-colour, a label fixed in the dark look's grey, a rule's own colour on its fill under 4.5:1, and the fields' edge back to `--line-2`. Then no descriptions: the classes the cut texts wore are gone from the
+dark and one that prefers dark with light kept is light, the system never asked. Each palette is every top-level block of its selector
+in order, a later one's tokens over an earlier's. **The sweep's rule in jsdom** (nhl v34, `thPairs`; widened after its review): on the
+state as published with a read of DraftKings' player lines planted on every projected game to come (PLAYER PROPS' answer from the state's
+own projections), on every view it offers (22 on 13 November's: the Games tab on a day of each kind, a game's page with a player open and
+its three windows, the same page with a tick the builder refused said in its status line, a final's page and one under way with a player
+open, Suggested Parlays, the Parlay Builder empty and with two legs (each Add found again by its leg after the draw the last one caused,
+the builder held to two legs and Finish open: the review found the card never drawn), its card, the builder with a tap it refused said
+under its Top 50 line (a replacement where the state lets none be refused), Team Rankings, ELO Ratings in three pills, the Pick'em with
+every pick, and X Parlays (a slip that landed and one that lost beside it) and the X Bet Log on an owner's page with planted files),
+every text the page draws, one of each kind, and every element that sets a colour of its own over words drawn in a child's colour (the
+builder's sentence, its words in a `<b>`), its colour as jsdom's cascade gives it on the ground under it (each layer up its ancestors that
+paints, a gradient's every stop, translucent layers composited, down to the page's own), resolved in each look by the palettes and the
+tokens a rule or an element sets for its own, 4.5:1 or 3:1 large, one entry a drawn pair (the colour as drawn on its ground, so a token
+the parlay card resolves by its own palette is another pair) held at its strictest use. jsdom's cascade drops a width `@media`, so the
+smoke puts it back: an element a width rule draws (`display`) is measured, and a text colour a width rule sets is weighed against the
+rest by this file's own cascade (`!important`, specificity by `thSpec`, order) at each width its rules start or stop at, and measured
+where it wins, its light rule's in the light look. The parlay card is drawn in its dark palette in both looks, every text of it the
+same colour on the same ground in either. **Every focus ring** (`thFocusSheet`: the stylesheet's `:focus`, `:focus-visible` and
+`:focus-within` turned into marks the smoke sets, since jsdom's `:focus-visible` matches the first element focused alone): every
+control of each view that takes the keyboard, one of each kind, focused; what the focus changes on it, or on an ancestor a
+`:focus-within` rule names, is its ring (a shadow with a spread, an outline), its colour over what it is drawn on (an inset ring, or an
+outline with a negative offset, on the control's own fill as focused; any other on the ground round it), the best of its rings 3:1 or
+more in each look, a control with none failing (112 kinds on 13 November's; least 3.07 light, 3.08 dark). Every field's edge 3:1 on
+what it sits on, `--field` 3:1 on every ground in each look, and every checkbox drawn by the page (`appearance:none`) with its edge,
+ticked fill and tick 3:1; every rule's own text colour on its own background 4.5:1 in each look (its light rule's values over its own),
+a rule in a width `@media` held at its width too; and the charts following the look: every colour a drawn chart carries (the Pick'em's,
+ELO Ratings' histogram and trend lines, the X Bet Log's) a token with a value in each look (the histogram's bars the tiers' own), every
+`fill`, `stroke` and `stop-color` the stylesheet sets (16 rules name a chart) a token with a value in each look, a mix of them, none or
+transparent, the four drawing functions writing no colour out, and a press on the Pick'em tab leaving the chart's markup as it was.
+Twelve planted faults were each caught at the build: a light text token under 4.5:1, the switch hidden by its attribute and by a phone
+rule, a press not stored, a press that redraws, the system's preference followed, the X Bet Log's line, the Pick'em's Alpha and the
+trend line each fixed in a dark-look colour, a label fixed in the dark look's grey, a rule's own colour on its fill under 4.5:1, and the
+fields' edge back to `--line-2`; and the review's 24 after it, ten of which the section had passed: a light `--ring` the panel's colour
+(set in a second light block), the card's light palette short of its ink and dropped whole, a light label colour set in a phone
+`@media`, the X Bet Log's and the Pick'em's lines fixed by a stylesheet rule, a final's strip in each look, a lost slip's marks and the
+builder's refused-tap sentence each pale. The section runs in about 23 seconds. Then no descriptions: the classes the cut texts wore are gone from the
 page and its stylesheet, and on every tab (every day's cards, every pick shown) no paragraph or small print of
 `main` that shows is over 90 characters but the kept few (the source warnings, the builder's and the panel's money warnings and
 notices, another book's prices, an error line, a level with no parlay saying why); a game's page and its windows, which are outside
@@ -1170,7 +1207,8 @@ every Elo on it, 1500 throughout where the spread is nothing; every row word for
 club that has him, the Elo with the figure to the thousandth on its title, the shield the tier of that Elo by the smoke's own nine numbers,
 the figures to the hundredth in their sign's colour, Career, the Trend line's points, colour and title, Peak and its season); every heading's
 title, the Player's the rule in force; the histogram (twelve bins by its own counts, each bar in its tier's colour and no shorter than a
-smaller one's, the axis, the bell as tall as a normal curve of as many on the bars' own scale, the legend, the label, a bin's words under the
+smaller one's, the axis, the bell as tall as a normal curve of as many on the bars' own scale, the counts drawn after it with their halo in
+the panel's colour, the legend, the label, a bin's words under the
 pointer, "1 forward" for one, none under five; 520 to 680px wide on a made-up box, again on a resize; its tip, on a made-up layout, over its
 bar and half its width inside each edge of what shows, scrolled or not); the clubs' four tables (each unit's order among the clubs that have
 the figure, its scale and tiers, the four figures with their places, shared on a level Elo, and colours, the goalie in net and how he was

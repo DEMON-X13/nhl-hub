@@ -171,8 +171,16 @@ h2 .pill{font-family:var(--body);font-size:12px;font-weight:700;vertical-align:m
 select,input[type=number],input[type=text],input[type=search]{background:var(--panel);color:var(--ink);border:1px solid var(--field);border-radius:var(--r-sm);padding:8px 11px;min-width:0;min-height:44px;box-shadow:none;transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
 select:hover,input[type=number]:hover,input[type=text]:hover,input[type=search]:hover{border-color:var(--ink-2)}
 select:focus,input[type=number]:focus,input[type=text]:focus,input[type=search]:focus{border-color:var(--ink);box-shadow:var(--ring)}
-input[type=checkbox]{width:16px;height:16px;cursor:pointer}
-input[type=checkbox],input[type=radio]{accent-color:var(--ice)}
+/* a checkbox the page draws itself (nhl v34 after its review: the browser's own unticked box was 1.5 to 2.9:1 on its ground in the dark
+   look): a 2px edge in --field, 3:1 on every ground; ticked, filled --ice with a tick in --on-fill; its ring an --ink outline round it.
+   The 44px target is the chip, tile or row it sits in, and its label stays its own */
+input[type=checkbox]{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin:0;flex:none;display:inline-grid;place-content:center;vertical-align:middle;border:2px solid var(--field);border-radius:5px;background:transparent;cursor:pointer}
+input[type=checkbox]::before{content:"";width:9px;height:5px;margin-top:-3px;border:solid var(--on-fill);border-width:0 0 2.5px 2.5px;transform:rotate(-45deg);visibility:hidden}
+input[type=checkbox]:checked{background:var(--ice);border-color:var(--ice)}
+input[type=checkbox]:checked::before{visibility:visible}
+input[type=checkbox]:disabled{cursor:default;opacity:.55}
+input[type=checkbox]:focus-visible{outline:2px solid var(--ink);outline-offset:2px;box-shadow:none}
+input[type=radio]{accent-color:var(--ice)}
 ::placeholder{color:var(--ink-2);opacity:1}
 @media(max-width:640px){select,input[type=text],input[type=search]{font-size:16px}}            /* iOS zooms in on a box under 16px, and stays zoomed */
 @media(max-width:760px){ .bar{gap:8px} .bar label{font-size:13px} }
@@ -573,7 +581,7 @@ table.rv-grid .rv-season{border-left:2px solid var(--line-2)}
 .pb-seg button:first-child{border-left:0}
 .pb-seg button.on{background:var(--ink);color:var(--panel)}
 .pb-seg button:focus-visible{box-shadow:inset var(--ring)}       /* the box clips its buttons, so the ring is drawn inside */
-.pb-seg button.on:focus-visible{box-shadow:inset 0 0 0 3px var(--ice)}
+.pb-seg button.on:focus-visible{box-shadow:inset 0 0 0 3px var(--on-fill)}      /* the chosen one's ring in the fill's own text colour, as .seg's: ice on --ink was 1.6:1 dark, 2.3:1 light */
 .pb-seg button small{display:block;font-size:10.5px;font-weight:600;opacity:.85}
 .pb-chips{display:flex;flex-wrap:wrap;gap:8px}
 .pb-chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:7px 13px 7px 11px;border:1px solid var(--line-2);border-radius:999px;background:var(--panel);cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2);user-select:none;-webkit-user-select:none}
@@ -756,6 +764,7 @@ table.pb-ltab td.pb-rmc{padding:6px 8px 6px 6px}
 .stake-chips button:first-child{border-left:0}
 .stake-chips button.on{background:var(--ink);color:var(--panel)}
 .stake-chips button:focus-visible{box-shadow:inset var(--ring);outline:none}
+.stake-chips button.on:focus-visible{box-shadow:inset 0 0 0 3px var(--on-fill)}
 @media(max-width:640px){ .stake-chips{display:flex;width:100%} .stake-chips button{flex:1 1 0;padding:0 4px} }
 /* the summary: the NFL's three boxes, the fair chance first; a figure steps down to fit its box (fitTiles), and one that will not fit at
    13px takes the whole row */
@@ -942,8 +951,6 @@ html[data-theme="light"] .pc-card{--bg:#2A3043;--bg-2:#30374B;--panel:#363D52;--
 .rungs .book{width:64px;color:var(--pick);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .rungs tr.mainline td{background:var(--panel-2)}
 .rungs tr.mainline .thr,.rungs tr.rung .thr{font-size:13px}
-.rungs input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--pick);vertical-align:middle}
-.rungs input[type=checkbox]:focus-visible{outline:2px solid var(--ink);outline-offset:2px;box-shadow:none}
 .rungs tr.on td{background:var(--ice-soft)}
 .rungs tr.hit td{background:var(--pick-soft)} .rungs tr.miss td{background:var(--miss-soft)}
 /* on a ticked or graded row the band stands on the panel, not on its own soft fill over the row's wash (gold on gold over ice or lime fell
@@ -1068,7 +1075,7 @@ button.plrbtn:hover{box-shadow:var(--sh-md)}
 .gs-ush{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px 6px;font-size:var(--gs-t2);color:var(--ink-2)}
 #gsModal .gs-ush b,#gsModal .gs-ubox.gs-better .gs-ush b{font-family:var(--display);font-weight:700;color:var(--ink)}
 .gs-utier{white-space:nowrap;color:var(--ink-2)}
-#gsModal .gs-ubox.gs-better .gs-lab,#gsModal .gs-ubox.gs-better .gs-utier{color:var(--ink)}
+#gsModal .gs-ubox.gs-better .gs-lab,#gsModal .gs-ubox.gs-better .gs-utier,#gsModal .gs-ubox.gs-better .gs-ush{color:var(--ink)}      /* the line's own colour too, under its words' own (--ink-2 on the lime tint is 4.4:1 dark) */
 #gsModal .dtag{display:inline-flex;align-items:center;font-size:var(--gs-t1);font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap;line-height:1.2;cursor:help}
 #gsModal .dtag.easy{background:#2E4426;color:#CDFF4F}
 #gsModal .dtag.fav{background:#2C3E34;color:#9BE3B0}
@@ -2034,13 +2041,15 @@ function peCurve(vals, label, one) {
     const range = i === 0 ? `under ${b.lo + BW}` : i === nb - 1 ? `${b.lo} and up` : `${b.lo}–${b.lo + BW - 1}`;
     const tip = `<b>${b.name}</b> · ${range}<br>${b.cnt} ${esc(b.cnt === 1 ? one || label : label)} (${Math.round(b.cnt / n * 100)}%)`;
     return `<g class="pe-cv-bin" data-lo="${b.lo}" data-n="${b.cnt}" data-tip="${esc(tip)}" data-x="${(x + w / 2) / W}" data-y="${yy / H}"><rect x="${f(i * bw)}" y="0" width="${f(bw)}" height="${base}" fill="transparent"/>`
-      + (h > 0 ? `<path class="pe-cv-bar" d="M${x} ${base}V${f(yy + r)}Q${x} ${yy} ${f(x + r)} ${yy}H${f(x + w - r)}Q${f(x + w)} ${yy} ${f(x + w)} ${f(yy + r)}V${base}Z" fill="${b.fill}"/>` : '')
-      + (b.cnt ? `<text x="${f(x + w / 2)}" y="${f(yy - 5)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${b.cnt}</text>` : '') + '</g>'; }).join('');
+      + (h > 0 ? `<path class="pe-cv-bar" d="M${x} ${base}V${f(yy + r)}Q${x} ${yy} ${f(x + r)} ${yy}H${f(x + w - r)}Q${f(x + w)} ${yy} ${f(x + w)} ${f(yy + r)}V${base}Z" fill="${b.fill}"/>` : '') + '</g>'; }).join('');
+  /* the counts over their bars, drawn after the bell so its dashes never cross a digit, each haloed in the panel's colour (nhl v34 after
+     its review: the dashes crossed "18", "45", "63", "93" at 1.4:1 under them) */
+  const nums = bins.map((b, i) => { const x = f(i * bw + gap / 2), w = f(bw - gap); return b.cnt ? `<text class="pe-cv-n" data-lo="${b.lo}" x="${f(x + w / 2)}" y="${f(f(y(b.cnt)) - 5)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)" stroke="var(--panel)" stroke-width="3" stroke-linejoin="round" paint-order="stroke">${b.cnt}</text>` : ''; }).join('');
   const bands = [[LO, 1350], [1350, 1400], [1400, 1450], [1450, 1500], [1500, 1550], [1550, 1600], [1600, 1650], [1650, 1700], [1700, 1750], [1750, HI]].map(([lo, hi]) => {
     const t = eloTier(lo + 1), cx = f((X(lo) + X(hi)) / 2);
     return `<line x1="${f(X(lo))}" x2="${f(X(lo))}" y1="${base}" y2="${base + 5}" stroke="var(--line-2)"/><text class="pe-cv-tn" x="${cx}" y="${base + 18}" text-anchor="middle" font-size="9.5" font-weight="600" fill="var(--ink-2)">${t[0]}</text><text class="pe-cv-tm" x="${cx}" y="${base + 31}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${lo === LO ? '&lt;1350' : hi === HI ? '1750+' : lo}</text>`; }).join('');
   const pts = []; for (let k = 0; k <= 96; k++) { const e = LO + k * (HI - LO) / 96; pts.push(`${k ? 'L' : 'M'}${X(e).toFixed(1)} ${y(dens(e)).toFixed(1)}`); }
-  return `<div class="pe-curve" role="img" aria-label="${esc(label)} by rating: ${bins.filter(b => b.cnt).map(b => b.lo + ' ' + b.cnt).join(', ')}"><div class="pe-cv-in"><svg class="pe-cv" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false">${bars}<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--line-2)"/>${bands}<path class="pe-cv-bell" d="${pts.join(' ')}" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-dasharray="5 4" pointer-events="none"/></svg><div class="pe-cv-tip" aria-hidden="true"></div></div>`
+  return `<div class="pe-curve" role="img" aria-label="${esc(label)} by rating: ${bins.filter(b => b.cnt).map(b => b.lo + ' ' + b.cnt).join(', ')}"><div class="pe-cv-in"><svg class="pe-cv" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false">${bars}<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--line-2)"/>${bands}<path class="pe-cv-bell" d="${pts.join(' ')}" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-dasharray="5 4" pointer-events="none"/><g class="pe-cv-nums" pointer-events="none">${nums}</g></svg><div class="pe-cv-tip" aria-hidden="true"></div></div>`
     + `<div class="pe-cv-key"><span><b></b>${n} ranked ${esc(label)}</span><span><i></i>bell curve</span></div></div>`;
 }
 /* the curve in its box, and a bar's count and share over it while the pointer is on its bin (the NFL's curveHover) */

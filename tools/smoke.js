@@ -4222,8 +4222,11 @@ async function gamesListChecks() {
   const w = await boot(AT, errs, { espn: url => sb(url) }), d = w.document, MAP = pageMap(w), $ = id => d.getElementById(id), today = etDate(AT);
   const sbReqs = () => w.__requests.filter(r => r.url.startsWith('https://site.api.espn.com/'));
   /* the tab: the bar, the note, the odds bar, the heads, the list; no strip, no card grid, no key */
-  const sv = $('slateView'), kidsV = sv ? [...sv.children].map(x => x.id || x.className) : [];
-  chk(eqA(kidsV, ['bar', 'sourceNote', 'slateOdds', 'gamehead', 'gamesList']) && !d.querySelector('#days, #games, .grid, .day, .teams, .badge, .prob, .pline, .chips, #opening:not(.empty), #refreshScores, #confKey'), `the Games tab is the bar, the source note, the odds bar, the column heads and the list; no day strip, no card grid (${kidsV.join(', ')})`);
+  /* and, between the source note and the odds bar, the Mismatches card (nhl v35) exactly where its rule lists a skater on the day the tab
+     opens on (THE MISMATCHES holds the card itself): the morning of 14 November 2026 the tab opened on a day with 49 listed, and this
+     check, written before the card, failed a right page and held the run's publish back */
+  const sv = $('slateView'), kidsV = sv ? [...sv.children].map(x => x.id || x.className) : [], mmOn = sMmRows(S, $('daySel') ? $('daySel').value : null, w.Date.now()).length > 0;
+  chk(eqA(kidsV, ['bar', 'sourceNote'].concat(mmOn ? ['peMism'] : [], ['slateOdds', 'gamehead', 'gamesList'])) && !d.querySelector('#days, #games, .grid, .day, .teams, .badge, .prob, .pline, .chips, #opening:not(.empty), #refreshScores, #confKey'), `the Games tab is the bar, the source note, ${mmOn ? 'the Mismatches card (its rule lists a skater on the day shown), ' : ''}the odds bar, the column heads and the list; no day strip, no card grid (${kidsV.join(', ')})`);
   const barK = [...sv.querySelector('.bar').children].map(x => x.id || (x.querySelector('select') ? 'label:' + x.querySelector('select').id : x.className));
   chk(eqA(barK, ['label:daySel', 'day-step', 'dayRec', 'seasonRec', 'grow', 'slateStamp', 'slateNow']) && txt(sv.querySelector('.bar label')).startsWith('Day') && $('dayPrev').getAttribute('aria-label') === 'Previous day' && $('dayNext').getAttribute('aria-label') === 'Next day' && $('slateStamp').getAttribute('role') === 'status', `the bar: the Day select and its two steppers, the day's and the season's record, Refresh scores and its stamp (${barK.join(', ')})`);
   chk(eqA([...sv.querySelectorAll('.gamehead > div')].map(txt), ['Date', 'Matchup', 'Win probability', 'Confidence', 'Score prediction', 'Final score']), 'six column heads');

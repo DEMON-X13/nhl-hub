@@ -1070,7 +1070,7 @@ puck drop planted: playing, LIVE, Refresh scores kept. That model works the pres
 own parse (`tools/espn.js`) of the answers the stubs gave, which `boot` notes for every window (`__answers`, `pressS`,
 `pressWordS`), so every section that holds a game's page after a press holds its words too.
 Its section THE GAMES LIST (nhl v28) works the Games tab out from the state by rules of its own, on any state the job can
-publish: the tab's parts (the bar, the source note, the odds bar, the six heads, the list; no strip, card grid or key); the Day
+publish: the tab's parts (the bar, the source note, the Mismatches card exactly where its rule lists a skater on the day the tab opens on, the odds bar, the six heads, the list; no strip, card grid or key; the card was missing from this list until the morning of 14 November 2026, the first state that showed it on the opening day, and that run published nothing); the Day
 select (its days, by month, each by its words; the day it opens on; "Today" the visitor's day), the page's colour families for a
 win bar its own list, and for every pair of the 32 clubs the bar's two halves by its own rule, each number 4.5:1 on its fill and
 two clubs of one brand colour never one colour; every row of every day in the select, cell by cell (`rowWrongs`: a button classed

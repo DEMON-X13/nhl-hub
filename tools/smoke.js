@@ -1397,7 +1397,11 @@ async function parlayBuilder() {
       for (const k of PBS.KINDS) for (const s of PBS.SIDES[k]) {
         const L = sLeg(g, s, k), box = pb.querySelector(`input[data-leg="${g.id}|${s}|${k}"]`);
         chk(!!L === !!box, `${g.id} ${s} ${k}: a box exactly where DraftKings prices it`);
-        if (L && box) chk(txt(box.closest('tr').querySelector('.book')) === PBS.odds(L.price) && txt(box.closest('tr').querySelector('.est')) === `model ${PBS.pctW(L.p)}` && !!box.closest('tr').querySelector('.pb-valmark') === (L.pick === s), `${g.id} ${s} ${k}: its row shows the state's price and the model's chance, Value on the call's side alone (${txt(box.closest('tr'))})`);
+        /* a To win row's chance is the call's own rounding, the pick's chance whole and the other side the rest, so the two add to 100 as on
+           the Games list (THE GAME'S PAGE holds it so); a half point (0.505: 51% and 49%) once failed here on the side's own rounding (50%),
+           LA at TOR on 18 November 2026, four runs in a row, nothing published */
+        const mW = k === 'ml' && slCallS(g) ? `${s === 'home' ? slCallS(g).ph : slCallS(g).pa}%` : PBS.pctW(L.p);
+        if (L && box) chk(txt(box.closest('tr').querySelector('.book')) === PBS.odds(L.price) && txt(box.closest('tr').querySelector('.est')) === `model ${mW}` && !!box.closest('tr').querySelector('.pb-valmark') === (L.pick === s), `${g.id} ${s} ${k}: its row shows the state's price and the model's chance, Value on the call's side alone (${txt(box.closest('tr'))})`);
       }
     }
   }

@@ -599,7 +599,14 @@ function partB() {
   chk(r3.status === 0 && readJSON(path.join(B, 'injuries.json')).pulled === pulled && Object.values(readJSON(path.join(B, 'injuries.json')).teams).some(l => l.length), 'an injury report that comes back empty is no report: the last one stays');
   const B0 = mkdir('B-noinj'); fs.copyFileSync(path.join(B, 'starters.json'), path.join(B0, 'starters.json'));
   fs.writeFileSync(path.join(B0, 'injuries.json'), JSON.stringify({ pulled: minute(Date.parse(NOW)), source: 'ESPN', teams: {} }));
-  if (pre.length) chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B0 }, 'sources.js, a report with no rows').status === 1, 'an injury report in use with no rows, games to come, is a broken source');
+  /* sources.js holds the injury report and DailyFaceoff to account only where a game is to come within a day and a half of the state's
+     publish (its own `soon`): on 20 November 2026, a day with no game, the next puck drop stood 38.6 hours past the publish the simulation
+     replays, sources.js rightly passed, and these checks, which asked only for a game to come, failed four runs in a row and held every
+     publish back. Each now asks of sources.js exactly what its rule gives the state: a broken source where a game is that near, else a pass */
+  const soonB = (() => { const s = readJSON(STB), t = Date.parse(s.published); return s.games.some(g => g.state === 'pre' && Date.parse(g.start) > t && Date.parse(g.start) - t < 36 * 3600000); })();
+  const soonW = soonB ? '' : ' (no game within a day and a half of the publish: sources.js holds its source checks back and passes)';
+  if (!soonB) console.log('  no game to come within a day and a half of the replayed publish: sources.js passes on a broken injury report or DailyFaceoff, held so');
+  if (pre.length) chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B0 }, 'sources.js, a report with no rows').status === (soonB ? 1 : 0), 'an injury report in use with no rows, games to come, is a broken source' + soonW);
   /* the page over a state whose injury report is a day old */
   const old = readJSON(STB); if (old.players && old.players.injuries) old.players.injuries.pulled = minute(Date.parse(old.published) - 20 * 3600000);
   const STALE = path.join(SCRATCH, 'B-stale.json'); fs.writeFileSync(STALE, JSON.stringify(old));
@@ -618,7 +625,7 @@ function partB() {
     run('starters.js', [], envD, 'starters.js, a new shape');
     const s2 = readJSON(path.join(B2, 'starters.json'));
     chk(s2.ok === false && /shape/.test(s2.why), "DailyFaceoff answering in a shape the job cannot read is said: " + s2.why);
-    chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B2 }).status === 1, 'and sources.js fails the run after the commit');
+    chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B2 }).status === (soonB ? 1 : 0), 'and sources.js fails the run after the commit' + soonW);
     /* every game on the page dated three days off (a date format misread): nothing matches the schedule */
     const entry = (g, extra) => Object.assign({ homeTeamName: E.CLUBS[g.home].name, awayTeamName: E.CLUBS[g.away].name, homeGoalieName: 'Somebody Real', homeNewsStrengthName: 'Confirmed' }, extra);
     const off3 = onD.slice(0, 4).map(g => entry(g, { date: addDays(D, 3) })).filter(e => !SB.games.some(g => g.date === e.date && E.CLUBS[g.home].name === e.homeTeamName && E.CLUBS[g.away].name === e.awayTeamName));
@@ -626,7 +633,7 @@ function partB() {
     run('starters.js', [], envD, 'starters.js, dates misread');
     const s3 = readJSON(path.join(B2, 'starters.json'));
     chk(s3.ok === false && /none matched the schedule/.test(s3.why) && (s3.unmatched || []).length === off3.length, `DailyFaceoff's games matching no game on the schedule are said, never applied silently: ${s3.why}`);
-    chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B2 }).status === 1, 'and sources.js fails the run after the commit');
+    chk(run('sources.js', [], { NHL_STATE: STB, NHL_DATA: B2 }).status === (soonB ? 1 : 0), 'and sources.js fails the run after the commit' + soonW);
     /* one good, one matching nothing: the good one is used, the other kept aside */
     fs.writeFileSync(path.join(FX3, 'dailyfaceoff.html'), dfoPage([entry(onD[0], { date: D })].concat(off3.slice(0, 1))));
     run('starters.js', [], envD, 'starters.js, one game misread');

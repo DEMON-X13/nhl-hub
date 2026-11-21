@@ -7917,7 +7917,7 @@ async function lightDarkChecks() {
   chk(!long.length, `no paragraph or small print of main is a sentence over 90 characters, on any tab, but the kept warnings (${long.length}: ${long.slice(0, 3).join(' | ')})`);
   /* the kept ones are short too where they show: the source warnings a few bold words each */
   const sn = dP.getElementById('sourceNote');
-  chk(sn.hidden || [...sn.querySelectorAll('b')].every(x => txt(x).length <= 60) && txt(sn).length === [...sn.querySelectorAll('b')].reduce((a, x) => a + txt(x).length, 0) + Math.max(0, sn.querySelectorAll('b').length - 1) * 0, `a source warning is its few bold words and nothing after them (${txt(sn).slice(0, 120)})`);
+  chk(sn.hidden || [...sn.querySelectorAll('b')].every(x => txt(x).length <= 60) && txt(sn).length === [...sn.querySelectorAll('b')].reduce((a, x) => a + txt(x).length, 0) + Math.max(0, sn.querySelectorAll('b').length - 1), `a source warning is its few bold words and nothing after them (two or more one space apart: the first evening of 20 November 2026 showed the injury report's and DailyFaceoff's together, and the space between them failed a right page) (${txt(sn).slice(0, 120)})`);
   console.log(`  no descriptions: ${GONE.length} classes gone from the page and its stylesheet; every tab swept, ${long.length} long line(s)`);
   chk(!errs.length, 'no runtime error on the sweep: ' + errs.join(' | '));
 

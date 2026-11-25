@@ -8411,7 +8411,7 @@ async function suggestRecord() {
   if (olderJob) console.log(`  the ledger is an older job's (its header the v30 rule's): ${lined.join(', ') || 'no day'} taken by that rule, held by the record's check alone`);
   for (const day of lined) {
     const want = SG.setOf(w, day), e = L.days[day];
-    if (!want.games.length) { chk(!e, `${day}: no game to come with a fresh line in the page, no entry`); continue; }
+    if (!want.games.length) { chk(!e || e.taken !== S.published, `${day}: no game to come with a fresh line in the page, no entry taken at this publish (a set taken earlier stands, as tools/suggest.js keeps it: 24 November 2026 held five runs back on this)`); continue; }
     if (olderJob) { chk(!!e && e.lock === new Date(first[day]).toISOString() && SG.ruleOfEntry(e) !== 'new', `${day}: taken by the older job, to lock at its first puck drop (${e ? e.lock : 'no entry'})`); continue; }
     chk(!!e && e.lock === new Date(first[day]).toISOString() && JSON.stringify([e.games, e.tiers]) === JSON.stringify([want.games, want.tiers]),
       `${day}: taken, to lock at its first puck drop ${new Date(first[day]).toISOString()}, the page's own levels at the publish (${e ? e.lock : 'no entry'})`);
